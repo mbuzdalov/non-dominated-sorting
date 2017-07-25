@@ -25,4 +25,5 @@ lazy val benchmarking = project.
   settings(commonSettings :_*).
   settings(name    := "non-dominated-sorting-benchmarking",
            version := "0.0.0").
+  dependsOn(implementations).
   enablePlugins(JmhPlugin)
