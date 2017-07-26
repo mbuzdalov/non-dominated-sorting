@@ -10,6 +10,9 @@ import ru.ifmo.NonDominatedSorting;
 import ru.ifmo.NonDominatedSortingFactory;
 
 @State(Scope.Benchmark)
+@Warmup(iterations = 12)
+@Measurement(iterations = 5)
+@Fork(5)
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
 public abstract class AbstractBenchmark {
@@ -17,7 +20,7 @@ public abstract class AbstractBenchmark {
     @SuppressWarnings({"unused"})
     private int instance;
 
-    @Param({"2", "3", "4", "5", "6", "7", "8", "9", "10", "15", "20"})
+    @Param({"2", "3", "4", "6", "8", "10", "15", "20"})
     private int dimension;
 
     @Param({"10", "100", "1000", "10000"})
