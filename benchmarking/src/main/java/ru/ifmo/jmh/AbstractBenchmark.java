@@ -1,47 +1,37 @@
 package ru.ifmo.jmh;
 
-import java.util.Arrays;
-import java.util.Random;
-import java.util.concurrent.TimeUnit;
-
 import org.openjdk.jmh.annotations.*;
 
 import ru.ifmo.NonDominatedSorting;
 import ru.ifmo.NonDominatedSortingFactory;
 
-@State(Scope.Benchmark)
-@Warmup(iterations = 12)
-@Measurement(iterations = 5)
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
+@State(Scope.Thread)
 @Fork(5)
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
 public abstract class AbstractBenchmark {
-    @Param({"0", "1", "2", "3"})
+    @Param({"0", "1", "2", "3", "4"})
     @SuppressWarnings({"unused"})
     private int instance;
 
     @Param({"2", "3", "4", "6", "8", "10", "15", "20"})
     private int dimension;
 
-    @Param({"10", "100", "1000", "10000"})
-    private int numPoints;
-
     private NonDominatedSorting sorting;
-    private double[][] cloudPoints;
-    private int[] ranks;
+    private List<Dataset> datasets = new ArrayList<>();
 
     @Setup
     public void initializeSorterAndData() {
-        Random random = new Random();
-        sorting = getFactory().getInstance(numPoints, dimension);
-        ranks = new int[numPoints];
-
-        cloudPoints = new double[numPoints][dimension];
-        for (double[] point : cloudPoints) {
-            for (int i = 0; i < dimension; ++i) {
-                point[i] = random.nextDouble();
-            }
-        }
+        datasets.clear();
+        datasets.add(Dataset.generateUniformHypercube(10, dimension));
+        datasets.add(Dataset.generateUniformHypercube(100, dimension));
+        datasets.add(Dataset.generateUniformHypercube(1000, dimension));
+        datasets.add(Dataset.generateUniformHypercube(10000, dimension));
+        sorting = getFactory().getInstance(10000, dimension);
     }
 
     @TearDown
@@ -50,14 +40,31 @@ public abstract class AbstractBenchmark {
     }
 
     @Benchmark
-    public int cloudBenchmark() {
-        Arrays.fill(ranks, 0);
-        sorting.sort(cloudPoints, ranks);
-        int sum = 0;
-        for (int i : ranks) {
-            sum += i;
-        }
-        return sum;
+    @Warmup(iterations = 15, time = 100, timeUnit = TimeUnit.MILLISECONDS)
+    @Measurement(iterations = 5, time = 1)
+    public int cloudBenchmark_N10() {
+        return datasets.get(0).runSortingOnMe(sorting);
+    }
+
+    @Benchmark
+    @Warmup(iterations = 15, time = 100, timeUnit = TimeUnit.MILLISECONDS)
+    @Measurement(iterations = 5, time = 1)
+    public int cloudBenchmark_N100() {
+        return datasets.get(1).runSortingOnMe(sorting);
+    }
+
+    @Benchmark
+    @Warmup(iterations = 15, time = 1)
+    @Measurement(iterations = 5, time = 1)
+    public int cloudBenchmark_N1000() {
+        return datasets.get(2).runSortingOnMe(sorting);
+    }
+
+    @Benchmark
+    @Warmup(iterations = 15, time = 10)
+    @Measurement(iterations = 5, time = 10)
+    public int cloudBenchmark_N10000() {
+        return datasets.get(3).runSortingOnMe(sorting);
     }
 
     protected abstract NonDominatedSortingFactory getFactory();
