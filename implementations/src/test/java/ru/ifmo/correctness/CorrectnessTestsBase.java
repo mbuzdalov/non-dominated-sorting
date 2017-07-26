@@ -30,18 +30,22 @@ public abstract class CorrectnessTestsBase {
                 dupOutput[i] = expectedOutput[i / 2];
             }
 
-            int[] actualOutput = new int[expectedOutput.length];
-            Arrays.fill(actualOutput, 2347);
             try (NonDominatedSorting sorting = factory.getInstance(doubleInput.length, doubleInput[0].length)) {
+                int[] actualOutput = new int[expectedOutput.length];
+                sorting.sort(doubleInput, actualOutput);
+                Assert.assertArrayEquals(expectedOutput, actualOutput);
+                Arrays.fill(actualOutput, 2347);
                 sorting.sort(doubleInput, actualOutput);
                 Assert.assertArrayEquals(expectedOutput, actualOutput);
             }
 
-            int[] actualDupOutput = new int[dupOutput.length];
-            Arrays.fill(actualDupOutput, 4319);
             try (NonDominatedSorting sorting = factory.getInstance(dupInput.length, dupInput[0].length)) {
-                sorting.sort(dupInput, actualDupOutput);
-                Assert.assertArrayEquals(dupOutput, actualDupOutput);
+                int[] actualOutput = new int[dupOutput.length];
+                sorting.sort(dupInput, actualOutput);
+                Assert.assertArrayEquals(dupOutput, actualOutput);
+                Arrays.fill(actualOutput, 2347);
+                sorting.sort(dupInput, actualOutput);
+                Assert.assertArrayEquals(dupOutput, actualOutput);
             }
         }
     }

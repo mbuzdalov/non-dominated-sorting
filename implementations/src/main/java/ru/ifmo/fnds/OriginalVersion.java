@@ -64,6 +64,9 @@ public class OriginalVersion extends NonDominatedSorting {
         int n = ranks.length;
         int dim = points[0].length;
 
+        Arrays.fill(howManyDominateMe, 0);
+        Arrays.fill(howManyIDominate, 0);
+
         /*
          * Part 1: Counting who dominates who, making lists.
          */
