@@ -1,52 +1,52 @@
-package ru.ifmo.correctness;
-
-import org.junit.Assert;
-import org.junit.Test;
-import ru.ifmo.NonDominatedSorting;
-import ru.ifmo.NonDominatedSortingFactory;
+package ru.ifmo.tests;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
 import java.util.Random;
 
+import org.junit.Assert;
+import org.junit.Test;
+
+import ru.ifmo.NonDominatedSorting;
+import ru.ifmo.NonDominatedSortingFactory;
+
 public abstract class CorrectnessTestsBase {
-    protected abstract List<NonDominatedSortingFactory> getFactories();
+    protected abstract NonDominatedSortingFactory getFactory();
 
     private void groupCheck(int[][] input, int[] expectedOutput) {
-        for (NonDominatedSortingFactory factory : getFactories()) {
-            double[][] doubleInput = new double[input.length][];
-            for (int i = 0; i < input.length; ++i) {
-                doubleInput[i] = new double[input[i].length];
-                for (int j = 0; j < input[i].length; ++j) {
-                    doubleInput[i][j] = input[i][j];
-                }
-            }
+        NonDominatedSortingFactory factory = getFactory();
 
-            double[][] dupInput = new double[2 * input.length][];
-            int[] dupOutput = new int[2 * expectedOutput.length];
-            for (int i = 0; i < dupInput.length; ++i) {
-                dupInput[i] = doubleInput[i / 2].clone();
-                dupOutput[i] = expectedOutput[i / 2];
+        double[][] doubleInput = new double[input.length][];
+        for (int i = 0; i < input.length; ++i) {
+            doubleInput[i] = new double[input[i].length];
+            for (int j = 0; j < input[i].length; ++j) {
+                doubleInput[i][j] = input[i][j];
             }
+        }
 
-            try (NonDominatedSorting sorting = factory.getInstance(doubleInput.length, doubleInput[0].length)) {
-                int[] actualOutput = new int[expectedOutput.length];
-                sorting.sort(doubleInput, actualOutput);
-                Assert.assertArrayEquals(expectedOutput, actualOutput);
-                Arrays.fill(actualOutput, 2347);
-                sorting.sort(doubleInput, actualOutput);
-                Assert.assertArrayEquals(expectedOutput, actualOutput);
-            }
+        double[][] dupInput = new double[2 * input.length][];
+        int[] dupOutput = new int[2 * expectedOutput.length];
+        for (int i = 0; i < dupInput.length; ++i) {
+            dupInput[i] = doubleInput[i / 2].clone();
+            dupOutput[i] = expectedOutput[i / 2];
+        }
 
-            try (NonDominatedSorting sorting = factory.getInstance(dupInput.length, dupInput[0].length)) {
-                int[] actualOutput = new int[dupOutput.length];
-                sorting.sort(dupInput, actualOutput);
-                Assert.assertArrayEquals(dupOutput, actualOutput);
-                Arrays.fill(actualOutput, 2347);
-                sorting.sort(dupInput, actualOutput);
-                Assert.assertArrayEquals(dupOutput, actualOutput);
-            }
+        try (NonDominatedSorting sorting = factory.getInstance(doubleInput.length, doubleInput[0].length)) {
+            int[] actualOutput = new int[expectedOutput.length];
+            sorting.sort(doubleInput, actualOutput);
+            Assert.assertArrayEquals(expectedOutput, actualOutput);
+            Arrays.fill(actualOutput, 2347);
+            sorting.sort(doubleInput, actualOutput);
+            Assert.assertArrayEquals(expectedOutput, actualOutput);
+        }
+
+        try (NonDominatedSorting sorting = factory.getInstance(dupInput.length, dupInput[0].length)) {
+            int[] actualOutput = new int[dupOutput.length];
+            sorting.sort(dupInput, actualOutput);
+            Assert.assertArrayEquals(dupOutput, actualOutput);
+            Arrays.fill(actualOutput, 2347);
+            sorting.sort(dupInput, actualOutput);
+            Assert.assertArrayEquals(dupOutput, actualOutput);
         }
     }
 
@@ -120,11 +120,10 @@ public abstract class CorrectnessTestsBase {
         for (int i = 0; i < 100; ++i) {
             int maxPoints = 1 + random.nextInt(100);
             int maxDimension = 1 + random.nextInt(20);
-            for (NonDominatedSortingFactory f : getFactories()) {
-                NonDominatedSorting s = f.getInstance(maxPoints, maxDimension);
-                Assert.assertEquals(maxPoints, s.getMaximumPoints());
-                Assert.assertEquals(maxDimension, s.getMaximumDimension());
-            }
+            NonDominatedSortingFactory f = getFactory();
+            NonDominatedSorting s = f.getInstance(maxPoints, maxDimension);
+            Assert.assertEquals(maxPoints, s.getMaximumPoints());
+            Assert.assertEquals(maxDimension, s.getMaximumDimension());
         }
     }
 

@@ -12,7 +12,7 @@ public class FastNonDominatedSorting {
     private static final NonDominatedSortingFactory ORIGINAL_FACTORY = OriginalVersion::new;
     private static final NonDominatedSortingFactory LINEAR_MEMORY_FACTORY = LinearMemory::new;
 
-    public static NonDominatedSortingFactory getOriginalImplementation() {
+    public static NonDominatedSortingFactory getOriginalVersion() {
         return ORIGINAL_FACTORY;
     }
 

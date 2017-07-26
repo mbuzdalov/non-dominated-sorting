@@ -40,28 +40,28 @@ public abstract class AbstractBenchmark {
     }
 
     @Benchmark
-    @Warmup(iterations = 15, time = 100, timeUnit = TimeUnit.MILLISECONDS)
+    @Warmup(iterations = 5, time = 100, timeUnit = TimeUnit.MILLISECONDS)
     @Measurement(iterations = 5, time = 1)
     public int cloudBenchmark_N10() {
         return datasets.get(0).runSortingOnMe(sorting);
     }
 
     @Benchmark
-    @Warmup(iterations = 15, time = 100, timeUnit = TimeUnit.MILLISECONDS)
+    @Warmup(iterations = 5, time = 100, timeUnit = TimeUnit.MILLISECONDS)
     @Measurement(iterations = 5, time = 1)
     public int cloudBenchmark_N100() {
         return datasets.get(1).runSortingOnMe(sorting);
     }
 
     @Benchmark
-    @Warmup(iterations = 15, time = 1)
+    @Warmup(iterations = 5, time = 1)
     @Measurement(iterations = 5, time = 1)
     public int cloudBenchmark_N1000() {
         return datasets.get(2).runSortingOnMe(sorting);
     }
 
     @Benchmark
-    @Warmup(iterations = 15, time = 10)
+    @Warmup(iterations = 5, time = 10)
     @Measurement(iterations = 5, time = 10)
     public int cloudBenchmark_N10000() {
         return datasets.get(3).runSortingOnMe(sorting);
