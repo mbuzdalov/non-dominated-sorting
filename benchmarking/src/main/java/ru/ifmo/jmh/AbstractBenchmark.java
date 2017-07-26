@@ -17,10 +17,10 @@ public abstract class AbstractBenchmark {
     @SuppressWarnings({"unused"})
     private int instance;
 
-    @Param({"2", "3", "4", "5", "6", "7", "8", "9", "10"})
+    @Param({"2", "3", "4", "5", "6", "7", "8", "9", "10", "15", "20"})
     private int dimension;
 
-    @Param({"10", "100", "1000", "10000", "100000"})
+    @Param({"10", "100", "1000", "10000"})
     private int numPoints;
 
     private NonDominatedSorting sorting;
