@@ -122,7 +122,8 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
     private boolean strictlyDominatesAssumingNotSame(int goodIndex, int weakIndex, int maxObj) {
         double[] goodPoint = points[goodIndex];
         double[] weakPoint = points[weakIndex];
-        for (int i = maxObj; i >= 0; --i) {
+        // Comparison in 0 makes no sense, as due to goodIndex < weakIndex the points are <= in this coordinate.
+        for (int i = maxObj; i > 0; --i) {
             if (goodPoint[i] > weakPoint[i]) {
                 return false;
             }
@@ -272,7 +273,10 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         int weakN = weakUntil - weakFrom;
         if (goodN == 1) {
             int gi = indices[goodFrom];
-            for (int i = weakFrom; i < weakUntil; ++i) {
+            // Binary search to discard points which are definitely not dominated.
+            int bs = Arrays.binarySearch(indices, weakFrom, weakUntil, gi);
+            int weakStart = -bs - 1;
+            for (int i = weakStart; i < weakUntil; ++i) {
                 int wi = indices[i];
                 if (strictlyDominatesAssumingNotSame(gi, wi, obj)) {
                     tryUpdateRank(gi, wi);
@@ -280,7 +284,10 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
             }
         } else if (weakN == 1) {
             int wi = indices[weakFrom];
-            for (int i = goodFrom; i < goodUntil; ++i) {
+            // Binary search to discard points which definitely do not dominate.
+            int bs = Arrays.binarySearch(indices, goodFrom, goodUntil, wi);
+            int goodFinish = -bs - 1;
+            for (int i = goodFrom; i < goodFinish; ++i) {
                 int gi = indices[i];
                 if (strictlyDominatesAssumingNotSame(gi, wi, obj)) {
                     tryUpdateRank(gi, wi);
