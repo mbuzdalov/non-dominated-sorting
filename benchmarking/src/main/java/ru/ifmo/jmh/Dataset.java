@@ -25,6 +25,19 @@ public class Dataset {
         return sum;
     }
 
+    public static Dataset generateUniformHyperplane(int numPoints, int dimension) {
+        Random random = ThreadLocalRandom.current();
+        double[][] points = new double[numPoints][dimension];
+        for (double[] point : points) {
+            for (int i = 1; i < dimension; ++i) {
+                point[i] = random.nextDouble();
+                point[0] -= point[i];
+            }
+            point[0] += dimension * 0.5;
+        }
+        return new Dataset(points, new int[numPoints]);
+    }
+
     public static Dataset generateUniformHypercube(int numPoints, int dimension) {
         Random random = ThreadLocalRandom.current();
         double[][] points = new double[numPoints][dimension];
