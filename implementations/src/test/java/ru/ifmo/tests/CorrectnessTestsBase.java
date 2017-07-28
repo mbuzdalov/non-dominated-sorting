@@ -233,7 +233,41 @@ public abstract class CorrectnessTestsBase {
         int[] ranks = hypercubeRanks(hc);
         groupCheck(hc, ranks);
     }
-    
+
+    private void hyperplaneImpl(int dimension) {
+        Random r = new Random(346357);
+        int[][] data = new int[100][dimension];
+        for (int i = 0; i < data.length; ++i) {
+            data[i][0] = 1000000000;
+            for (int j = 1; j < data[i].length; ++j) {
+                data[i][j] = r.nextInt(10000000);
+                data[i][0] -= data[i][j];
+            }
+        }
+        int[] ranks = new int[100];
+        groupCheck(data, ranks);
+    }
+
+    @Test
+    public void hyperplane2D() {
+        hyperplaneImpl(2);
+    }
+
+    @Test
+    public void hyperplane3D() {
+        hyperplaneImpl(3);
+    }
+
+    @Test
+    public void hyperplane4D() {
+        hyperplaneImpl(4);
+    }
+
+    @Test
+    public void hyperplane5D() {
+        hyperplaneImpl(5);
+    }
+
     @Test
     public void generatedTest1() {
         groupCheck(new int[][] {
