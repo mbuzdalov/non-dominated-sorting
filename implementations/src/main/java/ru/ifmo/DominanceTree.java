@@ -1,13 +1,13 @@
 package ru.ifmo;
 
-import ru.ifmo.domtree.Horstemeyer2008;
+import ru.ifmo.domtree.NoDelayedInsertion;
 
 public class DominanceTree {
     private DominanceTree() {}
 
-    private static final NonDominatedSortingFactory HORSTEMEYER_2008 = Horstemeyer2008::new;
+    private static final NonDominatedSortingFactory NO_DELAYED_INSERTION = NoDelayedInsertion::new;
 
-    public static NonDominatedSortingFactory getHorstemeyer2008() {
-        return HORSTEMEYER_2008;
+    public static NonDominatedSortingFactory getNoDelayedInsertion() {
+        return NO_DELAYED_INSERTION;
     }
 }
