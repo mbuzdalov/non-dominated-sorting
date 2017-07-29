@@ -13,8 +13,9 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
     private DoubleArraySorter sorter;
     private RankQueryStructure rankQuery;
     private int[] internalIndices;
-    private int[] lastFrontIndices;
+    private double[] lastFrontOrdinates;
     private int[] splitScratchL, splitScratchM, splitScratchR;
+    private double[][] transposedPoints;
 
     // Various answers
     private int splitL;
@@ -30,10 +31,11 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         indices = new int[maximumPoints];
         ranks = new int[maximumPoints];
         points = new double[maximumPoints][];
+        transposedPoints = new double[maximumDimension][maximumPoints];
         rankQuery = createStructure(maximumPoints);
 
         internalIndices = new int[maximumPoints];
-        lastFrontIndices = new int[maximumPoints];
+        lastFrontOrdinates = new double[maximumPoints];
         splitScratchL = new int[maximumPoints];
         splitScratchM = new int[maximumPoints];
         splitScratchR = new int[maximumPoints];
@@ -46,9 +48,10 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         ranks = null;
         points = null;
         rankQuery = null;
+        transposedPoints = null;
 
         internalIndices = null;
-        lastFrontIndices = null;
+        lastFrontOrdinates = null;
         splitScratchL = null;
         splitScratchM = null;
         splitScratchR = null;
@@ -108,10 +111,17 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
                     ranks[currII] = newN - 1;
                 }
 
-                // 3.2: Calling the actual sorting
+                // 3.2: Transposing points. This should fit in cache for reasonable dimensions.
+                for (int i = 0; i < newN; ++i) {
+                    for (int j = 0; j < dim; ++j) {
+                        transposedPoints[j][i] = this.points[i][j];
+                    }
+                }
+
+                // 3.3: Calling the actual sorting
                 helperA(0, newN, dim - 1);
 
-                // 3.3: Applying the results back. After that, the argument "ranks" array stops being abused.
+                // 3.4: Applying the results back. After that, the argument "ranks" array stops being abused.
                 for (int i = 0; i < n; ++i) {
                     ranks[i] = this.ranks[ranks[i]];
                 }
@@ -139,8 +149,9 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
 
     private void splitInTwo(int from, int until, double median, int obj, boolean equalToLeft) {
         int left = 0, right = 0;
+        double[] local = transposedPoints[obj];
         for (int i = from; i < until; ++i) {
-            double v = points[indices[i]][obj];
+            double v = local[indices[i]];
             if (v < median || (equalToLeft && v == median)) {
                 splitScratchL[left++] = indices[i];
             } else {
@@ -154,8 +165,9 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
 
     private void splitInThree(int from, int until, double median, int obj) {
         int l = 0, m = 0, r = 0;
+        double[] local = transposedPoints[obj];
         for (int i = from; i < until; ++i) {
-            double v = points[indices[i]][obj];
+            double v = local[indices[i]];
             if (v < median) {
                 splitScratchL[l++] = indices[i];
             } else if (v == median) {
@@ -190,13 +202,14 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
     protected abstract RankQueryStructure createStructure(int maximumPoints);
 
     private void sweepA(int from, int until) {
+        double[] local = transposedPoints[1];
         for (int i = from; i < until; ++i) {
-            rankQuery.addPossibleKey(points[indices[i]][1]);
+            rankQuery.addPossibleKey(local[indices[i]]);
         }
         rankQuery.init();
         for (int i = from; i < until; ++i) {
             int curr = indices[i];
-            double currY = points[curr][1];
+            double currY = local[curr];
             int result = Math.max(ranks[curr], rankQuery.getMaximumWithKeyAtMost(currY) + 1);
             ranks[curr] = result;
             rankQuery.put(currY, result);
@@ -205,8 +218,9 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
     }
 
     private void sweepB(int goodFrom, int goodUntil, int weakFrom, int weakUntil) {
+        double[] local = transposedPoints[1];
         for (int i = goodFrom; i < goodUntil; ++i) {
-            rankQuery.addPossibleKey(points[indices[i]][1]);
+            rankQuery.addPossibleKey(local[indices[i]]);
         }
         rankQuery.init();
         int goodI = goodFrom;
@@ -214,9 +228,9 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
             int weakCurr = indices[weakI];
             while (goodI < goodUntil && indices[goodI] < weakCurr) {
                 int goodCurr = indices[goodI++];
-                rankQuery.put(points[goodCurr][1], ranks[goodCurr]);
+                rankQuery.put(local[goodCurr], ranks[goodCurr]);
             }
-            ranks[weakCurr] = Math.max(ranks[weakCurr], rankQuery.getMaximumWithKeyAtMost(points[weakCurr][1]) + 1);
+            ranks[weakCurr] = Math.max(ranks[weakCurr], rankQuery.getMaximumWithKeyAtMost(local[weakCurr]) + 1);
         }
         rankQuery.clear();
     }
@@ -235,7 +249,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
             sweepA(from, until);
         } else {
             sorter.resetMedian();
-            sorter.consumeDataForMedian(points, indices, from, until, obj);
+            sorter.consumeDataForMedian(transposedPoints[obj], indices, from, until);
             if (sorter.getLastMedianConsumptionMin() == sorter.getLastMedianConsumptionMax()) {
                 helperA(from, until, obj - 1);
             } else {
@@ -297,9 +311,9 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
             sweepB(goodFrom, goodUntil, weakFrom, weakUntil);
         } else {
             sorter.resetMedian();
-            sorter.consumeDataForMedian(points, indices, goodFrom, goodUntil, obj);
+            sorter.consumeDataForMedian(transposedPoints[obj], indices, goodFrom, goodUntil);
             double goodMaxObj = sorter.getLastMedianConsumptionMax();
-            sorter.consumeDataForMedian(points, indices, weakFrom, weakUntil, obj);
+            sorter.consumeDataForMedian(transposedPoints[obj], indices, weakFrom, weakUntil);
             double weakMinObj = sorter.getLastMedianConsumptionMin();
             if (goodMaxObj <= weakMinObj) {
                 helperB(goodFrom, goodUntil, weakFrom, weakUntil, obj - 1);
@@ -353,7 +367,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         double minY = lastY;
 
         // Point 0 always has rank 0.
-        lastFrontIndices[0] = lastII;
+        lastFrontOrdinates[0] = lastY;
 
         for (int i = 1; i < n; ++i) {
             int ii = internalIndices[i];
@@ -385,7 +399,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
                 // Running the binary search.
                 while (right - left > 1) {
                     int mid = (left + right) >>> 1;
-                    double midY = points[lastFrontIndices[mid]][1];
+                    double midY = lastFrontOrdinates[mid];
                     if (cy < midY) {
                         right = mid;
                     } else {
@@ -394,7 +408,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
                 }
                 // "right" is now our rank.
                 ranks[ii] = right;
-                lastFrontIndices[right] = ii;
+                lastFrontOrdinates[right] = cy;
                 if (right == maxRank) {
                     ++maxRank;
                 }
