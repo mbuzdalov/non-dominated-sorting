@@ -188,7 +188,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
     }
 
     private void mergeTwo(int from, int mid, int until) {
-        int target = from;
+        int target = 0;
         int l = from, r = mid;
         while (l < mid && r < until) {
             if (indices[l] <= indices[r]) {
@@ -200,7 +200,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         while (l < mid) {
             splitScratchM[target++] = indices[l++];
         }
-        System.arraycopy(splitScratchM, from, indices, from, target - from);
+        System.arraycopy(splitScratchM, 0, indices, from, target);
     }
 
     protected abstract RankQueryStructure createStructure(int maximumPoints);
@@ -286,31 +286,39 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         }
     }
 
+    private void helperBGood1(int good, int weakFrom, int weakUntil, int obj) {
+        int gi = indices[good];
+        // Binary search to discard points which are definitely not dominated.
+        int bs = Arrays.binarySearch(indices, weakFrom, weakUntil, gi);
+        int weakStart = -bs - 1;
+        for (int i = weakStart; i < weakUntil; ++i) {
+            int wi = indices[i];
+            if (strictlyDominatesAssumingNotSame(gi, wi, obj)) {
+                tryUpdateRank(gi, wi);
+            }
+        }
+    }
+
+    private void helperBWeak1(int goodFrom, int goodUntil, int weak, int obj) {
+        int wi = indices[weak];
+        // Binary search to discard points which definitely do not dominate.
+        int bs = Arrays.binarySearch(indices, goodFrom, goodUntil, wi);
+        int goodFinish = -bs - 1;
+        for (int i = goodFrom; i < goodFinish; ++i) {
+            int gi = indices[i];
+            if (strictlyDominatesAssumingNotSame(gi, wi, obj)) {
+                tryUpdateRank(gi, wi);
+            }
+        }
+    }
+
     private void helperB(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj) {
         int goodN = goodUntil - goodFrom;
         int weakN = weakUntil - weakFrom;
         if (goodN == 1) {
-            int gi = indices[goodFrom];
-            // Binary search to discard points which are definitely not dominated.
-            int bs = Arrays.binarySearch(indices, weakFrom, weakUntil, gi);
-            int weakStart = -bs - 1;
-            for (int i = weakStart; i < weakUntil; ++i) {
-                int wi = indices[i];
-                if (strictlyDominatesAssumingNotSame(gi, wi, obj)) {
-                    tryUpdateRank(gi, wi);
-                }
-            }
+            helperBGood1(goodFrom, weakFrom, weakUntil, obj);
         } else if (weakN == 1) {
-            int wi = indices[weakFrom];
-            // Binary search to discard points which definitely do not dominate.
-            int bs = Arrays.binarySearch(indices, goodFrom, goodUntil, wi);
-            int goodFinish = -bs - 1;
-            for (int i = goodFrom; i < goodFinish; ++i) {
-                int gi = indices[i];
-                if (strictlyDominatesAssumingNotSame(gi, wi, obj)) {
-                    tryUpdateRank(gi, wi);
-                }
-            }
+            helperBWeak1(goodFrom, goodUntil, weakFrom, obj);
         } else if (obj == 1) {
             sweepB(goodFrom, goodUntil, weakFrom, weakUntil);
         } else {
@@ -361,7 +369,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
     }
 
     private void twoDimensionalCase(double[][] points, int[] ranks) {
-        // Also uses internalIndices and lastFrontIndices
+        // Also uses internalIndices and lastFrontOrdinates
         int maxRank = 1;
         int n = ranks.length;
 
