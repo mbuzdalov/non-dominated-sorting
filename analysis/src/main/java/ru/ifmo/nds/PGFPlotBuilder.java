@@ -40,12 +40,18 @@ public class PGFPlotBuilder {
             out.println("\\begin{tikzpicture}");
             out.println("\\begin{axis}[xtick=data, xmode=log, ymode=log,");
             out.println("              width=\\textwidth, height=0.45\\textheight, legend pos=north west,");
+            out.println("              ymin=1e-7, ymax=4,");
             out.println("              xlabel={" + myDescriptor.toString() + "}]");
+
+            StringWriter tableBuilder = new StringWriter();
+            PrintWriter tableWriter = new PrintWriter(tableBuilder);
+
             for (Map.Entry<String, List<JMHBenchmarkResult>> plot : myResults.entrySet()) {
                 out.println("\\addplot plot[error bars/.cd, y dir=both, y explicit] table[y error plus=y-max, y error minus=y-min] {");
                 out.println("    x y y-min y-max");
                 for (JMHBenchmarkResult plotPoint : plot.getValue()) {
-                    out.print("    " + plotPoint.getParameters().get("N"));
+                    int N = plotPoint.getParameters().get("N");
+                    out.print("    " + N);
                     List<Double> points = plotPoint.getResults();
                     // Finding LAST FIVE stats: what is given by JMH as "measurements".
                     List<Double> lastFivePoints = new ArrayList<>(points.subList(points.size() - 5, points.size()));
@@ -73,14 +79,16 @@ public class PGFPlotBuilder {
                     double bestFiveAvg = bestFiveSum / bestFivePoints.size();
 
                     if (lastFiveAvg > 1.2 * bestFiveAvg) {
-                        System.out.println("[Warning] " + myDescriptor.toString()
-                                + " " + plot.getKey() + " " + plotPoint.getParameters().get("N"));
+                        System.out.println("[Warning] " + myDescriptor.toString() + " " + plot.getKey() + " " + N);
                         System.out.println("[Warning]     'measurements' reported by JMH seem to be much worse:");
                         System.out.println("[Warning]     Last five: " + lastFivePoints);
                         System.out.println("[Warning]     Best five: " + bestFivePoints);
                     }
 
-                    out.println(" " + bestFiveAvg + " " + (bestFiveAvg - bestFiveMin) + " " + (bestFiveMax - bestFiveAvg));
+                    double bestErrMin = bestFiveAvg - bestFiveMin;
+                    double bestErrMax = bestFiveMax - bestFiveAvg;
+                    tableWriter.println("    {" + plot.getKey() + "} " + N + " " + bestFiveAvg + " " + bestErrMin + " " + bestErrMax);
+                    out.println(" " + bestFiveAvg + " " + bestErrMin + " " + bestErrMax);
                 }
                 out.println("};");
                 out.println("\\addlegendentry{" + plot.getKey() + "};");
@@ -88,6 +96,11 @@ public class PGFPlotBuilder {
             out.println("\\end{axis}");
             out.println("\\end{tikzpicture}\\vspace{2ex}");
             out.println();
+            out.println("\\pgfplotstabletypeset[sci zerofill, columns/Algo/.style={string type}] {");
+            out.println("    Algo N Tavg Err-min Err-max");
+            out.println(tableBuilder.getBuffer());
+            out.println("}");
+            out.println("\\newpage");
         }
 
         static class PlotDescriptor implements Comparable<PlotDescriptor> {
@@ -212,6 +225,7 @@ public class PGFPlotBuilder {
             out.println("\\usepackage[utf8]{inputenc}");
             out.println("\\usepackage{pgfplots}");
             out.println("\\pgfplotsset{compat=newest}");
+            out.println("\\usepackage{pgfplotstable}");
             out.println("\\begin{document}");
             for (SinglePlot plot : plots.values()) {
                 plot.print(out);
