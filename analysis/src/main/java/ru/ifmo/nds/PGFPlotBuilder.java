@@ -7,6 +7,7 @@ import java.util.*;
 
 public class PGFPlotBuilder {
     private static final String INPUT_OPTION = "--input";
+    private static final String INPUT_IGNORE_OPTION = "--input-ignore";
     private static final String OUTPUT_OPTION = "--output";
 
     private static void printUsageAndExit(String errorMessage) {
@@ -45,15 +46,41 @@ public class PGFPlotBuilder {
                 out.println("    x y y-min y-max");
                 for (JMHBenchmarkResult plotPoint : plot.getValue()) {
                     out.print("    " + plotPoint.getParameters().get("N"));
-                    double min = Double.POSITIVE_INFINITY, sum = 0, max = Double.NEGATIVE_INFINITY;
                     List<Double> points = plotPoint.getResults();
-                    for (double r : points) {
-                        min = Math.min(min, r);
-                        max = Math.max(max, r);
-                        sum += r;
+                    // Finding LAST FIVE stats: what is given by JMH as "measurements".
+                    List<Double> lastFivePoints = new ArrayList<>(points.subList(points.size() - 5, points.size()));
+                    double lastFiveMin = Double.POSITIVE_INFINITY,
+                            lastFiveSum = 0,
+                            lastFiveMax = Double.NEGATIVE_INFINITY;
+                    for (double r : lastFivePoints) {
+                        lastFiveMin = Math.min(lastFiveMin, r);
+                        lastFiveMax = Math.max(lastFiveMax, r);
+                        lastFiveSum += r;
                     }
-                    double avg = sum / points.size();
-                    out.println(" " + avg + " " + (avg - min) + " " + (max - avg));
+                    double lastFiveAvg = lastFiveSum / lastFivePoints.size();
+
+                    // Finding BEST FIVE stats.
+                    Collections.sort(points);
+                    List<Double> bestFivePoints = new ArrayList<>(points.subList(0, 5));
+                    double bestFiveMin = Double.POSITIVE_INFINITY,
+                            bestFiveSum = 0,
+                            bestFiveMax = Double.NEGATIVE_INFINITY;
+                    for (double r : bestFivePoints) {
+                        bestFiveMin = Math.min(bestFiveMin, r);
+                        bestFiveMax = Math.max(bestFiveMax, r);
+                        bestFiveSum += r;
+                    }
+                    double bestFiveAvg = bestFiveSum / bestFivePoints.size();
+
+                    if (lastFiveAvg > 1.2 * bestFiveAvg) {
+                        System.out.println("[Warning] " + myDescriptor.toString()
+                                + " " + plot.getKey() + " " + plotPoint.getParameters().get("N"));
+                        System.out.println("[Warning]     'measurements' reported by JMH seem to be much worse:");
+                        System.out.println("[Warning]     Last five: " + lastFivePoints);
+                        System.out.println("[Warning]     Best five: " + bestFivePoints);
+                    }
+
+                    out.println(" " + bestFiveAvg + " " + (bestFiveAvg - bestFiveMin) + " " + (bestFiveMax - bestFiveAvg));
                 }
                 out.println("};");
                 out.println("\\addlegendentry{" + plot.getKey() + "};");
@@ -140,32 +167,40 @@ public class PGFPlotBuilder {
         String outputFile = null;
 
         for (int i = 0; i < args.length; ++i) {
-            if (args[i].equals(INPUT_OPTION)) {
-                if (i + 2 >= args.length) {
-                    printUsageAndExit("Last " + INPUT_OPTION + " followed by too few arguments");
-                }
-                try {
-                    String algorithmName = args[i + 2];
-                    for (JMHBenchmarkResult result : JMHLogParser.parse(args[i + 1])) {
-                        SinglePlot.PlotDescriptor desc = new SinglePlot.PlotDescriptor(result);
-                        plots.computeIfAbsent(desc, SinglePlot::new).addResult(algorithmName, result);
+            switch (args[i]) {
+                case INPUT_OPTION:
+                    if (i + 2 >= args.length) {
+                        printUsageAndExit("Last " + INPUT_OPTION + " followed by too few arguments");
                     }
-                    i += 2;
-                } catch (Exception ex) {
-                    StringWriter out = new StringWriter();
-                    PrintWriter pw = new PrintWriter(out);
-                    ex.printStackTrace(pw);
-                    pw.println();
-                    pw.println("Error: file '" + args[i + 1] + "' cannot be parsed");
-                    pw.close();
-                    printUsageAndExit(out.toString());
-                }
-            } else if (args[i].equals(OUTPUT_OPTION)) {
-                if (i + 1 >= args.length) {
-                    printUsageAndExit("Last " + OUTPUT_OPTION + " followed by no arguments");
-                }
-                outputFile = args[i + 1];
-                i += 1;
+                    try {
+                        String algorithmName = args[i + 2];
+                        for (JMHBenchmarkResult result : JMHLogParser.parse(args[i + 1])) {
+                            SinglePlot.PlotDescriptor desc = new SinglePlot.PlotDescriptor(result);
+                            plots.computeIfAbsent(desc, SinglePlot::new).addResult(algorithmName, result);
+                        }
+                        i += 2;
+                    } catch (Exception ex) {
+                        StringWriter out = new StringWriter();
+                        PrintWriter pw = new PrintWriter(out);
+                        ex.printStackTrace(pw);
+                        pw.println();
+                        pw.println("Error: file '" + args[i + 1] + "' cannot be parsed");
+                        pw.close();
+                        printUsageAndExit(out.toString());
+                    }
+                    break;
+                case INPUT_IGNORE_OPTION:
+                    if (i + 2 >= args.length) {
+                        printUsageAndExit("Last " + INPUT_IGNORE_OPTION + " followed by too few arguments");
+                    }
+                    break;
+                case OUTPUT_OPTION:
+                    if (i + 1 >= args.length) {
+                        printUsageAndExit("Last " + OUTPUT_OPTION + " followed by no arguments");
+                    }
+                    outputFile = args[i + 1];
+                    i += 1;
+                    break;
             }
         }
 

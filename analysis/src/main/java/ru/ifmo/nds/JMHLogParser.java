@@ -12,6 +12,7 @@ public class JMHLogParser {
     private static final String FORK_START = "# Fork: ";
     private static final String RUN_COMPLETE_START = "# Run complete.";
     private static final String ITERATION = "Iteration";
+    private static final String WARMUP_ITERATION = "# Warmup Iteration";
     private static final String RESULT_START = "Result";
 
     private List<JMHBenchmarkResult> consumedBenchmarks = new ArrayList<>();
@@ -88,9 +89,17 @@ public class JMHLogParser {
             }
             case 3: {
                 if (line.startsWith(ITERATION)) {
-                    StringTokenizer st = new StringTokenizer(line);
-                    st.nextToken(); // Iteration
-                    st.nextToken(); // 1:
+                    StringTokenizer st = new StringTokenizer(line.substring(ITERATION.length()));
+                    st.nextToken(); // iteration number
+                    String value = st.nextToken();
+                    String unit = st.nextToken();
+                    if (!unit.equals("us/op")) {
+                        throw new UnsupportedOperationException("Cannot work with units other than us/op: '" + unit);
+                    }
+                    lastBenchmarkData.add(Double.parseDouble(value) * 1e-6);
+                } else if (line.startsWith(WARMUP_ITERATION)) {
+                    StringTokenizer st = new StringTokenizer(line.substring(WARMUP_ITERATION.length()));
+                    st.nextToken(); // iteration number
                     String value = st.nextToken();
                     String unit = st.nextToken();
                     if (!unit.equals("us/op")) {
@@ -118,14 +127,14 @@ public class JMHLogParser {
         }
     }
 
-    public JMHLogParser(Stream<String> lines) {
+    private JMHLogParser(Stream<String> lines) {
         lines.forEachOrdered(this::consumeLine);
         if (state != 5) {
             throw new IllegalStateException("Unexpected end of input data");
         }
     }
 
-    public List<JMHBenchmarkResult> getResults() {
+    private List<JMHBenchmarkResult> getResults() {
         return new ArrayList<>(consumedBenchmarks);
     }
 
