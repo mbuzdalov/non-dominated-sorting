@@ -31,11 +31,15 @@ public class RedBlackRankQueryStructure extends RankQueryStructure {
     public void put(double key, int value) {
         Node place = maxNodeBeforeExact(root, key);
         if (place == null || place.value < value) {
+            Node insertionHint = null;
             if (place == null) {
                 if (root != null) {
                     place = minNodeNonNull(root);
                 }
-            } else if (place.key != key) {
+            } else {
+                if (place.key == key) {
+                    insertionHint = place;
+                }
                 place = successor(place);
             }
             while (place != null && place.value <= value) {
@@ -43,7 +47,11 @@ public class RedBlackRankQueryStructure extends RankQueryStructure {
                 delete(place);
                 place = next;
             }
-            insert(key, value);
+            if (insertionHint == null) {
+                insert(key, value);
+            } else {
+                insertionHint.value = Math.max(insertionHint.value, value);
+            }
         }
     }
 
