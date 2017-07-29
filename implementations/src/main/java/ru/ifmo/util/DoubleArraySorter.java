@@ -155,9 +155,9 @@ public class DoubleArraySorter {
                     --r;
                 }
             }
-            if (from <= index && index <= r) {
+            if (index <= r) {
                 until = r + 1;
-            } else if (l <= index && index < until) {
+            } else if (l <= index) {
                 from = l;
             } else {
                 break;
