@@ -11,13 +11,8 @@ public class DoubleArraySorter {
     private int coordinate = -1;
     private int maxCoordinate = -1;
 
-    private double[] medianSwap;
-    private int medianCount = 0, countLarger = -1, countSmaller = -1;
-    private double lastMedianRunMin, lastMedianRunMax;
-
     public DoubleArraySorter(int maximumPoints) {
         this.scratch = new double[maximumPoints];
-        this.medianSwap = new double[maximumPoints];
     }
 
     private void sortImplInside(int from, int until) {
@@ -99,77 +94,5 @@ public class DoubleArraySorter {
         this.points = null;
         this.indices = null;
         this.maxCoordinate = -1;
-    }
-
-    public void consumeDataForMedian(double[] points, int[] indices, int from, int until) {
-        lastMedianRunMax = Double.NEGATIVE_INFINITY;
-        lastMedianRunMin = Double.POSITIVE_INFINITY;
-        for (int i = from; i < until; ++i) {
-            double v = points[indices[i]];
-            lastMedianRunMin = Math.min(lastMedianRunMin, v);
-            lastMedianRunMax = Math.max(lastMedianRunMax, v);
-            medianSwap[medianCount++] = v;
-        }
-    }
-
-    public double getLastMedianConsumptionMax() {
-        return lastMedianRunMax;
-    }
-
-    public double getLastMedianConsumptionMin() {
-        return lastMedianRunMin;
-    }
-
-    public void resetMedian() {
-        medianCount = 0;
-    }
-
-    public double findMedian() {
-        medianImpl(medianCount, medianCount / 2);
-        double rv = medianSwap[medianCount / 2];
-        countLarger = countSmaller = 0;
-        for (int i = 0; i < medianCount; ++i) {
-            if (medianSwap[i] < rv) {
-                ++countSmaller;
-            } else if (medianSwap[i] > rv) {
-                ++countLarger;
-            }
-        }
-        return rv;
-    }
-
-    private void medianImpl(int until, int index) {
-        int from = 0;
-        int count = 0;
-        while (from + 1 < until) {
-            double pivot = medianSwap[++count > 20 ? random.nextInt(from, until) : (from + until) >>> 1];
-            int l = from, r = until - 1;
-            while (l <= r) {
-                while (medianSwap[l] < pivot) ++l;
-                while (medianSwap[r] > pivot) --r;
-                if (l <= r) {
-                    double tmp = medianSwap[l];
-                    medianSwap[l] = medianSwap[r];
-                    medianSwap[r] = tmp;
-                    ++l;
-                    --r;
-                }
-            }
-            if (index <= r) {
-                until = r + 1;
-            } else if (l <= index) {
-                from = l;
-            } else {
-                break;
-            }
-        }
-    }
-
-    public int howManyLargerThanMedian() {
-        return countLarger;
-    }
-
-    public int howManySmallerThanMedian() {
-        return countSmaller;
     }
 }

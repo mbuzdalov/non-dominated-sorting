@@ -2,6 +2,7 @@ package ru.ifmo.jfb;
 
 import ru.ifmo.NonDominatedSorting;
 import ru.ifmo.util.DoubleArraySorter;
+import ru.ifmo.util.MedianFinder;
 import ru.ifmo.util.RankQueryStructure;
 
 import java.util.Arrays;
@@ -11,6 +12,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
     private int[] indices;
     private int[] ranks;
     private DoubleArraySorter sorter;
+    private MedianFinder medianFinder;
     private RankQueryStructure rankQuery;
     private int[] internalIndices;
     private double[] lastFrontOrdinates;
@@ -28,6 +30,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         super(maximumPoints, maximumDimension);
 
         sorter = new DoubleArraySorter(maximumPoints);
+        medianFinder = new MedianFinder(maximumPoints);
         indices = new int[maximumPoints];
         ranks = new int[maximumPoints];
         points = new double[maximumPoints][];
@@ -44,6 +47,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
     @Override
     protected void closeImpl() throws Exception {
         sorter = null;
+        medianFinder = null;
         indices = null;
         ranks = null;
         points = null;
@@ -248,14 +252,14 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         } else if (obj == 1) {
             sweepA(from, until);
         } else {
-            sorter.resetMedian();
-            sorter.consumeDataForMedian(transposedPoints[obj], indices, from, until);
-            if (sorter.getLastMedianConsumptionMin() == sorter.getLastMedianConsumptionMax()) {
+            medianFinder.resetMedian();
+            medianFinder.consumeDataForMedian(transposedPoints[obj], indices, from, until);
+            if (medianFinder.getLastMedianConsumptionMin() == medianFinder.getLastMedianConsumptionMax()) {
                 helperA(from, until, obj - 1);
             } else {
-                double median = sorter.findMedian();
-                int smallerThanMedian = sorter.howManySmallerThanMedian();
-                int largerThanMedian = sorter.howManyLargerThanMedian();
+                double median = medianFinder.findMedian();
+                int smallerThanMedian = medianFinder.howManySmallerThanMedian();
+                int largerThanMedian = medianFinder.howManyLargerThanMedian();
                 int equalToMedian = n - smallerThanMedian - largerThanMedian;
                 if (equalToMedian < n / 2) {
                     // Few enough median-valued points, use two-way splitting.
@@ -310,17 +314,17 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         } else if (obj == 1) {
             sweepB(goodFrom, goodUntil, weakFrom, weakUntil);
         } else {
-            sorter.resetMedian();
-            sorter.consumeDataForMedian(transposedPoints[obj], indices, goodFrom, goodUntil);
-            double goodMaxObj = sorter.getLastMedianConsumptionMax();
-            sorter.consumeDataForMedian(transposedPoints[obj], indices, weakFrom, weakUntil);
-            double weakMinObj = sorter.getLastMedianConsumptionMin();
+            medianFinder.resetMedian();
+            medianFinder.consumeDataForMedian(transposedPoints[obj], indices, goodFrom, goodUntil);
+            double goodMaxObj = medianFinder.getLastMedianConsumptionMax();
+            medianFinder.consumeDataForMedian(transposedPoints[obj], indices, weakFrom, weakUntil);
+            double weakMinObj = medianFinder.getLastMedianConsumptionMin();
             if (goodMaxObj <= weakMinObj) {
                 helperB(goodFrom, goodUntil, weakFrom, weakUntil, obj - 1);
             } else {
-                double median = sorter.findMedian();
-                int totalSmallerThanMedian = sorter.howManySmallerThanMedian();
-                int totalLargerThanMedian = sorter.howManyLargerThanMedian();
+                double median = medianFinder.findMedian();
+                int totalSmallerThanMedian = medianFinder.howManySmallerThanMedian();
+                int totalLargerThanMedian = medianFinder.howManyLargerThanMedian();
                 int totalEqualToMedian = (goodN + weakN) - totalLargerThanMedian - totalSmallerThanMedian;
                 if (totalEqualToMedian < (goodN + weakN) / 2) {
                     // Few enough median-valued points, use two-way splitting.
