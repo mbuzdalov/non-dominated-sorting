@@ -1,14 +1,16 @@
 package ru.ifmo.nds;
 
-import java.io.FileNotFoundException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 public class PGFPlotBuilder {
     private static final String INPUT_OPTION = "--input";
     private static final String INPUT_IGNORE_OPTION = "--input-ignore";
     private static final String OUTPUT_OPTION = "--output";
+    private static final String INPUT_FILE_LIST_OPTION = "--input-file-list";
 
     private static void printUsageAndExit(String errorMessage) {
         if (errorMessage != null) {
@@ -17,6 +19,11 @@ public class PGFPlotBuilder {
         System.err.println("Usage: ru.ifmo.nds.PGFPlotBuilder [options] where options are:");
         System.err.println("    --input <filename> <name>");
         System.err.println("        Include JMH log from file <filename> under name <name> in the plots.");
+        System.err.println("    --input-file-list <filename>");
+        System.err.println("        Read file <filename> and load JMH logs from this file.");
+        System.err.println("        Every line starting with '+' is interpreted.");
+        System.err.println("        The first non-whitespace token immediately after it should be a filename.");
+        System.err.println("        Everything after the whitespace is interpreted as the plot's name.");
         System.err.println("    --output <filename>");
         System.err.println("        Print LaTeX output to <filename> instead of standard output.");
         System.exit(1);
@@ -162,7 +169,7 @@ public class PGFPlotBuilder {
                     }
                     try {
                         String algorithmName = args[i + 2];
-                        for (JMHBenchmarkResult result : JMHLogParser.parse(args[i + 1])) {
+                        for (JMHBenchmarkResult result : JMHLogParser.parse(Paths.get(args[i + 1]))) {
                             SinglePlot.PlotDescriptor desc = new SinglePlot.PlotDescriptor(result);
                             plots.computeIfAbsent(desc, SinglePlot::new).addResult(algorithmName, result);
                         }
@@ -180,6 +187,41 @@ public class PGFPlotBuilder {
                 case INPUT_IGNORE_OPTION:
                     if (i + 2 >= args.length) {
                         printUsageAndExit("Last " + INPUT_IGNORE_OPTION + " followed by too few arguments");
+                    }
+                    break;
+                case INPUT_FILE_LIST_OPTION:
+                    if (i + 1 >= args.length) {
+                        printUsageAndExit("Last " + INPUT_FILE_LIST_OPTION + " followed by too few arguments");
+                    }
+                    try {
+                        Path file = Paths.get(args[i + 1]);
+                        int[] lineNumber = {0};
+                        Files.lines(file).forEachOrdered(s -> {
+                            ++lineNumber[0];
+                            if (s.startsWith("+")) {
+                                s = s.substring(1);
+                                int firstWS = s.indexOf(' ');
+                                String fileName = firstWS == -1 ? s : s.substring(0, firstWS);
+                                String plotName = firstWS == -1 ? s : s.substring(firstWS + 1).trim();
+                                Path plotFile = file.resolveSibling(fileName);
+                                try {
+                                    for (JMHBenchmarkResult result : JMHLogParser.parse(plotFile)) {
+                                        SinglePlot.PlotDescriptor desc = new SinglePlot.PlotDescriptor(result);
+                                        plots.computeIfAbsent(desc, SinglePlot::new).addResult(plotName, result);
+                                    }
+                                } catch (IOException e) {
+                                    throw new UncheckedIOException(e);
+                                }
+                            }
+                        });
+                    } catch (Exception ex) {
+                        StringWriter out = new StringWriter();
+                        PrintWriter pw = new PrintWriter(out);
+                        ex.printStackTrace(pw);
+                        pw.println();
+                        pw.println("Error: file '" + args[i + 1] + "' cannot be parsed");
+                        pw.close();
+                        printUsageAndExit(out.toString());
                     }
                     break;
                 case OUTPUT_OPTION:

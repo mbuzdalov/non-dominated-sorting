@@ -2,7 +2,7 @@ package ru.ifmo.nds;
 
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Stream;
 
@@ -170,7 +170,7 @@ public class JMHLogParser {
         return new ArrayList<>(consumedBenchmarks);
     }
 
-    public static List<JMHBenchmarkResult> parse(String filename) throws IOException {
-        return new JMHLogParser(Files.lines(Paths.get(filename))).getResults();
+    public static List<JMHBenchmarkResult> parse(Path file) throws IOException {
+        return new JMHLogParser(Files.lines(file)).getResults();
     }
 }
