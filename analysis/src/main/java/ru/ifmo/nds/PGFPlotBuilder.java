@@ -18,7 +18,7 @@ public class PGFPlotBuilder {
         System.err.println("    --input <filename> <name>");
         System.err.println("        Include JMH log from file <filename> under name <name> in the plots.");
         System.err.println("    --output <filename>");
-        System.out.println("        Print LaTeX output to <filename> instead of standard output.");
+        System.err.println("        Print LaTeX output to <filename> instead of standard output.");
         System.exit(1);
         throw new AssertionError("System.exit is banned from stopping the program");
     }
@@ -41,7 +41,7 @@ public class PGFPlotBuilder {
             out.println("\\begin{tikzpicture}");
             out.println("\\begin{axis}[xtick=data, xmode=log, ymode=log,");
             out.println("              width=\\textwidth, height=0.45\\textheight, legend pos=north west,");
-            out.println("              ymin=1e-7, ymax=4]");
+            out.println("              ymin=1e-7, ymax=4, cycle list name=my custom]");
 
             StringWriter tableBuilder = new StringWriter();
             PrintWriter tableWriter = new PrintWriter(tableBuilder);
@@ -53,42 +53,17 @@ public class PGFPlotBuilder {
                     int N = plotPoint.getParameters().get("N");
                     out.print("    " + N);
                     List<Double> points = plotPoint.getResults();
-                    // Finding LAST FIVE stats: what is given by JMH as "measurements".
-                    List<Double> lastFivePoints = new ArrayList<>(points.subList(points.size() - 5, points.size()));
-                    double lastFiveMin = Double.POSITIVE_INFINITY,
-                            lastFiveSum = 0,
-                            lastFiveMax = Double.NEGATIVE_INFINITY;
-                    for (double r : lastFivePoints) {
-                        lastFiveMin = Math.min(lastFiveMin, r);
-                        lastFiveMax = Math.max(lastFiveMax, r);
-                        lastFiveSum += r;
+                    double min = Double.POSITIVE_INFINITY, sum = 0, max = Double.NEGATIVE_INFINITY;
+                    for (double r : points) {
+                        min = Math.min(min, r);
+                        max = Math.max(max, r);
+                        sum += r;
                     }
-                    double lastFiveAvg = lastFiveSum / lastFivePoints.size();
-
-                    // Finding BEST FIVE stats.
-                    Collections.sort(points);
-                    List<Double> bestFivePoints = new ArrayList<>(points.subList(0, 5));
-                    double bestFiveMin = Double.POSITIVE_INFINITY,
-                            bestFiveSum = 0,
-                            bestFiveMax = Double.NEGATIVE_INFINITY;
-                    for (double r : bestFivePoints) {
-                        bestFiveMin = Math.min(bestFiveMin, r);
-                        bestFiveMax = Math.max(bestFiveMax, r);
-                        bestFiveSum += r;
-                    }
-                    double bestFiveAvg = bestFiveSum / bestFivePoints.size();
-
-                    if (lastFiveAvg > 1.2 * bestFiveAvg) {
-                        System.out.println("[Warning] " + myDescriptor.toString() + " " + plot.getKey() + " " + N);
-                        System.out.println("[Warning]     'measurements' reported by JMH seem to be much worse:");
-                        System.out.println("[Warning]     Last five: " + lastFivePoints);
-                        System.out.println("[Warning]     Best five: " + bestFivePoints);
-                    }
-
-                    double bestErrMin = bestFiveAvg - bestFiveMin;
-                    double bestErrMax = bestFiveMax - bestFiveAvg;
-                    tableWriter.println("    {" + plot.getKey() + "} " + N + " " + bestFiveAvg + " " + bestErrMin + " " + bestErrMax);
-                    out.println(" " + bestFiveAvg + " " + bestErrMin + " " + bestErrMax);
+                    double avg = sum / points.size();
+                    double errMin = avg - min;
+                    double errMax = max - avg;
+                    tableWriter.println("    {" + plot.getKey() + "} " + N + " " + avg + " " + errMin + " " + errMax);
+                    out.println(" " + avg + " " + errMin + " " + errMax);
                 }
                 out.println("};");
                 out.println("\\addlegendentry{" + plot.getKey() + "};");
@@ -226,6 +201,32 @@ public class PGFPlotBuilder {
             out.println("\\usepackage{pgfplots}");
             out.println("\\pgfplotsset{compat=newest}");
             out.println("\\usepackage{pgfplotstable}");
+            out.println("\\pgfplotscreateplotcyclelist{my custom}{%");
+            out.println("blue!60!black,every mark/.append style={fill=blue!60!black},mark=*\\\\%1");
+            out.println("red!70!black,every mark/.append style={fill=red!70!black},mark=*\\\\%2");
+            out.println("green!70!black,every mark/.append style={fill=green!70!black},mark=*\\\\%3");
+            out.println("gray,every mark/.append style={fill=gray},mark=*\\\\%4");
+            out.println("orange,every mark/.append style={fill=orange},mark=*\\\\%5");
+            out.println("brown!80!black,every mark/.append style={fill=brown!80!black},mark=*\\\\%6");
+            out.println("green,every mark/.append style={fill=green},mark=*\\\\%7");
+            out.println("violet!80!black,every mark/.append style={fill=violet!80!black},mark=*\\\\%8");
+            out.println("black,every mark/.append style={fill=black},mark=*\\\\%9");
+            out.println("teal,every mark/.append style={fill=teal},mark=*\\\\%10");
+            out.println("magenta!70!black,every mark/.append style={fill=magenta!70!black},mark=*\\\\%11");
+            out.println("yellow!90!black,every mark/.append style={fill=yellow!90!black},mark=*\\\\%12");
+            out.println("blue!60!black,every mark/.append style={fill=blue!60!black},mark=star\\\\%13");
+            out.println("red!70!black,every mark/.append style={fill=red!70!black},mark=star\\\\%14");
+            out.println("green!70!black,every mark/.append style={fill=green!70!black},mark=star\\\\%15");
+            out.println("gray,every mark/.append style={fill=gray},mark=star\\\\%16");
+            out.println("orange,every mark/.append style={fill=orange},mark=star\\\\%17");
+            out.println("brown!80!black,every mark/.append style={fill=brown!80!black},mark=star\\\\%18");
+            out.println("green,every mark/.append style={fill=green},mark=star\\\\%19");
+            out.println("violet!80!black,every mark/.append style={fill=violet!80!black},mark=star\\\\%20");
+            out.println("black,every mark/.append style={fill=black},mark=star\\\\%21");
+            out.println("teal,every mark/.append style={fill=teal},mark=star\\\\%22");
+            out.println("magenta!70!black,every mark/.append style={fill=magenta!70!black},mark=star\\\\%23");
+            out.println("yellow!90!black,every mark/.append style={fill=yellow!90!black},mark=star\\\\%24");
+            out.println("}");
             out.println("\\begin{document}");
             for (SinglePlot plot : plots.values()) {
                 plot.print(out);
