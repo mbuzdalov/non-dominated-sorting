@@ -69,7 +69,7 @@ public class PGFPlotBuilder {
                     double avg = sum / points.size();
                     double errMin = avg - min;
                     double errMax = max - avg;
-                    tableWriter.println("    {" + plot.getKey() + "} " + N + " " + avg + " " + errMin + " " + errMax);
+                    tableWriter.println("    {" + plot.getKey() + "} " + N + " " + min + " " + avg + " " + max);
                     out.println(" " + avg + " " + errMin + " " + errMax);
                 }
                 out.println("};");
@@ -79,7 +79,7 @@ public class PGFPlotBuilder {
             out.println("\\end{tikzpicture}\\vspace{2ex}");
             out.println();
             out.println("\\pgfplotstabletypeset[sci zerofill, columns/Algo/.style={string type}] {");
-            out.println("    Algo N Tavg Err-min Err-max");
+            out.println("    Algo N Tmin Tavg Tmax");
             out.println(tableBuilder.getBuffer());
             out.println("}");
             out.println("\\newpage");
