@@ -44,7 +44,7 @@ public class PGFPlotBuilder {
 
         void print(PrintWriter out) {
             out.println("% " + myDescriptor.toString());
-            out.println("\\section*{" + myDescriptor.toString() + "}");
+            out.println("\\section*{Dataset: " + myDescriptor.toString() + "}");
             out.println("\\begin{tikzpicture}");
             out.println("\\begin{axis}[xtick=data, xmode=log, ymode=log,");
             out.println("              width=\\textwidth, height=0.45\\textheight, legend pos=north west,");
