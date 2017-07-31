@@ -1,13 +1,11 @@
 package ru.ifmo;
 
-import ru.ifmo.domtree.NoDelayedInsertion;
+import ru.ifmo.domtree.NoPresort;
 
 public class DominanceTree {
     private DominanceTree() {}
 
-    private static final NonDominatedSortingFactory NO_DELAYED_INSERTION = NoDelayedInsertion::new;
-
-    public static NonDominatedSortingFactory getNoDelayedInsertion() {
-        return NO_DELAYED_INSERTION;
+    public static NonDominatedSortingFactory getNoDelayedInsertion(boolean useRecursiveMerge) {
+        return (maximumPoints, maximumDimension) -> new NoPresort(maximumPoints, maximumDimension, useRecursiveMerge);
     }
 }

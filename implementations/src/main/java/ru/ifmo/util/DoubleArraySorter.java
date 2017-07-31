@@ -95,4 +95,33 @@ public class DoubleArraySorter {
         this.indices = null;
         this.maxCoordinate = -1;
     }
+
+    public static int retainUniquePoints(double[][] sourcePoints, int[] sortedIndices, double[][] targetPoints, int[] reindex) {
+        int n = sourcePoints.length, dim = sourcePoints[0].length, newN = 1;
+        int lastII = sortedIndices[0];
+        targetPoints[0] = sourcePoints[lastII];
+        reindex[lastII] = 0;
+        for (int i = 1; i < n; ++i) {
+            int currII = sortedIndices[i];
+            double[] curr = sourcePoints[lastII];
+            double[] next = sourcePoints[currII];
+            boolean same = true;
+            for (int t = dim - 1; t >= 0; --t) {
+                if (curr[t] != next[t]) {
+                    same = false;
+                    break;
+                }
+            }
+            if (!same) {
+                // Copying the point to the internal array.
+                targetPoints[newN] = sourcePoints[currII];
+                lastII = currII;
+                ++newN;
+            }
+
+            // Abusing the argument "ranks" array to keep where the reference point lies.
+            reindex[currII] = newN - 1;
+        }
+        return newN;
+    }
 }

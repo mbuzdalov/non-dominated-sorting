@@ -66,69 +66,43 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         int n = points.length;
         int dim = points[0].length;
         Arrays.fill(ranks, 0);
-        if (dim > 0) {
-            for (int i = 0; i < n; ++i) {
-                internalIndices[i] = i;
+        for (int i = 0; i < n; ++i) {
+            internalIndices[i] = i;
+        }
+        sorter.lexicographicalSort(points, internalIndices, 0, n, dim);
+
+        if (dim == 1) {
+            // 1: This is equivalent to ordinary sorting.
+            for (int i = 0, r = 0; i < n; ++i) {
+                ranks[internalIndices[i]] = r;
+                if (i + 1 < n && points[internalIndices[i]][0] != points[internalIndices[i + 1]][0]) {
+                    ++r;
+                }
             }
-            sorter.lexicographicalSort(points, internalIndices, 0, n, dim);
+        } else if (dim == 2) {
+            // 2: Special case: binary search.
+            twoDimensionalCase(points, ranks);
+        } else {
+            // 3: General case.
+            // 3.1: Moving points in a sorted order to internal structures
+            int newN = DoubleArraySorter.retainUniquePoints(points, internalIndices, this.points, ranks);
+            for (int i = 0; i < newN; ++i) {
+                this.indices[i] = i;
+            }
 
-            if (dim == 1) {
-                // 1: This is equivalent to ordinary sorting.
-                for (int i = 0, r = 0; i < n; ++i) {
-                    ranks[internalIndices[i]] = r;
-                    if (i + 1 < n && points[internalIndices[i]][0] != points[internalIndices[i + 1]][0]) {
-                        ++r;
-                    }
+            // 3.2: Transposing points. This should fit in cache for reasonable dimensions.
+            for (int i = 0; i < newN; ++i) {
+                for (int j = 0; j < dim; ++j) {
+                    transposedPoints[j][i] = this.points[i][j];
                 }
-            } else if (dim == 2) {
-                // 2: Special case: binary search.
-                twoDimensionalCase(points, ranks);
-            } else {
-                // 3: General case.
-                // 3.1: Moving points in a sorted order to internal structures
-                int newN = 1;
-                int lastII = internalIndices[0];
-                this.points[0] = points[lastII];
-                this.indices[0] = 0;
-                this.ranks[lastII] = 0;
-                for (int i = 1; i < n; ++i) {
-                    int currII = internalIndices[i];
-                    double[] curr = points[lastII];
-                    double[] next = points[currII];
-                    boolean same = true;
-                    for (int t = dim - 1; t >= 0; --t) {
-                        if (curr[t] != next[t]) {
-                            same = false;
-                            break;
-                        }
-                    }
-                    if (!same) {
-                        // Copying the point to the internal array.
-                        this.points[newN] = points[currII];
-                        this.indices[newN] = newN;
-                        this.ranks[newN] = 0;
-                        lastII = currII;
-                        ++newN;
-                    }
+            }
 
-                    // Abusing the argument "ranks" array to keep where the reference point lies.
-                    ranks[currII] = newN - 1;
-                }
+            // 3.3: Calling the actual sorting
+            helperA(0, newN, dim - 1);
 
-                // 3.2: Transposing points. This should fit in cache for reasonable dimensions.
-                for (int i = 0; i < newN; ++i) {
-                    for (int j = 0; j < dim; ++j) {
-                        transposedPoints[j][i] = this.points[i][j];
-                    }
-                }
-
-                // 3.3: Calling the actual sorting
-                helperA(0, newN, dim - 1);
-
-                // 3.4: Applying the results back. After that, the argument "ranks" array stops being abused.
-                for (int i = 0; i < n; ++i) {
-                    ranks[i] = this.ranks[ranks[i]];
-                }
+            // 3.4: Applying the results back. After that, the argument "ranks" array stops being abused.
+            for (int i = 0; i < n; ++i) {
+                ranks[i] = this.ranks[ranks[i]];
             }
         }
     }

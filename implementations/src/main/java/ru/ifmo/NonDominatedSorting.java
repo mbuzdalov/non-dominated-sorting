@@ -1,5 +1,6 @@
 package ru.ifmo;
 
+import java.util.Arrays;
 import java.util.Objects;
 
 /**
@@ -102,7 +103,11 @@ public abstract class NonDominatedSorting implements AutoCloseable {
                 throw new IllegalArgumentException("All points to be sorted must have equal dimension");
             }
         }
-        sortChecked(points, ranks);
+        if (dimension == 0) {
+            Arrays.fill(ranks, 0);
+        } else {
+            sortChecked(points, ranks);
+        }
     }
 
     /**
