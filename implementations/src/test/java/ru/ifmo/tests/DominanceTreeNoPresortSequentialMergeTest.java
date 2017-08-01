@@ -3,9 +3,9 @@ package ru.ifmo.tests;
 import ru.ifmo.DominanceTree;
 import ru.ifmo.NonDominatedSortingFactory;
 
-public class DominanceTreeNoDelayedInsertionRecursiveMergeTest extends CorrectnessTestsBase {
+public class DominanceTreeNoPresortSequentialMergeTest extends CorrectnessTestsBase {
     @Override
     protected NonDominatedSortingFactory getFactory() {
-        return DominanceTree.getNoDelayedInsertion(true);
+        return DominanceTree.getNoPresortInsertion(false);
     }
 }

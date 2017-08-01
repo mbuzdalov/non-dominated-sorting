@@ -61,4 +61,19 @@ public class NoPresort extends AbstractDominanceTree {
     protected void sortChecked(double[][] points, int[] ranks) {
         sortCheckedImpl(points, ranks, points.length);
     }
+
+    private Node concatenate(Node source, Node append) {
+        if (source == null) {
+            return append;
+        } else if (append == null) {
+            return source;
+        } else {
+            Node tmp = source;
+            while (tmp.next != null) {
+                tmp = tmp.next;
+            }
+            tmp.next = append;
+            return source;
+        }
+    }
 }

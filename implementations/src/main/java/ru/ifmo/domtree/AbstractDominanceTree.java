@@ -23,7 +23,7 @@ public abstract class AbstractDominanceTree extends NonDominatedSorting {
         rankMergeArray = null;
     }
 
-    protected void sortCheckedImpl(double[][] points, int[] ranks, int n) {
+    void sortCheckedImpl(double[][] points, int[] ranks, int n) {
         for (int i = 0; i < n; ++i) {
             nodes[i].initialize(points[i]);
         }
@@ -43,7 +43,7 @@ public abstract class AbstractDominanceTree extends NonDominatedSorting {
 
     protected abstract Node merge(Node a, Node b);
 
-    Node mergeAll(Node[] array, int size) {
+    private Node mergeAll(Node[] array, int size) {
         if (size == 0) {
             return null;
         }
@@ -79,21 +79,6 @@ public abstract class AbstractDominanceTree extends NonDominatedSorting {
         } else {
             int mid = (from + until) >>> 1;
             return merge(buildTree(from, mid), buildTree(mid, until));
-        }
-    }
-
-    Node concatenate(Node source, Node append) {
-        if (source == null) {
-            return append;
-        } else if (append == null) {
-            return source;
-        } else {
-            Node tmp = source;
-            while (tmp.next != null) {
-                tmp = tmp.next;
-            }
-            tmp.next = append;
-            return source;
         }
     }
 
