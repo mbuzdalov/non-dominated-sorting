@@ -48,7 +48,7 @@ public class PGFPlotBuilder {
             out.println("\\begin{tikzpicture}");
             out.println("\\begin{axis}[xtick=data, xmode=log, ymode=log,");
             out.println("              width=\\textwidth, height=0.45\\textheight, legend pos=north west,");
-            out.println("              ymin=1e-7, ymax=4, cycle list name=my custom]");
+            out.println("              ymin=2e-7, ymax=10, cycle list name=my custom]");
 
             StringWriter tableBuilder = new StringWriter();
             PrintWriter tableWriter = new PrintWriter(tableBuilder);
@@ -56,6 +56,7 @@ public class PGFPlotBuilder {
             for (Map.Entry<String, List<JMHBenchmarkResult>> plot : myResults.entrySet()) {
                 out.println("\\addplot plot[error bars/.cd, y dir=both, y explicit] table[y error plus=y-max, y error minus=y-min] {");
                 out.println("    x y y-min y-max");
+                tableWriter.print("    {" + plot.getKey() + "}");
                 for (JMHBenchmarkResult plotPoint : plot.getValue()) {
                     int N = plotPoint.getParameters().get("N");
                     out.print("    " + N);
@@ -69,17 +70,18 @@ public class PGFPlotBuilder {
                     double avg = sum / points.size();
                     double errMin = avg - min;
                     double errMax = max - avg;
-                    tableWriter.println("    {" + plot.getKey() + "} " + N + " " + min + " " + avg + " " + max);
+                    tableWriter.print(" " + avg);
                     out.println(" " + avg + " " + errMin + " " + errMax);
                 }
                 out.println("};");
                 out.println("\\addlegendentry{" + plot.getKey() + "};");
+                tableWriter.println();
             }
             out.println("\\end{axis}");
             out.println("\\end{tikzpicture}\\vspace{2ex}");
             out.println();
             out.println("\\pgfplotstabletypeset[sci zerofill, columns/Algo/.style={string type}] {");
-            out.println("    Algo N Tmin Tavg Tmax");
+            out.println("    Algo T10 T100 T1000 T10000");
             out.println(tableBuilder.getBuffer());
             out.println("}");
             out.println("\\newpage");
