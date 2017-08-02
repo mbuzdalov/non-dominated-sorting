@@ -20,8 +20,11 @@ import java.util.Arrays;
  * </pre>
  *
  * The implementation is taken at 2017, Jul 28 from
- * <a href="https://github.com/Proteek/Best-Order-Sort/">Proteek's GitHub</a>
- * and only slightly adapted to interfaces and naming conventions.
+ * <a href="https://github.com/Proteek/Best-Order-Sort/">Proteek's GitHub</a>.
+ * It is slightly adapted to interfaces and naming conventions,
+ * and special case for two objectives is removed.
+ *
+ * @author Proteek Chandan Roy
  */
 public class Proteek extends NonDominatedSorting {
     private int m1 = -1;
@@ -30,7 +33,6 @@ public class Proteek extends NonDominatedSorting {
     private MergeSort mergesort;
     private int[] rank;
     private int totalFront = 0;
-    private int s;
     private int n;
     private int m;
     private int[] lexOrder;
@@ -55,11 +57,7 @@ public class Proteek extends NonDominatedSorting {
             Arrays.fill(ranks, 0);
         } else {
             initialize(points);
-            if(m == 2) {
-                extendedKungSortTwoDimension();
-            } else {
-                bestSort(n, m1);
-            }
+            bestSort(n, m1);
             System.arraycopy(this.rank, 0, ranks, 0, n);
         }
     }
@@ -104,7 +102,7 @@ public class Proteek extends NonDominatedSorting {
 
         for (int i = 0; i<n;i++) {
             for (int obj = 0; obj < m; obj++) {
-                s = allRank[i][obj];
+                int s = allRank[i][obj];
                 if (set[s]) {
                     list[obj][rank[s]].addStart(s);
                     continue;
@@ -178,58 +176,6 @@ public class Proteek extends NonDominatedSorting {
         mergesort.setPopulation(population);
         m1 = m; //change this value to m1 = log(n) when m is very high
     }
-
-    private void extendedKungSortTwoDimension() {
-        int low, high, middle;
-        double key;
-
-        rank = new int[n];
-        allRank = new int[n][m];
-        int[] index = new int[n];
-        for (int j = 0; j < m; j++) {
-            for (int i = 0; i < n; i++) {
-                allRank[i][j] = i;
-            }
-        }
-        mergesort.setRank(allRank);
-        mergesort.sort();
-
-        index[0] = allRank[0][0];
-        rank[allRank[0][0]] = 0;
-        totalFront = 1;
-
-        for(int i = 1; i < n; i++) {
-            s = allRank[i][0];
-            key = population[s][1];
-
-            low = 0;
-            high = totalFront - 1;
-
-            while (high >= low) {
-                middle = (low + high) >>> 1;
-
-                if(key < population[index[middle]][1]) {
-                    high = middle - 1;
-                } else if (key > population[index[middle]][1]) {
-                    low = middle + 1;
-                } else {
-                    if (population[index[middle]][0] < population[s][0]) {
-                        low = middle + 1;
-                    } else {
-                        low = rank[index[middle]];
-                        break;
-                    }
-                }
-            }
-
-            if (low == totalFront) {
-                totalFront = totalFront + 1;
-            }
-            rank[s] = low;
-            index[low] = s;
-        }
-    }
-
 
     private static class MergeSort {
         int[] helper;
