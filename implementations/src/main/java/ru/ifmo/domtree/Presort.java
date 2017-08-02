@@ -203,7 +203,7 @@ public class Presort extends AbstractDominanceTree {
     }
 
     @Override
-    protected void sortChecked(double[][] points, int[] ranks) {
+    protected void sortChecked(double[][] points, int[] ranks, int maximalMeaningfulRank) {
         int n = points.length;
         // this.ranks are temporarily abused to mean indices
         for (int i = 0; i < n; ++i) {

@@ -50,7 +50,7 @@ public class Proteek extends NonDominatedSorting {
     }
 
     @Override
-    protected void sortChecked(double[][] points, int[] ranks) {
+    protected void sortChecked(double[][] points, int[] ranks, int maximalMeaningfulRank) {
         if (points[0].length == 0) {
             Arrays.fill(ranks, 0);
         } else {

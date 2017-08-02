@@ -14,7 +14,13 @@ public abstract class CorrectnessTestsBase {
     protected abstract NonDominatedSortingFactory getFactory();
 
     private void groupCheck(int[][] input, int[] expectedOutput) {
+        expectedOutput = expectedOutput.clone();
         NonDominatedSortingFactory factory = getFactory();
+
+        int maxExpectedOutput = 0;
+        for (int expected : expectedOutput) {
+            maxExpectedOutput = Math.max(maxExpectedOutput, expected);
+        }
 
         double[][] doubleInput = new double[input.length][];
         for (int i = 0; i < input.length; ++i) {
@@ -33,6 +39,29 @@ public abstract class CorrectnessTestsBase {
 
         try (NonDominatedSorting sorting = factory.getInstance(doubleInput.length, doubleInput[0].length)) {
             int[] actualOutput = new int[expectedOutput.length];
+            sorting.sort(doubleInput, actualOutput);
+            Assert.assertArrayEquals(expectedOutput, actualOutput);
+            Arrays.fill(actualOutput, 2347);
+            sorting.sort(doubleInput, actualOutput);
+            Assert.assertArrayEquals(expectedOutput, actualOutput);
+
+            for (int maxRankG = maxExpectedOutput; maxRankG >= -maxExpectedOutput; --maxRankG) {
+                int maxRank = Math.abs(maxRankG);
+                int[] localExpectedOutput = expectedOutput.clone();
+                for (int i = 0; i < localExpectedOutput.length; ++i) {
+                    if (localExpectedOutput[i] > maxRank) {
+                        localExpectedOutput[i] = maxRank + 1;
+                    }
+                }
+                Arrays.fill(actualOutput, 0);
+                sorting.sort(doubleInput, actualOutput, maxRank);
+                Assert.assertArrayEquals(localExpectedOutput, actualOutput);
+                Arrays.fill(actualOutput, 2347);
+                sorting.sort(doubleInput, actualOutput, maxRank);
+                Assert.assertArrayEquals(localExpectedOutput, actualOutput);
+            }
+
+            Arrays.fill(actualOutput, 0);
             sorting.sort(doubleInput, actualOutput);
             Assert.assertArrayEquals(expectedOutput, actualOutput);
             Arrays.fill(actualOutput, 2347);
@@ -124,6 +153,23 @@ public abstract class CorrectnessTestsBase {
             NonDominatedSorting s = f.getInstance(maxPoints, maxDimension);
             Assert.assertEquals(maxPoints, s.getMaximumPoints());
             Assert.assertEquals(maxDimension, s.getMaximumDimension());
+        }
+    }
+
+    @Test
+    public void doesNotShareState() {
+        try (NonDominatedSorting sorting = getFactory().getInstance(2, 3)) {
+            double[][] nonDominated = { {1, 0, 0}, {0, 1, 0} };
+            double[][] dominated = { {0, 0, 0}, {1, 1, 1} };
+            int[] output = new int[2];
+            for (int t = 0; t < 10; ++t) {
+                sorting.sort(nonDominated, output);
+                Assert.assertEquals(0, output[0]);
+                Assert.assertEquals(0, output[1]);
+                sorting.sort(dominated, output);
+                Assert.assertEquals(0, output[0]);
+                Assert.assertEquals(1, output[1]);
+            }
         }
     }
 

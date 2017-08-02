@@ -57,11 +57,24 @@ public abstract class NonDominatedSorting implements AutoCloseable {
 
     /**
      * Performs non-dominated sorting.
-     *
      * @param points the array of points to be sorted.
      * @param ranks the array to be filled with ranks of points.
      */
     public final void sort(double[][] points, int[] ranks) {
+        sort(points, ranks, ranks == null ? 0 : ranks.length);
+    }
+
+    /**
+     * Performs non-dominated sorting. All ranks above the given {@code maximalMeaningfulRank} will be reported
+     * as {@code maximalMeaningfulRank + 1}.
+     *
+     * @param points the array of points to be sorted.
+     * @param ranks the array to be filled with ranks of points.
+     * @param maximalMeaningfulRank the maximal rank which is meaningful to the caller.
+     *                              All ranks above will be reported as {@code maximalMeaningfulRank + 1}.
+     *                              The safe value to get all ranks correct is {@code points.length}.
+     */
+    public final void sort(double[][] points, int[] ranks, int maximalMeaningfulRank) {
         Objects.requireNonNull(points, "The array of points must not be null");
         Objects.requireNonNull(ranks, "The array of ranks must not be null");
 
@@ -103,10 +116,19 @@ public abstract class NonDominatedSorting implements AutoCloseable {
                 throw new IllegalArgumentException("All points to be sorted must have equal dimension");
             }
         }
+        if (maximalMeaningfulRank < 0) {
+            throw new IllegalArgumentException("Maximal meaningful rank must be non-negative");
+        }
+
         if (dimension == 0) {
             Arrays.fill(ranks, 0);
         } else {
-            sortChecked(points, ranks);
+            sortChecked(points, ranks, maximalMeaningfulRank);
+        }
+        for (int i = 0; i < ranks.length; ++i) {
+            if (ranks[i] > maximalMeaningfulRank) {
+                ranks[i] = maximalMeaningfulRank + 1;
+            }
         }
     }
 
@@ -120,6 +142,8 @@ public abstract class NonDominatedSorting implements AutoCloseable {
      * Performs actual sorting. Assumes the input arrays are valid.
      * @param points the points to be sorted.
      * @param ranks the array of ranks to be filled.
+     * @param maximalMeaningfulRank the maximal rank which is meaningful to the caller.
+     *                              All ranks above can be treated as same.
      */
-    protected abstract void sortChecked(double[][] points, int[] ranks);
+    protected abstract void sortChecked(double[][] points, int[] ranks, int maximalMeaningfulRank);
 }

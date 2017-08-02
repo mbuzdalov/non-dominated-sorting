@@ -9,8 +9,10 @@ import java.util.Arrays;
 
 public abstract class AbstractJFBSorting extends NonDominatedSorting {
     // Pre-allocated
-    private int[] indices;
-    private int[] ranks;
+    int[] indices;
+    int[] ranks;
+    int maximalMeaningfulRank;
+
     private DoubleArraySorter sorter;
     private MedianFinder medianFinder;
     private RankQueryStructure rankQuery;
@@ -62,7 +64,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
     }
 
     @Override
-    protected final void sortChecked(double[][] points, int[] ranks) {
+    protected final void sortChecked(double[][] points, int[] ranks, int maximalMeaningfulRank) {
         int n = points.length;
         int dim = points[0].length;
         Arrays.fill(ranks, 0);
@@ -70,6 +72,8 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
             internalIndices[i] = i;
         }
         sorter.lexicographicalSort(points, internalIndices, 0, n, dim);
+
+        this.maximalMeaningfulRank = maximalMeaningfulRank;
 
         if (dim == 1) {
             // 1: This is equivalent to ordinary sorting.
@@ -88,6 +92,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
             int newN = DoubleArraySorter.retainUniquePoints(points, internalIndices, this.points, ranks);
             for (int i = 0; i < newN; ++i) {
                 this.indices[i] = i;
+                this.ranks[i] = 0;
             }
 
             // 3.2: Transposing points. This should fit in cache for reasonable dimensions.
@@ -103,11 +108,12 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
             // 3.4: Applying the results back. After that, the argument "ranks" array stops being abused.
             for (int i = 0; i < n; ++i) {
                 ranks[i] = this.ranks[ranks[i]];
+                this.points[i] = null;
             }
         }
     }
 
-    private boolean strictlyDominatesAssumingNotSame(int goodIndex, int weakIndex, int maxObj) {
+    boolean strictlyDominatesAssumingNotSame(int goodIndex, int weakIndex, int maxObj) {
         double[] goodPoint = points[goodIndex];
         double[] weakPoint = points[weakIndex];
         // Comparison in 0 makes no sense, as due to goodIndex < weakIndex the points are <= in this coordinate.
@@ -189,7 +195,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
             int curr = indices[i];
             double currY = local[curr];
             int result = Math.max(ranks[curr], rankQuery.getMaximumWithKeyAtMost(currY) + 1);
-            ranks[curr] = result;
+            ranks[curr] = Math.min(result, 1 + maximalMeaningfulRank);
             rankQuery.put(currY, result);
         }
         rankQuery.clear();
@@ -209,8 +215,16 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
                 rankQuery.put(local[goodCurr], ranks[goodCurr]);
             }
             ranks[weakCurr] = Math.max(ranks[weakCurr], rankQuery.getMaximumWithKeyAtMost(local[weakCurr]) + 1);
+            ranks[weakCurr] = Math.min(ranks[weakCurr], 1 + maximalMeaningfulRank);
         }
         rankQuery.clear();
+    }
+
+    protected boolean helperAHookCondition(int size, int obj) {
+        return false;
+    }
+    protected void helperAHook(int from, int until, int obj) {
+        throw new UnsupportedOperationException("helperAHook not yet implemented");
     }
 
     private void helperA(int from, int until, int obj) {
@@ -225,6 +239,8 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
             }
         } else if (obj == 1) {
             sweepA(from, until);
+        } else if (helperAHookCondition(until - from, obj)) {
+            helperAHook(from, until, obj);
         } else {
             medianFinder.resetMedian();
             medianFinder.consumeDataForMedian(transposedPoints[obj], indices, from, until);
@@ -286,57 +302,68 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         }
     }
 
+    protected boolean helperBHookCondition(int goodSize, int weakSize, int obj) {
+        return false;
+    }
+    protected void helperBHook(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj) {
+        throw new UnsupportedOperationException("helperBHook not yet implemented");
+    }
+
     private void helperB(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj) {
         int goodN = goodUntil - goodFrom;
         int weakN = weakUntil - weakFrom;
-        if (goodN == 1) {
-            helperBGood1(goodFrom, weakFrom, weakUntil, obj);
-        } else if (weakN == 1) {
-            helperBWeak1(goodFrom, goodUntil, weakFrom, obj);
-        } else if (obj == 1) {
-            sweepB(goodFrom, goodUntil, weakFrom, weakUntil);
-        } else {
-            medianFinder.resetMedian();
-            medianFinder.consumeDataForMedian(transposedPoints[obj], indices, goodFrom, goodUntil);
-            double goodMaxObj = medianFinder.getLastMedianConsumptionMax();
-            medianFinder.consumeDataForMedian(transposedPoints[obj], indices, weakFrom, weakUntil);
-            double weakMinObj = medianFinder.getLastMedianConsumptionMin();
-            if (goodMaxObj <= weakMinObj) {
-                helperB(goodFrom, goodUntil, weakFrom, weakUntil, obj - 1);
+        if (goodN > 0 && weakN > 0) {
+            if (goodN == 1) {
+                helperBGood1(goodFrom, weakFrom, weakUntil, obj);
+            } else if (weakN == 1) {
+                helperBWeak1(goodFrom, goodUntil, weakFrom, obj);
+            } else if (obj == 1) {
+                sweepB(goodFrom, goodUntil, weakFrom, weakUntil);
+            } else if (helperBHookCondition(goodUntil - goodFrom, weakUntil - weakFrom, obj)) {
+                helperBHook(goodFrom, goodUntil, weakFrom, weakUntil, obj);
             } else {
-                double median = medianFinder.findMedian();
-                int totalSmallerThanMedian = medianFinder.howManySmallerThanMedian();
-                int totalLargerThanMedian = medianFinder.howManyLargerThanMedian();
-                int totalEqualToMedian = (goodN + weakN) - totalLargerThanMedian - totalSmallerThanMedian;
-                if (totalEqualToMedian < (goodN + weakN) / 2) {
-                    // Few enough median-valued points, use two-way splitting.
-                    boolean leanLeft = totalSmallerThanMedian < totalLargerThanMedian;
-                    splitInTwo(goodFrom, goodUntil, median, obj, leanLeft);
-                    int goodMid = goodFrom + splitL;
-                    splitInTwo(weakFrom, weakUntil, median, obj, leanLeft);
-                    int weakMid = weakFrom + splitL;
-
-                    helperB(goodFrom, goodMid, weakFrom, weakMid, obj);
-                    helperB(goodFrom, goodMid, weakMid, weakUntil, obj - 1);
-                    helperB(goodMid, goodUntil, weakMid, weakUntil, obj);
-                    mergeTwo(goodFrom, goodMid, goodUntil);
-                    mergeTwo(weakFrom, weakMid, weakUntil);
+                medianFinder.resetMedian();
+                medianFinder.consumeDataForMedian(transposedPoints[obj], indices, goodFrom, goodUntil);
+                double goodMaxObj = medianFinder.getLastMedianConsumptionMax();
+                medianFinder.consumeDataForMedian(transposedPoints[obj], indices, weakFrom, weakUntil);
+                double weakMinObj = medianFinder.getLastMedianConsumptionMin();
+                if (goodMaxObj <= weakMinObj) {
+                    helperB(goodFrom, goodUntil, weakFrom, weakUntil, obj - 1);
                 } else {
-                    // Too many median-valued points, use three-way splitting.
-                    splitInThree(goodFrom, goodUntil, median, obj);
-                    int goodMidL = goodFrom + splitL;
-                    int goodMidR = goodMidL + splitM;
-                    splitInThree(weakFrom, weakUntil, median, obj);
-                    int weakMidL = weakFrom + splitL;
-                    int weakMidR = weakMidL + splitM;
+                    double median = medianFinder.findMedian();
+                    int totalSmallerThanMedian = medianFinder.howManySmallerThanMedian();
+                    int totalLargerThanMedian = medianFinder.howManyLargerThanMedian();
+                    int totalEqualToMedian = (goodN + weakN) - totalLargerThanMedian - totalSmallerThanMedian;
+                    if (totalEqualToMedian < (goodN + weakN) / 2) {
+                        // Few enough median-valued points, use two-way splitting.
+                        boolean leanLeft = totalSmallerThanMedian < totalLargerThanMedian;
+                        splitInTwo(goodFrom, goodUntil, median, obj, leanLeft);
+                        int goodMid = goodFrom + splitL;
+                        splitInTwo(weakFrom, weakUntil, median, obj, leanLeft);
+                        int weakMid = weakFrom + splitL;
 
-                    helperB(goodFrom, goodMidL, weakFrom, weakMidL, obj);
-                    helperB(goodMidR, goodUntil, weakMidR, weakUntil, obj);
-                    mergeTwo(goodFrom, goodMidL, goodMidR);
-                    mergeTwo(weakMidL, weakMidR, weakUntil);
-                    helperB(goodFrom, goodMidR, weakMidL, weakUntil, obj - 1);
-                    mergeTwo(goodFrom, goodMidR, goodUntil);
-                    mergeTwo(weakFrom, weakMidL, weakUntil);
+                        helperB(goodFrom, goodMid, weakFrom, weakMid, obj);
+                        helperB(goodFrom, goodMid, weakMid, weakUntil, obj - 1);
+                        helperB(goodMid, goodUntil, weakMid, weakUntil, obj);
+                        mergeTwo(goodFrom, goodMid, goodUntil);
+                        mergeTwo(weakFrom, weakMid, weakUntil);
+                    } else {
+                        // Too many median-valued points, use three-way splitting.
+                        splitInThree(goodFrom, goodUntil, median, obj);
+                        int goodMidL = goodFrom + splitL;
+                        int goodMidR = goodMidL + splitM;
+                        splitInThree(weakFrom, weakUntil, median, obj);
+                        int weakMidL = weakFrom + splitL;
+                        int weakMidR = weakMidL + splitM;
+
+                        helperB(goodFrom, goodMidL, weakFrom, weakMidL, obj);
+                        helperB(goodMidR, goodUntil, weakMidR, weakUntil, obj);
+                        mergeTwo(goodFrom, goodMidL, goodMidR);
+                        mergeTwo(weakMidL, weakMidR, weakUntil);
+                        helperB(goodFrom, goodMidR, weakMidL, weakUntil, obj - 1);
+                        mergeTwo(goodFrom, goodMidR, goodUntil);
+                        mergeTwo(weakFrom, weakMidL, weakUntil);
+                    }
                 }
             }
         }
@@ -395,7 +422,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
                 // "right" is now our rank.
                 ranks[ii] = right;
                 lastFrontOrdinates[right] = cy;
-                if (right == maxRank) {
+                if (right == maxRank && maxRank <= maximalMeaningfulRank) {
                     ++maxRank;
                 }
             }

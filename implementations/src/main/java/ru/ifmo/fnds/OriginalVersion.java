@@ -60,7 +60,7 @@ public class OriginalVersion extends NonDominatedSorting {
     }
 
     @Override
-    protected void sortChecked(double[][] points, int[] ranks) {
+    protected void sortChecked(double[][] points, int[] ranks, int maximalMeaningfulRank) {
         int n = ranks.length;
         int dim = points[0].length;
 

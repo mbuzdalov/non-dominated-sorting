@@ -58,7 +58,7 @@ public class NoPresort extends AbstractDominanceTree {
     }
 
     @Override
-    protected void sortChecked(double[][] points, int[] ranks) {
+    protected void sortChecked(double[][] points, int[] ranks, int maximalMeaningfulRank) {
         sortCheckedImpl(points, ranks, points.length);
     }
 
