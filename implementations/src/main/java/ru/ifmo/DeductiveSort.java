@@ -1,6 +1,8 @@
 package ru.ifmo;
 
 public class DeductiveSort {
+    private DeductiveSort() {}
+
     private static final NonDominatedSortingFactory INSTANCE = (maximumPoints, maximumDimension) ->
             new NonDominatedSorting(maximumPoints, maximumDimension) {
         private int[] indices = new int[maximumPoints];

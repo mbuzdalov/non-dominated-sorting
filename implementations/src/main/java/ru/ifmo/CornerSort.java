@@ -1,6 +1,8 @@
 package ru.ifmo;
 
 public class CornerSort {
+    private CornerSort() {}
+
     private static final NonDominatedSortingFactory INSTANCE = (maximumPoints, maximumDimension) ->
             new NonDominatedSorting(maximumPoints, maximumDimension) {
         private int[] indices = new int[maximumPoints];
