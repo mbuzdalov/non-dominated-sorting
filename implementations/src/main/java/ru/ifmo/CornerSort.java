@@ -39,25 +39,23 @@ public class CornerSort {
                 int last = n;
                 while (curr < last) {
                     int best = curr;
-                    double bestX = points[indices[best]][objective];
+                    double[] bestPoint = points[indices[best]];
                     for (int i = curr + 1; i < last; ++i) {
-                        double currX = points[indices[i]][objective];
-                        if (bestX > currX) {
-                            bestX = currX;
+                        double[] currPoint = points[indices[i]];
+                        if (bestPoint[objective] > currPoint[objective] ||
+                                bestPoint[objective] == currPoint[objective] && dominates(currPoint, bestPoint)) {
+                            bestPoint = currPoint;
                             best = i;
                         }
                     }
-                    for (int i = best + 1; i < last; ++i) {
-                        double[] currP = points[indices[i]];
-                        if (currP[objective] == bestX && dominates(currP, points[indices[best]])) {
-                            best = i;
-                        }
-                    }
+
                     int tmp = indices[best];
                     indices[best] = indices[curr];
                     indices[curr] = tmp;
 
-                    double[] bestPoint = points[tmp];
+                    if (points[tmp] != bestPoint) {
+                        throw new AssertionError();
+                    }
                     ranks[tmp] = rank;
                     ++curr;
 
