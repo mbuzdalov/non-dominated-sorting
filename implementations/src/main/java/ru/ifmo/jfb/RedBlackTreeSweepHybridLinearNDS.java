@@ -37,7 +37,7 @@ public class RedBlackTreeSweepHybridLinearNDS extends RedBlackTreeSweep {
     }
 
     @Override
-    protected void helperAHook(int from, int until, int obj) {
+    protected int helperAHook(int from, int until, int obj) {
         for (int i = from; i < until; ++i) {
             int index = indices[i];
             howManyDominateMe[index] = 0;
@@ -71,18 +71,32 @@ public class RedBlackTreeSweepHybridLinearNDS extends RedBlackTreeSweep {
                 while (nextIndex < newRemaining && candidates[nextIndex] < bestGuy) {
                     ++nextIndex;
                 }
+                int actualRemaining = nextIndex;
                 for (int i = nextIndex; i < newRemaining; ++i) {
                     int candidate = candidates[i];
                     if (strictlyDominatesAssumingNotSame(bestGuy, candidate, obj)) {
                         --howManyDominateMe[candidate];
                         if (bestGuyRank >= ranks[candidate]) {
-                            ranks[candidate] = Math.min(bestGuyRank, maximalMeaningfulRank) + 1;
+                            ranks[candidate] = bestGuyRank + 1;
+                            if (ranks[candidate] > maximalMeaningfulRank) {
+                                reportOverflowedRank(candidate);
+                                continue;
+                            }
                         }
                     }
+                    candidates[actualRemaining++] = candidate;
                 }
+                newRemaining = actualRemaining;
             }
             remaining = newRemaining;
         }
+        int newUntil = from;
+        for (int i = from; i < until; ++i) {
+            if (ranks[indices[i]] <= maximalMeaningfulRank) {
+                indices[newUntil++] = indices[i];
+            }
+        }
+        return newUntil;
     }
 
     @Override
@@ -91,19 +105,27 @@ public class RedBlackTreeSweepHybridLinearNDS extends RedBlackTreeSweep {
     }
 
     @Override
-    protected void helperBHook(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj) {
+    protected int helperBHook(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj) {
         for (int good = goodFrom, weakMin = weakFrom; good < goodUntil; ++good) {
             int goodIndex = indices[good];
             int goodRank = ranks[goodIndex];
             while (weakMin < weakUntil && indices[weakMin] < goodIndex) {
                 ++weakMin;
             }
+            int newWeakUntil = weakMin;
             for (int weak = weakMin; weak < weakUntil; ++weak) {
                 int weakIndex = indices[weak];
                 if (goodRank >= ranks[weakIndex] && strictlyDominatesAssumingNotSame(goodIndex, weakIndex, obj)) {
-                    ranks[weakIndex] = 1 + Math.min(goodRank, maximalMeaningfulRank);
+                    ranks[weakIndex] = 1 + goodRank;
+                    if (ranks[weakIndex] > maximalMeaningfulRank) {
+                        reportOverflowedRank(weakIndex);
+                        continue;
+                    }
                 }
+                indices[newWeakUntil++] = weakIndex;
             }
+            weakUntil = newWeakUntil;
         }
+        return weakUntil;
     }
 }
