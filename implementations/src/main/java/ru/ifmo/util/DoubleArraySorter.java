@@ -10,6 +10,7 @@ public class DoubleArraySorter {
     private int[] indices = null;
     private int coordinate = -1;
     private int maxCoordinate = -1;
+    private int[] resolver = null;
 
     public DoubleArraySorter(int maximumPoints) {
         this.scratch = new double[maximumPoints];
@@ -94,6 +95,62 @@ public class DoubleArraySorter {
         this.points = null;
         this.indices = null;
         this.maxCoordinate = -1;
+    }
+
+    private void sortByResolver(int from, int until) {
+        int pivot = resolver[indices[random.nextInt(from, until)]];
+        int l = from, r = until - 1;
+        while (l <= r) {
+            while (resolver[indices[l]] < pivot) ++l;
+            while (resolver[indices[r]] > pivot) --r;
+            if (l <= r) {
+                int tmpI = indices[l];
+                indices[l] = indices[r];
+                indices[r] = tmpI;
+                ++l;
+                --r;
+            }
+        }
+        if (from + 1 <= r) sortByResolver(from, r + 1);
+        if (l + 1 < until) sortByResolver(l, until);
+    }
+
+    private void sortWhileResolvingEqualImpl(int from, int until) {
+        sortImpl(from, until);
+
+        int last = from;
+        double lastX = points[indices[from]][coordinate];
+        for (int i = from + 1; i < until; ++i) {
+            double currX = points[indices[i]][coordinate];
+            if (currX != lastX) {
+                if (last + 1 < i) {
+                    sortByResolver(last, i);
+                }
+                last = i;
+                lastX = currX;
+            }
+        }
+        if (last + 1 < until) {
+            sortByResolver(last, until);
+        }
+    }
+
+    public void sortWhileResolvingEqual(double[][] points, int[] indices, int from, int until, int coordinate, int[] resolver) {
+        if (until - from > scratch.length) {
+            throw new IllegalArgumentException("The maximum array length to be sorted is " + scratch.length
+                    + ", but you requested from = " + from + " until = " + until + " which is " + (until - from));
+        }
+        this.points = points;
+        this.indices = indices;
+        this.coordinate = coordinate;
+        this.resolver = resolver;
+
+        sortWhileResolvingEqualImpl(from, until);
+
+        this.points = null;
+        this.indices = null;
+        this.coordinate = -1;
+        this.resolver = null;
     }
 
     public static int retainUniquePoints(double[][] sourcePoints, int[] sortedIndices, double[][] targetPoints, int[] reindex) {
