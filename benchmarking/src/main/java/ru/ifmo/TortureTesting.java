@@ -10,9 +10,17 @@ public class TortureTesting {
     private static ThreadLocalRandom random = ThreadLocalRandom.current();
     private static double[][] generateCloud(int points, int dimension) {
         double[][] rv = new double[points][dimension];
-        for (int i = 0; i < points; ++i) {
-            for (int j = 0; j < dimension; ++j) {
-                rv[i][j] = random.nextDouble();
+        if (random.nextBoolean()) {
+            for (int i = 0; i < points; ++i) {
+                for (int j = 0; j < dimension; ++j) {
+                    rv[i][j] = random.nextDouble();
+                }
+            }
+        } else {
+            for (int i = 0; i < points; ++i) {
+                for (int j = 0; j < dimension; ++j) {
+                    rv[i][j] = random.nextInt(20);
+                }
             }
         }
         return rv;
