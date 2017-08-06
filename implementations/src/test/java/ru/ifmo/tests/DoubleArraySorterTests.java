@@ -57,7 +57,7 @@ public class DoubleArraySorterTests {
     public void checkSortWithResolver() {
         Random random = new Random();
         DoubleArraySorter sorter = new DoubleArraySorter(100);
-        for (int times = 0; times < 10000; ++times) {
+        for (int times = 0; times < 1000; ++times) {
             int size = 1 + random.nextInt(100);
             double[][] array = new double[size][1];
             int[] resolver = new int[size];

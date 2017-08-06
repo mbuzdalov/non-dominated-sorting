@@ -40,7 +40,8 @@ public class TortureTesting {
                 JensenFortinBuzdalov.getFenwickSweepImplementation(),
                 JensenFortinBuzdalov.getRedBlackTreeSweepImplementation(),
                 JensenFortinBuzdalov.getRedBlackTreeSweepHybridImplementation(),
-                BestOrderSort.getProteekImplementation()
+                BestOrderSort.getProteekImplementation(),
+                BestOrderSort.getImprovedImplementation()
         );
         List<NonDominatedSorting> sortings = sortingFactories
                 .stream()
@@ -58,6 +59,8 @@ public class TortureTesting {
             int[] reference = null;
             int[] ranks = new int[points];
             for (NonDominatedSorting sorting : sortings) {
+                System.gc();
+                System.gc();
                 long t0 = System.currentTimeMillis();
                 sorting.sort(instance, ranks, maxRank);
                 long time = System.currentTimeMillis() - t0;
