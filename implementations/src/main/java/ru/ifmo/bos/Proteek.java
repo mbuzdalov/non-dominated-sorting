@@ -28,7 +28,7 @@ import java.util.Arrays;
  */
 public class Proteek extends NonDominatedSorting {
     private int m1 = -1;
-    private double population[][];
+    private double[][] population;
     private int[][] allRank;
     private MergeSort mergesort;
     private int[] rank;
