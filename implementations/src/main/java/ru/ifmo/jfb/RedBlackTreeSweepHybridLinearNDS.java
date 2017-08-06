@@ -58,10 +58,11 @@ public class RedBlackTreeSweepHybridLinearNDS extends RedBlackTreeSweep {
             int bestCount = 0;
             int newRemaining = 0;
             for (int i = 0; i < remaining; ++i) {
-                if (howManyDominateMe[candidates[i]] == 0) {
-                    bestGuys[bestCount++] = candidates[i];
+                int ci = candidates[i];
+                if (howManyDominateMe[ci] == 0) {
+                    bestGuys[bestCount++] = ci;
                 } else {
-                    candidates[newRemaining++] = candidates[i];
+                    candidates[newRemaining++] = ci;
                 }
             }
             int nextIndex = 0;
