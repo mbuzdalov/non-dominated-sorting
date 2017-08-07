@@ -113,7 +113,9 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
             // 3.3: Calling the actual sorting
             int nonOverflowed = helperA(0, newN, dim - 1);
             if (nonOverflowed + overflowedCount != newN) {
-                throw new AssertionError("nonOverflowed = " + nonOverflowed + " overflowed = " + overflowedCount + " newN = " + newN);
+                throw new AssertionError("nonOverflowed = " + nonOverflowed
+                        + " overflowed = " + overflowedCount
+                        + " newN = " + newN);
             }
 
             // 3.4: Applying the results back. After that, the argument "ranks" array stops being abused.
