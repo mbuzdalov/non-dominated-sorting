@@ -127,14 +127,17 @@ public class Improved extends NonDominatedSorting {
             Arrays.fill(prevFrontIndex[d], 0, newN, -1);
         }
 
-        for (int hIndex = 0, ranked = 0; hIndex < newN && ranked < newN; ++hIndex) {
+        int smallestRank = 0;
+
+        for (int hIndex = 0, ranked = 0; hIndex < newN && smallestRank <= maximalMeaningfulRank && ranked < newN; ++hIndex) {
             for (int oIndex = 0; oIndex < dim; ++oIndex) {
                 int currIndex = objectiveIndices[oIndex][hIndex];
                 int[] prevFI = prevFrontIndex[oIndex];
                 int[] lastFI = lastFrontIndex[oIndex];
                 if (this.ranks[currIndex] == -1) {
-                    int currRank = 0;
-                    // This is currently a sequential search. Binary search implementation is expected as well.
+                    int currRank = smallestRank;
+                    // This is currently implemented as sequential search.
+                    // A binary search implementation is expected as well.
                     while (currRank <= maximalMeaningfulRank) {
                         int prevIndex = lastFI[currRank];
                         boolean someoneDominatesMe = false;
@@ -155,11 +158,26 @@ public class Improved extends NonDominatedSorting {
                     ++ranked;
                 }
                 indexNeeded[currIndex][oIndex] = false;
-                --indexNeededCount[currIndex];
                 int myRank = this.ranks[currIndex];
                 if (myRank <= maximalMeaningfulRank) {
                     prevFI[currIndex] = lastFI[myRank];
                     lastFI[myRank] = currIndex;
+                }
+                if (--indexNeededCount[currIndex] == 0) {
+                    if (smallestRank < myRank + 1) {
+                        smallestRank = myRank + 1;
+                        if (smallestRank > maximalMeaningfulRank) {
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        if (smallestRank > maximalMeaningfulRank) {
+            for (int i = 0; i < newN; ++i) {
+                if (this.ranks[i] == -1) {
+                    this.ranks[i] = maximalMeaningfulRank + 1;
                 }
             }
         }
