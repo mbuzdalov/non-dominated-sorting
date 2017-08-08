@@ -87,10 +87,8 @@ public class Presort extends AbstractDominanceTree {
             return concatenateRecursively(0, count);
         } else if (insertionOption == InsertionOption.DELAYED_INSERTION_SEQUENTIAL_CONCATENATION) {
             Node rv = concatenationNodes[0];
-            concatenationNodes[0] = null;
             for (int i = 1; i < count; ++i) {
                 rv = concatenate(rv, concatenationNodes[i]);
-                concatenationNodes[i] = null;
             }
             return rv;
         } else {
@@ -101,18 +99,11 @@ public class Presort extends AbstractDominanceTree {
     private Node mergeHelperNoDelayed(Node main, Node other) {
         Node rv = null;
         for (Node prev = null, curr = other; curr != null; ) {
-            int comparison = main.dominationCompare(curr);
-            if (comparison > 0) {
-                throw new AssertionError();
-            }
-            if (comparison < 0) {
+            if (main.dominatesAssumingThisIsNotWorse(curr)) {
                 Node deleted = curr;
                 curr = curr.next;
                 deleted.next = null;
                 main.child = merge(main.child, deleted);
-                if (main.child == main) {
-                    throw new AssertionError();
-                }
                 if (prev != null) {
                     prev.next = curr;
                 }
@@ -131,8 +122,7 @@ public class Presort extends AbstractDominanceTree {
         Node rv = null;
         int concatCount = 0;
         for (Node prev = null, curr = other; curr != null; ) {
-            int comparison = main.dominationCompare(curr);
-            if (comparison < 0) {
+            if (main.dominatesAssumingThisIsNotWorse(curr)) {
                 Node deleted = curr;
                 curr = curr.next;
                 deleted.next = null;
@@ -148,7 +138,9 @@ public class Presort extends AbstractDominanceTree {
                 rv = prev;
             }
         }
-        main.child = merge(main.child, concatenateAll(concatCount));
+        if (concatCount > 0) {
+            main.child = merge(main.child, concatenateAll(concatCount));
+        }
         return rv;
     }
 

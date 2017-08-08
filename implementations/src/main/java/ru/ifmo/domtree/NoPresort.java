@@ -18,7 +18,8 @@ public class NoPresort extends AbstractDominanceTree {
         if (b == null) {
             return a;
         }
-        for (Node aPrev = null, aCurr = a; aCurr != null; ) {
+        Node aPrev = null;
+        for (Node aCurr = a; aCurr != null; ) {
             boolean aRemoved = false;
             for (Node bPrev = null, bCurr = b; bCurr != null; ) {
                 int compare = aCurr.dominationCompare(bCurr);
@@ -54,26 +55,19 @@ public class NoPresort extends AbstractDominanceTree {
                 aCurr = aCurr.next;
             }
         }
-        return concatenate(a, b);
+        if (aPrev != null && aPrev.next != null) {
+            throw new AssertionError();
+        }
+        if (a == null) {
+            return b;
+        } else {
+            aPrev.next = b;
+            return a;
+        }
     }
 
     @Override
     protected void sortChecked(double[][] points, int[] ranks, int maximalMeaningfulRank) {
         sortCheckedImpl(points, ranks, points.length);
-    }
-
-    private Node concatenate(Node source, Node append) {
-        if (source == null) {
-            return append;
-        } else if (append == null) {
-            return source;
-        } else {
-            Node tmp = source;
-            while (tmp.next != null) {
-                tmp = tmp.next;
-            }
-            tmp.next = append;
-            return source;
-        }
     }
 }

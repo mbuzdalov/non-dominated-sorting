@@ -27,7 +27,7 @@ public abstract class AbstractDominanceTree extends NonDominatedSorting {
         for (int i = 0; i < n; ++i) {
             nodes[i].initialize(points[i]);
         }
-        Node tree = buildTree(0, n);
+        Node tree = mergeAllRecursively(nodes, 0, n);
         for (int rank = 0; tree != null; ++rank) {
             int rankMergeCount = 0;
             while (tree != null) {
@@ -48,13 +48,13 @@ public abstract class AbstractDominanceTree extends NonDominatedSorting {
             return null;
         }
         if (useRecursiveMerge) {
-             Node rv = array[0];
-             for (int i = 1; i < size; ++i) {
-                 rv = merge(rv, array[i]);
-             }
-             return rv;
-        } else {
             return mergeAllRecursively(array, 0, size);
+        } else {
+            Node rv = array[0];
+            for (int i = 1; i < size; ++i) {
+                rv = merge(rv, array[i]);
+            }
+            return rv;
         }
     }
 
@@ -64,15 +64,6 @@ public abstract class AbstractDominanceTree extends NonDominatedSorting {
         } else {
             int mid = (from + until) >>> 1;
             return merge(mergeAllRecursively(array, from, mid), mergeAllRecursively(array, mid, until));
-        }
-    }
-
-    private Node buildTree(int from, int until) {
-        if (from + 1 == until) {
-            return nodes[from];
-        } else {
-            int mid = (from + until) >>> 1;
-            return merge(buildTree(from, mid), buildTree(mid, until));
         }
     }
 
@@ -91,6 +82,17 @@ public abstract class AbstractDominanceTree extends NonDominatedSorting {
             this.point = point;
             this.next = null;
             this.child = null;
+        }
+
+        boolean dominatesAssumingThisIsNotWorse(Node that) {
+            int dim = point.length;
+            for (int i = 0; i < dim; ++i) {
+                double a = point[i], b = that.point[i];
+                if (a > b) {
+                    return false;
+                }
+            }
+            return true;
         }
 
         int dominationCompare(Node that) {
