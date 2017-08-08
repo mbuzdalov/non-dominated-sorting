@@ -1,4 +1,4 @@
-package ru.ifmo;
+package ru.ifmo.worstcase;
 
 import java.util.Arrays;
 import java.util.List;
@@ -6,53 +6,10 @@ import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
+import ru.ifmo.*;
+import static ru.ifmo.worstcase.BasicWorstCase.Instance;
+
 public class DeductiveSortWorstCase {
-    static class Instance {
-        final double[][] points;
-        final int[] ranks;
-        final int[] place;
-
-        Instance(double[][] points, int[] ranks) {
-            this.points = points;
-            this.ranks = ranks;
-            this.place = new int[points.length];
-        }
-
-        void sortMe(NonDominatedSorting sorting) {
-            Arrays.fill(place, 82463);
-            sorting.sort(points, place);
-            if (ranks != null) {
-                for (int i = 0; i < ranks.length; ++i) {
-                    if (ranks[i] != place[i]) {
-                        throw new AssertionError(sorting.getName() + " failed: at index "
-                                + i + " expected " + ranks[i] + " found " + place[i]);
-                    }
-                }
-            }
-        }
-
-        void measure(NonDominatedSorting sorting) {
-            System.out.printf("    %50s", sorting.getName());
-            for (int t = 0; t < 5; ++t) {
-                long t0 = System.currentTimeMillis();
-                sortMe(sorting);
-                System.out.print(" " + (System.currentTimeMillis() - t0));
-            }
-            System.out.println();
-        }
-    }
-
-    private static Instance generateCloud(int points, int objectives) {
-        Random random = ThreadLocalRandom.current();
-        double[][] rv = new double[points][objectives];
-        for (int i = 0; i < points; ++i) {
-            for (int j = 0; j < objectives; ++j) {
-                rv[i][j] = random.nextDouble();
-            }
-        }
-        return new Instance(rv, null);
-    }
-
     private static Instance generateNFronts(int points, int objectives, int fronts) {
         Random random = ThreadLocalRandom.current();
         double[][] rv = new double[points][objectives];
@@ -101,19 +58,21 @@ public class DeductiveSortWorstCase {
                 .map(nonDominatedSortingFactory -> nonDominatedSortingFactory.getInstance(maxPoints, maxObjectives))
                 .collect(Collectors.toList());
 
+        int nameLength = sortings.stream().mapToInt(s -> s.getName().length()).max().orElse(-1);
+
         System.out.println("Warming up... ");
         for (NonDominatedSorting sorting : sortings) {
             System.out.println("    " + sorting.getName());
-            Instance instance = generateNFronts(1000, maxObjectives, 3);
+            Instance instance = BasicWorstCase.generateCloud(maxPoints / 5, maxObjectives);
             for (int i = 0; i < 100; ++i) {
                 instance.sortMe(sorting);
             }
         }
 
         System.out.println("CLOUD: " + maxPoints + " points, " + maxObjectives + " objectives");
-        Instance cloudInstance = generateCloud(maxPoints, maxObjectives);
+        Instance cloudInstance = BasicWorstCase.generateCloud(maxPoints, maxObjectives);
         for (NonDominatedSorting sorting : sortings) {
-            cloudInstance.measure(sorting);
+            cloudInstance.measure(sorting, nameLength);
         }
 
         for (int fronts = 1; fronts <= maxPoints; ++fronts) {
@@ -123,7 +82,7 @@ public class DeductiveSortWorstCase {
             System.out.println("NFRONTS: " + maxPoints + " points, " + maxObjectives + " objectives, " + fronts + " fronts");
             Instance instance = generateNFronts(maxPoints, maxObjectives, fronts);
             for (NonDominatedSorting sorting : sortings) {
-                instance.measure(sorting);
+                instance.measure(sorting, nameLength);
             }
         }
     }
