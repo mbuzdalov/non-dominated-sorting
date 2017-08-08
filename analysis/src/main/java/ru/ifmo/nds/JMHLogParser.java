@@ -6,7 +6,7 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Stream;
 
-public class JMHLogParser {
+class JMHLogParser {
     private static final String BENCHMARK_NAME_START = "# Benchmark: ";
     private static final String PARAMETERS_START = "# Parameters: ";
     private static final String FORK_START = "# Fork: ";
@@ -14,6 +14,8 @@ public class JMHLogParser {
     private static final String ITERATION = "Iteration";
     private static final String WARMUP_ITERATION = "# Warmup Iteration";
     private static final String RESULT_START = "Result";
+
+    private static final String DIVIDER_PARAM = "nInstances";
 
     private static final List<String> UNWANTED_PREFIXES = Arrays.asList("[info]", "[success]");
 
@@ -83,6 +85,15 @@ public class JMHLogParser {
         return Double.parseDouble(s);
     }
 
+    private void addValueToBenchmarkResult(String s) {
+        double value = parseDoubleIgnoringLocale(s);
+        if (lastBenchmarkParams.containsKey(DIVIDER_PARAM)) {
+            int divider = lastBenchmarkParams.get(DIVIDER_PARAM);
+            value /= divider;
+        }
+        lastBenchmarkData.add(value * 1e-6);
+    }
+
     private void consumeLine(String line) {
         line = cleanStringFromColors(line);
         boolean lineChanged;
@@ -128,7 +139,7 @@ public class JMHLogParser {
                     if (!unit.equals("us/op")) {
                         throw new UnsupportedOperationException("Cannot work with units other than us/op: '" + unit);
                     }
-                    lastBenchmarkData.add(parseDoubleIgnoringLocale(value) * 1e-6);
+                    addValueToBenchmarkResult(value);
                 } else if (line.startsWith(WARMUP_ITERATION)) {
                     StringTokenizer st = new StringTokenizer(line.substring(WARMUP_ITERATION.length()));
                     st.nextToken(); // iteration number
@@ -137,7 +148,7 @@ public class JMHLogParser {
                     if (!unit.equals("us/op")) {
                         throw new UnsupportedOperationException("Cannot work with units other than us/op: '" + unit);
                     }
-                    lastBenchmarkData.add(parseDoubleIgnoringLocale(value) * 1e-6);
+                    addValueToBenchmarkResult(value);
                 } else if (line.startsWith(RESULT_START)) {
                     consumedBenchmarks.add(new JMHBenchmarkResult(lastBenchmarkName, lastBenchmarkParams, lastBenchmarkData));
                     state = 4;
@@ -170,7 +181,7 @@ public class JMHLogParser {
         return new ArrayList<>(consumedBenchmarks);
     }
 
-    public static List<JMHBenchmarkResult> parse(Path file) throws IOException {
+    static List<JMHBenchmarkResult> parse(Path file) throws IOException {
         return new JMHLogParser(Files.lines(file)).getResults();
     }
 }
