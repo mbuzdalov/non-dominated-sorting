@@ -59,9 +59,6 @@ public abstract class AbstractDominanceTree extends NonDominatedSorting {
     }
 
     private Node mergeAllRecursively(Node[] array, int from, int until) {
-        if (from >= until) {
-            throw new AssertionError();
-        }
         if (from + 1 == until) {
             return array[from];
         } else {
@@ -71,9 +68,6 @@ public abstract class AbstractDominanceTree extends NonDominatedSorting {
     }
 
     private Node buildTree(int from, int until) {
-        if (from >= until) {
-            throw new AssertionError();
-        }
         if (from + 1 == until) {
             return nodes[from];
         } else {
