@@ -1,42 +1,54 @@
 package ru.ifmo.jmh;
 
 import org.openjdk.jmh.annotations.*;
+import org.openjdk.jmh.infra.BenchmarkParams;
 import ru.ifmo.NonDominatedSorting;
 import ru.ifmo.NonDominatedSortingFactory;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.StringTokenizer;
 import java.util.concurrent.TimeUnit;
 
-@State(Scope.Thread)
-@Fork(5)
+@State(Scope.Benchmark)
+@Fork(3)
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
 public abstract class AbstractBenchmark {
-    @Param({"2", "3", "4", "5", "10"})
+    @Param({"2", "3", "4", "5", "6", "7", "8", "9", "10"})
     private int dimension;
 
+    @Param({"1", "2", "3", "4", "5"})
+    private int instanceRandomSeed;
+
     private NonDominatedSorting sorting;
-    private Dataset uniformHypercube10;
-    private Dataset uniformHypercube100;
-    private Dataset uniformHypercube1000;
-    private Dataset uniformHypercube10000;
-    private Dataset uniformHyperplane10;
-    private Dataset uniformHyperplane100;
-    private Dataset uniformHyperplane1000;
-    private Dataset uniformHyperplane10000;
+    private Dataset dataset;
 
     @Setup
-    public void initializeSorterAndData() {
-        uniformHypercube10 = Dataset.generateUniformHypercube(10, dimension);
-        uniformHypercube100 = Dataset.generateUniformHypercube(100, dimension);
-        uniformHypercube1000 = Dataset.generateUniformHypercube(1000, dimension);
-        uniformHypercube10000 = Dataset.generateUniformHypercube(10000, dimension);
+    public void initializeSorterAndData(BenchmarkParams params) {
+        String benchmarkName = params.getBenchmark();
+        String benchmarkMethodName = benchmarkName.substring(benchmarkName.lastIndexOf('.') + 1);
+        StringTokenizer tokenizer = new StringTokenizer(benchmarkMethodName, "_");
+        String benchmarkType = tokenizer.nextToken();
+        Map<String, Integer> benchmarkParams = new HashMap<>();
+        while (tokenizer.hasMoreTokens()) {
+            String token = tokenizer.nextToken();
+            int firstNumber = 0;
+            while (!Character.isDigit(token.charAt(firstNumber))) {
+                ++firstNumber;
+            }
+            String paramName = token.substring(0, firstNumber);
+            int paramValue = Integer.parseInt(token.substring(firstNumber));
+            benchmarkParams.put(paramName, paramValue);
+        }
 
-        uniformHyperplane10 = Dataset.generateUniformHyperplane(10, dimension);
-        uniformHyperplane100 = Dataset.generateUniformHyperplane(100, dimension);
-        uniformHyperplane1000 = Dataset.generateUniformHyperplane(1000, dimension);
-        uniformHyperplane10000 = Dataset.generateUniformHyperplane(10000, dimension);
+        int realSeed = (benchmarkMethodName + "%" + instanceRandomSeed + "%" + dimension).hashCode();
 
-        sorting = getFactory().getInstance(10000, dimension);
+        benchmarkParams.put("seed", realSeed);
+        benchmarkParams.put("dimension", dimension);
+
+        dataset = Dataset.generate(benchmarkType, benchmarkParams);
+        sorting = getFactory().getInstance(benchmarkParams.get("N"), dimension);
     }
 
     @TearDown
@@ -45,59 +57,59 @@ public abstract class AbstractBenchmark {
     }
 
     @Benchmark
-    @Warmup(iterations = 20, time = 1)
-    @Measurement(iterations = 5, time = 1)
+    @Warmup(iterations = 5, time = 100, timeUnit = TimeUnit.MILLISECONDS)
+    @Measurement(iterations = 5, time = 100, timeUnit = TimeUnit.MILLISECONDS)
     public int uniformHypercube_N10() {
-        return uniformHypercube10.runSortingOnMe(sorting);
+        return dataset.runSortingOnMe(sorting);
     }
 
     @Benchmark
-    @Warmup(iterations = 20, time = 1)
-    @Measurement(iterations = 5, time = 1)
+    @Warmup(iterations = 5, time = 100, timeUnit = TimeUnit.MILLISECONDS)
+    @Measurement(iterations = 5, time = 100, timeUnit = TimeUnit.MILLISECONDS)
     public int uniformHypercube_N100() {
-        return uniformHypercube100.runSortingOnMe(sorting);
+        return dataset.runSortingOnMe(sorting);
     }
 
     @Benchmark
-    @Warmup(iterations = 20, time = 1)
+    @Warmup(iterations = 5, time = 1)
     @Measurement(iterations = 5, time = 1)
     public int uniformHypercube_N1000() {
-        return uniformHypercube1000.runSortingOnMe(sorting);
+        return dataset.runSortingOnMe(sorting);
     }
 
     @Benchmark
-    @Warmup(iterations = 20, time = 10)
+    @Warmup(iterations = 5, time = 10)
     @Measurement(iterations = 5, time = 10)
     public int uniformHypercube_N10000() {
-        return uniformHypercube10000.runSortingOnMe(sorting);
+        return dataset.runSortingOnMe(sorting);
     }
 
     @Benchmark
-    @Warmup(iterations = 20, time = 1)
-    @Measurement(iterations = 5, time = 1)
+    @Warmup(iterations = 5, time = 100, timeUnit = TimeUnit.MILLISECONDS)
+    @Measurement(iterations = 5, time = 100, timeUnit = TimeUnit.MILLISECONDS)
     public int uniformHyperplane_N10() {
-        return uniformHyperplane10.runSortingOnMe(sorting);
+        return dataset.runSortingOnMe(sorting);
     }
 
     @Benchmark
-    @Warmup(iterations = 20, time = 1)
-    @Measurement(iterations = 5, time = 1)
+    @Warmup(iterations = 5, time = 100, timeUnit = TimeUnit.MILLISECONDS)
+    @Measurement(iterations = 5, time = 100, timeUnit = TimeUnit.MILLISECONDS)
     public int uniformHyperplane_N100() {
-        return uniformHyperplane100.runSortingOnMe(sorting);
+        return dataset.runSortingOnMe(sorting);
     }
 
     @Benchmark
-    @Warmup(iterations = 20, time = 1)
+    @Warmup(iterations = 5, time = 1)
     @Measurement(iterations = 5, time = 1)
     public int uniformHyperplane_N1000() {
-        return uniformHyperplane1000.runSortingOnMe(sorting);
+        return dataset.runSortingOnMe(sorting);
     }
 
     @Benchmark
-    @Warmup(iterations = 20, time = 10)
+    @Warmup(iterations = 5, time = 10)
     @Measurement(iterations = 5, time = 10)
     public int uniformHyperplane_N10000() {
-        return uniformHyperplane10000.runSortingOnMe(sorting);
+        return dataset.runSortingOnMe(sorting);
     }
 
     protected abstract NonDominatedSortingFactory getFactory();

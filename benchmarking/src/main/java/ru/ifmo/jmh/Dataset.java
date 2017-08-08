@@ -1,12 +1,11 @@
 package ru.ifmo.jmh;
 
-import java.util.Arrays;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
 import ru.ifmo.NonDominatedSorting;
 
-public class Dataset {
+class Dataset {
     private final double[][] points;
     private final int[] ranks;
 
@@ -15,7 +14,7 @@ public class Dataset {
         this.ranks = ranks;
     }
 
-    public int runSortingOnMe(NonDominatedSorting sorting) {
+    int runSortingOnMe(NonDominatedSorting sorting) {
         Arrays.fill(ranks, 0);
         sorting.sort(points, ranks);
         int sum = 0;
@@ -25,8 +24,18 @@ public class Dataset {
         return sum;
     }
 
-    public static Dataset generateUniformHyperplane(int numPoints, int dimension) {
-        Random random = ThreadLocalRandom.current();
+    static Dataset generate(String benchmarkName, Map<String, Integer> params) {
+        switch (benchmarkName) {
+            case "uniformHypercube":
+                return generateUniformHypercube(params.get("N"), params.get("dimension"), params.get("seed"));
+            case "uniformHyperplane":
+                return generateUniformHyperplane(params.get("N"), params.get("dimension"), params.get("seed"));
+            default: throw new AssertionError("Unknown generator name '" + benchmarkName + "'");
+        }
+    }
+
+    private static Dataset generateUniformHyperplane(int numPoints, int dimension, int seed) {
+        Random random = new Random(seed);
         double[][] points = new double[numPoints][dimension];
         for (double[] point : points) {
             for (int i = 1; i < dimension; ++i) {
@@ -38,8 +47,8 @@ public class Dataset {
         return new Dataset(points, new int[numPoints]);
     }
 
-    public static Dataset generateUniformHypercube(int numPoints, int dimension) {
-        Random random = ThreadLocalRandom.current();
+    private static Dataset generateUniformHypercube(int numPoints, int dimension, int seed) {
+        Random random = new Random(seed);
         double[][] points = new double[numPoints][dimension];
         for (double[] point : points) {
             for (int i = 0; i < dimension; ++i) {
