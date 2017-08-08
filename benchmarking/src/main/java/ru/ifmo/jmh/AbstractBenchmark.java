@@ -57,15 +57,15 @@ public abstract class AbstractBenchmark {
     }
 
     @Benchmark
-    @Warmup(iterations = 5, time = 100, timeUnit = TimeUnit.MILLISECONDS)
-    @Measurement(iterations = 5, time = 100, timeUnit = TimeUnit.MILLISECONDS)
+    @Warmup(iterations = 5, time = 1)
+    @Measurement(iterations = 5, time = 1)
     public int uniformHypercube_N10() {
         return dataset.runSortingOnMe(sorting);
     }
 
     @Benchmark
-    @Warmup(iterations = 5, time = 100, timeUnit = TimeUnit.MILLISECONDS)
-    @Measurement(iterations = 5, time = 100, timeUnit = TimeUnit.MILLISECONDS)
+    @Warmup(iterations = 5, time = 1)
+    @Measurement(iterations = 5, time = 1)
     public int uniformHypercube_N100() {
         return dataset.runSortingOnMe(sorting);
     }
@@ -85,15 +85,15 @@ public abstract class AbstractBenchmark {
     }
 
     @Benchmark
-    @Warmup(iterations = 5, time = 100, timeUnit = TimeUnit.MILLISECONDS)
-    @Measurement(iterations = 5, time = 100, timeUnit = TimeUnit.MILLISECONDS)
+    @Warmup(iterations = 5, time = 1)
+    @Measurement(iterations = 5, time = 1)
     public int uniformHyperplane_N10() {
         return dataset.runSortingOnMe(sorting);
     }
 
     @Benchmark
-    @Warmup(iterations = 5, time = 100, timeUnit = TimeUnit.MILLISECONDS)
-    @Measurement(iterations = 5, time = 100, timeUnit = TimeUnit.MILLISECONDS)
+    @Warmup(iterations = 5, time = 1)
+    @Measurement(iterations = 5, time = 1)
     public int uniformHyperplane_N100() {
         return dataset.runSortingOnMe(sorting);
     }
