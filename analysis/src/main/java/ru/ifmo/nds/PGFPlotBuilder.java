@@ -45,9 +45,9 @@ public class PGFPlotBuilder {
         void print(PrintWriter out) {
             out.println("% " + myDescriptor.toString());
             out.println("\\section*{Dataset: " + myDescriptor.toString() + "}");
-            out.println("\\begin{tikzpicture}");
+            out.println("\\begin{tikzpicture}[scale=0.65]");
             out.println("\\begin{axis}[xtick=data, xmode=log, ymode=log,");
-            out.println("              width=\\textwidth, height=0.45\\textheight, legend pos=north west,");
+            out.println("              width=\\textwidth, height=0.7\\textheight, legend pos=outer north east,");
             out.println("              ymin=2e-7, ymax=10, cycle list name=my custom]");
 
             StringWriter tableBuilder = new StringWriter();
@@ -80,7 +80,7 @@ public class PGFPlotBuilder {
             out.println("\\end{axis}");
             out.println("\\end{tikzpicture}\\vspace{2ex}");
             out.println();
-            out.println("\\pgfplotstabletypeset[sci zerofill, columns/Algo/.style={string type}] {");
+            out.println("\\pgfplotstabletypeset[font=\\footnotesize, sci zerofill, columns/Algo/.style={string type}] {");
             out.println("    Algo T10 T100 T1000 T10000");
             out.println(tableBuilder.getBuffer());
             out.println("}");
@@ -239,7 +239,7 @@ public class PGFPlotBuilder {
         try (PrintWriter out = outputFile == null ? new PrintWriter(System.out) : new PrintWriter(outputFile)) {
             out.println("\\documentclass{extreport}");
             out.println("\\usepackage{geometry}");
-            out.println("\\geometry{a4paper,top=2cm,bottom=2cm,left=2cm,right=2cm}");
+            out.println("\\geometry{a4paper,landscape,top=2cm,bottom=2cm,left=2cm,right=2cm}");
             out.println("\\usepackage[T2A]{fontenc}");
             out.println("\\usepackage[utf8]{inputenc}");
             out.println("\\usepackage{pgfplots}");
