@@ -64,7 +64,7 @@ class JMHLogParser {
     }
 
     private void consumeParameters(String line) {
-        StringTokenizer st = new StringTokenizer(line.substring(PARAMETERS_START.length()).trim(), "()");
+        StringTokenizer st = new StringTokenizer(line.substring(PARAMETERS_START.length()).trim(), "(,)");
         while (st.hasMoreTokens()) {
             String token = st.nextToken();
             int equalSign = token.indexOf('=');
@@ -150,6 +150,7 @@ class JMHLogParser {
                     }
                     addValueToBenchmarkResult(value);
                 } else if (line.startsWith(RESULT_START)) {
+                    lastBenchmarkParams.remove(DIVIDER_PARAM);
                     consumedBenchmarks.add(new JMHBenchmarkResult(lastBenchmarkName, lastBenchmarkParams, lastBenchmarkData));
                     state = 4;
                 }
