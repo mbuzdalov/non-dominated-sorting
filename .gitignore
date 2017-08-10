@@ -22,7 +22,6 @@
 hs_err_pid*
 
 # IntelliJ IDEA stuff
-*.iml
 .idea/
 /out/
 /project/build.properties
@@ -33,3 +32,4 @@ hs_err_pid*
 /project/target/
 /benchmarking/target/
 /implementations/target/
+/analysis/target/
