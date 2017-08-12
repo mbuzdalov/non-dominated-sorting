@@ -20,7 +20,7 @@ public class LaTeX {
         out.println("\\begin{tikzpicture}[scale=0.65]");
         out.println("\\begin{axis}[xtick=data, xmode=log, ymode=log,");
         out.println("              width=\\textwidth, height=0.7\\textheight, legend pos=outer north east,");
-        out.println("              ymin=1e-11, ymax=3e-7, cycle list name=my custom]");
+        out.println("              ymin=3e-7, ymax=4, cycle list name=my custom]");
 
         StringWriter tableBuilder = new StringWriter();
         PrintWriter tableWriter = new PrintWriter(tableBuilder);
@@ -43,7 +43,7 @@ public class LaTeX {
                 double errMin = avg - min;
                 double errMax = max - avg;
                 tableWriter.print(" " + avg);
-                out.println(" " + (avg / N / N) + " " + (errMin / N / N) + " " + (errMax / N / N));
+                out.println(" " + avg + " " + errMin + " " + errMax);
             }
             out.println("};");
             out.println("\\addlegendentry{" + plot.getKey() + "};");

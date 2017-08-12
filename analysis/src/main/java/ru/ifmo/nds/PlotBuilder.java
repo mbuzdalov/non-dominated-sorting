@@ -1,6 +1,7 @@
 package ru.ifmo.nds;
 
 import ru.ifmo.nds.plotting.LaTeX;
+import ru.ifmo.nds.plotting.Plotly;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -16,6 +17,7 @@ public class PlotBuilder {
     private static final String INPUT_OPTION = "--input";
     private static final String INPUT_IGNORE_OPTION = "--input-ignore";
     private static final String OUTPUT_LATEX_OPTION = "--output-latex";
+    private static final String OUTPUT_PLOTLY_OPTION = "--output-plotly";
     private static final String INPUT_FILE_LIST_OPTION = "--input-file-list";
 
     public static void printUsageAndExit(String errorMessage) {
@@ -32,6 +34,8 @@ public class PlotBuilder {
         System.err.println("        Everything after the whitespace is interpreted as the plot's name.");
         System.err.println("    --output-latex <filename>");
         System.err.println("        Print LaTeX output to <filename>.");
+        System.err.println("    --output-plotly <filename>");
+        System.err.println("        Print an HTML with Plot.ly charts to <filename>.");
         System.exit(1);
         throw new AssertionError("System.exit is banned from stopping the program");
     }
@@ -193,6 +197,15 @@ public class PlotBuilder {
                     } else {
                         Path target = Paths.get(args[i + 1]);
                         printCommands.add(plot -> LaTeX.printLaTeX(plot, target));
+                        i += 1;
+                    }
+                    break;
+                case OUTPUT_PLOTLY_OPTION:
+                    if (i + 1 >= args.length) {
+                        printUsageAndExit("Last " + OUTPUT_PLOTLY_OPTION + " followed by no arguments");
+                    } else {
+                        Path target = Paths.get(args[i + 1]);
+                        printCommands.add(plot -> Plotly.printPlotly(plot, target));
                         i += 1;
                     }
                     break;
