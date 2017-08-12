@@ -1,22 +1,26 @@
 package ru.ifmo.nds;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.function.Consumer;
 
-public class PGFPlotBuilder {
+public class PlotBuilder {
     private static final String INPUT_OPTION = "--input";
     private static final String INPUT_IGNORE_OPTION = "--input-ignore";
-    private static final String OUTPUT_OPTION = "--output";
+    private static final String OUTPUT_LATEX_OPTION = "--output-latex";
     private static final String INPUT_FILE_LIST_OPTION = "--input-file-list";
 
     private static void printUsageAndExit(String errorMessage) {
         if (errorMessage != null) {
             System.err.println("Error: " + errorMessage);
         }
-        System.err.println("Usage: ru.ifmo.nds.PGFPlotBuilder [options] where options are:");
+        System.err.println("Usage: ru.ifmo.nds.PlotBuilder [options] where options are:");
         System.err.println("    --input <filename> <name>");
         System.err.println("        Include JMH log from file <filename> under name <name> in the plots.");
         System.err.println("    --input-file-list <filename>");
@@ -24,8 +28,8 @@ public class PGFPlotBuilder {
         System.err.println("        Every line starting with '+' is interpreted.");
         System.err.println("        The first non-whitespace token immediately after it should be a filename.");
         System.err.println("        Everything after the whitespace is interpreted as the plot's name.");
-        System.err.println("    --output <filename>");
-        System.err.println("        Print LaTeX output to <filename> instead of standard output.");
+        System.err.println("    --output-latex <filename>");
+        System.err.println("        Print LaTeX output to <filename>.");
         System.exit(1);
         throw new AssertionError("System.exit is banned from stopping the program");
     }
@@ -42,7 +46,7 @@ public class PGFPlotBuilder {
             myResults.computeIfAbsent(plotName, k -> new ArrayList<>()).add(result);
         }
 
-        void print(PrintWriter out) {
+        void printLaTeX(PrintWriter out) {
             out.println("% " + myDescriptor.toString());
             out.println("\\section*{Dataset: " + myDescriptor.toString() + "}");
             out.println("\\begin{tikzpicture}[scale=0.65]");
@@ -159,9 +163,61 @@ public class PGFPlotBuilder {
         }
     }
 
+    private static void printLaTeX(Map<SinglePlot.PlotDescriptor, SinglePlot> plots, Path output) {
+        try (PrintWriter out = new PrintWriter(Files.newBufferedWriter(output))) {
+            out.println("\\documentclass{extreport}");
+            out.println("\\usepackage{geometry}");
+            out.println("\\geometry{a4paper,landscape,top=2cm,bottom=2cm,left=2cm,right=2cm}");
+            out.println("\\usepackage[T2A]{fontenc}");
+            out.println("\\usepackage[utf8]{inputenc}");
+            out.println("\\usepackage{pgfplots}");
+            out.println("\\pgfplotsset{compat=newest}");
+            out.println("\\usepackage{pgfplotstable}");
+            out.println("\\pgfplotscreateplotcyclelist{my custom}{%");
+            out.println("blue!60!black,every mark/.append style={fill=blue!60!black},mark=*\\\\%1");
+            out.println("red!70!black,every mark/.append style={fill=red!70!black},mark=*\\\\%2");
+            out.println("green!70!black,every mark/.append style={fill=green!70!black},mark=*\\\\%3");
+            out.println("gray,every mark/.append style={fill=gray},mark=*\\\\%4");
+            out.println("orange,every mark/.append style={fill=orange},mark=*\\\\%5");
+            out.println("brown!80!black,every mark/.append style={fill=brown!80!black},mark=*\\\\%6");
+            out.println("green,every mark/.append style={fill=green},mark=*\\\\%7");
+            out.println("violet!80!black,every mark/.append style={fill=violet!80!black},mark=*\\\\%8");
+            out.println("black,every mark/.append style={fill=black},mark=*\\\\%9");
+            out.println("teal,every mark/.append style={fill=teal},mark=*\\\\%10");
+            out.println("magenta!70!black,every mark/.append style={fill=magenta!70!black},mark=*\\\\%11");
+            out.println("yellow!90!black,every mark/.append style={fill=yellow!90!black},mark=*\\\\%12");
+            out.println("blue!60!black,every mark/.append style={fill=blue!60!black},mark=star\\\\%13");
+            out.println("red!70!black,every mark/.append style={fill=red!70!black},mark=star\\\\%14");
+            out.println("green!70!black,every mark/.append style={fill=green!70!black},mark=star\\\\%15");
+            out.println("gray,every mark/.append style={fill=gray},mark=star\\\\%16");
+            out.println("orange,every mark/.append style={fill=orange},mark=star\\\\%17");
+            out.println("brown!80!black,every mark/.append style={fill=brown!80!black},mark=star\\\\%18");
+            out.println("green,every mark/.append style={fill=green},mark=star\\\\%19");
+            out.println("violet!80!black,every mark/.append style={fill=violet!80!black},mark=star\\\\%20");
+            out.println("black,every mark/.append style={fill=black},mark=star\\\\%21");
+            out.println("teal,every mark/.append style={fill=teal},mark=star\\\\%22");
+            out.println("magenta!70!black,every mark/.append style={fill=magenta!70!black},mark=star\\\\%23");
+            out.println("yellow!90!black,every mark/.append style={fill=yellow!90!black},mark=star\\\\%24");
+            out.println("}");
+            out.println("\\begin{document}");
+            for (SinglePlot plot : plots.values()) {
+                plot.printLaTeX(out);
+            }
+            out.println("\\end{document}");
+        } catch (IOException ex) {
+            StringWriter out = new StringWriter();
+            PrintWriter pw = new PrintWriter(out);
+            ex.printStackTrace(pw);
+            pw.println();
+            pw.println("Error: file '" + output.toString() + "' cannot be written to");
+            pw.close();
+            printUsageAndExit(out.toString());
+        }
+    }
+
     public static void main(String[] args) {
         Map<SinglePlot.PlotDescriptor, SinglePlot> plots = new TreeMap<>();
-        String outputFile = null;
+        List<Consumer<Map<SinglePlot.PlotDescriptor, SinglePlot>>> printCommands = new ArrayList<>();
 
         for (int i = 0; i < args.length; ++i) {
             switch (args[i]) {
@@ -226,64 +282,17 @@ public class PGFPlotBuilder {
                         printUsageAndExit(out.toString());
                     }
                     break;
-                case OUTPUT_OPTION:
+                case OUTPUT_LATEX_OPTION:
                     if (i + 1 >= args.length) {
-                        printUsageAndExit("Last " + OUTPUT_OPTION + " followed by no arguments");
+                        printUsageAndExit("Last " + OUTPUT_LATEX_OPTION + " followed by no arguments");
+                    } else {
+                        Path target = Paths.get(args[i + 1]);
+                        printCommands.add(plot -> printLaTeX(plot, target));
+                        i += 1;
                     }
-                    outputFile = args[i + 1];
-                    i += 1;
                     break;
             }
         }
-
-        try (PrintWriter out = outputFile == null ? new PrintWriter(System.out) : new PrintWriter(outputFile)) {
-            out.println("\\documentclass{extreport}");
-            out.println("\\usepackage{geometry}");
-            out.println("\\geometry{a4paper,landscape,top=2cm,bottom=2cm,left=2cm,right=2cm}");
-            out.println("\\usepackage[T2A]{fontenc}");
-            out.println("\\usepackage[utf8]{inputenc}");
-            out.println("\\usepackage{pgfplots}");
-            out.println("\\pgfplotsset{compat=newest}");
-            out.println("\\usepackage{pgfplotstable}");
-            out.println("\\pgfplotscreateplotcyclelist{my custom}{%");
-            out.println("blue!60!black,every mark/.append style={fill=blue!60!black},mark=*\\\\%1");
-            out.println("red!70!black,every mark/.append style={fill=red!70!black},mark=*\\\\%2");
-            out.println("green!70!black,every mark/.append style={fill=green!70!black},mark=*\\\\%3");
-            out.println("gray,every mark/.append style={fill=gray},mark=*\\\\%4");
-            out.println("orange,every mark/.append style={fill=orange},mark=*\\\\%5");
-            out.println("brown!80!black,every mark/.append style={fill=brown!80!black},mark=*\\\\%6");
-            out.println("green,every mark/.append style={fill=green},mark=*\\\\%7");
-            out.println("violet!80!black,every mark/.append style={fill=violet!80!black},mark=*\\\\%8");
-            out.println("black,every mark/.append style={fill=black},mark=*\\\\%9");
-            out.println("teal,every mark/.append style={fill=teal},mark=*\\\\%10");
-            out.println("magenta!70!black,every mark/.append style={fill=magenta!70!black},mark=*\\\\%11");
-            out.println("yellow!90!black,every mark/.append style={fill=yellow!90!black},mark=*\\\\%12");
-            out.println("blue!60!black,every mark/.append style={fill=blue!60!black},mark=star\\\\%13");
-            out.println("red!70!black,every mark/.append style={fill=red!70!black},mark=star\\\\%14");
-            out.println("green!70!black,every mark/.append style={fill=green!70!black},mark=star\\\\%15");
-            out.println("gray,every mark/.append style={fill=gray},mark=star\\\\%16");
-            out.println("orange,every mark/.append style={fill=orange},mark=star\\\\%17");
-            out.println("brown!80!black,every mark/.append style={fill=brown!80!black},mark=star\\\\%18");
-            out.println("green,every mark/.append style={fill=green},mark=star\\\\%19");
-            out.println("violet!80!black,every mark/.append style={fill=violet!80!black},mark=star\\\\%20");
-            out.println("black,every mark/.append style={fill=black},mark=star\\\\%21");
-            out.println("teal,every mark/.append style={fill=teal},mark=star\\\\%22");
-            out.println("magenta!70!black,every mark/.append style={fill=magenta!70!black},mark=star\\\\%23");
-            out.println("yellow!90!black,every mark/.append style={fill=yellow!90!black},mark=star\\\\%24");
-            out.println("}");
-            out.println("\\begin{document}");
-            for (SinglePlot plot : plots.values()) {
-                plot.print(out);
-            }
-            out.println("\\end{document}");
-        } catch (FileNotFoundException ex) {
-            StringWriter out = new StringWriter();
-            PrintWriter pw = new PrintWriter(out);
-            ex.printStackTrace(pw);
-            pw.println();
-            pw.println("Error: file '" + outputFile + "' cannot be written to");
-            pw.close();
-            printUsageAndExit(out.toString());
-        }
+        printCommands.forEach(action -> action.accept(plots));
     }
 }
