@@ -14,6 +14,7 @@ The following algorithms are currently implemented:
 * [ENS](#ens)
 * [Best Order Sort](#best-order-sort)
 * [Jensen-Fortin-Buzdalov divide-and-conquer method](#jensen-fortin-buzdalov)
+* [Sumit Mishra divide-and-conquer method](#sumit-mishra-s-dcns)
 
 ### Fast Non-Dominated Sorting
 
@@ -223,3 +224,21 @@ https://github.com/mbuzdalov/non-dominated-sorting/blob/master/implementations/s
 https://github.com/mbuzdalov/non-dominated-sorting/blob/master/implementations/src/main/java/ru/ifmo/nds/JensenFortinBuzdalov.java
 )`.getRedBlackTreeSweepHybridImplementation()` -- returns a hybrid implementation, which works as the red-black tree implementation, but switches to linear-memory fast non-dominated sorting on small enough subproblems. This version works much faster than the simple red-black-tree implementation at M>2, and is currently the fastest available algorithm. The memory requirements are O(MN), and no meaningful upper bounds are known other than O(min(MN^2), N (log N)^(M - 1)).
 
+### Sumit Mishra's DCNS
+
+```
+@inproceedings{ dncs-cec2016,
+    author      = {Sumit Mishra and Sriparna Saha and Samrat Mondal},
+    title       = {Divide and Conquer Based Non-dominated Sorting for Parallel Environment},
+    booktitle   = {Proceedings of Congress on Evolutionary Computation},
+    year        = {2016},
+    pages       = {4297-4304},
+    publisher   = {IEEE},
+    langid      = {english}
+}
+```
+
+How to get an instance:
+* [SumitMishraDivideConquer](
+https://github.com/mbuzdalov/non-dominated-sorting/blob/master/implementations/src/main/java/ru/ifmo/nds/SumitMishraDivideConquer.java
+)`.getSumitImplementation2016(boolean useBinarySearch, boolean useGammaHeuristic)` -- returns an original implementation of Sumit Mishra, minimally adapted to the requirements of the framework. The `useBinarySearch` parameter switches BS versions instead of SS. The `useGammaHeuristic` parameter switches on the heuristic which aims at reducing the number of comparisons. The worst-case running time complexity is O(MN^2).
