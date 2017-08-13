@@ -7,13 +7,13 @@ This repo contains implementations of algorithms for non-dominated sorting and a
 
 The following algorithms are currently implemented:
 
-* Fast Non-Dominated Sorting
-* Deductive Sort
-* Corner Sort
-* Dominance Tree
-* ENS
-* Best Order Sort
-* Jensen-Fortin-Buzdalov divide-and-conquer method
+* [Fast Non-Dominated Sorting](#fast-non-dominated-sorting)
+* [Deductive Sort](#deductive-sort)
+* [Corner Sort](#corner-sort)
+* [Dominance Tree](#dominance-tree)
+* [ENS](#ens)
+* [Best Order Sort](#best-order-sort)
+* [Jensen-Fortin-Buzdalov divide-and-conquer method](#jensen-fortin-buzdalov)
 
 ### Fast Non-Dominated Sorting
 
@@ -120,7 +120,8 @@ Delayed insertion is currently not implemented for the no-presort version, as th
 ```
 @article{ ens,
     author      = {Xingyi Zhang and Ye Tian and Ran Cheng and Yaochu Jin},
-    title       = {An Efficient Approach to Nondominated Sorting for Evolutionary Multiobjective Optimization},
+    title       = {An Efficient Approach to Nondominated Sorting
+                   for Evolutionary Multiobjective Optimization},
     journal     = {IEEE Transactions on Evolutionary Computation},
     year        = {2015},
     volume      = {19},
@@ -140,7 +141,7 @@ https://github.com/mbuzdalov/non-dominated-sorting/blob/master/implementations/s
 )`.getENS_BS()` -- returns an instance of ENS with binary search insertion.
 
 Both implementations require O(N) memory and have worst-case running time complexity O(MN^2).
-The `ENS_SS` version generally performs faster (up to 2 maybe times), except for occasional M=2.
+The `ENS_SS` version generally performs faster (up to maybe 2 times), except for occasional M=2.
 Currently these algorithms are slowest when the number of fronts is about 1.
 However, `ENS_SS` was the fastest algorithm on high-dimensional uniform inputs among all algorithms published on or before 2015.
 
@@ -149,7 +150,8 @@ However, `ENS_SS` was the fastest algorithm on high-dimensional uniform inputs a
 ```
 @inproceedings{ best-order-sort-gecco,
     author      = {Proteek Chandan Roy and Md. Monirul Islam and Kalyanmoy Deb},
-    title       = {Best Order Sort: A New Algorithm to Non-dominated Sorting for Evolutionary Multi-objective Optimization},
+    title       = {Best Order Sort: A New Algorithm to Non-dominated Sorting
+                   for Evolutionary Multi-objective Optimization},
     booktitle   = {Proceedings of the Genetic and Evolutionary Computation Conference Companion},
     year        = {2016},
     pages       = {1113-1120},
@@ -173,7 +175,8 @@ Both implementations require O(MN) memory and have worst-case running time compl
 ```
 @article{ jensen,
     author      = {Mikkel T. Jensen},
-    title       = {Reducing the Run-time Complexity of Multiobjective {EA}s: The {NSGA}-{II} and Other Algorithms},
+    title       = {Reducing the Run-time Complexity of Multiobjective {EA}s:
+                   The {NSGA}-{II} and Other Algorithms},
     journal     = {IEEE Transactions on Evolutionary Computation},
     volume      = {7},
     number      = {5},
@@ -195,7 +198,8 @@ Both implementations require O(MN) memory and have worst-case running time compl
 
 @incollection{ buzdalov,
     author      = {Maxim Buzdalov and Anatoly Shalyto},
-    title       = {A Provably Asymptotically Fast Version of the Generalized Jensen Algorithm for Non-Dominated Sorting},
+    title       = {A Provably Asymptotically Fast Version of the Generalized Jensen Algorithm
+                   for Non-Dominated Sorting},
     booktitle   = {Parallel Problem Solving from Nature -- {PPSN} {XIII}},
     series      = {Lecture Notes in Computer Science},
     number      = {8672},
