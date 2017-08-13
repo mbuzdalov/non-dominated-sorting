@@ -14,7 +14,7 @@ The following algorithms are currently implemented:
 * [ENS](#ens)
 * [Best Order Sort](#best-order-sort)
 * [Jensen-Fortin-Buzdalov divide-and-conquer method](#jensen-fortin-buzdalov)
-* [Sumit Mishra divide-and-conquer method](#sumit-mishra-s-dcns)
+* [Sumit Mishra divide-and-conquer method](#sumit-mishras-dcns)
 
 ### Fast Non-Dominated Sorting
 
