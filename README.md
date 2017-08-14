@@ -242,3 +242,8 @@ How to get an instance:
 * [SumitMishraDivideConquer](
 https://github.com/mbuzdalov/non-dominated-sorting/blob/master/implementations/src/main/java/ru/ifmo/nds/SumitMishraDivideConquer.java
 )`.getSumitImplementation2016(boolean useBinarySearch, boolean useGammaHeuristic)` -- returns an original implementation of Sumit Mishra, minimally adapted to the requirements of the framework. The `useBinarySearch` parameter switches BS versions instead of SS. The `useGammaHeuristic` parameter switches on the heuristic which aims at reducing the number of comparisons. The worst-case running time complexity is O(MN^2).
+
+From existing benchmarks, it can be derived that `useBinarySearch = false` and `useGammaHeuristic = true` parameters
+perform best in practice. The gamma heuristic seems to always improve the running time.
+However, the existing implementation degrades in performance, becoming worse than even fast non-dominated sorting,
+for higher numbers of objectives
