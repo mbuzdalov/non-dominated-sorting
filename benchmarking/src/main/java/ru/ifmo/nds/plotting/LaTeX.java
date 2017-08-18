@@ -1,6 +1,7 @@
 package ru.ifmo.nds.plotting;
 
 import ru.ifmo.nds.PlotBuilder;
+import ru.ifmo.nds.rundb.IdUtils;
 import ru.ifmo.nds.rundb.Record;
 
 import java.io.IOException;
@@ -45,7 +46,7 @@ public class LaTeX {
             tableWriter.print("    {" + plot.getKey() + "}");
             TreeMap<Long, Stats> stats = new TreeMap<>();
             for (Record plotPoint : plot.getValue()) {
-                long N = PlotBuilder.extract(plotPoint.getDatasetId(), factor);
+                long N = IdUtils.extract(plotPoint.getDatasetId(), factor);
                 List<Double> points = plotPoint.getReleaseMeasurements();
                 Stats st = stats.computeIfAbsent(N, v -> new Stats());
                 for (double p : points) {

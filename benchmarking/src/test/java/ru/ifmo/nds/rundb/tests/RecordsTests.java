@@ -1,7 +1,9 @@
-package ru.ifmo.nds.rundb;
+package ru.ifmo.nds.rundb.tests;
 
 import org.junit.Assert;
 import org.junit.Test;
+import ru.ifmo.nds.rundb.Record;
+import ru.ifmo.nds.rundb.Records;
 
 import java.io.IOException;
 import java.io.StringReader;

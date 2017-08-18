@@ -15,6 +15,7 @@ import java.util.*;
 import java.util.function.BiFunction;
 
 public final class Records {
+    // JSON fields
     private static final String ALGORITHM_ID = "algorithmId";
     private static final String DATASET_ID = "datasetId";
     private static final String MEASUREMENT_METHOD = "measurementMethod";
@@ -31,6 +32,17 @@ public final class Records {
             CPU_FREQUENCY, CPU_MODEL_NAME, WARM_UP_MEASUREMENTS, RELEASE_MEASUREMENTS, COMMENT
     );
 
+    // JMH constants for the parser.
+    private static final String BENCHMARK_NAME_START = "# Benchmark: ";
+    private static final String PARAMETERS_START = "# Parameters: ";
+    private static final String FORK_START = "# Fork: ";
+    private static final String RUN_COMPLETE_START = "# Run complete.";
+    private static final String ITERATION = "Iteration";
+    private static final String WARMUP_ITERATION = "# Warmup Iteration";
+    private static final String RESULT_START = "Result";
+    private static final String TOTAL_TIME = "Total time: ";
+    private static final List<String> UNWANTED_PREFIXES = Arrays.asList("[info]", "[success]");
+
     private Records() {}
 
     private static String getAlgorithmIdFromBenchmarkClass(String benchmarkClass) {
@@ -45,24 +57,6 @@ public final class Records {
     private static BiFunction<String, Map<String, String>, String> DEFAULT_EXTRACTOR =
             (methodName, runParams) -> runParams.get(DATASET_ID);
 
-    /*
-    private static BiFunction<String, Map<String, String>, String> LEGACY_EXTRACTOR =
-            (methodName, runParams) -> {
-                int underscore = methodName.indexOf('_');
-                String prefix = methodName.substring(0, underscore);
-                int n = Integer.parseInt(methodName.substring(underscore + 2));
-                switch (prefix) {
-                    case "uniformHypercube":
-                        return "uniform.hypercube.n" + n + ".d" + runParams.get("dimension");
-                    case "uniformHyperplane":
-                        return "uniform.hyperplanes.n" + n + ".d" + runParams.get("dimension") + ".f1";
-                    default:
-                        throw new IllegalArgumentException(
-                                "[LegacyExtractor] Could not extract benchmark name from: methodName = '" + methodName
-                                        + "', runParams = '" + runParams + "'");
-                }
-            };
-    */
     public static List<Record> parseJMHRun(
             Reader reader,
             String authorOfEveryBenchmark,
@@ -102,20 +96,16 @@ public final class Records {
             for (int i = 0; i < release.size(); ++i) {
                 release.set(i, release.get(i) / divisor);
             }
-            rv.add(new Record(
-                    algorithmId,
-                    datasetId,
-                    "JMH",
-                    authorOfEveryBenchmark,
-                    timeOfEveryBenchmark,
-                    cpuFrequency,
-                    cpuModelName,
-                    warm,
-                    release,
-                    comment
-            ));
+            rv.add(new Record(algorithmId, datasetId, "JMH", authorOfEveryBenchmark,
+                    timeOfEveryBenchmark, cpuFrequency, cpuModelName, warm, release, comment));
         }
         return rv;
+    }
+
+    public static void saveToFile(List<Record> records, Path file) throws IOException {
+        try (BufferedWriter writer = Files.newBufferedWriter(file)) {
+            saveToWriter(records, writer);
+        }
     }
 
     public static void saveToWriter(List<Record> records, Writer writer) throws IOException {
@@ -204,35 +194,17 @@ public final class Records {
                     throw new IOException("In record description, JSON name '" + s + "' is missing");
                 }
             }
-            rv.add(new Record(
-                    stringFields.get(ALGORITHM_ID),
-                    stringFields.get(DATASET_ID),
-                    stringFields.get(MEASUREMENT_METHOD),
-                    stringFields.get(MEASUREMENT_AUTHOR),
-                    timeFields.get(MEASUREMENT_TIME),
-                    doubleFields.get(CPU_FREQUENCY),
-                    stringFields.get(CPU_MODEL_NAME),
-                    doubleListFields.get(WARM_UP_MEASUREMENTS),
-                    doubleListFields.get(RELEASE_MEASUREMENTS),
-                    stringFields.get(COMMENT)
-            ));
+            rv.add(new Record(stringFields.get(ALGORITHM_ID), stringFields.get(DATASET_ID),
+                    stringFields.get(MEASUREMENT_METHOD), stringFields.get(MEASUREMENT_AUTHOR),
+                    timeFields.get(MEASUREMENT_TIME), doubleFields.get(CPU_FREQUENCY),
+                    stringFields.get(CPU_MODEL_NAME), doubleListFields.get(WARM_UP_MEASUREMENTS),
+                    doubleListFields.get(RELEASE_MEASUREMENTS), stringFields.get(COMMENT)));
         }
         jsonReader.endArray();
         return rv;
     }
 
     private static class JMHLogParser {
-        private static final String BENCHMARK_NAME_START = "# Benchmark: ";
-        private static final String PARAMETERS_START = "# Parameters: ";
-        private static final String FORK_START = "# Fork: ";
-        private static final String RUN_COMPLETE_START = "# Run complete.";
-        private static final String ITERATION = "Iteration";
-        private static final String WARMUP_ITERATION = "# Warmup Iteration";
-        private static final String RESULT_START = "Result";
-        private static final String TOTAL_TIME = "Total time: ";
-
-        private static final List<String> UNWANTED_PREFIXES = Arrays.asList("[info]", "[success]");
-
         private static String cleanStringFromColors(String s) {
             StringBuilder rv = new StringBuilder();
             for (int i = 0; i < s.length(); ++i) {
@@ -441,7 +413,7 @@ public final class Records {
             this.params = new HashMap<>(params);
         }
     }
-/*
+
     public static void main(String[] args) throws IOException {
         File root = new File("/home/maxbuzz/owncloud/non-dominated-sorting/results");
         List<Record> allRecords = new ArrayList<>();
@@ -453,13 +425,12 @@ public final class Records {
                             "Maxim Buzdalov",
                             2.4e9,
                             "Intel Core 2 Duo P8600",
-                            "Legacy benchmark", LEGACY_EXTRACTOR));
+                            "First new JMH benchmark"));
                 }
             }
         }
-        try (FileWriter writer = new FileWriter(new File(root, "legacy-results.json"))) {
+        try (FileWriter writer = new FileWriter(new File(root, "new-results.json"))) {
             Records.saveToWriter(allRecords, writer);
         }
     }
-*/
 }

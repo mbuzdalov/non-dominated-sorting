@@ -2,6 +2,7 @@ package ru.ifmo.nds;
 
 import ru.ifmo.nds.plotting.LaTeX;
 import ru.ifmo.nds.plotting.Plotly;
+import ru.ifmo.nds.rundb.IdUtils;
 import ru.ifmo.nds.rundb.Record;
 import ru.ifmo.nds.rundb.Records;
 
@@ -35,46 +36,6 @@ public class PlotBuilder {
         throw new AssertionError("System.exit is banned from stopping the program");
     }
 
-    private static final Comparator<String> ID_LEX_COMPARATOR = (o1, o2) -> {
-        StringTokenizer s1 = new StringTokenizer(o1, ".");
-        StringTokenizer s2 = new StringTokenizer(o2, ".");
-        while (true) {
-            if (s1.hasMoreTokens() && s2.hasMoreTokens()) {
-                String t1 = s1.nextToken();
-                String t2 = s2.nextToken();
-                int l1 = t1.length() - 1, l2 = t2.length() - 1;
-                while (l1 >= 0 && Character.isDigit(t1.charAt(l1))) --l1;
-                while (l2 >= 0 && Character.isDigit(t2.charAt(l2))) --l2;
-                ++l1;
-                ++l2;
-                if (l1 != t1.length() && l2 != t2.length()) {
-                    String prefix1 = t1.substring(0, l1);
-                    String prefix2 = t2.substring(0, l2);
-                    int prefixCmp = prefix1.compareTo(prefix2);
-                    if (prefixCmp != 0) {
-                        return prefixCmp;
-                    }
-                    long suffix1 = Long.parseLong(t1.substring(l1));
-                    long suffix2 = Long.parseLong(t2.substring(l2));
-                    if (suffix1 != suffix2) {
-                        return Long.compare(suffix1, suffix2);
-                    }
-                } else {
-                    int cmp = t1.compareTo(t2);
-                    if (cmp != 0) {
-                        return cmp;
-                    }
-                }
-            } else if (s1.hasMoreTokens()) {
-                return -1;
-            } else if (s2.hasMoreTokens()) {
-                return 1;
-            } else {
-                return 0;
-            }
-        }
-    };
-
     public static class SinglePlot {
         public final String myDatasetId;
         public final Map<String, List<Record>> myResults = new TreeMap<>();
@@ -88,41 +49,8 @@ public class PlotBuilder {
         }
     }
 
-    private static String factorize(String s, String factor) {
-        StringBuilder rv = new StringBuilder();
-        boolean first = true;
-        StringTokenizer st = new StringTokenizer(s, ".");
-        while (st.hasMoreTokens()) {
-            String token = st.nextToken();
-            if (!token.startsWith(factor) || (token.length() != factor.length() && !Character.isDigit(token.charAt(factor.length())))) {
-                if (first) {
-                    first = false;
-                } else {
-                    rv.append('.');
-                }
-                rv.append(token);
-            }
-        }
-        return rv.toString();
-    }
-
-    public static long extract(String s, String factor) {
-        StringTokenizer st = new StringTokenizer(s, ".");
-        while (st.hasMoreTokens()) {
-            String token = st.nextToken();
-            if (token.startsWith(factor)) {
-                try {
-                    return Long.parseLong(token.substring(factor.length()));
-                } catch (NumberFormatException ex) {
-                    // continue
-                }
-            }
-        }
-        throw new IllegalArgumentException("Cannot extract '" + factor + "' from string '" + s + "'");
-    }
-
     public static void main(String[] args) {
-        Map<String, SinglePlot> plots = new TreeMap<>(ID_LEX_COMPARATOR);
+        Map<String, SinglePlot> plots = new TreeMap<>(IdUtils.getLexicographicalIdComparator());
         String factor = null;
         List<BiConsumer<Map<String, SinglePlot>, String>> printCommands = new ArrayList<>();
         List<String> files = new ArrayList<>();
@@ -174,7 +102,7 @@ public class PlotBuilder {
         for (String file : files) {
             try {
                 for (Record result : Records.loadFromFile(Paths.get(file))) {
-                    String factorizedDataset = factorize(result.getDatasetId(), factor);
+                    String factorizedDataset = IdUtils.factorize(result.getDatasetId(), factor);
                     plots.computeIfAbsent(factorizedDataset, SinglePlot::new).addResult(result.getAlgorithmId(), result);
                 }
             } catch (Exception ex) {
