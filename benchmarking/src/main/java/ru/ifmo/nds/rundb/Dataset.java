@@ -19,7 +19,7 @@ public final class Dataset {
                 this.points[i][j] = this.points[i][j].clone();
             }
         }
-        this.actualRanks = new int[points.length];
+        this.actualRanks = new int[points[0].length];
     }
 
     public String getId() {
