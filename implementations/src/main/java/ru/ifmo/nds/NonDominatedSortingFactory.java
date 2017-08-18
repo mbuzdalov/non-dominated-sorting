@@ -12,4 +12,12 @@ public interface NonDominatedSortingFactory {
      * @return the instance of the non-dominated sorting algorithm.
      */
     NonDominatedSorting getInstance(int maximumPoints, int maximumDimension);
+
+    /**
+     * Returns the name of the non-dominated sorting algorithm, instances of which are produced by this factory.
+     * @return the name of the non-dominated sorting algorithm.
+     */
+    default String getName() {
+        return getInstance(2, 2).getName();
+    }
 }

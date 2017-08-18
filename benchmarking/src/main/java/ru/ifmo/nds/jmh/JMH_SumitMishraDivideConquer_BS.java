@@ -6,7 +6,7 @@ import ru.ifmo.nds.SumitMishraDivideConquer;
 @SuppressWarnings("unused")
 public class JMH_SumitMishraDivideConquer_BS extends AbstractBenchmark {
     @Override
-    protected NonDominatedSortingFactory getFactory() {
+    public NonDominatedSortingFactory getFactory() {
         return SumitMishraDivideConquer.getSumitImplementation2016(true, false);
     }
 }

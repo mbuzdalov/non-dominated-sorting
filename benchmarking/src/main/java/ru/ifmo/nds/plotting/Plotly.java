@@ -1,7 +1,7 @@
 package ru.ifmo.nds.plotting;
 
-import ru.ifmo.nds.JMHBenchmarkResult;
 import ru.ifmo.nds.PlotBuilder;
+import ru.ifmo.nds.rundb.Record;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -11,40 +11,59 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 public class Plotly {
     private Plotly() {}
 
     private static String divIdFor(PlotBuilder.SinglePlot plot) {
-        return "hash" + System.identityHashCode(plot.myDescriptor);
+        return "hash" + System.identityHashCode(plot.myDatasetId);
     }
 
-    private static void printPlotly(PlotBuilder.SinglePlot singlePlot, PrintWriter out) {
+    private static class Stats {
+        double min = Double.POSITIVE_INFINITY;
+        double max = Double.NEGATIVE_INFINITY;
+        double sum = 0;
+        int count = 0;
+
+        void add(double value) {
+            this.min = Math.min(this.min, value);
+            this.max = Math.max(this.max, value);
+            sum += value;
+            ++count;
+        }
+    }
+
+    private static void printPlotly(PlotBuilder.SinglePlot singlePlot, String factor, PrintWriter out) {
         out.println("Plotly.newPlot('" + divIdFor(singlePlot) + "', [");
-        for (Map.Entry<String, List<JMHBenchmarkResult>> plot : singlePlot.myResults.entrySet()) {
+        for (Map.Entry<String, List<Record>> plot : singlePlot.myResults.entrySet()) {
             out.println("  {");
             out.println("    name: '" + plot.getKey() + "',");
             out.println("    type: 'scatter',");
-            List<Integer> x = new ArrayList<>();
+            List<Long> x = new ArrayList<>();
             List<Double> y = new ArrayList<>();
             List<Double> yPlus = new ArrayList<>();
             List<Double> yMinus = new ArrayList<>();
-            for (JMHBenchmarkResult plotPoint : plot.getValue()) {
-                x.add(plotPoint.getParameters().get("N"));
-                List<Double> points = plotPoint.getResults();
-                double min = Double.POSITIVE_INFINITY, sum = 0, max = Double.NEGATIVE_INFINITY;
-                for (double r : points) {
-                    min = Math.min(min, r);
-                    max = Math.max(max, r);
-                    sum += r;
+
+            Map<Long, Stats> stats = new TreeMap<>();
+            for (Record plotPoint : plot.getValue()) {
+                long N = PlotBuilder.extract(plotPoint.getDatasetId(), factor);
+                Stats st = stats.computeIfAbsent(N, v -> new Stats());
+                for (double p : plotPoint.getReleaseMeasurements()) {
+                    st.add(p);
                 }
-                double avg = sum / points.size();
-                double errMin = avg - min;
-                double errMax = max - avg;
+            }
+
+            for (Map.Entry<Long, Stats> s : stats.entrySet()) {
+                double avg = s.getValue().sum / s.getValue().count;
+                double errMin = avg - s.getValue().min;
+                double errMax = s.getValue().max - avg;
+                x.add(s.getKey());
                 y.add(avg);
                 yPlus.add(errMax);
                 yMinus.add(errMin);
             }
+
             out.println("    x: " + x + ",");
             out.println("    y: " + y + ",");
             out.println("    error_y: {");
@@ -55,13 +74,13 @@ public class Plotly {
             out.println("  },");
         }
         out.println("], {");
-        out.println("  title: 'Dataset: " + singlePlot.myDescriptor.toString() + "',");
+        out.println("  title: 'Dataset: " + singlePlot.myDatasetId + "',");
         out.println("  xaxis: { type: 'log', autorange: true, title: 'Number of points' },");
         out.println("  yaxis: { type: 'log', autorange: true, title: 'Runtime, seconds' },");
         out.println("});");
     }
 
-    public static void printPlotly(Map<PlotBuilder.SinglePlot.PlotDescriptor, PlotBuilder.SinglePlot> plots, Path output) {
+    public static void printPlotly(Map<String, PlotBuilder.SinglePlot> plots, String factor, Path output) {
         try (PrintWriter out = new PrintWriter(Files.newBufferedWriter(output))) {
             out.println("<?xml version=\"1.0\" encoding=\"utf-8\"?>");
             out.println("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">");
@@ -77,7 +96,7 @@ public class Plotly {
             }
             out.println("<script>");
             for (PlotBuilder.SinglePlot plot : plots.values()) {
-                printPlotly(plot, out);
+                printPlotly(plot, factor, out);
             }
             out.println("</script>");
             out.println("</body>");

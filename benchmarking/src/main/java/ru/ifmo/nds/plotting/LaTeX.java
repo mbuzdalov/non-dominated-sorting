@@ -1,22 +1,35 @@
 package ru.ifmo.nds.plotting;
 
-import ru.ifmo.nds.JMHBenchmarkResult;
 import ru.ifmo.nds.PlotBuilder;
+import ru.ifmo.nds.rundb.Record;
 
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class LaTeX {
     private LaTeX() {}
 
-    private static void printLaTeX(PlotBuilder.SinglePlot singlePlot, PrintWriter out) {
-        out.println("% " + singlePlot.myDescriptor.toString());
-        out.println("\\section*{Dataset: " + singlePlot.myDescriptor.toString() + "}");
+    private static class Stats {
+        double min = Double.POSITIVE_INFINITY;
+        double max = Double.NEGATIVE_INFINITY;
+        double sum = 0;
+        int count = 0;
+
+        void add(double value) {
+            this.min = Math.min(this.min, value);
+            this.max = Math.max(this.max, value);
+            sum += value;
+            ++count;
+        }
+    }
+
+    private static void printLaTeX(PlotBuilder.SinglePlot singlePlot, String factor, PrintWriter out) {
+        out.println("% " + singlePlot.myDatasetId);
+        out.println("\\section*{Dataset: " + singlePlot.myDatasetId + "}");
         out.println("\\begin{tikzpicture}[scale=0.65]");
         out.println("\\begin{axis}[xtick=data, xmode=log, ymode=log,");
         out.println("              width=\\textwidth, height=0.7\\textheight, legend pos=outer north east,");
@@ -25,41 +38,47 @@ public class LaTeX {
         StringWriter tableBuilder = new StringWriter();
         PrintWriter tableWriter = new PrintWriter(tableBuilder);
 
-        for (Map.Entry<String, List<JMHBenchmarkResult>> plot : singlePlot.myResults.entrySet()) {
+        Set<Long> factors = new TreeSet<>();
+        for (Map.Entry<String, List<Record>> plot : singlePlot.myResults.entrySet()) {
             out.println("\\addplot plot[error bars/.cd, y dir=both, y explicit] table[y error plus=y-max, y error minus=y-min] {");
             out.println("    x y y-min y-max");
             tableWriter.print("    {" + plot.getKey() + "}");
-            for (JMHBenchmarkResult plotPoint : plot.getValue()) {
-                int N = plotPoint.getParameters().get("N");
-                out.print("    " + N);
-                List<Double> points = plotPoint.getResults();
-                double min = Double.POSITIVE_INFINITY, sum = 0, max = Double.NEGATIVE_INFINITY;
-                for (double r : points) {
-                    min = Math.min(min, r);
-                    max = Math.max(max, r);
-                    sum += r;
+            TreeMap<Long, Stats> stats = new TreeMap<>();
+            for (Record plotPoint : plot.getValue()) {
+                long N = PlotBuilder.extract(plotPoint.getDatasetId(), factor);
+                List<Double> points = plotPoint.getReleaseMeasurements();
+                Stats st = stats.computeIfAbsent(N, v -> new Stats());
+                for (double p : points) {
+                    st.add(p);
                 }
-                double avg = sum / points.size();
-                double errMin = avg - min;
-                double errMax = max - avg;
+            }
+            for (Map.Entry<Long, Stats> entry : stats.entrySet()) {
+                double avg = entry.getValue().sum / entry.getValue().count;
+                double errMin = avg - entry.getValue().min;
+                double errMax = entry.getValue().max - avg;
                 tableWriter.print(" " + avg);
-                out.println(" " + avg + " " + errMin + " " + errMax);
+                out.println("    " + entry.getKey() + " " + avg + " " + errMin + " " + errMax);
             }
             out.println("};");
             out.println("\\addlegendentry{" + plot.getKey() + "};");
             tableWriter.println();
+            factors.addAll(stats.keySet());
         }
         out.println("\\end{axis}");
         out.println("\\end{tikzpicture}\\vspace{2ex}");
         out.println();
         out.println("\\pgfplotstabletypeset[font=\\footnotesize, sci zerofill, columns/Algo/.style={string type}] {");
-        out.println("    Algo T10 T100 T1000 T10000");
+        out.print("    Algo");
+        for (long f : factors) {
+            out.print(" T" + f);
+        }
+        out.println();
         out.println(tableBuilder.getBuffer());
         out.println("}");
         out.println("\\newpage");
     }
 
-    public static void printLaTeX(Map<PlotBuilder.SinglePlot.PlotDescriptor, PlotBuilder.SinglePlot> plots, Path output) {
+    public static void printLaTeX(Map<String, PlotBuilder.SinglePlot> plots, String factor, Path output) {
         try (PrintWriter out = new PrintWriter(Files.newBufferedWriter(output))) {
             out.println("\\documentclass{extreport}");
             out.println("\\usepackage{geometry}");
@@ -97,7 +116,7 @@ public class LaTeX {
             out.println("}");
             out.println("\\begin{document}");
             for (PlotBuilder.SinglePlot plot : plots.values()) {
-                printLaTeX(plot, out);
+                printLaTeX(plot, factor, out);
             }
             out.println("\\end{document}");
         } catch (IOException ex) {

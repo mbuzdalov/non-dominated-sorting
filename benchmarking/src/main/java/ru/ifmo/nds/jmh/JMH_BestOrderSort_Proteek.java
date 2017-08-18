@@ -6,7 +6,7 @@ import ru.ifmo.nds.NonDominatedSortingFactory;
 @SuppressWarnings("unused")
 public class JMH_BestOrderSort_Proteek extends AbstractBenchmark {
     @Override
-    protected NonDominatedSortingFactory getFactory() {
+    public NonDominatedSortingFactory getFactory() {
         return BestOrderSort.getProteekImplementation();
     }
 }

@@ -6,14 +6,15 @@ lazy val commonSettings = Seq(
 )
 
 lazy val junitInterface = "com.novocode" % "junit-interface" % "0.11" % "test"
+lazy val gson = "com.google.code.gson" % "gson" % "2.8.1"
 
 lazy val root = project
   .in(file("."))
   .settings(commonSettings :_*)
   .settings(name    := "non-dominated-sorting",
             version := "0.0.0")
-  .dependsOn(implementations, benchmarking, analysis)
-  .aggregate(implementations, benchmarking, analysis)
+  .dependsOn(implementations, benchmarking)
+  .aggregate(implementations, benchmarking)
 
 lazy val implementations = project
   .in(file("implementations"))
@@ -25,12 +26,7 @@ lazy val benchmarking = project
   .in(file("benchmarking"))
   .settings(commonSettings :_*)
   .settings(name    := "non-dominated-sorting-benchmarking",
-            version := "0.0.0")
+            version := "0.0.0",
+            libraryDependencies += gson)
   .dependsOn(implementations)
   .enablePlugins(JmhPlugin)
-
-lazy val analysis = project
-  .in(file("analysis"))
-  .settings(commonSettings :_*)
-  .settings(name    := "non-dominated-sorting-analysis",
-            version := "0.0.0")
