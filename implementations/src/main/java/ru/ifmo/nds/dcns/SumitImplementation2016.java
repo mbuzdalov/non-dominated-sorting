@@ -25,7 +25,7 @@ public class SumitImplementation2016 extends NonDominatedSorting {
 
     @Override
     public String getName() {
-        return "DCNS-" + (useBinarySearch ? 'B' : 'S') + "S" + (useBinarySearch ? "S" : "");
+        return "DCNS-" + (useBinarySearch ? 'B' : 'S') + "S" + (useGammaHeuristic ? "S" : "");
     }
 
     @Override
