@@ -413,24 +413,4 @@ public final class Records {
             this.params = new HashMap<>(params);
         }
     }
-
-    public static void main(String[] args) throws IOException {
-        File root = new File("/home/maxbuzz/owncloud/non-dominated-sorting/results");
-        List<Record> allRecords = new ArrayList<>();
-        for (File results : root.listFiles()) {
-            if (results.getName().endsWith(".result")) {
-                try (FileReader reader = new FileReader(results)) {
-                    allRecords.addAll(parseJMHRun(
-                            reader,
-                            "Maxim Buzdalov",
-                            2.4e9,
-                            "Intel Core 2 Duo P8600",
-                            "First new JMH benchmark"));
-                }
-            }
-        }
-        try (FileWriter writer = new FileWriter(new File(root, "new-results.json"))) {
-            Records.saveToWriter(allRecords, writer);
-        }
-    }
 }

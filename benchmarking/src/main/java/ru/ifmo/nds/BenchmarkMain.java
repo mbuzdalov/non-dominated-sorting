@@ -6,6 +6,8 @@ import ru.ifmo.nds.rundb.Record;
 import ru.ifmo.nds.rundb.Records;
 
 import java.io.IOException;
+import java.io.Reader;
+import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -14,7 +16,7 @@ public class BenchmarkMain {
     private BenchmarkMain() {}
 
     private static final List<Module> modules = Arrays.asList(
-            new Compare(), new Merge()
+            new ConvertJMH(), new Compare(), new Merge()
     );
 
     private static void printErrorMessageAndExit(String errorMessage, Throwable cause) {
@@ -52,6 +54,89 @@ public class BenchmarkMain {
         String getName();
         String[] getExplanation();
         void run(String[] args);
+    }
+
+    private static class ConvertJMH implements Module {
+        @Override
+        public String getName() {
+            return "convert-jmh";
+        }
+
+        @Override
+        public String[] getExplanation() {
+            return new String[] {
+                    "convert-jmh <source> <target> parameters...",
+                    "  Converts the JMH output to JSON storage format. Parameters are:",
+                    "    --author <author>:  specifies the author of the benchmarks.",
+                    "    --cpu-freq <value>: specifies the frequency of the CPU used, in Hz.",
+                    "    --cpu-name <text>:  specifies the model of the CPU used.",
+                    "    --comment  <text>:  gives the comment on this benchmark set.",
+                    "  All parameters are mandatory."
+            };
+        }
+
+        @Override
+        public void run(String[] args) {
+            if (args.length < 2) {
+                printErrorMessageAndExit("Too few arguments.", null);
+            }
+            String author = null;
+            Double cpuFreq = null;
+            String cpuName = null;
+            String comment = null;
+            for (int i = 2; i < args.length; ++i) {
+                switch (args[i]) {
+                    case "--author":
+                        if (i + 1 >= args.length) {
+                            printErrorMessageAndExit("Expected author name after the --author parameter.", null);
+                        }
+                        author = args[++i];
+                        break;
+                    case "--cpu-freq":
+                        if (i + 1 >= args.length) {
+                            printErrorMessageAndExit("Expected author name after the --cpu-freq parameter.", null);
+                        }
+                        try {
+                            cpuFreq = Double.parseDouble(args[++i]);
+                        } catch (NumberFormatException ex) {
+                            printErrorMessageAndExit("Could not parse '" + args[i] + "' as the --cpu-freq parameter.", ex);
+                        }
+                        break;
+                    case "--cpu-name":
+                        if (i + 1 >= args.length) {
+                            printErrorMessageAndExit("Expected author name after the --cpu-name parameter.", null);
+                        }
+                        cpuName = args[++i];
+                        break;
+                    case "--comment":
+                        if (i + 1 >= args.length) {
+                            printErrorMessageAndExit("Expected author name after the --comment parameter.", null);
+                        }
+                        comment = args[++i];
+                        break;
+                }
+            }
+            if (author == null) {
+                printErrorMessageAndExit("No --author specified.", null);
+            } else if (cpuFreq == null) {
+                printErrorMessageAndExit("No --cpu-freq specified.", null);
+            } else if (cpuName == null) {
+                printErrorMessageAndExit("No --cpu-name specified.", null);
+            } else if (comment == null) {
+                printErrorMessageAndExit("No --comment specified.", null);
+            } else {
+                try (Reader in = Files.newBufferedReader(Paths.get(args[0]))) {
+                    List<Record> records = Records.parseJMHRun(in, author, cpuFreq, cpuName, comment);
+                    try {
+                        Records.saveToFile(records, Paths.get(args[1]));
+                    } catch (IOException ex) {
+                        printErrorMessageAndExit("Error writing output file '" + args[1] + "'.", ex);
+                    }
+                } catch (IOException ex) {
+                    printErrorMessageAndExit("Error reading input file '" + args[0] + "'.", ex);
+                }
+            }
+        }
     }
 
     private static class Compare implements Module {
