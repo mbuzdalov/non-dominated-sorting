@@ -12,8 +12,8 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class BenchmarkMain {
-    private BenchmarkMain() {}
+public class BenchmarkMaintenanceMain {
+    private BenchmarkMaintenanceMain() {}
 
     private static final List<Module> modules = Arrays.asList(
             new ConvertJMH(), new Compare(), new Merge()
@@ -26,7 +26,7 @@ public class BenchmarkMain {
         if (cause != null) {
             cause.printStackTrace();
         }
-        System.err.println("Usage: ru.ifmo.nds.BenchmarkMain <command> [parameters], where <command> is one of:");
+        System.err.println("Usage: ru.ifmo.nds.BenchmarkMaintenanceMain <command> [parameters], where <command> is one of:");
         for (Module module : modules) {
             for (String explanation : module.getExplanation()) {
                 System.err.print("   ");
