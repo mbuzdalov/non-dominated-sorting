@@ -50,11 +50,11 @@ public abstract class AbstractBenchmark {
     @Setup
     public void initializeSorterAndData() {
         dataset = AllDatasets.getDataset(datasetId);
-        sorting = getFactory().getInstance(dataset.getNumberOfPoints(), dataset.getDimension());
+        sorting = getFactory().getInstance(dataset.getMaxNumberOfPoints(), dataset.getMaxDimension());
     }
 
     private int runBenchmark() {
-        return dataset.runAlgorithm(sorting, dataset.getNumberOfPoints());
+        return dataset.runAlgorithm(sorting, dataset.getMaxNumberOfPoints());
     }
 
     @TearDown
