@@ -230,6 +230,11 @@ public class BenchmarkMaintenanceMain {
                         System.out.print("L > R");
                         rv = 1;
                     }
+                    System.out.println();
+                    System.out.printf("%35s: %s%n", "=> left",
+                            Arrays.stream(lefts).mapToObj(v -> String.format("%.2e", v)).collect(Collectors.toList()));
+                    System.out.printf("%35s: %s", "=> right",
+                            Arrays.stream(rights).mapToObj(v -> String.format("%.2e", v)).collect(Collectors.toList()));
                 } else {
                     System.out.print("L ~ R");
                     rv = 0;

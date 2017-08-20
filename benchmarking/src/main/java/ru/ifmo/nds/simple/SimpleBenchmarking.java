@@ -277,6 +277,7 @@ public class SimpleBenchmarking {
 
     public static void main(String[] args) throws IOException {
         int algoId = Integer.parseInt(args[0]);
+        int repeats = Integer.parseInt(args[1]);
         SimpleBenchmarking benchmarking = new SimpleBenchmarking(factories.get(algoId), jmhIds);
         LocalDateTime beginning = LocalDateTime.now();
         List<Record> records = benchmarking.evaluate(
@@ -284,7 +285,7 @@ public class SimpleBenchmarking {
                 2.4e9,
                 "Intel Core 2 Duo P8600",
                 "First simple benchmark",
-                3
+                repeats
         );
         System.out.println("[info] Total time to run the benchmark: " + Duration.between(beginning, LocalDateTime.now()));
         Records.saveToFile(records, Paths.get("/home/maxbuzz/owncloud/non-dominated-sorting/simple-" + algoId + ".json"));
