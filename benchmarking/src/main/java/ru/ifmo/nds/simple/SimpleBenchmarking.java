@@ -194,8 +194,8 @@ public class SimpleBenchmarking {
             do {
                 results.clear();
                 for (int t = 0; t < repeats; ++t) {
-                    double result = measure(dataset) / dataset.getNumberOfInstances();
-                    System.out.print(" " + result);
+                    double result = measure(dataset) / dataset.getNumberOfInstances() / 1e9;
+                    System.out.printf(" %.3e", result);
                     results.add(result);
                 }
             } while (!practicallySame(results));
