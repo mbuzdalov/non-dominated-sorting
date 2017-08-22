@@ -46,7 +46,7 @@ public final class Benchmark extends JCommanderRunnable {
 
     @Parameter(names = "--type",
             required = true,
-            description = "Specify the benchmark type. Possible values: 'JMH', 'simple'.")
+            description = "Specify the benchmark type.")
     private Type benchmarkType;
 
     @Parameter(names = "--algorithmId",
