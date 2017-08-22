@@ -87,7 +87,7 @@ public class SimpleBenchmark {
         this.warmupIds = new ArrayList<>(warmupSet);
     }
 
-    private double measureImpl() {
+    private double measureImpl(boolean usePrintln) {
         Dataset dataset = lastDataset;
         for (int attempt = 0; ; ++attempt) {
             long wallClock0 = System.nanoTime();
@@ -106,19 +106,23 @@ public class SimpleBenchmark {
             if (wallClockTime < threadTime * 1.02) {
                 return (double) wallClockTime / multiple;
             }
-            System.out.println("[warning] remeasuring as thread time (" + threadTime
-                    + ") is much less than wall-clock time (" + wallClockTime
-                    + "): Attempt " + attempt);
+            if (usePrintln) {
+                System.out.println("[warning] remeasuring as thread time (" + threadTime
+                        + ") is much less than wall-clock time (" + wallClockTime
+                        + "): Attempt " + attempt);
+            } else {
+                System.out.print("[!]");
+            }
         }
     }
 
-    private double measure(Dataset dataset) {
+    private double measure(Dataset dataset, boolean usePrintln) {
         if (dataset != lastDataset) {
             multiple = 0;
             lastDataset = dataset;
             while (true) {
                 multiple = multiple == 0 ? 1 : multiple * 2;
-                double result = measureImpl();
+                double result = measureImpl(usePrintln);
                 if (!Double.isInfinite(result)) {
                     if (result < 3e8) {
                         multiple *= 2;
@@ -128,7 +132,7 @@ public class SimpleBenchmark {
             }
         } else {
             while (true) {
-                double rv = measureImpl();
+                double rv = measureImpl(usePrintln);
                 if (!Double.isInfinite(rv)) {
                     return rv;
                 } else {
@@ -160,7 +164,7 @@ public class SimpleBenchmark {
             List<Double> warmUpMeasurements = new ArrayList<>();
             while (warmUpMeasurements.size() < 10 ||
                     !practicallySame(warmUpMeasurements.subList(warmUpMeasurements.size() / 2, warmUpMeasurements.size()))) {
-                double measurement = measure(warmUp);
+                double measurement = measure(warmUp, true);
                 System.out.println("[info]     " + measurement);
                 warmUpMeasurements.add(measurement);
             }
@@ -169,7 +173,7 @@ public class SimpleBenchmark {
             System.out.println("[info] warm-up measurements:");
             List<Double> controlMeasurements = new ArrayList<>();
             for (int i = 0; i < warmUpMeasurements.size(); ++i) {
-                double measurement = measure(control);
+                double measurement = measure(control, true);
                 System.out.println("[info]     " + measurement);
                 controlMeasurements.add(measurement);
             }
@@ -199,7 +203,7 @@ public class SimpleBenchmark {
             do {
                 results.clear();
                 for (int t = 0; t < repeats; ++t) {
-                    double result = measure(dataset) / dataset.getNumberOfInstances() / 1e9;
+                    double result = measure(dataset, false) / dataset.getNumberOfInstances() / 1e9;
                     System.out.printf(" %.3e", result);
                     results.add(result);
                 }
