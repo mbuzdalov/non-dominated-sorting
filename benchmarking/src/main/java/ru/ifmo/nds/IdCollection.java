@@ -123,6 +123,6 @@ public final class IdCollection {
         addNonDominatedSortingFactory("dcns.bs", SumitMishraDivideConquer.getSumitImplementation2016(true, false));
         addNonDominatedSortingFactory("dcns.bss", SumitMishraDivideConquer.getSumitImplementation2016(true, true));
         addNonDominatedSortingFactory("dcns.ss", SumitMishraDivideConquer.getSumitImplementation2016(false, false));
-        addNonDominatedSortingFactory("dncs.sss", SumitMishraDivideConquer.getSumitImplementation2016(false, true));
+        addNonDominatedSortingFactory("dcns.sss", SumitMishraDivideConquer.getSumitImplementation2016(false, true));
     }
 }
