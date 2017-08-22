@@ -22,6 +22,7 @@ import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 import oshi.SystemInfo;
 
+import ru.ifmo.nds.IdCollection;
 import ru.ifmo.nds.jmh.JMHBenchmark;
 import ru.ifmo.nds.rundb.Record;
 import ru.ifmo.nds.rundb.Records;
@@ -163,8 +164,8 @@ public final class Benchmark extends JCommanderRunnable {
                             if (!primary.getScoreUnit().equals("us/op")) {
                                 throw new CLIWrapperException("Unable to dig through JMH output: getScoreUnit() = " + primary.getScoreUnit(), null);
                             }
-                            double value = primary.getScore();
-                            times.add(value / 1e6);
+                            double value = primary.getScore() / 1e6;
+                            times.add(value / IdCollection.getDataset(datasetId).getNumberOfInstances());
                         }
                     }
                     long endTimeMillis = benchmarkResult.getMetadata().getStopTime();
