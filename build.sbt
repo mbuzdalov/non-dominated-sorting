@@ -8,6 +8,8 @@ lazy val commonSettings = Seq(
 lazy val junitInterface = "com.novocode" % "junit-interface" % "0.11" % "test"
 lazy val gson = "com.google.code.gson" % "gson" % "2.8.1"
 lazy val apacheMath = "org.apache.commons" % "commons-math3" % "3.6.1"
+lazy val jCommander = "com.beust" % "jcommander" % "1.72"
+lazy val osHardwareInformation = "com.github.oshi" % "oshi-core" % "3.4.3"
 
 lazy val root = project
   .in(file("."))
@@ -28,6 +30,6 @@ lazy val benchmarking = project
   .settings(commonSettings :_*)
   .settings(name    := "non-dominated-sorting-benchmarking",
             version := "0.0.0",
-            libraryDependencies ++= Seq(gson, apacheMath))
+            libraryDependencies ++= Seq(gson, apacheMath, jCommander, osHardwareInformation))
   .dependsOn(implementations)
   .enablePlugins(JmhPlugin)

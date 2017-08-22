@@ -1,16 +1,21 @@
 package ru.ifmo.nds.simple;
 
-import ru.ifmo.nds.*;
-import ru.ifmo.nds.rundb.*;
-
-import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
-import java.nio.file.Paths;
-import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
+
+import oshi.SystemInfo;
+
+import ru.ifmo.nds.IdCollection;
+import ru.ifmo.nds.NonDominatedSorting;
+import ru.ifmo.nds.rundb.Dataset;
+import ru.ifmo.nds.rundb.IdUtils;
+import ru.ifmo.nds.rundb.Record;
 
 /**
  * This is a "simple" benchmarking tool for non-dominated sorting algorithms.
@@ -29,7 +34,8 @@ import java.util.stream.Collectors;
  *     </li>
  * </ul>
  */
-public class SimpleBenchmarking {
+public class SimpleBenchmark {
+    private final String algorithmId;
     private final NonDominatedSorting instance;
     private final List<String> datasetIds;
     private final List<String> warmupIds;
@@ -40,7 +46,8 @@ public class SimpleBenchmarking {
     private int multiple;
     private Dataset lastDataset;
 
-    public SimpleBenchmarking(NonDominatedSortingFactory algorithm, List<String> datasetIds) {
+    public SimpleBenchmark(String algorithmId, List<String> datasetIds) {
+        this.algorithmId = algorithmId;
         int maxN = 0, maxD = 0;
         int minN = Integer.MAX_VALUE, minD = Integer.MAX_VALUE;
 
@@ -72,7 +79,7 @@ public class SimpleBenchmarking {
                 warmupSet.add(id);
             }
         }
-        instance = algorithm.getInstance(maxN, maxD);
+        instance = IdCollection.getNonDominatedSortingFactory(algorithmId).getInstance(maxN, maxD);
         this.datasetIds = new ArrayList<>(datasetIds);
         warmupSet.add(idMaxN);
         warmupSet.add(idMaxD);
@@ -141,7 +148,7 @@ public class SimpleBenchmarking {
     }
 
     private void warmUp() {
-        List<Dataset> warmUpInputs = warmupIds.stream().map(AllDatasets::getDataset).collect(Collectors.toList());
+        List<Dataset> warmUpInputs = warmupIds.stream().map(IdCollection::getDataset).collect(Collectors.toList());
         List<Dataset> warmUpAndControl = Dataset.concatenateAndSplit("$.warm.up", warmUpInputs, 2);
         Dataset warmUp = warmUpAndControl.get(0);
         Dataset control = warmUpAndControl.get(1);
@@ -177,8 +184,6 @@ public class SimpleBenchmarking {
 
     public List<Record> evaluate(
             String benchmarkAuthor,
-            double cpuFrequency,
-            String cpuModel,
             String comment,
             int repeats
     ) {
@@ -189,8 +194,8 @@ public class SimpleBenchmarking {
 
         for (String datasetId : datasetIds) {
             System.out.print("[info] " + datasetId + ":");
-            Dataset dataset = AllDatasets.getDataset(datasetId);
-            List<Double> results = new ArrayList<>();
+            Dataset dataset = IdCollection.getDataset(datasetId);
+            List<Double> results = new ArrayList<>(repeats);
             do {
                 results.clear();
                 for (int t = 0; t < repeats; ++t) {
@@ -203,91 +208,26 @@ public class SimpleBenchmarking {
             System.out.println();
         }
 
+        String javaRuntimeVersion = System.getProperty("java.runtime.version");
+        String cpuModel = new SystemInfo().getHardware().getProcessor().getName();
+
+        System.out.println("[info] Java runtime version: '" + javaRuntimeVersion + "'.");
+        System.out.println("[info] CPU model: '" + cpuModel + "'.");
         System.out.println("[info] black hole value: " + blackHole);
+
         LocalDateTime time = LocalDateTime.now();
         for (int i = 0; i < datasetIds.size(); ++i) {
             rv.add(new Record(
-                    instance.getName(),
+                    algorithmId,
                     datasetIds.get(i),
                     "Simple",
                     benchmarkAuthor,
                     time,
-                    cpuFrequency,
                     cpuModel,
-                    Collections.emptyList(),
+                    javaRuntimeVersion,
                     datasetIdTimes.get(i),
                     comment));
         }
         return rv;
-    }
-
-    private static final List<String> jmhIds = Arrays.asList(
-            "uniform.hypercube.n10.d2", "uniform.hypercube.n10.d3", "uniform.hypercube.n10.d4",
-            "uniform.hypercube.n10.d5", "uniform.hypercube.n10.d6", "uniform.hypercube.n10.d7",
-            "uniform.hypercube.n10.d8", "uniform.hypercube.n10.d9", "uniform.hypercube.n10.d10",
-            "uniform.hypercube.n100.d2", "uniform.hypercube.n100.d3", "uniform.hypercube.n100.d4",
-            "uniform.hypercube.n100.d5", "uniform.hypercube.n100.d6", "uniform.hypercube.n100.d7",
-            "uniform.hypercube.n100.d8", "uniform.hypercube.n100.d9", "uniform.hypercube.n100.d10",
-            "uniform.hypercube.n1000.d2", "uniform.hypercube.n1000.d3", "uniform.hypercube.n1000.d4",
-            "uniform.hypercube.n1000.d5", "uniform.hypercube.n1000.d6", "uniform.hypercube.n1000.d7",
-            "uniform.hypercube.n1000.d8", "uniform.hypercube.n1000.d9", "uniform.hypercube.n1000.d10",
-            "uniform.hypercube.n10000.d2", "uniform.hypercube.n10000.d3", "uniform.hypercube.n10000.d4",
-            "uniform.hypercube.n10000.d5", "uniform.hypercube.n10000.d6", "uniform.hypercube.n10000.d7",
-            "uniform.hypercube.n10000.d8", "uniform.hypercube.n10000.d9", "uniform.hypercube.n10000.d10",
-
-            "uniform.hyperplanes.n10.d2.f1", "uniform.hyperplanes.n10.d3.f1", "uniform.hyperplanes.n10.d4.f1",
-            "uniform.hyperplanes.n10.d5.f1", "uniform.hyperplanes.n10.d6.f1", "uniform.hyperplanes.n10.d7.f1",
-            "uniform.hyperplanes.n10.d8.f1", "uniform.hyperplanes.n10.d9.f1", "uniform.hyperplanes.n10.d10.f1",
-            "uniform.hyperplanes.n100.d2.f1", "uniform.hyperplanes.n100.d3.f1", "uniform.hyperplanes.n100.d4.f1",
-            "uniform.hyperplanes.n100.d5.f1", "uniform.hyperplanes.n100.d6.f1", "uniform.hyperplanes.n100.d7.f1",
-            "uniform.hyperplanes.n100.d8.f1", "uniform.hyperplanes.n100.d9.f1", "uniform.hyperplanes.n100.d10.f1",
-            "uniform.hyperplanes.n1000.d2.f1", "uniform.hyperplanes.n1000.d3.f1", "uniform.hyperplanes.n1000.d4.f1",
-            "uniform.hyperplanes.n1000.d5.f1", "uniform.hyperplanes.n1000.d6.f1", "uniform.hyperplanes.n1000.d7.f1",
-            "uniform.hyperplanes.n1000.d8.f1", "uniform.hyperplanes.n1000.d9.f1", "uniform.hyperplanes.n1000.d10.f1",
-            "uniform.hyperplanes.n10000.d2.f1", "uniform.hyperplanes.n10000.d3.f1", "uniform.hyperplanes.n10000.d4.f1",
-            "uniform.hyperplanes.n10000.d5.f1", "uniform.hyperplanes.n10000.d6.f1", "uniform.hyperplanes.n10000.d7.f1",
-            "uniform.hyperplanes.n10000.d8.f1", "uniform.hyperplanes.n10000.d9.f1", "uniform.hyperplanes.n10000.d10.f1"
-    );
-
-    private static final List<NonDominatedSortingFactory> factories = Arrays.asList(
-            BestOrderSort.getImprovedImplementation(),
-            BestOrderSort.getProteekImplementation(),
-            CornerSort.getInstance(),
-            DeductiveSort.getInstance(),
-            DominanceTree.getNoPresortInsertion(true),
-            DominanceTree.getNoPresortInsertion(false),
-            DominanceTree.getPresortInsertion(true, DominanceTree.InsertionOption.NO_DELAYED_INSERTION),
-            DominanceTree.getPresortInsertion(true, DominanceTree.InsertionOption.DELAYED_INSERTION_RECURSIVE_CONCATENATION),
-            DominanceTree.getPresortInsertion(true, DominanceTree.InsertionOption.DELAYED_INSERTION_SEQUENTIAL_CONCATENATION),
-            DominanceTree.getPresortInsertion(false, DominanceTree.InsertionOption.NO_DELAYED_INSERTION),
-            DominanceTree.getPresortInsertion(false, DominanceTree.InsertionOption.DELAYED_INSERTION_RECURSIVE_CONCATENATION),
-            DominanceTree.getPresortInsertion(false, DominanceTree.InsertionOption.DELAYED_INSERTION_SEQUENTIAL_CONCATENATION),
-            ENS.getENS_BS(),
-            ENS.getENS_SS(),
-            FastNonDominatedSorting.getLinearMemoryImplementation(),
-            FastNonDominatedSorting.getOriginalVersion(),
-            JensenFortinBuzdalov.getFenwickSweepImplementation(),
-            JensenFortinBuzdalov.getRedBlackTreeSweepImplementation(),
-            JensenFortinBuzdalov.getRedBlackTreeSweepHybridImplementation(),
-            SumitMishraDivideConquer.getSumitImplementation2016(true, true),
-            SumitMishraDivideConquer.getSumitImplementation2016(true, false),
-            SumitMishraDivideConquer.getSumitImplementation2016(false, true),
-            SumitMishraDivideConquer.getSumitImplementation2016(false, false)
-    );
-
-    public static void main(String[] args) throws IOException {
-        int algoId = Integer.parseInt(args[0]);
-        int repeats = Integer.parseInt(args[1]);
-        SimpleBenchmarking benchmarking = new SimpleBenchmarking(factories.get(algoId), jmhIds);
-        LocalDateTime beginning = LocalDateTime.now();
-        List<Record> records = benchmarking.evaluate(
-                "Maxim Buzdalov",
-                2.4e9,
-                "Intel Core 2 Duo P8600",
-                "First simple benchmark",
-                repeats
-        );
-        System.out.println("[info] Total time to run the benchmark: " + Duration.between(beginning, LocalDateTime.now()));
-        Records.saveToFile(records, Paths.get("/home/maxbuzz/owncloud/non-dominated-sorting/simple-" + algoId + ".json"));
     }
 }

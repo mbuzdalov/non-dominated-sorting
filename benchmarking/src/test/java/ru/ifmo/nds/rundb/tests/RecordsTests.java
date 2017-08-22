@@ -1,10 +1,5 @@
 package ru.ifmo.nds.rundb.tests;
 
-import org.junit.Assert;
-import org.junit.Test;
-import ru.ifmo.nds.rundb.Record;
-import ru.ifmo.nds.rundb.Records;
-
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
@@ -13,6 +8,12 @@ import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import org.junit.Assert;
+import org.junit.Test;
+
+import ru.ifmo.nds.rundb.Record;
+import ru.ifmo.nds.rundb.Records;
 
 public class RecordsTests {
     private String randomString(Random random) {
@@ -30,9 +31,8 @@ public class RecordsTests {
                 randomString(random),
                 randomString(random),
                 LocalDateTime.now(),
-                random.nextDouble(),
                 randomString(random),
-                random.doubles(random.nextInt(5)).boxed().collect(Collectors.toList()),
+                randomString(random),
                 random.doubles(random.nextInt(5)).boxed().collect(Collectors.toList()),
                 randomString(random)
         );

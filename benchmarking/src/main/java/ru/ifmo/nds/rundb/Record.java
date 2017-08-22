@@ -14,9 +14,8 @@ public class Record {
     private final String measurementMethod;
     private final String measurementAuthor;
     private final LocalDateTime measurementTime;
-    private final double cpuFrequency;
     private final String cpuModelName;
-    private final List<Double> warmUpMeasurements;
+    private final String javaRuntimeVersion;
     private final List<Double> releaseMeasurements;
     private final String comment;
 
@@ -25,9 +24,8 @@ public class Record {
                   String measurementMethod,
                   String measurementAuthor,
                   LocalDateTime measurementTime,
-                  double cpuFrequency,
                   String cpuModelName,
-                  List<Double> warmUpMeasurements,
+                  String javaRuntimeVersion,
                   List<Double> releaseMeasurements,
                   String comment) {
         this.algorithmID = algorithmID;
@@ -35,9 +33,8 @@ public class Record {
         this.measurementMethod = measurementMethod;
         this.measurementAuthor = measurementAuthor;
         this.measurementTime = measurementTime;
-        this.cpuFrequency = cpuFrequency;
         this.cpuModelName = cpuModelName;
-        this.warmUpMeasurements = Collections.unmodifiableList(new ArrayList<>(warmUpMeasurements));
+        this.javaRuntimeVersion = javaRuntimeVersion;
         this.releaseMeasurements = Collections.unmodifiableList(new ArrayList<>(releaseMeasurements));
         this.comment = comment;
     }
@@ -62,20 +59,16 @@ public class Record {
         return measurementTime;
     }
 
-    public double getCpuFrequency() {
-        return cpuFrequency;
-    }
-
     public String getCpuModelName() {
         return cpuModelName;
     }
 
-    public String getComment() {
-        return comment;
+    public String getJavaRuntimeVersion() {
+        return javaRuntimeVersion;
     }
 
-    public List<Double> getWarmUpMeasurements() {
-        return warmUpMeasurements;
+    public String getComment() {
+        return comment;
     }
 
     public List<Double> getReleaseMeasurements() {
@@ -89,14 +82,13 @@ public class Record {
 
         Record record = (Record) o;
 
-        return Double.compare(record.cpuFrequency, cpuFrequency) == 0
-                && algorithmID.equals(record.algorithmID)
+        return algorithmID.equals(record.algorithmID)
                 && datasetID.equals(record.datasetID)
                 && measurementMethod.equals(record.measurementMethod)
                 && measurementAuthor.equals(record.measurementAuthor)
                 && measurementTime.equals(record.measurementTime)
                 && cpuModelName.equals(record.cpuModelName)
-                && warmUpMeasurements.equals(record.warmUpMeasurements)
+                && javaRuntimeVersion.equals(record.javaRuntimeVersion)
                 && releaseMeasurements.equals(record.releaseMeasurements)
                 && comment.equals(record.comment);
     }
@@ -104,16 +96,13 @@ public class Record {
     @Override
     public int hashCode() {
         int result;
-        long temp;
         result = algorithmID.hashCode();
         result = 31 * result + datasetID.hashCode();
         result = 31 * result + measurementMethod.hashCode();
         result = 31 * result + measurementAuthor.hashCode();
         result = 31 * result + measurementTime.hashCode();
-        temp = Double.doubleToLongBits(cpuFrequency);
-        result = 31 * result + (int) (temp ^ (temp >>> 32));
         result = 31 * result + cpuModelName.hashCode();
-        result = 31 * result + warmUpMeasurements.hashCode();
+        result = 31 * result + javaRuntimeVersion.hashCode();
         result = 31 * result + releaseMeasurements.hashCode();
         result = 31 * result + comment.hashCode();
         return result;

@@ -2,7 +2,8 @@ package ru.ifmo.nds.rundb;
 
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
-import ru.ifmo.nds.jmh.AbstractBenchmark;
+import ru.ifmo.nds.IdCollection;
+import ru.ifmo.nds.jmh.JMHBenchmark;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -21,24 +22,22 @@ public final class Records {
     private static final String MEASUREMENT_METHOD = "measurementMethod";
     private static final String MEASUREMENT_AUTHOR = "measurementAuthor";
     private static final String MEASUREMENT_TIME = "measurementTime";
-    private static final String CPU_FREQUENCY = "cpuFrequency";
     private static final String CPU_MODEL_NAME = "cpuModelName";
-    private static final String WARM_UP_MEASUREMENTS = "warmUpMeasurements";
+    private static final String JAVA_RUNTIME_VERSION = "javaRuntimeVersion";
     private static final String RELEASE_MEASUREMENTS = "releaseMeasurements";
     private static final String COMMENT = "comment";
 
     private static final List<String> ALL_NAMES = Arrays.asList(
             ALGORITHM_ID, DATASET_ID, MEASUREMENT_METHOD, MEASUREMENT_AUTHOR, MEASUREMENT_TIME,
-            CPU_FREQUENCY, CPU_MODEL_NAME, WARM_UP_MEASUREMENTS, RELEASE_MEASUREMENTS, COMMENT
+            CPU_MODEL_NAME, JAVA_RUNTIME_VERSION, RELEASE_MEASUREMENTS, COMMENT
     );
 
     // JMH constants for the parser.
-    private static final String BENCHMARK_NAME_START = "# Benchmark: ";
+    private static final String BENCHMARK_NAME_START = "# JMHBenchmark: ";
     private static final String PARAMETERS_START = "# Parameters: ";
     private static final String FORK_START = "# Fork: ";
     private static final String RUN_COMPLETE_START = "# Run complete.";
     private static final String ITERATION = "Iteration";
-    private static final String WARMUP_ITERATION = "# Warmup Iteration";
     private static final String RESULT_START = "Result";
     private static final String TOTAL_TIME = "Total time: ";
     private static final List<String> UNWANTED_PREFIXES = Arrays.asList("[info]", "[success]");
@@ -47,8 +46,9 @@ public final class Records {
 
     private static String getAlgorithmIdFromBenchmarkClass(String benchmarkClass) {
         try {
-            AbstractBenchmark benchmark = (AbstractBenchmark) Class.forName(benchmarkClass).newInstance();
-            return benchmark.getFactory().getName();
+            JMHBenchmark benchmark = (JMHBenchmark) Class.forName(benchmarkClass).newInstance();
+            return null;
+            //return benchmark.getFactory().getName();
         } catch (Exception ex) {
             throw new RuntimeException(ex);
         }
@@ -60,18 +60,18 @@ public final class Records {
     public static List<Record> parseJMHRun(
             Reader reader,
             String authorOfEveryBenchmark,
-            double cpuFrequency,
             String cpuModelName,
+            String javaRuntimeVersion,
             String comment
     ) throws IOException {
-        return parseJMHRun(reader, authorOfEveryBenchmark, cpuFrequency, cpuModelName, comment, DEFAULT_EXTRACTOR);
+        return parseJMHRun(reader, authorOfEveryBenchmark, cpuModelName, javaRuntimeVersion, comment, DEFAULT_EXTRACTOR);
     }
 
     private static List<Record> parseJMHRun(
             Reader reader,
             String authorOfEveryBenchmark,
-            double cpuFrequency,
             String cpuModelName,
+            String javaRuntimeVersion,
             String comment,
             BiFunction<String, Map<String, String>, String> benchmarkNameExtractor
     ) throws IOException {
@@ -86,29 +86,25 @@ public final class Records {
         for (JMHBenchmarkResult result : parser.consumedBenchmarks) {
             String benchmarkClass = result.benchmarkClass;
             String algorithmId = algorithmIdMapper.computeIfAbsent(benchmarkClass, Records::getAlgorithmIdFromBenchmarkClass);
-            List<Double> warm = result.warmUpResults;
             List<Double> release = result.releaseResults;
             String datasetId = benchmarkNameExtractor.apply(result.methodName, result.params);
-            int divisor = AllDatasets.getDataset(datasetId).getNumberOfInstances();
-            for (int i = 0; i < warm.size(); ++i) {
-                warm.set(i, warm.get(i) / divisor);
-            }
+            int divisor = IdCollection.getDataset(datasetId).getNumberOfInstances();
             for (int i = 0; i < release.size(); ++i) {
                 release.set(i, release.get(i) / divisor);
             }
             rv.add(new Record(algorithmId, datasetId, "JMH", authorOfEveryBenchmark,
-                    timeOfEveryBenchmark, cpuFrequency, cpuModelName, warm, release, comment));
+                    timeOfEveryBenchmark, cpuModelName, javaRuntimeVersion, release, comment));
         }
         return rv;
     }
 
-    public static void saveToFile(List<Record> records, Path file) throws IOException {
+    public static void saveToFile(Collection<? extends Record> records, Path file) throws IOException {
         try (BufferedWriter writer = Files.newBufferedWriter(file)) {
             saveToWriter(records, writer);
         }
     }
 
-    public static void saveToWriter(List<Record> records, Writer writer) throws IOException {
+    public static void saveToWriter(Collection<? extends Record> records, Writer writer) throws IOException {
         JsonWriter jsonWriter = new JsonWriter(writer);
         jsonWriter.beginArray();
         for (Record record : records) {
@@ -118,13 +114,8 @@ public final class Records {
             jsonWriter.name(MEASUREMENT_METHOD).value(record.getMeasurementMethod());
             jsonWriter.name(MEASUREMENT_AUTHOR).value(record.getMeasurementAuthor());
             jsonWriter.name(MEASUREMENT_TIME).value(record.getMeasurementTime().toString());
-            jsonWriter.name(CPU_FREQUENCY).value(record.getCpuFrequency());
             jsonWriter.name(CPU_MODEL_NAME).value(record.getCpuModelName());
-            jsonWriter.name(WARM_UP_MEASUREMENTS).beginArray();
-            for (double measurement : record.getWarmUpMeasurements()) {
-                jsonWriter.value(measurement);
-            }
-            jsonWriter.endArray();
+            jsonWriter.name(JAVA_RUNTIME_VERSION).value(record.getJavaRuntimeVersion());
             jsonWriter.name(RELEASE_MEASUREMENTS).beginArray();
             for (double measurement : record.getReleaseMeasurements()) {
                 jsonWriter.value(measurement);
@@ -148,7 +139,6 @@ public final class Records {
         jsonReader.beginArray();
         while (jsonReader.hasNext()) {
             Map<String, String> stringFields = new HashMap<>();
-            Map<String, Double> doubleFields = new HashMap<>();
             Map<String, LocalDateTime> timeFields = new HashMap<>();
             Map<String, List<Double>> doubleListFields = new HashMap<>();
 
@@ -162,15 +152,12 @@ public final class Records {
                     case MEASUREMENT_AUTHOR:
                     case CPU_MODEL_NAME:
                     case COMMENT:
+                    case JAVA_RUNTIME_VERSION:
                         stringFields.put(key, jsonReader.nextString());
                         break;
                     case MEASUREMENT_TIME:
                         timeFields.put(key, LocalDateTime.parse(jsonReader.nextString()));
                         break;
-                    case CPU_FREQUENCY:
-                        doubleFields.put(key, jsonReader.nextDouble());
-                        break;
-                    case WARM_UP_MEASUREMENTS:
                     case RELEASE_MEASUREMENTS: {
                         List<Double> list = new ArrayList<>();
                         jsonReader.beginArray();
@@ -189,16 +176,15 @@ public final class Records {
             jsonReader.endObject();
 
             for (String s : ALL_NAMES) {
-                if (!stringFields.containsKey(s) && !doubleFields.containsKey(s)
-                        && !timeFields.containsKey(s) && !doubleListFields.containsKey(s)) {
+                if (!stringFields.containsKey(s) && !timeFields.containsKey(s) && !doubleListFields.containsKey(s)) {
                     throw new IOException("In record description, JSON name '" + s + "' is missing");
                 }
             }
             rv.add(new Record(stringFields.get(ALGORITHM_ID), stringFields.get(DATASET_ID),
                     stringFields.get(MEASUREMENT_METHOD), stringFields.get(MEASUREMENT_AUTHOR),
-                    timeFields.get(MEASUREMENT_TIME), doubleFields.get(CPU_FREQUENCY),
-                    stringFields.get(CPU_MODEL_NAME), doubleListFields.get(WARM_UP_MEASUREMENTS),
-                    doubleListFields.get(RELEASE_MEASUREMENTS), stringFields.get(COMMENT)));
+                    timeFields.get(MEASUREMENT_TIME), stringFields.get(CPU_MODEL_NAME),
+                    stringFields.get(JAVA_RUNTIME_VERSION), doubleListFields.get(RELEASE_MEASUREMENTS),
+                    stringFields.get(COMMENT)));
         }
         jsonReader.endArray();
         return rv;
@@ -228,12 +214,10 @@ public final class Records {
         private String lastBenchmarkName = null;
         private Map<String, String> lastBenchmarkParams = new HashMap<>();
         private List<Double> lastBenchmarkReleaseData = new ArrayList<>();
-        private List<Double> lastBenchmarkWarmUpData = new ArrayList<>();
         private LocalDateTime time = null;
 
         private void consumeBenchmarkName(String line) {
             lastBenchmarkReleaseData.clear();
-            lastBenchmarkWarmUpData.clear();
             lastBenchmarkParams.clear();
             String lastBenchmarkName = line.substring(BENCHMARK_NAME_START.length()).trim();
             int lastDot = lastBenchmarkName.lastIndexOf('.');
@@ -286,9 +270,7 @@ public final class Records {
 
         private void flushBenchmark() {
             consumedBenchmarks.add(new JMHBenchmarkResult(lastBenchmarkName,
-                    lastBenchmarkClass,
-                    lastBenchmarkWarmUpData, lastBenchmarkReleaseData, lastBenchmarkParams));
-            lastBenchmarkWarmUpData.clear();
+                    lastBenchmarkClass, lastBenchmarkReleaseData, lastBenchmarkParams));
             lastBenchmarkReleaseData.clear();
         }
 
@@ -338,15 +320,6 @@ public final class Records {
                             throw new UnsupportedOperationException("Cannot work with units other than us/op: '" + unit);
                         }
                         addValueToBenchmarkResult(value, lastBenchmarkReleaseData);
-                    } else if (line.startsWith(WARMUP_ITERATION)) {
-                        StringTokenizer st = new StringTokenizer(line.substring(WARMUP_ITERATION.length()));
-                        st.nextToken(); // iteration number
-                        String value = st.nextToken();
-                        String unit = st.nextToken();
-                        if (!unit.equals("us/op")) {
-                            throw new UnsupportedOperationException("Cannot work with units other than us/op: '" + unit);
-                        }
-                        addValueToBenchmarkResult(value, lastBenchmarkWarmUpData);
                     } else if (line.startsWith(FORK_START)) {
                         flushBenchmark();
                     } else if (line.startsWith(RESULT_START)) {
@@ -399,16 +372,14 @@ public final class Records {
     private static class JMHBenchmarkResult {
         private final String methodName;
         private final String benchmarkClass;
-        private final List<Double> warmUpResults;
         private final List<Double> releaseResults;
         private final Map<String, String> params;
 
         JMHBenchmarkResult(String methodName, String benchmarkClass,
-                           List<Double> warmUpResults, List<Double> releaseResults,
+                           List<Double> releaseResults,
                            Map<String, String> params) {
             this.methodName = methodName;
             this.benchmarkClass = benchmarkClass;
-            this.warmUpResults = new ArrayList<>(warmUpResults);
             this.releaseResults = new ArrayList<>(releaseResults);
             this.params = new HashMap<>(params);
         }
