@@ -135,9 +135,6 @@ public final class Benchmark extends JCommanderRunnable {
             }
 
             Collection<RunResult> results = new Runner(options).run();
-            if (results.size() != 1) {
-                throw new CLIWrapperException("Unable to dig through JMH output: results.size() != 1", null);
-            }
             List<Record> records = new ArrayList<>();
 
             String javaRuntimeVersion = System.getProperty("java.runtime.version");
