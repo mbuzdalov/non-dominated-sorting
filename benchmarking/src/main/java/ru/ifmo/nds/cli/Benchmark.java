@@ -28,8 +28,7 @@ import ru.ifmo.nds.rundb.Records;
 import ru.ifmo.nds.simple.SimpleBenchmark;
 
 public final class Benchmark extends JCommanderRunnable {
-    private Benchmark() {
-    }
+    private Benchmark() {}
 
     public enum Type {
         JMH, simple
@@ -128,7 +127,7 @@ public final class Benchmark extends JCommanderRunnable {
         try {
             Path output = Paths.get(outputFileName);
             List<Record> allBenchmarks;
-            if (shouldAppendToOutput) {
+            if (shouldAppendToOutput && Files.exists(output) && Files.size(output) > 0) {
                 allBenchmarks = Records.loadFromFile(output);
             } else {
                 allBenchmarks = new ArrayList<>();
@@ -198,7 +197,7 @@ public final class Benchmark extends JCommanderRunnable {
         try {
             Path output = Paths.get(outputFileName);
             List<Record> allBenchmarks;
-            if (shouldAppendToOutput) {
+            if (shouldAppendToOutput && Files.exists(output) && Files.size(output) > 0) {
                 allBenchmarks = Records.loadFromFile(output);
             } else {
                 allBenchmarks = new ArrayList<>();

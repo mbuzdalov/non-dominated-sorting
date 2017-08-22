@@ -13,10 +13,6 @@ import ru.ifmo.nds.rundb.Records;
 public class ConvertJMH extends JCommanderRunnable {
     private ConvertJMH() {}
 
-    @SuppressWarnings("unused")
-    @Parameter(validateWith = MainParameterSuppressor.class)
-    private String mainParameterSuppressor;
-
     @Parameter(names = "--input", required = true, description = "Specify the file with JMH logs to convert.")
     private String inputFileName;
 

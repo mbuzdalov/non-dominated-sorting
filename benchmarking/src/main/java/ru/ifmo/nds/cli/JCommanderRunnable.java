@@ -10,6 +10,7 @@ abstract class JCommanderRunnable {
         JCommander parser = JCommander.newBuilder()
                 .programName(object.getClass().getName())
                 .addObject(object)
+                .addObject(new MainParameterSuppressor())
                 .acceptUnknownOptions(false)
                 .allowParameterOverwriting(false)
                 .build();
