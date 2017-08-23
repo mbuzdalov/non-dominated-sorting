@@ -1,10 +1,38 @@
 package ru.ifmo.nds.rundb;
 
 import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.StringTokenizer;
 
 public final class IdUtils {
     private IdUtils() {}
+
+    @SuppressWarnings("ResultOfMethodCallIgnored")
+    public static Set<String> getPossibleFactors(String s) {
+        Set<String> rv = new HashSet<>();
+        StringTokenizer st = new StringTokenizer(s, ".");
+        while (st.hasMoreTokens()) {
+            String token = st.nextToken();
+            int start = 0;
+            while (start < token.length() && !Character.isDigit(token.charAt(start))) {
+                ++start;
+            }
+            boolean isNumber = true;
+            for (int i = start; isNumber && i < token.length(); ++i) {
+                isNumber = Character.isDigit(token.charAt(i));
+            }
+            if (isNumber) {
+                try {
+                    Long.parseLong(token.substring(start));
+                    rv.add(token.substring(0, start));
+                } catch (NumberFormatException ignored) {
+                    // this token cannot be a factor
+                }
+            }
+        }
+        return rv;
+    }
 
     public static String factorize(String s, String factor) {
         StringBuilder rv = new StringBuilder();
@@ -24,13 +52,13 @@ public final class IdUtils {
         return rv.toString();
     }
 
-    public static long extract(String s, String factor) {
+    public static int extract(String s, String factor) {
         StringTokenizer st = new StringTokenizer(s, ".");
         while (st.hasMoreTokens()) {
             String token = st.nextToken();
             if (token.startsWith(factor)) {
                 try {
-                    return Long.parseLong(token.substring(factor.length()));
+                    return Integer.parseInt(token.substring(factor.length()));
                 } catch (NumberFormatException ex) {
                     // continue
                 }

@@ -74,12 +74,22 @@ public class Compare extends JCommanderRunnable {
             {-1,  2,  8, 14, 20, 27, 34, 41, 48, 55, 62, 69, 76, 83, 90, 98, 105, 112, 119, 127},
     };
 
-    static class ComparisonHolder {
+    private static class Result {
+        final int comparisonResult;
+        final double relativeMedianDifference;
+
+        private Result(int comparisonResult, double relativeMedianDifference) {
+            this.comparisonResult = comparisonResult;
+            this.relativeMedianDifference = relativeMedianDifference;
+        }
+    }
+
+    private static class ComparisonHolder {
         final List<Record> left = new ArrayList<>();
         final List<Record> right = new ArrayList<>();
         final MannWhitneyUTest uTest = new MannWhitneyUTest();
 
-        int conductAndPrintUTest() {
+        Result conductAndPrintUTest() {
             double[] lefts = fromList(left.stream()
                     .flatMap(r -> r.getReleaseMeasurements().stream())
                     .collect(Collectors.toList()));
@@ -96,14 +106,17 @@ public class Compare extends JCommanderRunnable {
                 significant = uTest.mannWhitneyUTest(lefts, rights) <= 0.05;
             }
 
-            int rv;
+            Result rv;
             if (significant) {
-                if (median(lefts) < median(rights)) {
-                    System.out.print("L < R");
-                    rv = -1;
+                double ml = median(lefts);
+                double mr = median(rights);
+                double diff = 2 * Math.abs(ml - mr) / (ml + mr);
+                if (ml < mr) {
+                    System.out.printf("L < R (relative diff = %.2f)", diff);
+                    rv = new Result(-1, diff);
                 } else {
-                    System.out.print("L > R");
-                    rv = 1;
+                    System.out.printf("L > R (relative diff = %.2f)", diff);
+                    rv = new Result(+1, diff);
                 }
                 System.out.println();
                 System.out.printf("%35s: %s%n", "=> left",
@@ -112,7 +125,7 @@ public class Compare extends JCommanderRunnable {
                         Arrays.stream(rights).mapToObj(v -> String.format("%.2e", v)).collect(Collectors.toList()));
             } else {
                 System.out.print("L ~ R");
-                rv = 0;
+                rv = new Result(0, 0);
             }
             System.out.println();
             return rv;
@@ -139,6 +152,9 @@ public class Compare extends JCommanderRunnable {
             int countStatisticallyGreater = 0;
             int countStatisticallySame = 0;
 
+            double sumDiffStatisticallyLess = 0;
+            double sumDiffStatisticallyGreater = 0;
+
             int bothDatasets = 0;
             int leftOnlyDatasets = 0;
             int rightOnlyDatasets = 0;
@@ -150,11 +166,13 @@ public class Compare extends JCommanderRunnable {
                 if (!h.left.isEmpty() && !h.right.isEmpty()) {
                     ++bothDatasets;
                     System.out.printf("%35s: ", e.getKey());
-                    int comp = h.conductAndPrintUTest();
-                    if (comp < 0) {
+                    Result comp = h.conductAndPrintUTest();
+                    if (comp.comparisonResult < 0) {
                         ++countStatisticallyLess;
-                    } else if (comp > 0) {
+                        sumDiffStatisticallyLess += comp.relativeMedianDifference;
+                    } else if (comp.comparisonResult > 0) {
                         ++countStatisticallyGreater;
+                        sumDiffStatisticallyGreater += comp.relativeMedianDifference;
                     } else {
                         ++countStatisticallySame;
                     }
@@ -164,11 +182,14 @@ public class Compare extends JCommanderRunnable {
                     ++rightOnlyDatasets;
                 }
             }
+            String averageDiffLess = String.format(" (average difference %.2f)", sumDiffStatisticallyLess / countStatisticallyLess);
+            String averageDiffGreater = String.format(" (average difference %.2f)", sumDiffStatisticallyGreater / countStatisticallyGreater);
+
             System.out.println("    Summary for " + byAlgorithm.getKey() + ":");
             System.out.println("        Configurations on both sides: " + bothDatasets + ", of them:");
-            System.out.println("            statistically less:     " + countStatisticallyLess);
-            System.out.println("            statistically greater:  " + countStatisticallyGreater);
-            System.out.println("            statistically unsure:   " + countStatisticallySame);
+            System.out.println("            statistically L < R: " + countStatisticallyLess + averageDiffLess);
+            System.out.println("            statistically L > R: " + countStatisticallyGreater + averageDiffGreater);
+            System.out.println("            statistically L ~ R: " + countStatisticallySame);
             System.out.println("        Configurations on left side only: " + leftOnlyDatasets);
             System.out.println("        Configurations on right side only: " + rightOnlyDatasets);
             System.out.println();
@@ -185,10 +206,10 @@ public class Compare extends JCommanderRunnable {
             } else {
                 symbol = "[==]";
             }
-            grandSummary.add(symbol + " " + byAlgorithm.getKey() + ": "
-                    + countStatisticallyLess + " less, "
-                    + countStatisticallySame + " same, "
-                    + countStatisticallyGreater + " greater.");
+            grandSummary.add(symbol + " " + byAlgorithm.getKey() + ": [L < R] => "
+                    + countStatisticallyLess + averageDiffLess + ", [L ~ R] => "
+                    + countStatisticallySame + ", [L > R] => "
+                    + countStatisticallyGreater + averageDiffGreater + ".");
         }
         System.out.println("Grand summary:");
         for (String s : grandSummary) {
