@@ -16,7 +16,7 @@ public class Record {
     private final LocalDateTime measurementTime;
     private final String cpuModelName;
     private final String javaRuntimeVersion;
-    private final List<Double> releaseMeasurements;
+    private final List<Double> measurements;
     private final String comment;
 
     public Record(String algorithmID,
@@ -26,7 +26,7 @@ public class Record {
                   LocalDateTime measurementTime,
                   String cpuModelName,
                   String javaRuntimeVersion,
-                  List<Double> releaseMeasurements,
+                  List<Double> measurements,
                   String comment) {
         this.algorithmID = algorithmID;
         this.datasetID = datasetID;
@@ -35,7 +35,7 @@ public class Record {
         this.measurementTime = measurementTime;
         this.cpuModelName = cpuModelName;
         this.javaRuntimeVersion = javaRuntimeVersion;
-        this.releaseMeasurements = Collections.unmodifiableList(new ArrayList<>(releaseMeasurements));
+        this.measurements = new ArrayList<>(measurements);
         this.comment = comment;
     }
 
@@ -71,8 +71,8 @@ public class Record {
         return comment;
     }
 
-    public List<Double> getReleaseMeasurements() {
-        return releaseMeasurements;
+    public List<Double> getMeasurements() {
+        return Collections.unmodifiableList(measurements);
     }
 
     @Override
@@ -89,7 +89,7 @@ public class Record {
                 && measurementTime.equals(record.measurementTime)
                 && cpuModelName.equals(record.cpuModelName)
                 && javaRuntimeVersion.equals(record.javaRuntimeVersion)
-                && releaseMeasurements.equals(record.releaseMeasurements)
+                && measurements.equals(record.measurements)
                 && comment.equals(record.comment);
     }
 
@@ -103,7 +103,7 @@ public class Record {
         result = 31 * result + measurementTime.hashCode();
         result = 31 * result + cpuModelName.hashCode();
         result = 31 * result + javaRuntimeVersion.hashCode();
-        result = 31 * result + releaseMeasurements.hashCode();
+        result = 31 * result + measurements.hashCode();
         result = 31 * result + comment.hashCode();
         return result;
     }

@@ -47,7 +47,7 @@ public class LaTeX {
             TreeMap<Long, Stats> stats = new TreeMap<>();
             for (Record plotPoint : plot.getValue()) {
                 long N = IdUtils.extract(plotPoint.getDatasetId(), factor);
-                List<Double> points = plotPoint.getReleaseMeasurements();
+                List<Double> points = plotPoint.getMeasurements();
                 Stats st = stats.computeIfAbsent(N, v -> new Stats());
                 for (double p : points) {
                     st.add(p);

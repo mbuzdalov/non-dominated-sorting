@@ -50,7 +50,7 @@ public class Plotly {
             for (Record plotPoint : plot.getValue()) {
                 long N = IdUtils.extract(plotPoint.getDatasetId(), factor);
                 Stats st = stats.computeIfAbsent(N, v -> new Stats());
-                for (double p : plotPoint.getReleaseMeasurements()) {
+                for (double p : plotPoint.getMeasurements()) {
                     st.add(p);
                 }
             }

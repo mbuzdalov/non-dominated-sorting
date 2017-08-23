@@ -91,10 +91,10 @@ public class Compare extends JCommanderRunnable {
 
         Result conductAndPrintUTest() {
             double[] lefts = fromList(left.stream()
-                    .flatMap(r -> r.getReleaseMeasurements().stream())
+                    .flatMap(r -> r.getMeasurements().stream())
                     .collect(Collectors.toList()));
             double[] rights = fromList(right.stream()
-                    .flatMap(r -> r.getReleaseMeasurements().stream())
+                    .flatMap(r -> r.getMeasurements().stream())
                     .collect(Collectors.toList()));
 
             boolean significant;
@@ -182,8 +182,12 @@ public class Compare extends JCommanderRunnable {
                     ++rightOnlyDatasets;
                 }
             }
-            String averageDiffLess = String.format(" (average difference %.2f)", sumDiffStatisticallyLess / countStatisticallyLess);
-            String averageDiffGreater = String.format(" (average difference %.2f)", sumDiffStatisticallyGreater / countStatisticallyGreater);
+            String averageDiffLess = countStatisticallyLess == 0
+                    ? ""
+                    : String.format(" (average difference %.2f)", sumDiffStatisticallyLess / countStatisticallyLess);
+            String averageDiffGreater = countStatisticallyGreater == 0
+                    ? ""
+                    : String.format(" (average difference %.2f)", sumDiffStatisticallyGreater / countStatisticallyGreater);
 
             System.out.println("    Summary for " + byAlgorithm.getKey() + ":");
             System.out.println("        Configurations on both sides: " + bothDatasets + ", of them:");
