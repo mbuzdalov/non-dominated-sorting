@@ -103,7 +103,7 @@ public class SimpleBenchmark {
             if (threadTime < 200_000_000) {
                 return Double.NEGATIVE_INFINITY;
             }
-            if (threadTime < wallClockTime && wallClockTime < threadTime * 1.02) {
+            if (threadTime <= wallClockTime * 0.99 && wallClockTime < threadTime * 1.01) {
                 return (double) wallClockTime / multiple;
             }
             if (usePrintln) {
