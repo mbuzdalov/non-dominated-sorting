@@ -1,6 +1,9 @@
 package ru.ifmo.nds.rundb;
 
-import java.io.*;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.Reader;
+import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
@@ -19,8 +22,6 @@ public final class Records {
     private static final String CPU_MODEL_NAME = "cpuModelName";
     private static final String JAVA_RUNTIME_VERSION = "javaRuntimeVersion";
     private static final String MEASUREMENTS = "measurements";
-    @Deprecated
-    private static final String RELEASE_MEASUREMENTS = "releaseMeasurements";
     private static final String COMMENT = "comment";
 
     private static final List<String> ALL_NAMES = Arrays.asList(
@@ -90,11 +91,7 @@ public final class Records {
                     case MEASUREMENT_TIME:
                         timeFields.put(key, LocalDateTime.parse(jsonReader.nextString()));
                         break;
-                    case MEASUREMENTS:
-                    case RELEASE_MEASUREMENTS: {
-                        if (key.equals(RELEASE_MEASUREMENTS)) {
-                            System.out.println("[warning] 'releaseMeasurements' is deprecated, use 'measurements'.");
-                        }
+                    case MEASUREMENTS: {
                         List<Double> list = new ArrayList<>();
                         jsonReader.beginArray();
                         while (jsonReader.hasNext()) {

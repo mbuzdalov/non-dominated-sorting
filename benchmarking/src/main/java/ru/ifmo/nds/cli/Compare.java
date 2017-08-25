@@ -15,11 +15,17 @@ import ru.ifmo.nds.rundb.Records;
 public class Compare extends JCommanderRunnable {
     private Compare() {}
 
-    @Parameter(names = "--left", required = true, description = "Specify the file name for the left side.")
-    private String leftFile;
+    @Parameter(names = "--left",
+            variableArity = true,
+            required = true,
+            description = "Specify the file name for the left side.")
+    private List<String> leftFiles;
 
-    @Parameter(names = "--right", required = true, description = "Specify the file name for the right side.")
-    private String rightFile;
+    @Parameter(names = "--right",
+            variableArity = true,
+            required = true,
+            description = "Specify the file name for the right side.")
+    private List<String> rightFiles;
 
     private List<Record> readRecords(String file) throws CLIWrapperException {
         try {
@@ -135,15 +141,19 @@ public class Compare extends JCommanderRunnable {
     @Override
     protected void run() throws CLIWrapperException {
         Map<String, Map<String, ComparisonHolder>> map = new TreeMap<>();
-        for (Record record : readRecords(leftFile)) {
-            map.computeIfAbsent(record.getAlgorithmId(), a -> new TreeMap<>(IdUtils.getLexicographicalIdComparator()))
-                    .computeIfAbsent(record.getDatasetId(), d -> new ComparisonHolder())
-                    .left.add(record);
+        for (String leftFile : leftFiles) {
+            for (Record record : readRecords(leftFile)) {
+                map.computeIfAbsent(record.getAlgorithmId(), a -> new TreeMap<>(IdUtils.getLexicographicalIdComparator()))
+                        .computeIfAbsent(record.getDatasetId(), d -> new ComparisonHolder())
+                        .left.add(record);
+            }
         }
-        for (Record record : readRecords(rightFile)) {
-            map.computeIfAbsent(record.getAlgorithmId(), a -> new TreeMap<>(IdUtils.getLexicographicalIdComparator()))
-                    .computeIfAbsent(record.getDatasetId(), d -> new ComparisonHolder())
-                    .right.add(record);
+        for (String rightFile : rightFiles) {
+            for (Record record : readRecords(rightFile)) {
+                map.computeIfAbsent(record.getAlgorithmId(), a -> new TreeMap<>(IdUtils.getLexicographicalIdComparator()))
+                        .computeIfAbsent(record.getDatasetId(), d -> new ComparisonHolder())
+                        .right.add(record);
+            }
         }
         List<String> grandSummary = new ArrayList<>();
 
@@ -154,6 +164,8 @@ public class Compare extends JCommanderRunnable {
 
             double sumDiffStatisticallyLess = 0;
             double sumDiffStatisticallyGreater = 0;
+            double maxDiffStatisticallyLess = 0;
+            double maxDiffStatisticallyGreater = 0;
 
             int bothDatasets = 0;
             int leftOnlyDatasets = 0;
@@ -170,9 +182,11 @@ public class Compare extends JCommanderRunnable {
                     if (comp.comparisonResult < 0) {
                         ++countStatisticallyLess;
                         sumDiffStatisticallyLess += comp.relativeMedianDifference;
+                        maxDiffStatisticallyLess = Math.max(maxDiffStatisticallyLess, comp.relativeMedianDifference);
                     } else if (comp.comparisonResult > 0) {
                         ++countStatisticallyGreater;
                         sumDiffStatisticallyGreater += comp.relativeMedianDifference;
+                        maxDiffStatisticallyGreater = Math.max(maxDiffStatisticallyGreater, comp.relativeMedianDifference);
                     } else {
                         ++countStatisticallySame;
                     }
@@ -184,10 +198,12 @@ public class Compare extends JCommanderRunnable {
             }
             String averageDiffLess = countStatisticallyLess == 0
                     ? ""
-                    : String.format(" (average difference %.2f)", sumDiffStatisticallyLess / countStatisticallyLess);
+                    : String.format(" (average difference %.2f, max difference %.2f)",
+                        sumDiffStatisticallyLess / countStatisticallyLess, maxDiffStatisticallyLess);
             String averageDiffGreater = countStatisticallyGreater == 0
                     ? ""
-                    : String.format(" (average difference %.2f)", sumDiffStatisticallyGreater / countStatisticallyGreater);
+                    : String.format(" (average difference %.2f, max difference %.2f)",
+                        sumDiffStatisticallyGreater / countStatisticallyGreater, maxDiffStatisticallyGreater);
 
             System.out.println("    Summary for " + byAlgorithm.getKey() + ":");
             System.out.println("        Configurations on both sides: " + bothDatasets + ", of them:");
