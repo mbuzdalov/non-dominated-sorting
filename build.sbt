@@ -2,7 +2,8 @@ lazy val commonSettings = Seq(
   organization := "ru.ifmo",
   libraryDependencies += junitInterface,
   autoScalaLibrary := false,
-  crossPaths := false
+  crossPaths := false,
+  fork := true
 )
 
 lazy val junitInterface = "com.novocode" % "junit-interface" % "0.11" % "test"
