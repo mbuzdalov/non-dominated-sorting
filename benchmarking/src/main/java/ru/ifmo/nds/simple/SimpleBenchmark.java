@@ -93,7 +93,7 @@ public class SimpleBenchmark {
             long wallClock0 = System.nanoTime();
             long thread0 = threadMXBean.getCurrentThreadCpuTime();
 
-            for (int i = 0; i < multiple; ++i) {
+            for (int i = 0, limit = multiple; i < limit; ++i) {
                 blackHole += dataset.runAlgorithm(instance, dataset.getMaxNumberOfPoints());
             }
 
@@ -151,7 +151,7 @@ public class SimpleBenchmark {
             min = Math.min(min, v);
             max = Math.max(max, v);
         }
-        return (max - min) < 0.02 * (max + min);
+        return (max - min) < 0.01 * (max + min);
     }
 
     private void warmUp() {
