@@ -55,8 +55,8 @@ public class SimpleBenchmark {
         Set<String> warmupSet = new HashSet<>();
 
         for (String id : datasetIds) {
-            int n = (int) IdUtils.extract(id, "n");
-            int d = (int) IdUtils.extract(id, "d");
+            int n = IdUtils.extract(id, "n");
+            int d = IdUtils.extract(id, "d");
             if (maxN < n) {
                 maxN = n;
                 idMinD = null;
@@ -103,15 +103,21 @@ public class SimpleBenchmark {
             if (threadTime < 200_000_000) {
                 return Double.NEGATIVE_INFINITY;
             }
-            if (wallClockTime < threadTime * 1.02) {
+            if (threadTime < wallClockTime && wallClockTime < threadTime * 1.02) {
                 return (double) wallClockTime / multiple;
             }
             if (usePrintln) {
-                System.out.println("[warning] remeasuring as thread time (" + threadTime
-                        + ") is much less than wall-clock time (" + wallClockTime
-                        + "): Attempt " + attempt);
+                if (threadTime > wallClockTime) {
+                    System.out.println("[warning] remeasuring as thread time (" + threadTime
+                            + ") is GREATER than wall-clock time (" + wallClockTime
+                            + "): Attempt " + attempt);
+                } else {
+                    System.out.println("[warning] remeasuring as thread time (" + threadTime
+                            + ") is much less than wall-clock time (" + wallClockTime
+                            + "): Attempt " + attempt);
+                }
             } else {
-                System.out.print("[!]");
+                System.out.print(threadTime > wallClockTime ? "[?]" : "[!]");
             }
         }
     }
@@ -124,9 +130,6 @@ public class SimpleBenchmark {
                 multiple = multiple == 0 ? 1 : multiple * 2;
                 double result = measureImpl(usePrintln);
                 if (!Double.isInfinite(result)) {
-                    if (result < 3e8) {
-                        multiple *= 2;
-                    }
                     return result;
                 }
             }
@@ -153,7 +156,7 @@ public class SimpleBenchmark {
 
     private void warmUp() {
         List<Dataset> warmUpInputs = warmupIds.stream().map(IdCollection::getDataset).collect(Collectors.toList());
-        List<Dataset> warmUpAndControl = Dataset.concatenateAndSplit("$.warm.up", warmUpInputs, 2);
+        List<Dataset> warmUpAndControl = Dataset.concatenateAndSplitIntoWarmupAndControl("$", warmUpInputs);
         Dataset warmUp = warmUpAndControl.get(0);
         Dataset control = warmUpAndControl.get(1);
 
@@ -200,6 +203,8 @@ public class SimpleBenchmark {
             System.out.print("[info] " + datasetId + ":");
             Dataset dataset = IdCollection.getDataset(datasetId);
             List<Double> results = new ArrayList<>(repeats);
+            System.gc();
+            System.gc();
             do {
                 results.clear();
                 for (int t = 0; t < repeats; ++t) {

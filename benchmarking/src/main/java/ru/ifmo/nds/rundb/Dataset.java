@@ -71,18 +71,20 @@ public final class Dataset {
         return sumMaximumRanks;
     }
 
-    public static List<Dataset> concatenateAndSplit(String newIdPrefix, List<Dataset> datasets, int howMuch) {
+    public static List<Dataset> concatenateAndSplitIntoWarmupAndControl(String newIdPrefix, List<Dataset> datasets) {
         List<double[][]> inputs = datasets.stream().flatMap(d -> Arrays.stream(d.points)).collect(Collectors.toList());
         Collections.shuffle(inputs);
-        List<Dataset> rv = new ArrayList<>(howMuch);
-        int size = (inputs.size() + howMuch - 1) / howMuch;
+        List<Dataset> rv = new ArrayList<>(2);
+        int warmUpSize = (inputs.size() * 9) / 10;
+        int controlSize = inputs.size() - warmUpSize;
         int start = 0;
         while (start < inputs.size()) {
-            int localSize = Math.min(size, inputs.size() - start);
+            int localSize = start == 0 ? warmUpSize : controlSize;
             double[][][] allPoints = new double[localSize][][];
             for (int i = 0; i < allPoints.length; ++i) {
                 allPoints[i] = inputs.get(start + i);
             }
+            Arrays.sort(allPoints, Comparator.comparingInt(a -> a.length));
             rv.add(new Dataset(newIdPrefix + "." + rv.size(), allPoints));
             start += localSize;
         }
