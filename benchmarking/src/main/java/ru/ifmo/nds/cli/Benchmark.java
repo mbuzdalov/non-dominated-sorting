@@ -44,6 +44,15 @@ public final class Benchmark extends JCommanderRunnable {
         }
     }
 
+    public static class AtLeastOneValidator implements IValueValidator<Double> {
+        @Override
+        public void validate(String name, Double value) throws ParameterException {
+            if (value < 1.0) {
+                throw new ParameterException("Value for '" + name + "' must be at least 1.0, you specified " + value + ".");
+            }
+        }
+    }
+
     @Parameter(names = "--type",
             required = true,
             description = "Specify the benchmark type.")
@@ -69,6 +78,12 @@ public final class Benchmark extends JCommanderRunnable {
             description = "Specify the number of warmup measurements for each configuration.",
             validateValueWith = PositiveIntegerValidator.class)
     private Integer warmUpMeasurements;
+
+    @Parameter(names = "--thread-vs-wall-clock",
+            description = "Specify the maximum relative difference between thread and wall-clock times " +
+                    "for --type=simple (>= 1.0).",
+            validateValueWith = AtLeastOneValidator.class)
+    private double threadVsWallClock = 1.02;
 
     @Parameter(names = "--author",
             required = true,
@@ -204,8 +219,8 @@ public final class Benchmark extends JCommanderRunnable {
 
             allBenchmarks.addAll(new SimpleBenchmark(
                     algorithmId,
-                    Arrays.asList(jmhIds)
-            ).evaluate(author, comment, measurements));
+                    Arrays.asList(jmhIds),
+                    threadVsWallClock).evaluate(author, comment, measurements));
 
             Records.saveToFile(allBenchmarks, output);
         } catch (IOException ex) {
