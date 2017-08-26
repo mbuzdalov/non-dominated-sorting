@@ -44,11 +44,11 @@ public final class Benchmark extends JCommanderRunnable {
         }
     }
 
-    public static class AtLeastOneValidator implements IValueValidator<Double> {
+    public static class PositiveDoubleValidator implements IValueValidator<Double> {
         @Override
         public void validate(String name, Double value) throws ParameterException {
-            if (value < 1.0) {
-                throw new ParameterException("Value for '" + name + "' must be at least 1.0, you specified " + value + ".");
+            if (value <= 0.0) {
+                throw new ParameterException("Value for '" + name + "' must be positive, you specified " + value + ".");
             }
         }
     }
@@ -80,9 +80,9 @@ public final class Benchmark extends JCommanderRunnable {
     private Integer warmUpMeasurements;
 
     @Parameter(names = "--required-precision",
-            description = "Specify the required precision for --type=simple (>= 1.0).",
-            validateValueWith = AtLeastOneValidator.class)
-    private double requiredPrecision = 1.02;
+            description = "Specify the required precision for --type=simple (> 0.0).",
+            validateValueWith = PositiveDoubleValidator.class)
+    private double requiredPrecision = 0.02;
 
     @Parameter(names = "--author",
             required = true,

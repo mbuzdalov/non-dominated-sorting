@@ -51,7 +51,7 @@ public class SimpleBenchmark {
         this.algorithmId = algorithmId;
         this.requiredPrecision = requiredPrecision;
 
-        if (requiredPrecision < 1) {
+        if (requiredPrecision <= 0) {
             throw new IllegalArgumentException("Parameter 'requiredPrecision' should be at least 1.0");
         }
 
@@ -110,7 +110,8 @@ public class SimpleBenchmark {
             if (threadTime < 200_000_000) {
                 return Double.NEGATIVE_INFINITY;
             }
-            if (threadTime <= wallClockTime * requiredPrecision && wallClockTime <= threadTime * requiredPrecision) {
+            if (threadTime <= wallClockTime * (1 + requiredPrecision)
+                    && wallClockTime <= threadTime * (1 + requiredPrecision)) {
                 return (double) wallClockTime / multiple;
             }
             if (usePrintln) {
@@ -162,8 +163,8 @@ public class SimpleBenchmark {
             min = Math.min(min, v);
             max = Math.max(max, v);
         }
-        // average += (average * (requiredPrecision - 1))
-        return (max - min) < (requiredPrecision - 1) * (max + min);
+        // average += (average * requiredPrecision)
+        return (max - min) < requiredPrecision * (max + min);
     }
 
     private void warmUp() {
