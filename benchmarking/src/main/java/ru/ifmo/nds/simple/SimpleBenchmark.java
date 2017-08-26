@@ -162,8 +162,8 @@ public class SimpleBenchmark {
             min = Math.min(min, v);
             max = Math.max(max, v);
         }
-        // average += (average * requiredPrecision)
-        return (max - min) < requiredPrecision * (max + min);
+        // average += (average * (requiredPrecision - 1))
+        return (max - min) < (requiredPrecision - 1) * (max + min);
     }
 
     private void warmUp() {
@@ -176,6 +176,8 @@ public class SimpleBenchmark {
         do {
             System.out.println("[info] warm-up dataset: " + warmUp.getNumberOfInstances() + " instances");
             System.out.println("[info] warm-up measurements:");
+            System.gc();
+            System.gc();
             List<Double> warmUpMeasurements = new ArrayList<>();
             while (warmUpMeasurements.size() < 10 ||
                     !practicallySame(warmUpMeasurements.subList(warmUpMeasurements.size() / 2, warmUpMeasurements.size()))) {
