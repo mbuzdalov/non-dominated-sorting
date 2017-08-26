@@ -79,11 +79,10 @@ public final class Benchmark extends JCommanderRunnable {
             validateValueWith = PositiveIntegerValidator.class)
     private Integer warmUpMeasurements;
 
-    @Parameter(names = "--thread-vs-wall-clock",
-            description = "Specify the maximum relative difference between thread and wall-clock times " +
-                    "for --type=simple (>= 1.0).",
+    @Parameter(names = "--required-precision",
+            description = "Specify the required precision for --type=simple (>= 1.0).",
             validateValueWith = AtLeastOneValidator.class)
-    private double threadVsWallClock = 1.02;
+    private double requiredPrecision = 1.02;
 
     @Parameter(names = "--author",
             required = true,
@@ -220,7 +219,7 @@ public final class Benchmark extends JCommanderRunnable {
             allBenchmarks.addAll(new SimpleBenchmark(
                     algorithmId,
                     Arrays.asList(jmhIds),
-                    threadVsWallClock).evaluate(author, comment, measurements));
+                    requiredPrecision).evaluate(author, comment, measurements));
 
             Records.saveToFile(allBenchmarks, output);
         } catch (IOException ex) {

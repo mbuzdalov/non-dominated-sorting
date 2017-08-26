@@ -39,7 +39,7 @@ public class SimpleBenchmark {
     private final NonDominatedSorting instance;
     private final List<String> datasetIds;
     private final List<String> warmupIds;
-    private final double threadVsWallClock;
+    private final double requiredPrecision;
 
     private final ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
     private long blackHole = 0;
@@ -47,12 +47,12 @@ public class SimpleBenchmark {
     private int multiple;
     private Dataset lastDataset;
 
-    public SimpleBenchmark(String algorithmId, List<String> datasetIds, double threadVsWallClock) {
+    public SimpleBenchmark(String algorithmId, List<String> datasetIds, double requiredPrecision) {
         this.algorithmId = algorithmId;
-        this.threadVsWallClock = threadVsWallClock;
+        this.requiredPrecision = requiredPrecision;
 
-        if (threadVsWallClock < 1) {
-            throw new IllegalArgumentException("Parameter 'threadVsWallClock' should be at least 1.0");
+        if (requiredPrecision < 1) {
+            throw new IllegalArgumentException("Parameter 'requiredPrecision' should be at least 1.0");
         }
 
         int maxN = 0, maxD = 0;
@@ -110,7 +110,7 @@ public class SimpleBenchmark {
             if (threadTime < 200_000_000) {
                 return Double.NEGATIVE_INFINITY;
             }
-            if (threadTime <= wallClockTime * threadVsWallClock && wallClockTime <= threadTime * threadVsWallClock) {
+            if (threadTime <= wallClockTime * requiredPrecision && wallClockTime <= threadTime * requiredPrecision) {
                 return (double) wallClockTime / multiple;
             }
             if (usePrintln) {
@@ -162,7 +162,8 @@ public class SimpleBenchmark {
             min = Math.min(min, v);
             max = Math.max(max, v);
         }
-        return (max - min) < 0.01 * (max + min);
+        // average += (average * requiredPrecision)
+        return (max - min) < requiredPrecision * (max + min);
     }
 
     private void warmUp() {
