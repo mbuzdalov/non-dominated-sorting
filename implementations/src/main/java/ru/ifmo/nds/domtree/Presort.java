@@ -207,6 +207,7 @@ public class Presort extends AbstractDominanceTree {
         sortCheckedImpl(this.points, this.ranks, realN);
         for (int i = 0; i < n; ++i) {
             ranks[i] = this.ranks[ranks[i]];
+            this.points[i] = null;
         }
     }
 }
