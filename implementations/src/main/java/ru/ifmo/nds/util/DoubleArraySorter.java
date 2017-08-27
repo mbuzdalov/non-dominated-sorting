@@ -175,8 +175,6 @@ public class DoubleArraySorter {
                 lastII = currII;
                 ++newN;
             }
-
-            // Abusing the argument "ranks" array to keep where the reference point lies.
             reindex[currII] = newN - 1;
         }
         return newN;
