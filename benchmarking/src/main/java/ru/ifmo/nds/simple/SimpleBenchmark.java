@@ -4,17 +4,14 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import oshi.SystemInfo;
 
 import ru.ifmo.nds.IdCollection;
 import ru.ifmo.nds.NonDominatedSorting;
+import ru.ifmo.nds.NonDominatedSortingFactory;
 import ru.ifmo.nds.rundb.Dataset;
-import ru.ifmo.nds.rundb.IdUtils;
 import ru.ifmo.nds.rundb.Record;
 
 /**
@@ -36,9 +33,8 @@ import ru.ifmo.nds.rundb.Record;
  */
 public class SimpleBenchmark {
     private final String algorithmId;
-    private final NonDominatedSorting instance;
+    private final NonDominatedSortingFactory factory;
     private final List<String> datasetIds;
-    private final List<String> warmupIds;
     private final double requiredPrecision;
     private final boolean keepSilent;
 
@@ -47,6 +43,7 @@ public class SimpleBenchmark {
 
     private int multiple;
     private Dataset lastDataset;
+    private NonDominatedSorting instance;
 
     public SimpleBenchmark(String algorithmId, List<String> datasetIds, double requiredPrecision, boolean keepSilent) {
         this.algorithmId = algorithmId;
@@ -57,46 +54,11 @@ public class SimpleBenchmark {
             throw new IllegalArgumentException("Parameter 'requiredPrecision' should be at least 1.0");
         }
 
-        int maxN = 0, maxD = 0;
-        int minN = Integer.MAX_VALUE, minD = Integer.MAX_VALUE;
-
-        String idMaxN = null, idMaxD = null, idMinD = null;
-        Set<String> warmupSet = new HashSet<>();
-
-        for (String id : datasetIds) {
-            int n = IdUtils.extract(id, "n");
-            int d = IdUtils.extract(id, "d");
-            if (maxN < n) {
-                maxN = n;
-                idMinD = null;
-                minD = Integer.MAX_VALUE;
-                idMaxN = id;
-            }
-            if (maxN == n && minD > d) {
-                minD = d;
-                idMinD = id;
-            }
-            if (maxD < d) {
-                maxD = d;
-                idMaxD = id;
-            }
-            if (minN >= n) {
-                if (minN > n) {
-                    warmupSet.clear();
-                    minN = n;
-                }
-                warmupSet.add(id);
-            }
-        }
-        instance = IdCollection.getNonDominatedSortingFactory(algorithmId).getInstance(maxN, maxD);
+        factory = IdCollection.getNonDominatedSortingFactory(algorithmId);
         this.datasetIds = new ArrayList<>(datasetIds);
-        warmupSet.add(idMaxN);
-        warmupSet.add(idMaxD);
-        warmupSet.add(idMinD);
-        this.warmupIds = new ArrayList<>(warmupSet);
     }
 
-    private double measureImpl(boolean usePrintln) {
+    private double measureImpl() {
         Dataset dataset = lastDataset;
         for (int attempt = 0; ; ++attempt) {
             long wallClock0 = System.nanoTime();
@@ -117,41 +79,33 @@ public class SimpleBenchmark {
                 return (double) wallClockTime / multiple;
             }
             if (!keepSilent) {
-                if (usePrintln) {
-                    if (threadTime > wallClockTime) {
-                        System.out.println("[warning] remeasuring as thread time (" + threadTime
-                                + ") is GREATER than wall-clock time (" + wallClockTime
-                                + "): Attempt " + attempt);
-                    } else {
-                        System.out.println("[warning] remeasuring as thread time (" + threadTime
-                                + ") is much less than wall-clock time (" + wallClockTime
-                                + "): Attempt " + attempt);
-                    }
+                if (attempt < 10) {
+                    System.out.print(threadTime > wallClockTime ? "[?]" : "[!]");
                 } else {
-                    if (attempt < 10) {
-                        System.out.print(threadTime > wallClockTime ? "[?]" : "[!]");
-                    } else {
-                        System.out.print("[thread=" + threadTime + ",wc=" + wallClockTime + "]");
-                    }
+                    System.out.print("[thread=" + threadTime + ",wc=" + wallClockTime + "]");
                 }
             }
         }
     }
 
-    private double measure(Dataset dataset, boolean usePrintln) {
+    private double measure(Dataset dataset) {
         if (dataset != lastDataset) {
             multiple = 0;
             lastDataset = dataset;
+            if (instance != null) {
+                instance.close();
+            }
+            instance = factory.getInstance(dataset.getMaxNumberOfPoints(), dataset.getMaxDimension());
             while (true) {
                 multiple = multiple == 0 ? 1 : multiple * 2;
-                double result = measureImpl(usePrintln);
+                double result = measureImpl();
                 if (!Double.isInfinite(result)) {
                     return result;
                 }
             }
         } else {
             while (true) {
-                double rv = measureImpl(usePrintln);
+                double rv = measureImpl();
                 if (!Double.isInfinite(rv)) {
                     return rv;
                 } else {
@@ -171,63 +125,7 @@ public class SimpleBenchmark {
         return (max - min) < requiredPrecision * (max + min);
     }
 
-    private void warmUp() {
-        List<Dataset> warmUpInputs = warmupIds.stream().map(IdCollection::getDataset).collect(Collectors.toList());
-        List<Dataset> warmUpAndControl = Dataset.concatenateAndSplitIntoWarmupAndControl("$", warmUpInputs);
-        Dataset warmUp = warmUpAndControl.get(0);
-        Dataset control = warmUpAndControl.get(1);
-
-        boolean controlPassed;
-        do {
-            if (!keepSilent) {
-                System.out.println("[info] warm-up dataset: " + warmUp.getNumberOfInstances() + " instances");
-                System.out.println("[info] warm-up measurements:");
-            }
-            System.gc();
-            System.gc();
-            List<Double> warmUpMeasurements = new ArrayList<>();
-            while (warmUpMeasurements.size() < 10 ||
-                    !practicallySame(warmUpMeasurements.subList(warmUpMeasurements.size() / 2, warmUpMeasurements.size()))) {
-                double measurement = measure(warmUp, true);
-                if (!keepSilent) {
-                    System.out.println("[info]     " + measurement);
-                }
-                warmUpMeasurements.add(measurement);
-            }
-
-            if (!keepSilent) {
-                System.out.println("[info] control dataset: " + control.getNumberOfInstances() + " instances");
-                System.out.println("[info] warm-up measurements:");
-            }
-            List<Double> controlMeasurements = new ArrayList<>();
-            for (int i = 0; i < warmUpMeasurements.size(); ++i) {
-                double measurement = measure(control, true);
-                if (!keepSilent) {
-                    System.out.println("[info]     " + measurement);
-                }
-                controlMeasurements.add(measurement);
-            }
-            controlPassed = practicallySame(controlMeasurements);
-            if (!keepSilent) {
-                if (controlPassed) {
-                    System.out.println("[info] control passed. proceed with actual measurements!");
-                } else {
-                    System.out.println("[warning] control not passed, repeating warm-up!");
-                }
-            }
-        } while (!controlPassed);
-    }
-
-    public List<Record> evaluate(
-            String benchmarkAuthor,
-            String comment,
-            int repeats
-    ) {
-        List<Record> rv = new ArrayList<>(datasetIds.size());
-        List<List<Double>> datasetIdTimes = new ArrayList<>();
-
-        warmUp();
-
+    private boolean evaluateOnDatasets(List<List<Double>> datasetIdTimes, int repeats) {
         for (String datasetId : datasetIds) {
             if (!keepSilent) {
                 System.out.print("[info] " + datasetId + ":");
@@ -236,21 +134,35 @@ public class SimpleBenchmark {
             List<Double> results = new ArrayList<>(repeats);
             System.gc();
             System.gc();
-            do {
-                results.clear();
-                for (int t = 0; t < repeats; ++t) {
-                    double result = measure(dataset, false) / dataset.getNumberOfInstances() / 1e9;
-                    if (!keepSilent) {
-                        System.out.printf(" %.3e", result);
-                    }
-                    results.add(result);
+            for (int t = 0; t < repeats; ++t) {
+                double result = measure(dataset) / dataset.getNumberOfInstances() / 1e9;
+                if (!keepSilent) {
+                    System.out.printf(" %.3e", result);
                 }
-            } while (!practicallySame(results));
+                results.add(result);
+            }
+            if (!practicallySame(results)) {
+                System.out.println("\n[info] Instability found, restarting evaluations, datasets before restart: "
+                        + datasetIdTimes.size());
+                return false;
+            }
             datasetIdTimes.add(results);
             if (!keepSilent) {
                 System.out.println();
             }
         }
+        return true;
+    }
+
+    public List<Record> evaluate(
+            String benchmarkAuthor,
+            String comment,
+            int repeats
+    ) {
+        List<List<Double>> datasetIdTimes = new ArrayList<>(datasetIds.size());
+        do {
+            datasetIdTimes.clear();
+        } while (!evaluateOnDatasets(datasetIdTimes, repeats));
 
         // From now on, nobody cares about benchmarking precision anymore...
 
@@ -263,6 +175,7 @@ public class SimpleBenchmark {
         System.out.println("[info] black hole value: " + blackHole);
 
         LocalDateTime time = LocalDateTime.now();
+        List<Record> rv = new ArrayList<>(datasetIds.size());
         for (int i = 0; i < datasetIds.size(); ++i) {
             rv.add(new Record(
                     algorithmId,
