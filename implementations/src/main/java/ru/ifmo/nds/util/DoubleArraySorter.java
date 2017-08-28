@@ -2,7 +2,7 @@ package ru.ifmo.nds.util;
 
 import java.util.concurrent.ThreadLocalRandom;
 
-public class DoubleArraySorter {
+public final class DoubleArraySorter {
     private final double[] scratch;
     private final ThreadLocalRandom random = ThreadLocalRandom.current();
 

@@ -1,6 +1,6 @@
 package ru.ifmo.nds.util;
 
-public class DominanceHelper {
+public final class DominanceHelper {
     private DominanceHelper() {}
 
     public static final int HAS_LESS_MASK = 1;

@@ -80,7 +80,7 @@ public final class Benchmark extends JCommanderRunnable {
     private Integer warmUpMeasurements;
 
     @Parameter(names = "--required-precision",
-            description = "Specify the required precision for --type=simple (> 0.0).",
+            description = "Specify the required precision for --type simple (> 0.0).",
             validateValueWith = PositiveDoubleValidator.class)
     private double requiredPrecision = 0.02;
 
@@ -101,6 +101,9 @@ public final class Benchmark extends JCommanderRunnable {
 
     @Parameter(names = "--append", description = "Append to the output file instead of overwriting it.")
     private boolean shouldAppendToOutput;
+
+    @Parameter(names = "--silent", description = "Suppress output while benchmarking (only for --type simple).")
+    private boolean keepSilent = false;
 
     private static final String[] jmhIds = {
             "uniform.hypercube.n10.d2", "uniform.hypercube.n10.d3", "uniform.hypercube.n10.d4",
@@ -219,7 +222,7 @@ public final class Benchmark extends JCommanderRunnable {
             allBenchmarks.addAll(new SimpleBenchmark(
                     algorithmId,
                     Arrays.asList(jmhIds),
-                    requiredPrecision).evaluate(author, comment, measurements));
+                    requiredPrecision, keepSilent).evaluate(author, comment, measurements));
 
             Records.saveToFile(allBenchmarks, output);
         } catch (IOException ex) {

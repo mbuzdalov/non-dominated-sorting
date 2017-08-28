@@ -2,7 +2,7 @@ package ru.ifmo.nds.util;
 
 import java.util.Arrays;
 
-public class FenwickRankQueryStructure extends RankQueryStructure {
+public final class FenwickRankQueryStructure extends RankQueryStructure {
     private final double[] keys;
     private final int[] values;
     private int size;

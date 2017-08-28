@@ -75,60 +75,26 @@ public abstract class NonDominatedSorting implements AutoCloseable {
      *                              The safe value to get all ranks correct is {@code points.length}.
      */
     public final void sort(double[][] points, int[] ranks, int maximalMeaningfulRank) {
-        Objects.requireNonNull(points, "The array of points must not be null");
+        requirePointsAreNonNull(points);
         Objects.requireNonNull(ranks, "The array of ranks must not be null");
 
-        int myMaximumPoints = getMaximumPoints();
-        int myMaximumDimension = getMaximumDimension();
+        checkNumbersOfPoints(points.length, ranks.length);
 
-        if (points.length > myMaximumPoints) {
-            throw new IllegalArgumentException(
-                    "The number of points to be sorted, " + points.length
-                            + ", must not exceed the maximum number of points, " + myMaximumPoints
-                            + ", which this instance of NonDominatedSorting can handle");
-        }
-        if (points.length != ranks.length) {
-            throw new IllegalArgumentException(
-                    "The number of points, " + points.length
-                            + ", must coincide with the length of the array for ranks, which is " + ranks.length);
-        }
         if (points.length == 0) {
             // Nothing to be done here.
             return;
         }
-        for (double[] point : points) {
-            Objects.requireNonNull(point, "The points to be sorted must not be null");
-            for (double coordinate : point) {
-                if (Double.isNaN(coordinate) || Double.isInfinite(coordinate)) {
-                    throw new IllegalArgumentException("Coordinates of points to be sorted must not be NaN or Inf");
-                }
-            }
-        }
-        int dimension = points[0].length;
-        if (dimension > myMaximumDimension) {
-            throw new IllegalArgumentException(
-                    "The dimension of points to be sorted, " + dimension
-                            + ", must not exceed the maximum dimension, " + myMaximumDimension
-                            + ", which this instance of NonDominatedSorting can handle");
-        }
-        for (int i = 1; i < points.length; ++i) {
-            if (points[i].length != dimension) {
-                throw new IllegalArgumentException("All points to be sorted must have equal dimension");
-            }
-        }
+
         if (maximalMeaningfulRank < 0) {
             throw new IllegalArgumentException("Maximal meaningful rank must be non-negative");
         }
 
+        int dimension = checkAndGetDimension(points);
         if (dimension == 0) {
             Arrays.fill(ranks, 0);
         } else {
             sortChecked(points, ranks, maximalMeaningfulRank);
-        }
-        for (int i = 0; i < ranks.length; ++i) {
-            if (ranks[i] > maximalMeaningfulRank) {
-                ranks[i] = maximalMeaningfulRank + 1;
-            }
+            filterMaximumMeaningfulRank(ranks, maximalMeaningfulRank);
         }
     }
 
@@ -146,4 +112,54 @@ public abstract class NonDominatedSorting implements AutoCloseable {
      *                              All ranks above can be treated as same.
      */
     protected abstract void sortChecked(double[][] points, int[] ranks, int maximalMeaningfulRank);
+
+    private void requirePointsAreNonNull(double[][] points) {
+        Objects.requireNonNull(points, "The array of points must not be null");
+        for (double[] point : points) {
+            Objects.requireNonNull(point, "The points to be sorted must not be null");
+            for (double coordinate : point) {
+                if (Double.isNaN(coordinate) || Double.isInfinite(coordinate)) {
+                    throw new IllegalArgumentException("Coordinates of points to be sorted must not be NaN or Inf");
+                }
+            }
+        }
+    }
+
+    private void filterMaximumMeaningfulRank(int[] ranks, int maximalMeaningfulRank) {
+        for (int i = 0; i < ranks.length; ++i) {
+            if (ranks[i] > maximalMeaningfulRank) {
+                ranks[i] = maximalMeaningfulRank + 1;
+            }
+        }
+    }
+
+    private int checkAndGetDimension(double[][] points) {
+        int dimension = points[0].length;
+        for (int i = 1; i < points.length; ++i) {
+            if (points[i].length != dimension) {
+                throw new IllegalArgumentException("All points to be sorted must have equal dimension");
+            }
+        }
+        if (dimension > this.maximumDimension) {
+            throw new IllegalArgumentException(
+                    "The dimension of points to be sorted, " + dimension
+                            + ", must not exceed the maximum dimension, " + this.maximumDimension
+                            + ", which this instance of NonDominatedSorting can handle");
+        }
+        return dimension;
+    }
+
+    private void checkNumbersOfPoints(int pointsLength, int ranksLength) {
+        if (pointsLength > this.maximumPoints) {
+            throw new IllegalArgumentException(
+                    "The number of points to be sorted, " + pointsLength
+                            + ", must not exceed the maximum number of points, " + this.maximumPoints
+                            + ", which this instance of NonDominatedSorting can handle");
+        }
+        if (pointsLength != ranksLength) {
+            throw new IllegalArgumentException(
+                    "The number of points, " + pointsLength
+                            + ", must coincide with the length of the array for ranks, which is " + ranksLength);
+        }
+    }
 }

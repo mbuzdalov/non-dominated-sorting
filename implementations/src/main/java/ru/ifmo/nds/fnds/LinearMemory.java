@@ -1,8 +1,9 @@
 package ru.ifmo.nds.fnds;
 
-import ru.ifmo.nds.NonDominatedSorting;
-
 import static ru.ifmo.nds.util.DominanceHelper.*;
+
+import ru.ifmo.nds.NonDominatedSorting;
+import ru.ifmo.nds.util.ArrayHelper;
 
 public class LinearMemory extends NonDominatedSorting {
     private int[] howManyDominateMe;
@@ -30,10 +31,13 @@ public class LinearMemory extends NonDominatedSorting {
         double[] pi = points[index];
         for (int j = from; j < until; ++j) {
             int comp = dominanceComparison(pi, points[j], HAS_LESS_MASK | HAS_GREATER_MASK);
-            if (comp == HAS_LESS_MASK) {
-                ++howManyDominateMe[j];
-            } else if (comp == HAS_GREATER_MASK) {
-                ++howManyDominateMe[index];
+            switch (comp) {
+                case HAS_LESS_MASK:
+                    ++howManyDominateMe[j];
+                    break;
+                case HAS_GREATER_MASK:
+                    ++howManyDominateMe[index];
+                    break;
             }
         }
     }
@@ -54,11 +58,7 @@ public class LinearMemory extends NonDominatedSorting {
         int current = 0;
         for (int i = 0; i < count; ++i) {
             if (howManyDominateMe[i] == 0) {
-                if (current != i) {
-                    int tmp = candidates[i];
-                    candidates[i] = candidates[current];
-                    candidates[current] = tmp;
-                }
+                ArrayHelper.swap(candidates, i, current);
                 ++current;
             }
         }
@@ -80,11 +80,7 @@ public class LinearMemory extends NonDominatedSorting {
             int comp = dominanceComparison(cp, np, HAS_GREATER_MASK);
             if (comp == HAS_LESS_MASK) {
                 if (--howManyDominateMe[nextPoint] == 0) {
-                    if (nextIndex != nextRankRight) {
-                        int tmp = candidates[nextIndex];
-                        candidates[nextIndex] = candidates[nextRankRight];
-                        candidates[nextRankRight] = tmp;
-                    }
+                    ArrayHelper.swap(candidates, nextIndex, nextRankRight);
                     ++nextRankRight;
                 }
             }

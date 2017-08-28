@@ -40,6 +40,7 @@ public class SimpleBenchmark {
     private final List<String> datasetIds;
     private final List<String> warmupIds;
     private final double requiredPrecision;
+    private final boolean keepSilent;
 
     private final ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
     private long blackHole = 0;
@@ -47,9 +48,10 @@ public class SimpleBenchmark {
     private int multiple;
     private Dataset lastDataset;
 
-    public SimpleBenchmark(String algorithmId, List<String> datasetIds, double requiredPrecision) {
+    public SimpleBenchmark(String algorithmId, List<String> datasetIds, double requiredPrecision, boolean keepSilent) {
         this.algorithmId = algorithmId;
         this.requiredPrecision = requiredPrecision;
+        this.keepSilent = keepSilent;
 
         if (requiredPrecision <= 0) {
             throw new IllegalArgumentException("Parameter 'requiredPrecision' should be at least 1.0");
@@ -114,21 +116,23 @@ public class SimpleBenchmark {
                     && wallClockTime <= threadTime * (1 + requiredPrecision)) {
                 return (double) wallClockTime / multiple;
             }
-            if (usePrintln) {
-                if (threadTime > wallClockTime) {
-                    System.out.println("[warning] remeasuring as thread time (" + threadTime
-                            + ") is GREATER than wall-clock time (" + wallClockTime
-                            + "): Attempt " + attempt);
+            if (!keepSilent) {
+                if (usePrintln) {
+                    if (threadTime > wallClockTime) {
+                        System.out.println("[warning] remeasuring as thread time (" + threadTime
+                                + ") is GREATER than wall-clock time (" + wallClockTime
+                                + "): Attempt " + attempt);
+                    } else {
+                        System.out.println("[warning] remeasuring as thread time (" + threadTime
+                                + ") is much less than wall-clock time (" + wallClockTime
+                                + "): Attempt " + attempt);
+                    }
                 } else {
-                    System.out.println("[warning] remeasuring as thread time (" + threadTime
-                            + ") is much less than wall-clock time (" + wallClockTime
-                            + "): Attempt " + attempt);
-                }
-            } else {
-                if (attempt < 10) {
-                    System.out.print(threadTime > wallClockTime ? "[?]" : "[!]");
-                } else {
-                    System.out.print("[thread=" + threadTime + ",wc=" + wallClockTime + "]");
+                    if (attempt < 10) {
+                        System.out.print(threadTime > wallClockTime ? "[?]" : "[!]");
+                    } else {
+                        System.out.print("[thread=" + threadTime + ",wc=" + wallClockTime + "]");
+                    }
                 }
             }
         }
@@ -175,31 +179,41 @@ public class SimpleBenchmark {
 
         boolean controlPassed;
         do {
-            System.out.println("[info] warm-up dataset: " + warmUp.getNumberOfInstances() + " instances");
-            System.out.println("[info] warm-up measurements:");
+            if (!keepSilent) {
+                System.out.println("[info] warm-up dataset: " + warmUp.getNumberOfInstances() + " instances");
+                System.out.println("[info] warm-up measurements:");
+            }
             System.gc();
             System.gc();
             List<Double> warmUpMeasurements = new ArrayList<>();
             while (warmUpMeasurements.size() < 10 ||
                     !practicallySame(warmUpMeasurements.subList(warmUpMeasurements.size() / 2, warmUpMeasurements.size()))) {
                 double measurement = measure(warmUp, true);
-                System.out.println("[info]     " + measurement);
+                if (!keepSilent) {
+                    System.out.println("[info]     " + measurement);
+                }
                 warmUpMeasurements.add(measurement);
             }
 
-            System.out.println("[info] control dataset: " + control.getNumberOfInstances() + " instances");
-            System.out.println("[info] warm-up measurements:");
+            if (!keepSilent) {
+                System.out.println("[info] control dataset: " + control.getNumberOfInstances() + " instances");
+                System.out.println("[info] warm-up measurements:");
+            }
             List<Double> controlMeasurements = new ArrayList<>();
             for (int i = 0; i < warmUpMeasurements.size(); ++i) {
                 double measurement = measure(control, true);
-                System.out.println("[info]     " + measurement);
+                if (!keepSilent) {
+                    System.out.println("[info]     " + measurement);
+                }
                 controlMeasurements.add(measurement);
             }
             controlPassed = practicallySame(controlMeasurements);
-            if (controlPassed) {
-                System.out.println("[info] control passed. proceed with actual measurements!");
-            } else {
-                System.out.println("[warning] control not passed, repeating warm-up!");
+            if (!keepSilent) {
+                if (controlPassed) {
+                    System.out.println("[info] control passed. proceed with actual measurements!");
+                } else {
+                    System.out.println("[warning] control not passed, repeating warm-up!");
+                }
             }
         } while (!controlPassed);
     }
@@ -215,7 +229,9 @@ public class SimpleBenchmark {
         warmUp();
 
         for (String datasetId : datasetIds) {
-            System.out.print("[info] " + datasetId + ":");
+            if (!keepSilent) {
+                System.out.print("[info] " + datasetId + ":");
+            }
             Dataset dataset = IdCollection.getDataset(datasetId);
             List<Double> results = new ArrayList<>(repeats);
             System.gc();
@@ -224,17 +240,24 @@ public class SimpleBenchmark {
                 results.clear();
                 for (int t = 0; t < repeats; ++t) {
                     double result = measure(dataset, false) / dataset.getNumberOfInstances() / 1e9;
-                    System.out.printf(" %.3e", result);
+                    if (!keepSilent) {
+                        System.out.printf(" %.3e", result);
+                    }
                     results.add(result);
                 }
             } while (!practicallySame(results));
             datasetIdTimes.add(results);
-            System.out.println();
+            if (!keepSilent) {
+                System.out.println();
+            }
         }
+
+        // From now on, nobody cares about benchmarking precision anymore...
 
         String javaRuntimeVersion = System.getProperty("java.runtime.version");
         String cpuModel = new SystemInfo().getHardware().getProcessor().getName();
 
+        System.out.println("[info] Finished measuring: '" + algorithmId + "'");
         System.out.println("[info] Java runtime version: '" + javaRuntimeVersion + "'.");
         System.out.println("[info] CPU model: '" + cpuModel + "'.");
         System.out.println("[info] black hole value: " + blackHole);

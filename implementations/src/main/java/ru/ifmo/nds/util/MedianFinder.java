@@ -2,7 +2,7 @@ package ru.ifmo.nds.util;
 
 import java.util.concurrent.ThreadLocalRandom;
 
-public class MedianFinder {
+public final class MedianFinder {
     private final ThreadLocalRandom random = ThreadLocalRandom.current();
 
     private double[] medianSwap;

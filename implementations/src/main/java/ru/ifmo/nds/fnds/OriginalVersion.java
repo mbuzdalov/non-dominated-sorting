@@ -60,16 +60,22 @@ public class OriginalVersion extends NonDominatedSorting {
         whoIDominate = null;
     }
 
+    private void pushToDominateList(int good, int bad) {
+        ++howManyDominateMe[bad];
+        whoIDominate[good][howManyIDominate[good]++] = bad;
+    }
+
     private void comparePointWithOthers(int index, double[][] points, int from, int until) {
         double[] pi = points[index];
         for (int j = from; j < until; ++j) {
             int comp = dominanceComparison(pi, points[j], HAS_LESS_MASK | HAS_GREATER_MASK);
-            if (comp == HAS_LESS_MASK) {
-                ++howManyDominateMe[j];
-                whoIDominate[index][howManyIDominate[index]++] = j;
-            } else if (comp == HAS_GREATER_MASK) {
-                ++howManyDominateMe[index];
-                whoIDominate[j][howManyIDominate[j]++] = index;
+            switch (comp) {
+                case HAS_LESS_MASK:
+                    pushToDominateList(index, j);
+                    break;
+                case HAS_GREATER_MASK:
+                    pushToDominateList(j, index);
+                    break;
             }
         }
     }

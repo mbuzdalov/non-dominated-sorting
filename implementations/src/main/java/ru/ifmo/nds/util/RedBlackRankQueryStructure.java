@@ -7,7 +7,7 @@ package ru.ifmo.nds.util;
  * @author Rui Gonçalves
  * @author Maxim Buzdalov
  */
-public class RedBlackRankQueryStructure extends RankQueryStructure {
+public final class RedBlackRankQueryStructure extends RankQueryStructure {
     private boolean initialized = false;
     private final Node[] allNodes;
     private Node root;
