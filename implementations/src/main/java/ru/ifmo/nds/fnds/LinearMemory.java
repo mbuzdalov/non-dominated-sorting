@@ -48,12 +48,6 @@ public class LinearMemory extends NonDominatedSorting {
         }
     }
 
-    private void fillIdentity(int[] array, int count) {
-        for (int i = 0; i < count; ++i) {
-            array[i] = i;
-        }
-    }
-
     private int moveNonDominatedForward(int count) {
         int current = 0;
         for (int i = 0; i < count; ++i) {
@@ -77,8 +71,7 @@ public class LinearMemory extends NonDominatedSorting {
             int nextPoint = candidates[nextIndex];
             double[] np = points[nextPoint];
 
-            int comp = dominanceComparison(cp, np, HAS_GREATER_MASK);
-            if (comp == HAS_LESS_MASK) {
+            if (strictlyDominates(cp, np)) {
                 if (--howManyDominateMe[nextPoint] == 0) {
                     ArrayHelper.swap(candidates, nextIndex, nextRankRight);
                     ++nextRankRight;
@@ -124,7 +117,7 @@ public class LinearMemory extends NonDominatedSorting {
     protected void sortChecked(double[][] points, int[] ranks, int maximalMeaningfulRank) {
         int n = ranks.length;
         compareAllPoints(points, n);
-        fillIdentity(candidates, n);
+        ArrayHelper.fillIdentity(candidates, n);
         int rankZeroPoints = moveNonDominatedForward(n);
         assignRanks(points, ranks, rankZeroPoints, n, maximalMeaningfulRank);
         cleanup(n);

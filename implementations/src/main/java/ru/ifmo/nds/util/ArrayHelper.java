@@ -8,4 +8,10 @@ public final class ArrayHelper {
         array[a] = array[b];
         array[b] = tmp;
     }
+
+    public static void fillIdentity(int[] array, int n) {
+        for (int i = 0; i < n; ++i) {
+            array[i] = i;
+        }
+    }
 }

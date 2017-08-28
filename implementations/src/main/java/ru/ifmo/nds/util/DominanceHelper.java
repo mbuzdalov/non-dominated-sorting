@@ -6,6 +6,10 @@ public final class DominanceHelper {
     public static final int HAS_LESS_MASK = 1;
     public static final int HAS_GREATER_MASK = 2;
 
+    public static boolean strictlyDominates(double[] a, double[] b) {
+        return dominanceComparison(a, b, HAS_GREATER_MASK) == HAS_LESS_MASK;
+    }
+
     public static int dominanceComparison(double[] a, double[] b, int breakMask) {
         int dim = a.length;
         int result = 0;
