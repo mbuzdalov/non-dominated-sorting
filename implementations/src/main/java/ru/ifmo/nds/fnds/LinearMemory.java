@@ -2,6 +2,8 @@ package ru.ifmo.nds.fnds;
 
 import ru.ifmo.nds.NonDominatedSorting;
 
+import static ru.ifmo.nds.util.DominanceHelper.*;
+
 public class LinearMemory extends NonDominatedSorting {
     private int[] howManyDominateMe;
     private int[] candidates;
@@ -22,26 +24,6 @@ public class LinearMemory extends NonDominatedSorting {
     protected void closeImpl() throws Exception {
         howManyDominateMe = null;
         candidates = null;
-    }
-
-    private static final int HAS_LESS_MASK = 1;
-    private static final int HAS_GREATER_MASK = 2;
-
-    private int dominanceComparison(double[] a, double[] b, int breakMask) {
-        int dim = a.length;
-        int result = 0;
-        for (int i = 0; i < dim; ++i) {
-            double ai = a[i], bi = b[i];
-            if (ai < bi) {
-                result |= HAS_LESS_MASK;
-            } else if (ai > bi) {
-                result |= HAS_GREATER_MASK;
-            }
-            if ((result & breakMask) == breakMask) {
-                break;
-            }
-        }
-        return result;
     }
 
     private void comparePointWithOthers(int index, double[][] points, int from, int until) {
@@ -118,21 +100,37 @@ public class LinearMemory extends NonDominatedSorting {
         return nextRankRight;
     }
 
-    @Override
-    protected void sortChecked(double[][] points, int[] ranks, int maximalMeaningfulRank) {
-        int n = ranks.length;
-        compareAllPoints(points, n);
-        fillIdentity(candidates, n);
+    private void assignRanks(double[][] points, int[] ranks, int numberOfRankZeroPoints, int n, int maximalMeaningfulRank) {
         int currentRankLeft = 0;
-        int currentRankRight = moveNonDominatedForward(n);
+        int currentRankRight = numberOfRankZeroPoints;
 
         int currentRank = 0;
         while (currentRankLeft < n) {
             assignRankToRange(ranks, currentRank, currentRankLeft, currentRankRight);
+            if (currentRank == maximalMeaningfulRank) {
+                assignRankToRange(ranks, currentRank + 1, currentRankRight, n);
+                return;
+            }
             int nextRankRight = punchNextPoints(points, currentRankLeft, currentRankRight, n);
             currentRankLeft = currentRankRight;
             currentRankRight = nextRankRight;
             ++currentRank;
         }
+    }
+
+    private void cleanup(int n) {
+        for (int i = 0; i < n; ++i) {
+            howManyDominateMe[i] = 0;
+        }
+    }
+
+    @Override
+    protected void sortChecked(double[][] points, int[] ranks, int maximalMeaningfulRank) {
+        int n = ranks.length;
+        compareAllPoints(points, n);
+        fillIdentity(candidates, n);
+        int rankZeroPoints = moveNonDominatedForward(n);
+        assignRanks(points, ranks, rankZeroPoints, n, maximalMeaningfulRank);
+        cleanup(n);
     }
 }

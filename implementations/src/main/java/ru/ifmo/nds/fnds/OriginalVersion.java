@@ -3,6 +3,7 @@ package ru.ifmo.nds.fnds;
 import java.util.Arrays;
 
 import ru.ifmo.nds.NonDominatedSorting;
+import static ru.ifmo.nds.util.DominanceHelper.*;
 
 /**
  * This is the implementation of the fast non-dominated sorting algorithm
@@ -59,67 +60,77 @@ public class OriginalVersion extends NonDominatedSorting {
         whoIDominate = null;
     }
 
-    @Override
-    protected void sortChecked(double[][] points, int[] ranks, int maximalMeaningfulRank) {
-        int n = ranks.length;
-        int dim = points[0].length;
-
-        Arrays.fill(howManyDominateMe, 0);
-        Arrays.fill(howManyIDominate, 0);
-
-        /*
-         * Part 1: Counting who dominates who, making lists.
-         */
-        for (int i = 0; i < n; ++i) {
-            double[] pi = points[i];
-            for (int j = i + 1; j < n; ++j) {
-                double[] pj = points[j];
-                boolean iWeaklyDominatesJ = true;
-                boolean jWeaklyDominatesI = true;
-                for (int k = 0; k < dim; ++k) {
-                    if (pi[k] < pj[k]) {
-                        jWeaklyDominatesI = false;
-                        if (!iWeaklyDominatesJ) {
-                            break;
-                        }
-                    } else if (pi[k] > pj[k]) {
-                        iWeaklyDominatesJ = false;
-                        if (!jWeaklyDominatesI) {
-                            break;
-                        }
-                    }
-                }
-                if (iWeaklyDominatesJ && !jWeaklyDominatesI) {
-                    ++howManyDominateMe[j];
-                    whoIDominate[i][howManyIDominate[i]++] = j;
-                } else if (jWeaklyDominatesI && !iWeaklyDominatesJ) {
-                    ++howManyDominateMe[i];
-                    whoIDominate[j][howManyIDominate[j]++] = i;
-                }
+    private void comparePointWithOthers(int index, double[][] points, int from, int until) {
+        double[] pi = points[index];
+        for (int j = from; j < until; ++j) {
+            int comp = dominanceComparison(pi, points[j], HAS_LESS_MASK | HAS_GREATER_MASK);
+            if (comp == HAS_LESS_MASK) {
+                ++howManyDominateMe[j];
+                whoIDominate[index][howManyIDominate[index]++] = j;
+            } else if (comp == HAS_GREATER_MASK) {
+                ++howManyDominateMe[index];
+                whoIDominate[j][howManyIDominate[j]++] = index;
             }
         }
+    }
 
-        /*
-         * Part 2: Assigning ranks using breadth-first search.
-         */
-        Arrays.fill(ranks, 0);
-        int qHead = 0, qTail = 0;
+    private void comparePoints(double[][] points, int n) {
+        for (int i = 0; i < n; ++i) {
+            comparePointWithOthers(i, points, i + 1, n);
+        }
+    }
+
+    private int enqueueZeroRanks(int n, int[] ranks) {
+        int qHead = 0;
         for (int i = 0; i < n; ++i) {
             if (howManyDominateMe[i] == 0) {
+                ranks[i] = 0;
                 queue[qHead++] = i;
             }
         }
-        while (qHead > qTail) {
-            int curr = queue[qTail++];
-            int[] iDominate = whoIDominate[curr];
-            int nextRank = ranks[curr] + 1;
-            for (int pos = howManyIDominate[curr] - 1; pos >= 0; --pos) {
-                int next = iDominate[pos];
-                if (--howManyDominateMe[next] == 0) {
-                    ranks[next] = nextRank;
+        return qHead;
+    }
+
+    private int decreaseWhomIDominate(int index, int[] ranks, int qHead, int maximalMeaningfulRank) {
+        int[] iDominate = whoIDominate[index];
+        int nextRank = ranks[index] + 1;
+        for (int pos = howManyIDominate[index] - 1; pos >= 0; --pos) {
+            int next = iDominate[pos];
+            if (--howManyDominateMe[next] == 0) {
+                ranks[next] = nextRank;
+                if (nextRank < maximalMeaningfulRank) {
                     queue[qHead++] = next;
                 }
             }
         }
+        return qHead;
+    }
+
+    private void markNotRankedAsMeaningless(int n, int[] ranks, int maximalMeaningfulRank) {
+        for (int i = 0; i < n; ++i) {
+            if (ranks[i] == -1) {
+                ranks[i] = maximalMeaningfulRank + 1;
+            }
+        }
+    }
+
+    private void assignRanks(int[] ranks, int n, int maximalMeaningfulRank) {
+        int qHead = enqueueZeroRanks(n, ranks);
+        int qTail = 0;
+        while (qHead > qTail) {
+            int curr = queue[qTail++];
+            qHead = decreaseWhomIDominate(curr, ranks, qHead, maximalMeaningfulRank);
+        }
+        markNotRankedAsMeaningless(n, ranks, maximalMeaningfulRank);
+    }
+
+    @Override
+    protected void sortChecked(double[][] points, int[] ranks, int maximalMeaningfulRank) {
+        int n = ranks.length;
+        Arrays.fill(howManyDominateMe, 0);
+        Arrays.fill(howManyIDominate, 0);
+        comparePoints(points, n);
+        Arrays.fill(ranks, -1);
+        assignRanks(ranks, n, maximalMeaningfulRank);
     }
 }
