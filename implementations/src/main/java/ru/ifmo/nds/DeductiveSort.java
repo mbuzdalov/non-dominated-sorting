@@ -1,5 +1,7 @@
 package ru.ifmo.nds;
 
+import ru.ifmo.nds.util.DominanceHelper;
+
 public class DeductiveSort {
     private DeductiveSort() {}
 
@@ -15,19 +17,6 @@ public class DeductiveSort {
         @Override
         protected void closeImpl() throws Exception {
             indices = null;
-        }
-
-        private int compare(double[] a, double[] b) {
-            int d = a.length;
-            boolean hasLess = false, hasGreater = false;
-            for (int i = 0; i < d; ++i) {
-                hasLess |= a[i] < b[i];
-                hasGreater |= a[i] > b[i];
-                if (hasLess && hasGreater) {
-                    return 0;
-                }
-            }
-            return hasLess ? -1 : hasGreater ? 1 : 0;
         }
 
         @Override
@@ -48,7 +37,7 @@ public class DeductiveSort {
                     while (next < last) {
                         int nextI = indices[next];
                         double[] nextP = points[nextI];
-                        int comparison = compare(currP, nextP);
+                        int comparison = DominanceHelper.dominanceComparison(currP, nextP);
                         if (comparison < 0) {
                             int tmp = indices[--last];
                             indices[last] = indices[next];

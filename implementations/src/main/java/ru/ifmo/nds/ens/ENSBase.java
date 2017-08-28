@@ -1,6 +1,8 @@
 package ru.ifmo.nds.ens;
 
 import ru.ifmo.nds.NonDominatedSorting;
+import ru.ifmo.nds.util.ArrayHelper;
+import ru.ifmo.nds.util.DominanceHelper;
 import ru.ifmo.nds.util.DoubleArraySorter;
 
 import java.util.Arrays;
@@ -28,22 +30,10 @@ public abstract class ENSBase extends NonDominatedSorting {
         lastRankIndex = null;
     }
 
-    private boolean dominates(double[] a, double[] b) {
-        boolean hasLess = false;
-        int d = a.length;
-        for (int i = 0; i < d; ++i) {
-            if (a[i] > b[i]) {
-                return false;
-            }
-            hasLess |= a[i] < b[i];
-        }
-        return hasLess;
-    }
-
     boolean frontDominates(int frontIndex, double[][] points, double[] point) {
         int index = lastRankIndex[frontIndex];
         while (index >= 0) {
-            if (dominates(points[index], point)) {
+            if (DominanceHelper.strictlyDominates(points[index], point)) {
                 return true;
             }
             index = prevIndex[index];
@@ -67,9 +57,7 @@ public abstract class ENSBase extends NonDominatedSorting {
     @Override
     protected void sortChecked(double[][] points, int[] ranks, int maximalMeaningfulRank) {
         int n = ranks.length;
-        for (int i = 0; i < n; ++i) {
-            indices[i] = i;
-        }
+        ArrayHelper.fillIdentity(indices, n);
         Arrays.fill(prevIndex, -1);
         sorter.lexicographicalSort(points, indices, 0, n, points[0].length);
         sortCheckedImpl(points, ranks, maximalMeaningfulRank);

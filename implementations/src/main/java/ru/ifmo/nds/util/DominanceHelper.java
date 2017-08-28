@@ -3,14 +3,21 @@ package ru.ifmo.nds.util;
 public final class DominanceHelper {
     private DominanceHelper() {}
 
-    public static final int HAS_LESS_MASK = 1;
-    public static final int HAS_GREATER_MASK = 2;
+    private static final int HAS_LESS_MASK = 1;
+    private static final int HAS_GREATER_MASK = 2;
+
+    private static final int[] REINDEX = { 0, -1, 1, 0 };
 
     public static boolean strictlyDominates(double[] a, double[] b) {
-        return dominanceComparison(a, b, HAS_GREATER_MASK) == HAS_LESS_MASK;
+        return detailedDominanceComparison(a, b, HAS_GREATER_MASK) == HAS_LESS_MASK;
     }
 
-    public static int dominanceComparison(double[] a, double[] b, int breakMask) {
+    public static int dominanceComparison(double[] a, double[] b) {
+        int rv = detailedDominanceComparison(a, b, HAS_GREATER_MASK | HAS_LESS_MASK);
+        return REINDEX[rv];
+    }
+
+    private static int detailedDominanceComparison(double[] a, double[] b, int breakMask) {
         int dim = a.length;
         int result = 0;
         for (int i = 0; i < dim; ++i) {

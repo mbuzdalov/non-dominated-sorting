@@ -1,6 +1,7 @@
 package ru.ifmo.nds.domtree;
 
 import ru.ifmo.nds.NonDominatedSorting;
+import ru.ifmo.nds.util.DominanceHelper;
 
 public abstract class AbstractDominanceTree extends NonDominatedSorting {
     private Node[] nodes;
@@ -96,16 +97,7 @@ public abstract class AbstractDominanceTree extends NonDominatedSorting {
         }
 
         int dominationCompare(Node that) {
-            int dim = point.length;
-            boolean less = false, greater = false;
-            for (int i = 0; i < dim; ++i) {
-                less |= point[i] < that.point[i];
-                greater |= point[i] > that.point[i];
-                if (less && greater) {
-                    return 0;
-                }
-            }
-            return less ? -1 : greater ? 1 : 0;
+            return DominanceHelper.dominanceComparison(point, that.point);
         }
     }
 }

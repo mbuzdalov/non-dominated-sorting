@@ -1,6 +1,8 @@
 package ru.ifmo.nds.bos;
 
 import ru.ifmo.nds.NonDominatedSorting;
+import ru.ifmo.nds.util.ArrayHelper;
+import ru.ifmo.nds.util.DominanceHelper;
 import ru.ifmo.nds.util.DoubleArraySorter;
 
 import java.util.Arrays;
@@ -85,12 +87,7 @@ public class Improved extends NonDominatedSorting {
             checkIndicesCount[i1] = count;
             return true;
         } else {
-            for (int i = 0; i < p1.length; ++i) {
-                if (p1[i] > p2[i]) {
-                    return false;
-                }
-            }
-            return true;
+            return DominanceHelper.strictlyDominates(p1, p2);
         }
     }
 
@@ -98,9 +95,7 @@ public class Improved extends NonDominatedSorting {
     protected void sortChecked(double[][] points, int[] ranks, int maximalMeaningfulRank) {
         int origN = ranks.length;
         int dim = points[0].length;
-        for (int i = 0; i < origN; ++i) {
-            reindex[i] = i;
-        }
+        ArrayHelper.fillIdentity(reindex, origN);
         sorter.lexicographicalSort(points, reindex, 0, origN, dim);
         int newN = DoubleArraySorter.retainUniquePoints(points, reindex, this.points, ranks);
         for (int d = 0; d < dim; ++d) {

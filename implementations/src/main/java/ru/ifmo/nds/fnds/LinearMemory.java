@@ -30,12 +30,12 @@ public class LinearMemory extends NonDominatedSorting {
     private void comparePointWithOthers(int index, double[][] points, int from, int until) {
         double[] pi = points[index];
         for (int j = from; j < until; ++j) {
-            int comp = dominanceComparison(pi, points[j], HAS_LESS_MASK | HAS_GREATER_MASK);
+            int comp = dominanceComparison(pi, points[j]);
             switch (comp) {
-                case HAS_LESS_MASK:
+                case -1:
                     ++howManyDominateMe[j];
                     break;
-                case HAS_GREATER_MASK:
+                case +1:
                     ++howManyDominateMe[index];
                     break;
             }

@@ -1,6 +1,7 @@
 package ru.ifmo.nds.jfb;
 
 import ru.ifmo.nds.NonDominatedSorting;
+import ru.ifmo.nds.util.ArrayHelper;
 import ru.ifmo.nds.util.DoubleArraySorter;
 import ru.ifmo.nds.util.MedianFinder;
 import ru.ifmo.nds.util.RankQueryStructure;
@@ -74,9 +75,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         int n = points.length;
         int dim = points[0].length;
         Arrays.fill(ranks, 0);
-        for (int i = 0; i < n; ++i) {
-            internalIndices[i] = i;
-        }
+        ArrayHelper.fillIdentity(internalIndices, n);
         sorter.lexicographicalSort(points, internalIndices, 0, n, dim);
 
         this.maximalMeaningfulRank = maximalMeaningfulRank;
@@ -96,10 +95,8 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
             // 3: General case.
             // 3.1: Moving points in a sorted order to internal structures
             int newN = DoubleArraySorter.retainUniquePoints(points, internalIndices, this.points, ranks);
-            for (int i = 0; i < newN; ++i) {
-                this.indices[i] = i;
-                this.ranks[i] = 0;
-            }
+            Arrays.fill(this.ranks, 0, newN, 0);
+            ArrayHelper.fillIdentity(this.indices, newN);
 
             // 3.2: Transposing points. This should fit in cache for reasonable dimensions.
             for (int i = 0; i < newN; ++i) {
