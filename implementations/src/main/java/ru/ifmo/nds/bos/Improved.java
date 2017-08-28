@@ -91,6 +91,39 @@ public class Improved extends NonDominatedSorting {
         }
     }
 
+    private void initializeObjectiveIndices(int newN, int dim) {
+        for (int d = 0; d < dim; ++d) {
+            int[] currentObjectiveIndex = objectiveIndices[d];
+            ArrayHelper.fillIdentity(currentObjectiveIndex, newN);
+            if (d > 0) {
+                sorter.sortWhileResolvingEqual(this.points, currentObjectiveIndex, 0, newN, d, objectiveIndices[0]);
+            }
+        }
+    }
+
+    private void rankPoint(int currIndex, int[] prevFI, int[] lastFI, int smallestRank, int maximalMeaningfulRank) {
+        int currRank = smallestRank;
+        // This is currently implemented as sequential search.
+        // A binary search implementation is expected as well.
+        while (currRank <= maximalMeaningfulRank) {
+            int prevIndex = lastFI[currRank];
+            boolean someoneDominatesMe = false;
+            while (prevIndex != -1) {
+                if (dominates(prevIndex, currIndex)) {
+                    someoneDominatesMe = true;
+                    break;
+                } else {
+                    prevIndex = prevFI[prevIndex];
+                }
+            }
+            if (!someoneDominatesMe) {
+                break;
+            }
+            ++currRank;
+        }
+        this.ranks[currIndex] = currRank;
+    }
+
     @Override
     protected void sortChecked(double[][] points, int[] ranks, int maximalMeaningfulRank) {
         int origN = ranks.length;
@@ -98,25 +131,18 @@ public class Improved extends NonDominatedSorting {
         ArrayHelper.fillIdentity(reindex, origN);
         sorter.lexicographicalSort(points, reindex, 0, origN, dim);
         int newN = DoubleArraySorter.retainUniquePoints(points, reindex, this.points, ranks);
-        for (int d = 0; d < dim; ++d) {
-            int[] currentObjectiveIndex = objectiveIndices[d];
-            for (int i = 0; i < newN; ++i) {
-                currentObjectiveIndex[i] = i;
-            }
-            if (d > 0) {
-                sorter.sortWhileResolvingEqual(this.points, currentObjectiveIndex, 0, newN, d, objectiveIndices[0]);
-            }
-        }
+        initializeObjectiveIndices(newN, dim);
         maximalMeaningfulRank = Math.min(maximalMeaningfulRank, newN - 1);
+
+        Arrays.fill(this.ranks, 0, newN, -1);
+        Arrays.fill(checkIndicesCount, 0, newN, dim);
+        Arrays.fill(indexNeededCount, 0, newN, dim);
+
         for (int i = 0; i < newN; ++i) {
-            this.ranks[i] = -1;
-            checkIndicesCount[i] = dim;
-            indexNeededCount[i] = dim;
-            for (int d = 0; d < dim; ++d) {
-                checkIndices[i][d] = d;
-                indexNeeded[i][d] = true;
-            }
+            ArrayHelper.fillIdentity(checkIndices[i], dim);
+            Arrays.fill(indexNeeded[i], 0, dim, true);
         }
+
         for (int d = 0; d < dim; ++d) {
             Arrays.fill(lastFrontIndex[d], 0, newN, -1);
             Arrays.fill(prevFrontIndex[d], 0, newN, -1);
@@ -124,32 +150,15 @@ public class Improved extends NonDominatedSorting {
 
         int smallestRank = 0;
 
-        for (int hIndex = 0, ranked = 0; hIndex < newN && smallestRank <= maximalMeaningfulRank && ranked < newN; ++hIndex) {
+        for (int hIndex = 0, ranked = 0;
+             hIndex < newN && smallestRank <= maximalMeaningfulRank && ranked < newN;
+             ++hIndex) {
             for (int oIndex = 0; oIndex < dim; ++oIndex) {
                 int currIndex = objectiveIndices[oIndex][hIndex];
                 int[] prevFI = prevFrontIndex[oIndex];
                 int[] lastFI = lastFrontIndex[oIndex];
                 if (this.ranks[currIndex] == -1) {
-                    int currRank = smallestRank;
-                    // This is currently implemented as sequential search.
-                    // A binary search implementation is expected as well.
-                    while (currRank <= maximalMeaningfulRank) {
-                        int prevIndex = lastFI[currRank];
-                        boolean someoneDominatesMe = false;
-                        while (prevIndex != -1) {
-                            if (dominates(prevIndex, currIndex)) {
-                                someoneDominatesMe = true;
-                                break;
-                            } else {
-                                prevIndex = prevFI[prevIndex];
-                            }
-                        }
-                        if (!someoneDominatesMe) {
-                            break;
-                        }
-                        ++currRank;
-                    }
-                    this.ranks[currIndex] = currRank;
+                    rankPoint(currIndex, prevFI, lastFI, smallestRank, maximalMeaningfulRank);
                     ++ranked;
                 }
                 indexNeeded[currIndex][oIndex] = false;
@@ -177,9 +186,9 @@ public class Improved extends NonDominatedSorting {
             }
         }
 
+        Arrays.fill(this.points, 0, origN, null);
         for (int i = 0; i < origN; ++i) {
             ranks[i] = this.ranks[ranks[i]];
-            this.points[i] = null;
         }
     }
 }
