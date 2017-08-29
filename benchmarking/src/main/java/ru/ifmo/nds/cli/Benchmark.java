@@ -48,7 +48,7 @@ public final class Benchmark extends JCommanderRunnable {
             required = true,
             description = "Specify the number of forks (different JVM instances) to be used.",
             validateValueWith = PositiveIntegerValidator.class)
-    private Integer forks = 1;
+    private Integer forks;
 
     @Parameter(names = "--measurements",
             required = true,
@@ -58,7 +58,7 @@ public final class Benchmark extends JCommanderRunnable {
 
     @Parameter(names = "--warmup-measurements",
             required = true,
-            description = "Specify the number of warmup measurements for each configuration.",
+            description = "Specify the number of warm-up measurements for each configuration.",
             validateValueWith = PositiveIntegerValidator.class)
     private Integer warmUpMeasurements;
 
