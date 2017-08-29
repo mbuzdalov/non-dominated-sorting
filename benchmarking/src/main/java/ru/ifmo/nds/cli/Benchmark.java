@@ -4,9 +4,11 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.Instant;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 import com.beust.jcommander.IValueValidator;
 import com.beust.jcommander.Parameter;
@@ -39,6 +41,15 @@ public final class Benchmark extends JCommanderRunnable {
         }
     }
 
+    private static class ToleranceValidator implements IValueValidator<Double> {
+        @Override
+        public void validate(String name, Double value) throws ParameterException {
+            if (value <= 0 || value >= 1) {
+                throw new ParameterException("Value for '" + name + "' must be in (0; 1), you specified " + value + ".");
+            }
+        }
+    }
+
     @Parameter(names = "--algorithmId",
             required = true,
             description = "Specify the algorithm ID to benchmark.")
@@ -50,17 +61,17 @@ public final class Benchmark extends JCommanderRunnable {
             validateValueWith = PositiveIntegerValidator.class)
     private Integer forks;
 
-    @Parameter(names = "--measurements",
+    @Parameter(names = "--tolerance",
             required = true,
-            description = "Specify the number of measurements for each configuration.",
-            validateValueWith = PositiveIntegerValidator.class)
-    private Integer measurements;
+            description = "Specify the tolerance used to determine warm-up iteration count, should be in (0; 1).",
+            validateValueWith = ToleranceValidator.class)
+    private Double tolerance;
 
-    @Parameter(names = "--warmup-measurements",
+    @Parameter(names = "--plateau",
             required = true,
-            description = "Specify the number of warm-up measurements for each configuration.",
+            description = "Specify the plateau size used to determine warm-up iteration count, should be positive.",
             validateValueWith = PositiveIntegerValidator.class)
-    private Integer warmUpMeasurements;
+    private Integer plateauSize;
 
     @Parameter(names = "--author",
             required = true,
@@ -108,16 +119,83 @@ public final class Benchmark extends JCommanderRunnable {
             "uniform.hyperplanes.n10000.d8.f1", "uniform.hyperplanes.n10000.d9.f1", "uniform.hyperplanes.n10000.d10.f1"
     };
 
-    @Override
-    protected void run() throws CLIWrapperException {
+    private List<Double> getTimes(String algorithmId,
+                                  String datasetId,
+                                  int warmUps,
+                                  int measurements) throws CLIWrapperException, RunnerException {
         Options options = new OptionsBuilder()
-                .forks(forks)
+                .forks(1)
                 .measurementIterations(measurements)
-                .warmupIterations(warmUpMeasurements == null ? measurements : warmUpMeasurements)
-                .param("datasetId", jmhIds)
+                .warmupIterations(warmUps)
+                .param("datasetId", datasetId)
                 .param("algorithmId", algorithmId)
                 .include(JMHBenchmark.class.getName())
                 .build();
+
+        Collection<RunResult> results = new Runner(options).run();
+        List<Double> times = new ArrayList<>();
+        for (RunResult result : results) {
+            for (BenchmarkResult benchmarkResult : result.getBenchmarkResults()) {
+                BenchmarkParams params = benchmarkResult.getParams();
+                String myDatasetId = params.getParam("datasetId");
+                if (!datasetId.equals(myDatasetId)) {
+                    throw new CLIWrapperException("Unable to dig through JMH output: Value for 'datasetId' parameter is '"
+                            + myDatasetId + "' but expected '" + datasetId + "'", null);
+                }
+                String myAlgorithmId = params.getParam("algorithmId");
+                if (!algorithmId.equals(myAlgorithmId)) {
+                    throw new CLIWrapperException("Unable to dig through JMH output: Value for 'algorithmId' parameter is '"
+                            + myAlgorithmId + "' but expected '" + algorithmId + "'", null);
+                }
+                int count = 0;
+                for (IterationResult iterationResult : benchmarkResult.getIterationResults()) {
+                    for (Result<?> primary : iterationResult.getRawPrimaryResults()) {
+                        if (primary.getStatistics().getN() != 1) {
+                            throw new CLIWrapperException("Unable to dig through JMH output: getN() != 1", null);
+                        }
+                        if (!primary.getScoreUnit().equals("us/op")) {
+                            throw new CLIWrapperException("Unable to dig through JMH output: getScoreUnit() = " + primary.getScoreUnit(), null);
+                        }
+                        double value = primary.getScore() / 1e6;
+                        times.add(value / IdCollection.getDataset(datasetId).getNumberOfInstances());
+                        ++count;
+                    }
+                }
+                if (count != measurements) {
+                    throw new CLIWrapperException("Unable to dig through JMH output: Expected "
+                            + measurements + " measurements, found " + count, null);
+                }
+            }
+        }
+        return times;
+    }
+
+    private int getWarmUpLength(List<Double> times) {
+        int minimum = 0;
+        for (int i = 0; i < times.size(); ++i) {
+            if (times.get(i) < times.get(minimum)) {
+                minimum = i;
+            }
+        }
+        double best = times.get(minimum);
+        int lastCount = 0;
+        for (int i = times.size() - 1; i >= 0; --i) {
+            double curr = times.get(i);
+            if (Math.abs(curr - best) <= tolerance * best) {
+                ++lastCount;
+            } else {
+                break;
+            }
+        }
+        if (lastCount >= plateauSize) {
+            return times.size() - lastCount + plateauSize;
+        } else {
+            return -1;
+        }
+    }
+
+    @Override
+    protected void run() throws CLIWrapperException {
         try {
             Path output = Paths.get(outputFileName);
             List<Record> allBenchmarks;
@@ -128,48 +206,54 @@ public final class Benchmark extends JCommanderRunnable {
                 Files.write(output, Collections.emptyList());
             }
 
-            Collection<RunResult> results = new Runner(options).run();
-            List<Record> records = new ArrayList<>();
-
             String javaRuntimeVersion = System.getProperty("java.runtime.version");
             String cpuModel = new SystemInfo().getHardware().getProcessor().getName();
 
             System.out.println("[info] Java runtime version: '" + javaRuntimeVersion + "'.");
             System.out.println("[info] CPU model: '" + cpuModel + "'.");
 
-            for (RunResult result : results) {
-                for (BenchmarkResult benchmarkResult : result.getBenchmarkResults()) {
-                    BenchmarkParams params = benchmarkResult.getParams();
-                    String datasetId = params.getParam("datasetId");
-                    if (datasetId == null) {
-                        throw new CLIWrapperException("Unable to dig through JMH output: No 'datasetId' parameter", null);
-                    }
-                    String algorithmId = params.getParam("algorithmId");
-                    if (algorithmId == null) {
-                        throw new CLIWrapperException("Unable to dig through JMH output: No 'algorithmId' parameter", null);
-                    }
-                    List<Double> times = new ArrayList<>();
-                    for (IterationResult iterationResult : benchmarkResult.getIterationResults()) {
-                        for (Result<?> primary : iterationResult.getRawPrimaryResults()) {
-                            if (primary.getStatistics().getN() != 1) {
-                                throw new CLIWrapperException("Unable to dig through JMH output: getN() != 1", null);
-                            }
-                            if (!primary.getScoreUnit().equals("us/op")) {
-                                throw new CLIWrapperException("Unable to dig through JMH output: getScoreUnit() = " + primary.getScoreUnit(), null);
-                            }
-                            double value = primary.getScore() / 1e6;
-                            times.add(value / IdCollection.getDataset(datasetId).getNumberOfInstances());
-                        }
-                    }
-                    long endTimeMillis = benchmarkResult.getMetadata().getStopTime();
-                    LocalDateTime measurementTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(endTimeMillis),
-                            TimeZone.getDefault().toZoneId());
+            List<Record> records = new ArrayList<>();
 
-                    records.add(new Record(
-                            algorithmId, datasetId, "JMH",
-                            author, measurementTime, cpuModel, javaRuntimeVersion, times, comment
-                    ));
-                }
+            for (String datasetId : jmhIds) {
+                int warmUpGuess = 5;
+                List<Record> localRecords = new ArrayList<>();
+                do {
+                    int warmUpLength;
+                    double bestValue;
+                    System.out.println("[info] Finding the right warm-up length...");
+                    do {
+                        warmUpGuess *= 2;
+                        List<Double> times = getTimes(algorithmId, datasetId, 0, warmUpGuess);
+                        warmUpLength = getWarmUpLength(times);
+                        bestValue = times.stream().mapToDouble(Double::doubleValue).min().orElse(Double.NaN);
+                        if (warmUpLength == -1) {
+                            System.out.println("[warning] " + warmUpGuess
+                                    + " iterations is not enough to find a plateau of size " + plateauSize
+                                    + " with tolerance " + tolerance + ", doubling...");
+                        }
+                    } while (warmUpLength == -1);
+
+                    System.out.println("[info] warm-up length is " + warmUpLength);
+
+                    for (int i = 0; i < forks; ++i) {
+                        List<Double> times = getTimes(algorithmId, datasetId, warmUpLength, 1);
+                        LocalDateTime measurementTime = LocalDateTime.now();
+
+                        double max = times.stream().mapToDouble(Double::doubleValue).max().orElse(Double.NaN);
+                        if (max > (1 + tolerance * 4) * bestValue) {
+                            System.out.println("[warning] something is going wrong, max value " + max
+                                    + " is much worse than best pre-warm-up value " + bestValue + ". Repeating...");
+                            localRecords.clear();
+                            break;
+                        }
+
+                        localRecords.add(new Record(
+                                algorithmId, datasetId, "JMH",
+                                author, measurementTime, cpuModel, javaRuntimeVersion, times, comment
+                        ));
+                    }
+                } while (localRecords.size() > 0);
+                records.addAll(localRecords);
             }
 
             allBenchmarks.addAll(records);
