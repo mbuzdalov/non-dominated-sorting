@@ -26,14 +26,9 @@ import ru.ifmo.nds.IdCollection;
 import ru.ifmo.nds.jmh.JMHBenchmark;
 import ru.ifmo.nds.rundb.Record;
 import ru.ifmo.nds.rundb.Records;
-import ru.ifmo.nds.simple.SimpleBenchmark;
 
 public final class Benchmark extends JCommanderRunnable {
     private Benchmark() {}
-
-    public enum Type {
-        JMH, simple
-    }
 
     public static class PositiveIntegerValidator implements IValueValidator<Integer> {
         @Override
@@ -44,26 +39,13 @@ public final class Benchmark extends JCommanderRunnable {
         }
     }
 
-    public static class PositiveDoubleValidator implements IValueValidator<Double> {
-        @Override
-        public void validate(String name, Double value) throws ParameterException {
-            if (value <= 0.0) {
-                throw new ParameterException("Value for '" + name + "' must be positive, you specified " + value + ".");
-            }
-        }
-    }
-
-    @Parameter(names = "--type",
-            required = true,
-            description = "Specify the benchmark type.")
-    private Type benchmarkType;
-
     @Parameter(names = "--algorithmId",
             required = true,
             description = "Specify the algorithm ID to benchmark.")
     private String algorithmId;
 
     @Parameter(names = "--forks",
+            required = true,
             description = "Specify the number of forks (different JVM instances) to be used.",
             validateValueWith = PositiveIntegerValidator.class)
     private Integer forks = 1;
@@ -75,14 +57,10 @@ public final class Benchmark extends JCommanderRunnable {
     private Integer measurements;
 
     @Parameter(names = "--warmup-measurements",
+            required = true,
             description = "Specify the number of warmup measurements for each configuration.",
             validateValueWith = PositiveIntegerValidator.class)
     private Integer warmUpMeasurements;
-
-    @Parameter(names = "--required-precision",
-            description = "Specify the required precision for --type simple (> 0.0).",
-            validateValueWith = PositiveDoubleValidator.class)
-    private double requiredPrecision = 0.02;
 
     @Parameter(names = "--author",
             required = true,
@@ -101,9 +79,6 @@ public final class Benchmark extends JCommanderRunnable {
 
     @Parameter(names = "--append", description = "Append to the output file instead of overwriting it.")
     private boolean shouldAppendToOutput;
-
-    @Parameter(names = "--silent", description = "Suppress output while benchmarking (only for --type simple).")
-    private boolean keepSilent = false;
 
     private static final String[] jmhIds = {
             "uniform.hypercube.n10.d2", "uniform.hypercube.n10.d3", "uniform.hypercube.n10.d4",
@@ -133,7 +108,8 @@ public final class Benchmark extends JCommanderRunnable {
             "uniform.hyperplanes.n10000.d8.f1", "uniform.hyperplanes.n10000.d9.f1", "uniform.hyperplanes.n10000.d10.f1"
     };
 
-    private void runJMH() throws CLIWrapperException {
+    @Override
+    protected void run() throws CLIWrapperException {
         Options options = new OptionsBuilder()
                 .forks(forks)
                 .measurementIterations(measurements)
@@ -202,43 +178,6 @@ public final class Benchmark extends JCommanderRunnable {
             throw new CLIWrapperException("Error while running JMH tests.", ex);
         } catch (IOException ex) {
             throw new CLIWrapperException("Error writing results to output file.", ex);
-        }
-    }
-
-    private void runSimple() throws CLIWrapperException {
-        if (forks != 1) {
-            System.out.println("[warning] Parameter '--forks' is not yet supported when '--type simple'.");
-        }
-        try {
-            Path output = Paths.get(outputFileName);
-            List<Record> allBenchmarks;
-            if (shouldAppendToOutput && Files.exists(output) && Files.size(output) > 0) {
-                allBenchmarks = Records.loadFromFile(output);
-            } else {
-                allBenchmarks = new ArrayList<>();
-                Files.write(output, Collections.emptyList());
-            }
-
-            allBenchmarks.addAll(new SimpleBenchmark(
-                    algorithmId,
-                    Arrays.asList(jmhIds),
-                    requiredPrecision, keepSilent).evaluate(author, comment, measurements));
-
-            Records.saveToFile(allBenchmarks, output);
-        } catch (IOException ex) {
-            throw new CLIWrapperException("Error writing results to output file.", ex);
-        }
-    }
-
-    @Override
-    protected void run() throws CLIWrapperException {
-        switch (benchmarkType) {
-            case JMH:
-                runJMH();
-                break;
-            case simple:
-                runSimple();
-                break;
         }
     }
 
