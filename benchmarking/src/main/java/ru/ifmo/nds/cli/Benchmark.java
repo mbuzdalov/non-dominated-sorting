@@ -215,12 +215,18 @@ public final class Benchmark extends JCommanderRunnable {
             List<Record> records = new ArrayList<>();
 
             for (String datasetId : jmhIds) {
+                System.out.println();
+                System.out.println("**************************************************************");
+                System.out.println("* Algorithm: " + algorithmId + ", dataset: " + datasetId);
+                System.out.println("**************************************************************");
                 int warmUpGuess = 5;
                 List<Record> localRecords = new ArrayList<>();
                 do {
                     int warmUpLength;
                     double bestValue;
-                    System.out.println("[info] Finding the right warm-up length...");
+                    System.out.println();
+                    System.out.println("************* Finding the right warm-up length *************");
+                    System.out.println();
                     do {
                         warmUpGuess *= 2;
                         List<Double> times = getTimes(algorithmId, datasetId, 0, warmUpGuess);
@@ -233,7 +239,9 @@ public final class Benchmark extends JCommanderRunnable {
                         }
                     } while (warmUpLength == -1);
 
-                    System.out.println("[info] warm-up length is " + warmUpLength);
+                    System.out.println();
+                    System.out.println("************* Warm-up length is " + warmUpLength + " *************");
+                    System.out.println();
 
                     for (int i = 0; i < forks; ++i) {
                         List<Double> times = getTimes(algorithmId, datasetId, warmUpLength, 1);
