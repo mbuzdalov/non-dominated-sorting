@@ -171,17 +171,11 @@ public final class Benchmark extends JCommanderRunnable {
     }
 
     private int getWarmUpLength(List<Double> times) {
-        int minimum = 0;
-        for (int i = 0; i < times.size(); ++i) {
-            if (times.get(i) < times.get(minimum)) {
-                minimum = i;
-            }
-        }
-        double best = times.get(minimum);
+        double expected = times.get(times.size() - 1);
         int lastCount = 0;
         for (int i = times.size() - 1; i >= 0; --i) {
             double curr = times.get(i);
-            if (Math.abs(curr - best) <= tolerance * best) {
+            if (Math.abs(curr - expected) <= tolerance * Math.min(curr, expected)) {
                 ++lastCount;
             } else {
                 break;
@@ -231,7 +225,7 @@ public final class Benchmark extends JCommanderRunnable {
                         warmUpGuess *= 2;
                         List<Double> times = getTimes(algorithmId, datasetId, 0, warmUpGuess);
                         warmUpLength = getWarmUpLength(times);
-                        bestValue = times.stream().mapToDouble(Double::doubleValue).min().orElse(Double.NaN);
+                        bestValue = times.get(times.size() - 1);
                         if (warmUpLength == -1) {
                             System.out.println("[warning] " + warmUpGuess
                                     + " iterations is not enough to find a plateau of size " + plateauSize
