@@ -252,7 +252,7 @@ public final class Benchmark extends JCommanderRunnable {
                                 author, measurementTime, cpuModel, javaRuntimeVersion, times, comment
                         ));
                     }
-                } while (localRecords.size() > 0);
+                } while (localRecords.size() == 0);
                 records.addAll(localRecords);
             }
 
