@@ -41,7 +41,7 @@ public final class Benchmark extends JCommanderRunnable {
         }
     }
 
-    private static class ToleranceValidator implements IValueValidator<Double> {
+    public static class ToleranceValidator implements IValueValidator<Double> {
         @Override
         public void validate(String name, Double value) throws ParameterException {
             if (value <= 0 || value >= 1) {
