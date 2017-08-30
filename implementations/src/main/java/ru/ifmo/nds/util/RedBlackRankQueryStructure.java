@@ -12,10 +12,12 @@ public final class RedBlackRankQueryStructure extends RankQueryStructure {
     private final Node[] allNodes;
     private Node root;
     private int size;
+    private final Node[] nodesByRank;
 
     public RedBlackRankQueryStructure(int maximumPoints) {
         allNodes = new Node[maximumPoints];
         root = null;
+        nodesByRank = new Node[maximumPoints];
         size = 0;
     }
 
@@ -55,7 +57,7 @@ public final class RedBlackRankQueryStructure extends RankQueryStructure {
             if (insertionHint == null) {
                 insert(key, value);
             } else {
-                insertionHint.value = Math.max(insertionHint.value, value);
+                setValue(insertionHint, Math.max(insertionHint.value, value));
             }
         }
     }
@@ -69,6 +71,9 @@ public final class RedBlackRankQueryStructure extends RankQueryStructure {
     @Override
     public void clear() {
         root = null;
+        for (int i = 0; i < size; ++i) {
+            setValue(allNodes[i], -1);
+        }
         size = 0;
         initialized = false;
     }
@@ -80,9 +85,26 @@ public final class RedBlackRankQueryStructure extends RankQueryStructure {
 
     private static class Node {
         double key;
-        int value, index;
+        int value = -1;
+        int index;
         boolean red;
         Node left, right, parent;
+    }
+
+    private void setValue(Node node, int value) {
+        if (node.value != -1) {
+            if (nodesByRank[node.value] != node) {
+                throw new AssertionError();
+            }
+            nodesByRank[node.value] = null;
+        }
+        node.value = value;
+        if (value != -1) {
+            if (nodesByRank[value] != null) {
+                throw new AssertionError();
+            }
+            nodesByRank[value] = node;
+        }
     }
 
     private Node newNode(double key, int value, Node parent) {
@@ -92,7 +114,7 @@ public final class RedBlackRankQueryStructure extends RankQueryStructure {
         }
         Node rv = allNodes[size];
         rv.key = key;
-        rv.value = value;
+        setValue(rv, value);
         rv.red = true;
         rv.left = null;
         rv.right = null;
@@ -101,6 +123,7 @@ public final class RedBlackRankQueryStructure extends RankQueryStructure {
     }
 
     private void deleteNode(Node node) {
+        setValue(node, -1);
         if (node.index != size - 1) {
             Node other = allNodes[size - 1];
             allNodes[node.index] = other;
@@ -163,7 +186,7 @@ public final class RedBlackRankQueryStructure extends RankQueryStructure {
         }
 
         if (cmp == 0) {
-            parent.value = value;
+            setValue(parent, value);
         } else {
             Node z = newNode(key, value, parent);
 
