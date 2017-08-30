@@ -144,7 +144,7 @@ public final class DoubleArraySorter {
     }
 
     public static int retainUniquePoints(double[][] sourcePoints, int[] sortedIndices, double[][] targetPoints, int[] reindex) {
-        int n = sourcePoints.length, dim = sourcePoints[0].length, newN = 1;
+        int n = sourcePoints.length, newN = 1;
         int lastII = sortedIndices[0];
         targetPoints[0] = sourcePoints[lastII];
         reindex[lastII] = 0;
