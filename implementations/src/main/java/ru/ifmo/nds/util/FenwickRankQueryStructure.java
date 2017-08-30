@@ -73,7 +73,7 @@ public final class FenwickRankQueryStructure extends RankQueryStructure {
     }
 
     @Override
-    public int getMaximumWithKeyAtMost(double key) {
+    public int getMaximumWithKeyAtMost(double key, int minimumMeaningfulAnswer) {
         if (!initialized) {
             throw new IllegalStateException("getMaximumWithKeyAtMost(double) called in the preparation mode");
         }

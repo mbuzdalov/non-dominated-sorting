@@ -223,7 +223,8 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         for (int i = from; i < until; ++i) {
             int curr = indices[i];
             double currY = local[curr];
-            int result = Math.max(ranks[curr], rankQuery.getMaximumWithKeyAtMost(currY) + 1);
+            int result = Math.max(ranks[curr],
+                    rankQuery.getMaximumWithKeyAtMost(currY, ranks[curr]) + 1);
             ranks[curr] = result;
             if (result > maximalMeaningfulRank) {
                 reportOverflowedRank(curr);
@@ -252,7 +253,8 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
                 int goodCurr = indices[goodI++];
                 rankQuery.put(local[goodCurr], ranks[goodCurr]);
             }
-            ranks[weakCurr] = Math.max(ranks[weakCurr], rankQuery.getMaximumWithKeyAtMost(local[weakCurr]) + 1);
+            ranks[weakCurr] = Math.max(ranks[weakCurr],
+                    rankQuery.getMaximumWithKeyAtMost(local[weakCurr], ranks[weakCurr]) + 1);
             if (ranks[weakCurr] > maximalMeaningfulRank) {
                 reportOverflowedRank(weakCurr);
             } else {

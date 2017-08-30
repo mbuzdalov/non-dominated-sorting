@@ -35,6 +35,8 @@ public abstract class RankQueryStructure {
      * This operation should be performed in the initialized mode,
      * and may throw exceptions in the preparation mode.
      *
+     * The value must be non-negative.
+     *
      * @param key the key.
      * @param value the value.
      */
@@ -44,13 +46,21 @@ public abstract class RankQueryStructure {
      * Returns a maximum value, among those which were added to the structure previously
      * and which were associated with the key smaller than, or equal to, the given key.
      *
+     * This function supports returning imprecise answers with greater speed.
+     * If one specifies the parameter {@code minimumMeaningfulAnswer} greater than {@code -1},
+     * the search may return faster when it encounters that the answer will be smaller than the given parameter.
+     * In this case, it will return {@code minimumMeaningfulAnswer - 1} or a smaller value.
+     *
+     * A safe value for {@code minimumMeaningfulAnswer} is -1; in this case, no information is lost.
+     *
      * This operation should be performed in the initialized mode,
      * and may throw exceptions in the preparation mode.
      *
      * @param key the key.
+     * @param minimumMeaningfulAnswer the minimum meaningful answer to return.
      * @return the maximum found value for another key above this key.
      */
-    public abstract int getMaximumWithKeyAtMost(double key);
+    public abstract int getMaximumWithKeyAtMost(double key, int minimumMeaningfulAnswer);
 
     /**
      * Clears the existing mappings and moves the data structure to the preparation mode.

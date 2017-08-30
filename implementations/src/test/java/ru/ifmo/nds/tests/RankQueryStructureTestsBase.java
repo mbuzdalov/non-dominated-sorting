@@ -30,7 +30,7 @@ public abstract class RankQueryStructureTestsBase {
 
             structure.init();
 
-            for (int queries = 0; queries < 1000; ++queries) {
+            for (int queries = 0; queries < 2000; ++queries) {
                 if (random.nextBoolean()) {
                     int keyIndex = random.nextInt(differentPoints);
                     int newValue = random.nextInt(100);
@@ -44,7 +44,10 @@ public abstract class RankQueryStructureTestsBase {
                             trueAnswer = Math.max(trueAnswer, values[i]);
                         }
                     }
-                    Assert.assertEquals(trueAnswer, structure.getMaximumWithKeyAtMost(q));
+                    Assert.assertEquals(trueAnswer, structure.getMaximumWithKeyAtMost(q, -1));
+                    Assert.assertEquals(trueAnswer, structure.getMaximumWithKeyAtMost(q, trueAnswer));
+                    Assert.assertTrue(structure.getMaximumWithKeyAtMost(q, trueAnswer + 1) < trueAnswer + 1);
+                    Assert.assertTrue(structure.getMaximumWithKeyAtMost(q, 1000) < 1000);
                 }
             }
 

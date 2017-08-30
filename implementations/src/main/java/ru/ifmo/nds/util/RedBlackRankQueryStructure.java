@@ -36,34 +36,43 @@ public final class RedBlackRankQueryStructure extends RankQueryStructure {
 
     @Override
     public void put(double key, int value) {
-        Node place = maxNodeBeforeExact(root, key);
-        if (place == null || place.value < value) {
+        Node place = nodesByRank[value];
+        if (place == null) {
+            place = minNodeAfterExactByValue(root, value);
+        }
+        if (place == null || place.key > key) {
             Node insertionHint = null;
             if (place == null) {
                 if (root != null) {
-                    place = minNodeNonNull(root);
+                    place = maxNodeNonNull(root);
                 }
             } else {
-                if (place.key == key) {
+                if (place.value == value) {
                     insertionHint = place;
                 }
-                place = successor(place);
+                place = predecessor(place);
             }
-            while (place != null && place.value <= value) {
-                Node next = successor(place);
+            while (place != null && place.key >= key) {
+                Node next = predecessor(place);
                 delete(place);
                 place = next;
             }
             if (insertionHint == null) {
                 insert(key, value);
             } else {
-                setValue(insertionHint, Math.max(insertionHint.value, value));
+                insertionHint.key = key;
             }
         }
     }
 
     @Override
-    public int getMaximumWithKeyAtMost(double key) {
+    public int getMaximumWithKeyAtMost(double key, int minimumMeaningfulAnswer) {
+        if (minimumMeaningfulAnswer >= 0 && size > 0) {
+            Node atMin = nodesByRank[Math.min(minimumMeaningfulAnswer, size - 1)];
+            if (atMin != null && atMin.key > key) {
+                return minimumMeaningfulAnswer - 1;
+            }
+        }
         Node q = maxNodeBeforeExact(root, key);
         return q == null ? -1 : q.value;
     }
@@ -172,6 +181,22 @@ public final class RedBlackRankQueryStructure extends RankQueryStructure {
                 child = cmp < 0 ? child.left : child.right;
             }
             return cmp >= 0 ? parent : predecessor(parent);
+        }
+    }
+
+    private Node minNodeAfterExactByValue(Node node, int value) {
+        if (node == null) {
+            return null;
+        } else {
+            Node parent = null;
+            Node child = node;
+            int cmp = -1;
+            while (child != null && cmp != 0) {
+                parent = child;
+                cmp = Integer.compare(value, child.value);
+                child = cmp < 0 ? child.left : child.right;
+            }
+            return cmp <= 0 ? parent : successor(parent);
         }
     }
 
