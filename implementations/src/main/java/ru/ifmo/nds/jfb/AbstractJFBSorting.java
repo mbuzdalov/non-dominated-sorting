@@ -201,12 +201,13 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
                 splitScratchM[target++] = indices[r++];
             }
         }
-        System.arraycopy(indices, l, splitScratchM, target, untilLeft - l);
-        target += untilLeft - l;
-        System.arraycopy(indices, r, splitScratchM, target, untilRight - r);
-        target += untilRight - r;
+        // copy the remainder of right to its place
+        System.arraycopy(indices, r, indices, fromLeft + target + untilLeft - l, untilRight - r);
+        // copy the remainder of left to its place
+        System.arraycopy(indices, l, indices, fromLeft + target, untilLeft - l);
+        // copy the merged part
         System.arraycopy(splitScratchM, 0, indices, fromLeft, target);
-        return fromLeft + target;
+        return fromLeft + target + untilLeft - l + untilRight - r;
     }
 
     protected abstract RankQueryStructure createStructure(int maximumPoints);
