@@ -83,8 +83,9 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         if (dim == 1) {
             // 1: This is equivalent to ordinary sorting.
             for (int i = 0, r = 0; i < n; ++i) {
-                ranks[internalIndices[i]] = r;
-                if (i + 1 < n && points[internalIndices[i]][0] != points[internalIndices[i + 1]][0]) {
+                int ii = internalIndices[i];
+                ranks[ii] = r;
+                if (i + 1 < n && points[ii][0] != points[internalIndices[i + 1]][0]) {
                     ++r;
                 }
             }
@@ -156,11 +157,12 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         int left = 0, right = 0;
         double[] local = transposedPoints[obj];
         for (int i = from; i < until; ++i) {
-            double v = local[indices[i]];
+            int ii = indices[i];
+            double v = local[ii];
             if (v < median || (equalToLeft && v == median)) {
-                splitScratchL[left++] = indices[i];
+                splitScratchL[left++] = ii;
             } else {
-                splitScratchR[right++] = indices[i];
+                splitScratchR[right++] = ii;
             }
         }
         System.arraycopy(splitScratchL, 0, indices, from, left);
@@ -172,13 +174,14 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         int l = 0, m = 0, r = 0;
         double[] local = transposedPoints[obj];
         for (int i = from; i < until; ++i) {
-            double v = local[indices[i]];
+            int ii = indices[i];
+            double v = local[ii];
             if (v < median) {
-                splitScratchL[l++] = indices[i];
+                splitScratchL[l++] = ii;
             } else if (v == median) {
-                splitScratchM[m++] = indices[i];
+                splitScratchM[m++] = ii;
             } else {
-                splitScratchR[r++] = indices[i];
+                splitScratchR[r++] = ii;
             }
         }
         System.arraycopy(splitScratchL, 0, indices, from, l);
@@ -198,12 +201,10 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
                 splitScratchM[target++] = indices[r++];
             }
         }
-        while (l < untilLeft) {
-            splitScratchM[target++] = indices[l++];
-        }
-        while (r < untilRight) {
-            splitScratchM[target++] = indices[r++];
-        }
+        System.arraycopy(indices, l, splitScratchM, target, untilLeft - l);
+        target += untilLeft - l;
+        System.arraycopy(indices, r, splitScratchM, target, untilRight - r);
+        target += untilRight - r;
         System.arraycopy(splitScratchM, 0, indices, fromLeft, target);
         return fromLeft + target;
     }
