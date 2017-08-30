@@ -20,6 +20,11 @@ public final class RedBlackRankQueryStructure extends RankQueryStructure {
     }
 
     @Override
+    public boolean needsPossibleKeys() {
+        return false;
+    }
+
+    @Override
     public void addPossibleKey(double key) {}
 
     @Override

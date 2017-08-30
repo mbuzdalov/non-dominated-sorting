@@ -7,6 +7,12 @@ package ru.ifmo.nds.util;
  */
 public abstract class RankQueryStructure {
     /**
+     * Returns {@code true} if calls to {@link #addPossibleKey(double)} are necessary, {@code false} otherwise.
+     * @return whether adding possible keys is necessary.
+     */
+    public abstract boolean needsPossibleKeys();
+
+    /**
      * Adds a possible key to the structure.
      *
      * This operation is possible in the preparation mode,

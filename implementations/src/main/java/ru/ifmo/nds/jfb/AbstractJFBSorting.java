@@ -213,8 +213,10 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
 
     private int sweepA(int from, int until) {
         double[] local = transposedPoints[1];
-        for (int i = from; i < until; ++i) {
-            rankQuery.addPossibleKey(local[indices[i]]);
+        if (rankQuery.needsPossibleKeys()) {
+            for (int i = from; i < until; ++i) {
+                rankQuery.addPossibleKey(local[indices[i]]);
+            }
         }
         rankQuery.init();
         int newUntil = from;
@@ -236,8 +238,10 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
 
     private int sweepB(int goodFrom, int goodUntil, int weakFrom, int weakUntil) {
         double[] local = transposedPoints[1];
-        for (int i = goodFrom; i < goodUntil; ++i) {
-            rankQuery.addPossibleKey(local[indices[i]]);
+        if (rankQuery.needsPossibleKeys()) {
+            for (int i = goodFrom; i < goodUntil; ++i) {
+                rankQuery.addPossibleKey(local[indices[i]]);
+            }
         }
         rankQuery.init();
         int goodI = goodFrom;

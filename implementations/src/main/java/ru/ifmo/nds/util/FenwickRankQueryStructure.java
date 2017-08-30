@@ -16,6 +16,11 @@ public final class FenwickRankQueryStructure extends RankQueryStructure {
     }
 
     @Override
+    public boolean needsPossibleKeys() {
+        return true;
+    }
+
+    @Override
     public void addPossibleKey(double key) {
         if (initialized) {
             throw new IllegalStateException("addPossibleKey(double) called in the initialized mode");
