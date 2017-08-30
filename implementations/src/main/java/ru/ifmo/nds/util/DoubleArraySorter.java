@@ -23,14 +23,8 @@ public final class DoubleArraySorter {
             while (scratch[l] < pivot) ++l;
             while (scratch[r] > pivot) --r;
             if (l <= r) {
-                int tmpI = indices[l];
-                indices[l] = indices[r];
-                indices[r] = tmpI;
-                double tmpD = scratch[l];
-                scratch[l] = scratch[r];
-                scratch[r] = tmpD;
-                ++l;
-                --r;
+                ArrayHelper.swap(indices, l, r);
+                ArrayHelper.swap(scratch, l++, r--);
             }
         }
         if (from + 1 <= r) sortImplInside(from, r + 1);
@@ -49,9 +43,9 @@ public final class DoubleArraySorter {
         sortImpl(from, until);
 
         int last = from;
-        double lastX = points[indices[from]][coordinate];
+        double lastX = scratch[from];
         for (int i = from + 1; i < until; ++i) {
-            double currX = points[indices[i]][coordinate];
+            double currX = scratch[i];
             if (currX != lastX) {
                 if (last + 1 < i && coordinate + 1 < maxCoordinate) {
                     lexSortImpl(last, i, coordinate + 1);
@@ -104,11 +98,7 @@ public final class DoubleArraySorter {
             while (resolver[indices[l]] < pivot) ++l;
             while (resolver[indices[r]] > pivot) --r;
             if (l <= r) {
-                int tmpI = indices[l];
-                indices[l] = indices[r];
-                indices[r] = tmpI;
-                ++l;
-                --r;
+                ArrayHelper.swap(indices, l++, r--);
             }
         }
         if (from + 1 <= r) sortByResolver(from, r + 1);
@@ -160,16 +150,7 @@ public final class DoubleArraySorter {
         reindex[lastII] = 0;
         for (int i = 1; i < n; ++i) {
             int currII = sortedIndices[i];
-            double[] curr = sourcePoints[lastII];
-            double[] next = sourcePoints[currII];
-            boolean same = true;
-            for (int t = dim - 1; t >= 0; --t) {
-                if (curr[t] != next[t]) {
-                    same = false;
-                    break;
-                }
-            }
-            if (!same) {
+            if (!ArrayHelper.equal(sourcePoints[lastII], sourcePoints[currII])) {
                 // Copying the point to the internal array.
                 targetPoints[newN] = sourcePoints[currII];
                 lastII = currII;
