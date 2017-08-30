@@ -23,8 +23,9 @@ public class MedianFinderTests {
                 sorter.resetMedian();
                 sorter.consumeDataForMedian(points, indices, 0, size);
                 double median = sorter.findMedian();
+                double[] originalPoints = points.clone();
                 Arrays.sort(points);
-                Assert.assertEquals(points[size / 2], median, 1e-16);
+                Assert.assertEquals(Arrays.toString(originalPoints), points[size / 2], median, 1e-16);
             }
         }
     }

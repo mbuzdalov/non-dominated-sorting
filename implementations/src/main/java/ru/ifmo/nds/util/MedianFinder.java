@@ -36,10 +36,9 @@ public final class MedianFinder {
         medianCount = 0;
     }
 
-    public double findMedian() {
+    private double findMedianGeneralCase() {
         medianImpl(medianCount, medianCount / 2);
         double rv = medianSwap[medianCount / 2];
-        countLarger = countSmaller = 0;
         for (int i = 0; i < medianCount; ++i) {
             if (medianSwap[i] < rv) {
                 ++countSmaller;
@@ -48,6 +47,72 @@ public final class MedianFinder {
             }
         }
         return rv;
+    }
+
+    private double median2() {
+        double a = medianSwap[0], b = medianSwap[1];
+        if (a != b) {
+            ++countSmaller;
+        }
+        return Math.max(a, b);
+    }
+
+    private double median3() {
+        double a = medianSwap[0], b = medianSwap[1], c = medianSwap[2];
+        if (b > c) {
+            double tmp = b;
+            b = c;
+            c = tmp;
+            if (a <= b) {
+                if (a < b) {
+                    ++countSmaller;
+                }
+                ++countLarger;
+                return b;
+            } else if (a <= c) {
+                ++countSmaller;
+                if (a < c) {
+                    ++countLarger;
+                }
+                return a;
+            } else {
+                ++countLarger;
+                ++countSmaller;
+                return c;
+            }
+        } else {
+            if (a <= b) {
+                if (a < b) {
+                    ++countSmaller;
+                }
+                if (b < c) {
+                    ++countLarger;
+                }
+                return b;
+            } else if (a <= c) {
+                ++countSmaller;
+                if (a < c) {
+                    ++countLarger;
+                }
+                return a;
+            } else {
+                ++countLarger;
+                if (b < c) {
+                    ++countSmaller;
+                }
+                return c;
+            }
+        }
+    }
+
+    public double findMedian() {
+        countLarger = countSmaller = 0;
+        switch (medianCount) {
+            case 1: return medianSwap[0];
+            case 2: return median2();
+            case 3: return median3();
+            default: return findMedianGeneralCase();
+        }
     }
 
     private void medianImpl(int until, int index) {
@@ -60,11 +125,7 @@ public final class MedianFinder {
                 while (medianSwap[l] < pivot) ++l;
                 while (medianSwap[r] > pivot) --r;
                 if (l <= r) {
-                    double tmp = medianSwap[l];
-                    medianSwap[l] = medianSwap[r];
-                    medianSwap[r] = tmp;
-                    ++l;
-                    --r;
+                    ArrayHelper.swap(medianSwap, l++, r--);
                 }
             }
             if (index <= r) {
