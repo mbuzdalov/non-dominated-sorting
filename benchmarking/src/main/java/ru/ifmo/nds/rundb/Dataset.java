@@ -1,9 +1,9 @@
 package ru.ifmo.nds.rundb;
 
-import ru.ifmo.nds.NonDominatedSorting;
+import java.util.Arrays;
+import java.util.Objects;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import ru.ifmo.nds.NonDominatedSorting;
 
 public final class Dataset {
     private final String id;
@@ -69,25 +69,5 @@ public final class Dataset {
             sumMaximumRanks += maximumRank;
         }
         return sumMaximumRanks;
-    }
-
-    public static List<Dataset> concatenateAndSplitIntoWarmupAndControl(String newIdPrefix, List<Dataset> datasets) {
-        List<double[][]> inputs = datasets.stream().flatMap(d -> Arrays.stream(d.points)).collect(Collectors.toList());
-        Collections.shuffle(inputs);
-        List<Dataset> rv = new ArrayList<>(2);
-        int warmUpSize = (inputs.size() * 9) / 10;
-        int controlSize = inputs.size() - warmUpSize;
-        int start = 0;
-        while (start < inputs.size()) {
-            int localSize = start == 0 ? warmUpSize : controlSize;
-            double[][][] allPoints = new double[localSize][][];
-            for (int i = 0; i < allPoints.length; ++i) {
-                allPoints[i] = inputs.get(start + i);
-            }
-            Arrays.sort(allPoints, Comparator.comparingInt(a -> a.length));
-            rv.add(new Dataset(newIdPrefix + "." + rv.size(), allPoints));
-            start += localSize;
-        }
-        return rv;
     }
 }
