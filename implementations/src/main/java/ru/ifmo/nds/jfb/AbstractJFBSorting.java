@@ -145,7 +145,6 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         if (ranks[weakIndex] <= ranks[goodIndex]) {
             ranks[weakIndex] = 1 + ranks[goodIndex];
             if (ranks[weakIndex] > maximalMeaningfulRank) {
-                ranks[weakIndex] = maximalMeaningfulRank + 1;
                 reportOverflowedRank(weakIndex);
                 return false;
             }
