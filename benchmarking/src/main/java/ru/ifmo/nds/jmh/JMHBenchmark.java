@@ -15,10 +15,10 @@ public class JMHBenchmark {
     private NonDominatedSorting sorting;
     private Dataset dataset;
 
-    @Param("Please use ru.ifmo.nds.cli.JMHBenchmark to run this JMH benchmark")
+    @Param("Please use ru.ifmo.nds.cli.Benchmark to run this JMH benchmark")
     private String datasetId;
 
-    @Param("Please use ru.ifmo.nds.cli.JMHBenchmark to run this JMH benchmark")
+    @Param("Please use ru.ifmo.nds.cli.Benchmark to run this JMH benchmark")
     private String algorithmId;
 
     @Setup
