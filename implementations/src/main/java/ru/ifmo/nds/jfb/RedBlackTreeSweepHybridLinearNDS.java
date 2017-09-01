@@ -1,25 +1,17 @@
 package ru.ifmo.nds.jfb;
 
-import java.util.Arrays;
-
 public class RedBlackTreeSweepHybridLinearNDS extends RedBlackTreeSweep {
-    private int[] howManyDominateMe;
-    private int[] candidates;
-    private int[] bestGuys;
+    private int[] badGuys;
 
     public RedBlackTreeSweepHybridLinearNDS(int maximumPoints, int maximumDimension) {
         super(maximumPoints, maximumDimension);
-        howManyDominateMe = new int[maximumPoints];
-        candidates = new int[maximumPoints];
-        bestGuys = new int[maximumPoints];
+        badGuys = new int[maximumPoints];
     }
 
     @Override
     protected void closeImpl() throws Exception {
         super.closeImpl();
-        howManyDominateMe = null;
-        candidates = null;
-        bestGuys = null;
+        badGuys = null;
     }
 
     @Override
@@ -38,66 +30,28 @@ public class RedBlackTreeSweepHybridLinearNDS extends RedBlackTreeSweep {
 
     @Override
     protected int helperAHook(int from, int until, int obj) {
-        for (int i = from; i < until; ++i) {
-            int index = indices[i];
-            howManyDominateMe[index] = 0;
-            candidates[i - from] = index;
-        }
-        Arrays.fill(howManyDominateMe, from, until, 0);
+        int badCount = 0;
         for (int left = from; left < until; ++left) {
             int leftIndex = indices[left];
+            int leftRank = ranks[leftIndex];
+            int newUntil = left + 1;
             for (int right = left + 1; right < until; ++right) {
                 int rightIndex = indices[right];
-                if (ranks[rightIndex] <= maximalMeaningfulRank && strictlyDominatesAssumingNotSame(leftIndex, rightIndex, obj)) {
-                    ++howManyDominateMe[rightIndex];
-                }
-            }
-        }
-        int remaining = until - from;
-        while (remaining > 0) {
-            int bestCount = 0;
-            int newRemaining = 0;
-            for (int i = 0; i < remaining; ++i) {
-                int ci = candidates[i];
-                if (howManyDominateMe[ci] == 0) {
-                    bestGuys[bestCount++] = ci;
-                } else {
-                    candidates[newRemaining++] = ci;
-                }
-            }
-            int nextIndex = 0;
-            for (int bi = 0; bi < bestCount; ++bi) {
-                int bestGuy = bestGuys[bi];
-                int bestGuyRank = ranks[bestGuy];
-                while (nextIndex < newRemaining && candidates[nextIndex] < bestGuy) {
-                    ++nextIndex;
-                }
-                int actualRemaining = nextIndex;
-                for (int i = nextIndex; i < newRemaining; ++i) {
-                    int candidate = candidates[i];
-                    if (strictlyDominatesAssumingNotSame(bestGuy, candidate, obj)) {
-                        --howManyDominateMe[candidate];
-                        if (bestGuyRank >= ranks[candidate]) {
-                            ranks[candidate] = bestGuyRank + 1;
-                            if (ranks[candidate] > maximalMeaningfulRank) {
-                                reportOverflowedRank(candidate);
-                                continue;
-                            }
-                        }
+                if (ranks[rightIndex] <= leftRank && strictlyDominatesAssumingNotSame(leftIndex, rightIndex, obj)) {
+                    if (leftRank == maximalMeaningfulRank) {
+                        reportOverflowedRank(rightIndex);
+                        badGuys[badCount++] = rightIndex;
+                        continue;
+                    } else {
+                        ranks[rightIndex] = leftRank + 1;
                     }
-                    candidates[actualRemaining++] = candidate;
                 }
-                newRemaining = actualRemaining;
+                indices[newUntil++] = rightIndex;
             }
-            remaining = newRemaining;
+            until = newUntil;
         }
-        int newUntil = from;
-        for (int i = from; i < until; ++i) {
-            if (ranks[indices[i]] <= maximalMeaningfulRank) {
-                indices[newUntil++] = indices[i];
-            }
-        }
-        return newUntil;
+        System.arraycopy(badGuys, 0, indices, until, badCount);
+        return until;
     }
 
     @Override
