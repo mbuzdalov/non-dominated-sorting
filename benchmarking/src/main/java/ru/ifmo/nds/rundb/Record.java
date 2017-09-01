@@ -107,4 +107,56 @@ public class Record {
         result = 31 * result + comment.hashCode();
         return result;
     }
+
+    // Fields are @SuppressWarnings("unused") because they are actually accessed by valueOf.
+    public enum FieldAccessor {
+        @SuppressWarnings("unused") algorithmID {
+            @Override
+            public Object extractField(Record record) {
+                return record.getAlgorithmId();
+            }
+        }, @SuppressWarnings("unused") datasetID {
+            @Override
+            public Object extractField(Record record) {
+                return record.getDatasetId();
+            }
+        }, @SuppressWarnings("unused") measurementMethod {
+            @Override
+            public Object extractField(Record record) {
+                return record.getMeasurementMethod();
+            }
+        }, @SuppressWarnings("unused") measurementAuthor {
+            @Override
+            public Object extractField(Record record) {
+                return record.getMeasurementAuthor();
+            }
+        }, @SuppressWarnings("unused") measurementTime {
+            @Override
+            public Object extractField(Record record) {
+                return record.getMeasurementTime();
+            }
+        }, @SuppressWarnings("unused") cpuModelName {
+            @Override
+            public Object extractField(Record record) {
+                return record.getCpuModelName();
+            }
+        }, @SuppressWarnings("unused") javaRuntimeVersion {
+            @Override
+            public Object extractField(Record record) {
+                return record.getJavaRuntimeVersion();
+            }
+        }, @SuppressWarnings("unused") measurements {
+            @Override
+            public Object extractField(Record record) {
+                return record.getMeasurements();
+            }
+        }, @SuppressWarnings("unused") comment {
+            @Override
+            public Object extractField(Record record) {
+                return record.getComment();
+            }
+        };
+
+        public abstract Object extractField(Record record);
+    }
 }

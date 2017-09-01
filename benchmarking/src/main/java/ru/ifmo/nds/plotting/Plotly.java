@@ -1,6 +1,6 @@
 package ru.ifmo.nds.plotting;
 
-import ru.ifmo.nds.PlotBuilder;
+import ru.ifmo.nds.cli.PlotBuilder;
 import ru.ifmo.nds.rundb.IdUtils;
 import ru.ifmo.nds.rundb.Record;
 
@@ -48,7 +48,9 @@ public class Plotly {
 
             Map<Long, Stats> stats = new TreeMap<>();
             for (Record plotPoint : plot.getValue()) {
-                long N = IdUtils.extract(plotPoint.getDatasetId(), factor);
+                long N = IdUtils
+                        .extract(plotPoint.getDatasetId(), factor)
+                        .orElseThrow(() -> new IllegalArgumentException("Could not find factor " + factor));
                 Stats st = stats.computeIfAbsent(N, v -> new Stats());
                 for (double p : plotPoint.getMeasurements()) {
                     st.add(p);
@@ -81,7 +83,7 @@ public class Plotly {
         out.println("});");
     }
 
-    public static void printPlotly(Map<String, PlotBuilder.SinglePlot> plots, String factor, Path output) {
+    public static void printPlotly(Map<String, PlotBuilder.SinglePlot> plots, String factor, Path output) throws IOException {
         try (PrintWriter out = new PrintWriter(Files.newBufferedWriter(output))) {
             out.println("<?xml version=\"1.0\" encoding=\"utf-8\"?>");
             out.println("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">");
@@ -102,14 +104,6 @@ public class Plotly {
             out.println("</script>");
             out.println("</body>");
             out.println("</html>");
-        } catch (IOException ex) {
-            StringWriter out = new StringWriter();
-            PrintWriter pw = new PrintWriter(out);
-            ex.printStackTrace(pw);
-            pw.println();
-            pw.println("Error: file '" + output.toString() + "' cannot be written to");
-            pw.close();
-            PlotBuilder.printUsageAndExit(out.toString());
         }
     }
 }

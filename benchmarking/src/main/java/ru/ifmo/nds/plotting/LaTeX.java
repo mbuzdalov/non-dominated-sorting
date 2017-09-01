@@ -1,6 +1,6 @@
 package ru.ifmo.nds.plotting;
 
-import ru.ifmo.nds.PlotBuilder;
+import ru.ifmo.nds.cli.PlotBuilder;
 import ru.ifmo.nds.rundb.IdUtils;
 import ru.ifmo.nds.rundb.Record;
 
@@ -46,7 +46,9 @@ public class LaTeX {
             tableWriter.print("    {" + plot.getKey() + "}");
             TreeMap<Long, Stats> stats = new TreeMap<>();
             for (Record plotPoint : plot.getValue()) {
-                long N = IdUtils.extract(plotPoint.getDatasetId(), factor);
+                long N = IdUtils
+                        .extract(plotPoint.getDatasetId(), factor)
+                        .orElseThrow(() -> new IllegalArgumentException("Could not find factor " + factor));
                 List<Double> points = plotPoint.getMeasurements();
                 Stats st = stats.computeIfAbsent(N, v -> new Stats());
                 for (double p : points) {
@@ -79,7 +81,7 @@ public class LaTeX {
         out.println("\\newpage");
     }
 
-    public static void printLaTeX(Map<String, PlotBuilder.SinglePlot> plots, String factor, Path output) {
+    public static void printLaTeX(Map<String, PlotBuilder.SinglePlot> plots, String factor, Path output) throws IOException {
         try (PrintWriter out = new PrintWriter(Files.newBufferedWriter(output))) {
             out.println("\\documentclass{extreport}");
             out.println("\\usepackage{geometry}");
@@ -120,14 +122,6 @@ public class LaTeX {
                 printLaTeX(plot, factor, out);
             }
             out.println("\\end{document}");
-        } catch (IOException ex) {
-            StringWriter out = new StringWriter();
-            PrintWriter pw = new PrintWriter(out);
-            ex.printStackTrace(pw);
-            pw.println();
-            pw.println("Error: file '" + output.toString() + "' cannot be written to");
-            pw.close();
-            PlotBuilder.printUsageAndExit(out.toString());
         }
     }
 }

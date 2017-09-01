@@ -1,6 +1,7 @@
 package ru.ifmo.nds.rundb;
 
 import java.util.Comparator;
+import java.util.OptionalInt;
 import java.util.StringTokenizer;
 
 public final class IdUtils {
@@ -24,19 +25,19 @@ public final class IdUtils {
         return rv.toString();
     }
 
-    public static int extract(String s, String factor) {
+    public static OptionalInt extract(String s, String factor) {
         StringTokenizer st = new StringTokenizer(s, ".");
         while (st.hasMoreTokens()) {
             String token = st.nextToken();
             if (token.startsWith(factor)) {
                 try {
-                    return Integer.parseInt(token.substring(factor.length()));
+                    return OptionalInt.of(Integer.parseInt(token.substring(factor.length())));
                 } catch (NumberFormatException ex) {
                     // continue
                 }
             }
         }
-        throw new IllegalArgumentException("Cannot extract '" + factor + "' from string '" + s + "'");
+        return OptionalInt.empty();
     }
 
 
