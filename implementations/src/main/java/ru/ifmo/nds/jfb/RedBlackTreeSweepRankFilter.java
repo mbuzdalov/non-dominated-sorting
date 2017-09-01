@@ -25,7 +25,7 @@ public class RedBlackTreeSweepRankFilter extends AbstractJFBSorting {
 
     @Override
     public String getName() {
-        return "Jensen-Fortin-Buzdalov sorting (tree sweep)";
+        return "Jensen-Fortin-Buzdalov sorting (tree sweep, rank filter)";
     }
 
     private int getMaxRank(int from, int until) {
