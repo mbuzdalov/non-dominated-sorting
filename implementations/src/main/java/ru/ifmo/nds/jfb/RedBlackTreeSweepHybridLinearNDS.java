@@ -101,8 +101,8 @@ public class RedBlackTreeSweepHybridLinearNDS extends RedBlackTreeSweep {
     }
 
     @Override
-    protected boolean helperBHookCondition(int goodSize, int weakSize, int obj) {
-        return helperAHookCondition(goodSize + weakSize, obj);
+    protected boolean helperBHookCondition(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj) {
+        return helperAHookCondition(goodUntil - goodFrom + weakUntil - weakFrom, obj);
     }
 
     @Override

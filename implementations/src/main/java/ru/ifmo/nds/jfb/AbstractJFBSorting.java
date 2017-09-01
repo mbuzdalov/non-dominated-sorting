@@ -358,7 +358,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         return weak + 1;
     }
 
-    protected boolean helperBHookCondition(int goodSize, int weakSize, int obj) {
+    protected boolean helperBHookCondition(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj) {
         return false;
     }
     protected int helperBHook(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj) {
@@ -375,7 +375,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
                 return helperBWeak1(goodFrom, goodUntil, weakFrom, obj);
             } else if (obj == 1) {
                 return sweepB(goodFrom, goodUntil, weakFrom, weakUntil);
-            } else if (helperBHookCondition(goodUntil - goodFrom, weakUntil - weakFrom, obj)) {
+            } else if (helperBHookCondition(goodFrom, goodUntil, weakFrom, weakUntil, obj)) {
                 return helperBHook(goodFrom, goodUntil, weakFrom, weakUntil, obj);
             } else {
                 medianFinder.resetMedian();
