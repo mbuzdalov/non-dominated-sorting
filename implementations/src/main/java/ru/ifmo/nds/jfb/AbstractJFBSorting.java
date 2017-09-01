@@ -190,7 +190,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         splitM = m;
     }
 
-    private int mergeTwo(int fromLeft, int untilLeft, int fromRight, int untilRight) {
+    int mergeTwo(int fromLeft, int untilLeft, int fromRight, int untilRight) {
         int target = 0;
         int l = fromLeft, r = fromRight;
         while (l < untilLeft && r < untilRight) {
@@ -365,7 +365,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         throw new UnsupportedOperationException("helperBHook not yet implemented");
     }
 
-    private int helperB(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj) {
+    int helperB(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj) {
         int goodN = goodUntil - goodFrom;
         int weakN = weakUntil - weakFrom;
         if (goodN > 0 && weakN > 0) {
