@@ -3,9 +3,9 @@ package ru.ifmo.nds.tests;
 import ru.ifmo.nds.JensenFortinBuzdalov;
 import ru.ifmo.nds.NonDominatedSortingFactory;
 
-public class JensenFortinBuzdalovRedBlackTest extends CorrectnessTestsBase {
+public class JensenFortinBuzdalovRedBlackHybridLinearFNDSRankFilterTest extends CorrectnessTestsBase {
     @Override
     protected NonDominatedSortingFactory getFactory() {
-        return JensenFortinBuzdalov.getRedBlackTreeSweepImplementation(false);
+        return JensenFortinBuzdalov.getRedBlackTreeSweepHybridImplementation(true);
     }
 }

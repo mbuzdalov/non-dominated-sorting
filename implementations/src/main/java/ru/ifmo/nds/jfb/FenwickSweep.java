@@ -5,7 +5,7 @@ import ru.ifmo.nds.util.RankQueryStructure;
 
 public class FenwickSweep extends AbstractJFBSorting {
     public FenwickSweep(int maximumPoints, int maximumDimension) {
-        super(maximumPoints, maximumDimension);
+        super(maximumPoints, maximumDimension, false);
     }
 
     @Override

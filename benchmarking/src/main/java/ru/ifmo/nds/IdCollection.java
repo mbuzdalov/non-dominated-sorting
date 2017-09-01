@@ -13,7 +13,7 @@ public final class IdCollection {
     private static final Map<String, DatasetGenerator> idToDatasetGenerator = new TreeMap<>();
     private static final List<String> allDatasets = new ArrayList<>();
 
-    public static void addGenerator(DatasetGenerator generator) {
+    private static void addGenerator(DatasetGenerator generator) {
         List<String> ids = generator.getAllDatasetIds();
         for (String id : ids) {
             DatasetGenerator gen = idToDatasetGenerator.get(id);
@@ -50,7 +50,7 @@ public final class IdCollection {
         addGenerator(UniformHyperplanes.getInstance());
     }
 
-    public static void addNonDominatedSortingFactory(String id, NonDominatedSortingFactory factory) {
+    private static void addNonDominatedSortingFactory(String id, NonDominatedSortingFactory factory) {
         String currName = factory.getName();
         NonDominatedSortingFactory prev = allNDSFactories.get(id);
         if (prev != null) {
@@ -118,9 +118,10 @@ public final class IdCollection {
         addNonDominatedSortingFactory("fnds.original", FastNonDominatedSorting.getOriginalVersion());
         addNonDominatedSortingFactory("fnds.linear", FastNonDominatedSorting.getLinearMemoryImplementation());
         addNonDominatedSortingFactory("jfb.fenwick", JensenFortinBuzdalov.getFenwickSweepImplementation());
-        addNonDominatedSortingFactory("jfb.rbtree", JensenFortinBuzdalov.getRedBlackTreeSweepImplementation());
-        addNonDominatedSortingFactory("jfb.rbtree.hybrid.fnds", JensenFortinBuzdalov.getRedBlackTreeSweepHybridImplementation());
-        addNonDominatedSortingFactory("jfb.rbtree.rankfilter", JensenFortinBuzdalov.getRedBlackTreeSweepWithRankFilterImplementation());
+        addNonDominatedSortingFactory("jfb.rbtree", JensenFortinBuzdalov.getRedBlackTreeSweepImplementation(false));
+        addNonDominatedSortingFactory("jfb.rbtree.hybrid.fnds", JensenFortinBuzdalov.getRedBlackTreeSweepHybridImplementation(false));
+        addNonDominatedSortingFactory("jfb.rbtree.rankfilter", JensenFortinBuzdalov.getRedBlackTreeSweepImplementation(true));
+        addNonDominatedSortingFactory("jfb.rbtree.rankfilter.hybrid.fnds", JensenFortinBuzdalov.getRedBlackTreeSweepHybridImplementation(true));
         addNonDominatedSortingFactory("dcns.bs", SumitMishraDivideConquer.getSumitImplementation2016(true, false));
         addNonDominatedSortingFactory("dcns.bss", SumitMishraDivideConquer.getSumitImplementation2016(true, true));
         addNonDominatedSortingFactory("dcns.ss", SumitMishraDivideConquer.getSumitImplementation2016(false, false));

@@ -3,8 +3,8 @@ package ru.ifmo.nds.jfb;
 public class RedBlackTreeSweepHybridLinearNDS extends RedBlackTreeSweep {
     private int[] badGuys;
 
-    public RedBlackTreeSweepHybridLinearNDS(int maximumPoints, int maximumDimension) {
-        super(maximumPoints, maximumDimension);
+    public RedBlackTreeSweepHybridLinearNDS(int maximumPoints, int maximumDimension, boolean useRankFilter) {
+        super(maximumPoints, maximumDimension, useRankFilter);
         badGuys = new int[maximumPoints];
     }
 
@@ -16,7 +16,8 @@ public class RedBlackTreeSweepHybridLinearNDS extends RedBlackTreeSweep {
 
     @Override
     public String getName() {
-        return "Jensen-Fortin-Buzdalov sorting (tree sweep, hybrid with fast NDS)";
+        return "Jensen-Fortin-Buzdalov sorting (tree sweep, hybrid with fast NDS"
+                + (useRankFilter ? ", rank filter" : "") + ")";
     }
 
     @Override
@@ -28,29 +29,55 @@ public class RedBlackTreeSweepHybridLinearNDS extends RedBlackTreeSweep {
         }
     }
 
+    private int updateByPointWithMove(int pointIndex, int from, int until, int obj) {
+        int badCount = 0;
+        reportOverflowedRank(indices[from]);
+        badGuys[badCount++] = indices[from];
+        int newUntil = from;
+        for (int i = from + 1; i < until; ++i) {
+            int ii = indices[i];
+            if (ranks[ii] <= maximalMeaningfulRank && strictlyDominatesAssumingNotSame(pointIndex, ii, obj)) {
+                reportOverflowedRank(ii);
+                badGuys[badCount++] = ii;
+            } else {
+                indices[newUntil++] = ii;
+            }
+        }
+        return newUntil;
+    }
+
+    private void updateByPoint(int pointIndex, int pointRank, int from, int until, int obj) {
+        for (int i = from; i < until; ++i) {
+            int ii = indices[i];
+            if (ranks[ii] <= pointRank && strictlyDominatesAssumingNotSame(pointIndex, ii, obj)) {
+                ranks[ii] = pointRank + 1;
+            }
+        }
+    }
+
+    private int updateByPointCritical(int pointIndex, int from, int until, int obj) {
+        for (int i = from; i < until; ++i) {
+            int ii = indices[i];
+            if (ranks[ii] <= maximalMeaningfulRank && strictlyDominatesAssumingNotSame(pointIndex, ii, obj)) {
+                return updateByPointWithMove(pointIndex, i, until, obj);
+            }
+        }
+        return until;
+    }
+
     @Override
     protected int helperAHook(int from, int until, int obj) {
-        int badCount = 0;
+        int oldUntil = until;
         for (int left = from; left < until; ++left) {
             int leftIndex = indices[left];
             int leftRank = ranks[leftIndex];
-            int newUntil = left + 1;
-            for (int right = left + 1; right < until; ++right) {
-                int rightIndex = indices[right];
-                if (ranks[rightIndex] <= leftRank && strictlyDominatesAssumingNotSame(leftIndex, rightIndex, obj)) {
-                    if (leftRank == maximalMeaningfulRank) {
-                        reportOverflowedRank(rightIndex);
-                        badGuys[badCount++] = rightIndex;
-                        continue;
-                    } else {
-                        ranks[rightIndex] = leftRank + 1;
-                    }
-                }
-                indices[newUntil++] = rightIndex;
+            if (leftRank < maximalMeaningfulRank) {
+                updateByPoint(leftIndex, leftRank, left + 1, until, obj);
+            } else {
+                until = updateByPointCritical(leftIndex, left + 1, until, obj);
             }
-            until = newUntil;
         }
-        System.arraycopy(badGuys, 0, indices, until, badCount);
+        System.arraycopy(badGuys, 0, indices, until, oldUntil - until);
         return until;
     }
 
