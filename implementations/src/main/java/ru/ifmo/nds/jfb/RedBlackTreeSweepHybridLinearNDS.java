@@ -23,8 +23,8 @@ public class RedBlackTreeSweepHybridLinearNDS extends RedBlackTreeSweep {
     @Override
     protected boolean helperAHookCondition(int size, int obj) {
         switch (obj) {
-            case 2: return false;
-            case 3: return size < 70;
+            case 1: return false;
+            case 2: return size < 70;
             default: return size < 400;
         }
     }
