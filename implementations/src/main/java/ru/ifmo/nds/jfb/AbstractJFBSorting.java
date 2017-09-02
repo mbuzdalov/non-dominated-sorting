@@ -33,6 +33,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
     private double[][] points;
 
     final boolean useRankFilter;
+    private int firstNonVisitedPosition;
 
     AbstractJFBSorting(int maximumPoints, int maximumDimension, boolean useRankFilter) {
         super(maximumPoints, maximumDimension);
@@ -110,6 +111,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
             }
 
             overflowedCount = 0;
+            firstNonVisitedPosition = 0;
 
             // 3.3: Calling the actual sorting
             int nonOverflowed = helperA(0, newN, dim - 1);
@@ -125,6 +127,11 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
                 this.points[i] = null;
             }
         }
+    }
+
+    private int updateFirstNonVisited(int until) {
+        firstNonVisitedPosition = Math.max(firstNonVisitedPosition, until);
+        return until;
     }
 
     void reportOverflowedRank(int index) {
@@ -275,6 +282,41 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         throw new UnsupportedOperationException("helperAHook not yet implemented");
     }
 
+    private int helperAMain(int from, int until, int obj) {
+        int n = until - from;
+        medianFinder.resetMedian();
+        medianFinder.consumeDataForMedian(transposedPoints[obj], indices, from, until);
+        if (medianFinder.getLastMedianConsumptionMin() == medianFinder.getLastMedianConsumptionMax()) {
+            return helperA(from, until, obj - 1);
+        } else {
+            double median = medianFinder.findMedian();
+            int smallerThanMedian = medianFinder.howManySmallerThanMedian();
+            int largerThanMedian = medianFinder.howManyLargerThanMedian();
+            int equalToMedian = n - smallerThanMedian - largerThanMedian;
+            if (equalToMedian < n / 2) {
+                // Few enough median-valued points, use two-way splitting.
+                splitInTwo(from, until, median, obj, smallerThanMedian < largerThanMedian);
+                int middle = from + splitL;
+                int newMiddle = helperA(from, middle, obj);
+                int newUntil = helperB(from, newMiddle, middle, until, obj - 1);
+                newUntil = helperA(middle, newUntil, obj);
+                return mergeTwo(from, newMiddle, middle, newUntil);
+            } else {
+                // Too many median-valued points, use three-way splitting.
+                splitInThree(from, until, median, obj);
+                int startMid = from + splitL;
+                int startRight = startMid + splitM;
+                int newStartMid = helperA(from, startMid, obj);
+                int newStartRight = helperB(from, newStartMid, startMid, startRight, obj - 1);
+                newStartRight = helperA(startMid, newStartRight, obj - 1);
+                newStartRight = mergeTwo(from, newStartMid, startMid, newStartRight);
+                int newUntil = helperB(from, newStartRight, startRight, until, obj - 1);
+                newUntil = helperA(startRight, newUntil, obj);
+                return mergeTwo(from, newStartRight, startRight, newUntil);
+            }
+        }
+    }
+
     private int helperA(int from, int until, int obj) {
         int n = until - from;
         if (n <= 2) {
@@ -287,43 +329,13 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
                     }
                 }
             }
-            return until;
+            return updateFirstNonVisited(until);
         } else if (obj == 1) {
-            return sweepA(from, until);
+            return updateFirstNonVisited(sweepA(from, until));
         } else if (helperAHookCondition(until - from, obj)) {
-            return helperAHook(from, until, obj);
+            return updateFirstNonVisited(helperAHook(from, until, obj));
         } else {
-            medianFinder.resetMedian();
-            medianFinder.consumeDataForMedian(transposedPoints[obj], indices, from, until);
-            if (medianFinder.getLastMedianConsumptionMin() == medianFinder.getLastMedianConsumptionMax()) {
-                return helperA(from, until, obj - 1);
-            } else {
-                double median = medianFinder.findMedian();
-                int smallerThanMedian = medianFinder.howManySmallerThanMedian();
-                int largerThanMedian = medianFinder.howManyLargerThanMedian();
-                int equalToMedian = n - smallerThanMedian - largerThanMedian;
-                if (equalToMedian < n / 2) {
-                    // Few enough median-valued points, use two-way splitting.
-                    splitInTwo(from, until, median, obj, smallerThanMedian < largerThanMedian);
-                    int middle = from + splitL;
-                    int newMiddle = helperA(from, middle, obj);
-                    int newUntil = helperB(from, newMiddle, middle, until, obj - 1);
-                    newUntil = helperA(middle, newUntil, obj);
-                    return mergeTwo(from, newMiddle, middle, newUntil);
-                } else {
-                    // Too many median-valued points, use three-way splitting.
-                    splitInThree(from, until, median, obj);
-                    int startMid = from + splitL;
-                    int startRight = startMid + splitM;
-                    int newStartMid = helperA(from, startMid, obj);
-                    int newStartRight = helperB(from, newStartMid, startMid, startRight, obj - 1);
-                    newStartRight = helperA(startMid, newStartRight, obj - 1);
-                    newStartRight = mergeTwo(from, newStartMid, startMid, newStartRight);
-                    int newUntil = helperB(from, newStartRight, startRight, until, obj - 1);
-                    newUntil = helperA(startRight, newUntil, obj);
-                    return mergeTwo(from, newStartRight, startRight, newUntil);
-                }
-            }
+            return updateFirstNonVisited(helperAMain(from, until, obj));
         }
     }
 
@@ -369,6 +381,9 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
     }
 
     private int getMaxRank(int from, int until) {
+        if (from >= firstNonVisitedPosition) {
+            return 0;
+        }
         if (!useRankFilter) {
             return -1;
         }
@@ -460,25 +475,32 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         int weakN = weakUntil - weakFrom;
         if (goodN > 0 && weakN > 0) {
             if (goodN == 1) {
-                return helperBGood1(goodFrom, weakFrom, weakUntil, obj);
+                return updateFirstNonVisited(helperBGood1(goodFrom, weakFrom, weakUntil, obj));
             } else if (weakN == 1) {
-                return helperBWeak1(goodFrom, goodUntil, weakFrom, obj);
+                return updateFirstNonVisited(helperBWeak1(goodFrom, goodUntil, weakFrom, obj));
             } else if (obj == 1) {
-                return sweepB(goodFrom, goodUntil, weakFrom, weakUntil);
+                return updateFirstNonVisited(sweepB(goodFrom, goodUntil, weakFrom, weakUntil));
             } else if (helperBHookCondition(goodFrom, goodUntil, weakFrom, weakUntil, obj)) {
-                return helperBHook(goodFrom, goodUntil, weakFrom, weakUntil, obj);
+                return updateFirstNonVisited(helperBHook(goodFrom, goodUntil, weakFrom, weakUntil, obj));
             } else {
                 int maxGoodRank = getMaxRank(goodFrom, goodUntil);
-                int newWeakUntil = filterByRank(weakFrom, weakUntil, maxGoodRank);
-                int finalWeakUntil = helperBMain(goodFrom, goodUntil, weakFrom, newWeakUntil, obj);
-                if (newWeakUntil != weakUntil) {
-                    return mergeTwo(weakFrom, finalWeakUntil, newWeakUntil, weakUntil);
+                int maxWeakRank = getMaxRank(weakFrom, weakUntil);
+                if (maxWeakRank <= maxGoodRank) {
+                    // nothing to filter, pass by. This happens regularly.
+                    return updateFirstNonVisited(helperBMain(goodFrom, goodUntil, weakFrom, weakUntil, obj));
                 } else {
-                    return finalWeakUntil;
+                    // try to filter something
+                    int newWeakUntil = filterByRank(weakFrom, weakUntil, maxGoodRank);
+                    int finalWeakUntil = helperBMain(goodFrom, goodUntil, weakFrom, newWeakUntil, obj);
+                    if (newWeakUntil != weakUntil) {
+                        return updateFirstNonVisited(mergeTwo(weakFrom, finalWeakUntil, newWeakUntil, weakUntil));
+                    } else {
+                        return updateFirstNonVisited(finalWeakUntil);
+                    }
                 }
             }
         } else {
-            return weakUntil;
+            return updateFirstNonVisited(weakUntil);
         }
     }
 

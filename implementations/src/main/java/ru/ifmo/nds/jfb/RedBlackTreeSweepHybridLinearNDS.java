@@ -1,17 +1,13 @@
 package ru.ifmo.nds.jfb;
 
 public class RedBlackTreeSweepHybridLinearNDS extends RedBlackTreeSweep {
-    private int[] badGuys;
-
     public RedBlackTreeSweepHybridLinearNDS(int maximumPoints, int maximumDimension, boolean useRankFilter) {
         super(maximumPoints, maximumDimension, useRankFilter);
-        badGuys = new int[maximumPoints];
     }
 
     @Override
     protected void closeImpl() throws Exception {
         super.closeImpl();
-        badGuys = null;
     }
 
     @Override
@@ -30,15 +26,12 @@ public class RedBlackTreeSweepHybridLinearNDS extends RedBlackTreeSweep {
     }
 
     private int updateByPointWithMove(int pointIndex, int from, int until, int obj) {
-        int badCount = 0;
         reportOverflowedRank(indices[from]);
-        badGuys[badCount++] = indices[from];
         int newUntil = from;
         for (int i = from + 1; i < until; ++i) {
             int ii = indices[i];
             if (ranks[ii] <= maximalMeaningfulRank && strictlyDominatesAssumingNotSame(pointIndex, ii, obj)) {
                 reportOverflowedRank(ii);
-                badGuys[badCount++] = ii;
             } else {
                 indices[newUntil++] = ii;
             }
@@ -67,7 +60,6 @@ public class RedBlackTreeSweepHybridLinearNDS extends RedBlackTreeSweep {
 
     @Override
     protected int helperAHook(int from, int until, int obj) {
-        int oldUntil = until;
         for (int left = from; left < until; ++left) {
             int leftIndex = indices[left];
             int leftRank = ranks[leftIndex];
@@ -77,7 +69,6 @@ public class RedBlackTreeSweepHybridLinearNDS extends RedBlackTreeSweep {
                 until = updateByPointCritical(leftIndex, left + 1, until, obj);
             }
         }
-        System.arraycopy(badGuys, 0, indices, until, oldUntil - until);
         return until;
     }
 
@@ -94,19 +85,11 @@ public class RedBlackTreeSweepHybridLinearNDS extends RedBlackTreeSweep {
             while (weakMin < weakUntil && indices[weakMin] < goodIndex) {
                 ++weakMin;
             }
-            int newWeakUntil = weakMin;
-            for (int weak = weakMin; weak < weakUntil; ++weak) {
-                int weakIndex = indices[weak];
-                if (goodRank >= ranks[weakIndex] && strictlyDominatesAssumingNotSame(goodIndex, weakIndex, obj)) {
-                    ranks[weakIndex] = 1 + goodRank;
-                    if (ranks[weakIndex] > maximalMeaningfulRank) {
-                        reportOverflowedRank(weakIndex);
-                        continue;
-                    }
-                }
-                indices[newWeakUntil++] = weakIndex;
+            if (goodRank == maximalMeaningfulRank) {
+                weakUntil = updateByPointCritical(goodIndex, weakMin, weakUntil, obj);
+            } else {
+                updateByPoint(goodIndex, goodRank, weakMin, weakUntil, obj);
             }
-            weakUntil = newWeakUntil;
         }
         return weakUntil;
     }
