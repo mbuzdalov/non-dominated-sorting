@@ -381,11 +381,11 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
     }
 
     private int getMaxRank(int from, int until) {
-        if (from >= firstNonVisitedPosition) {
-            return 0;
-        }
         if (!useRankFilter) {
             return -1;
+        }
+        if (from >= firstNonVisitedPosition) {
+            return 0;
         }
         int rv = 0;
         for (int i = from; i < until; ++i) {
