@@ -213,48 +213,36 @@ public final class Benchmark extends JCommanderRunnable {
                 System.out.println("**************************************************************");
                 System.out.println("* Algorithm: " + algorithmId + ", dataset: " + datasetId);
                 System.out.println("**************************************************************");
-                int warmUpGuess = 5;
                 List<Record> localRecords = new ArrayList<>();
+                int warmUpGuess = 5;
+                int warmUpLength;
+                System.out.println();
+                System.out.println("************* Finding the right warm-up length *************");
+                System.out.println();
                 do {
-                    int warmUpLength;
-                    double bestValue;
-                    System.out.println();
-                    System.out.println("************* Finding the right warm-up length *************");
-                    System.out.println();
-                    do {
-                        warmUpGuess *= 2;
-                        List<Double> times = getTimes(algorithmId, datasetId, 0, warmUpGuess);
-                        warmUpLength = getWarmUpLength(times);
-                        bestValue = times.get(times.size() - 1);
-                        if (warmUpLength == -1) {
-                            System.out.println("[warning] " + warmUpGuess
-                                    + " iterations is not enough to find a plateau of size " + plateauSize
-                                    + " with tolerance " + tolerance + ", doubling...");
-                        }
-                    } while (warmUpLength == -1);
-
-                    System.out.println();
-                    System.out.println("************* Warm-up length is " + warmUpLength + " *************");
-                    System.out.println();
-
-                    for (int i = 0; i < forks; ++i) {
-                        List<Double> times = getTimes(algorithmId, datasetId, warmUpLength, 1);
-                        LocalDateTime measurementTime = LocalDateTime.now();
-
-                        double max = times.stream().mapToDouble(Double::doubleValue).max().orElse(Double.NaN);
-                        if (max > (1 + tolerance * 4) * bestValue) {
-                            System.out.println("[warning] something is going wrong, max value " + max
-                                    + " is much worse than best pre-warm-up value " + bestValue + ". Repeating...");
-                            localRecords.clear();
-                            break;
-                        }
-
-                        localRecords.add(new Record(
-                                algorithmId, datasetId, "JMH",
-                                author, measurementTime, cpuModel, javaRuntimeVersion, times, comment
-                        ));
+                    warmUpGuess *= 2;
+                    List<Double> times = getTimes(algorithmId, datasetId, 0, warmUpGuess);
+                    warmUpLength = getWarmUpLength(times);
+                    if (warmUpLength == -1) {
+                        System.out.println("[warning] " + warmUpGuess
+                                + " iterations is not enough to find a plateau of size " + plateauSize
+                                + " with tolerance " + tolerance + ", doubling...");
                     }
-                } while (localRecords.size() == 0);
+                } while (warmUpLength == -1);
+
+                System.out.println();
+                System.out.println("************* Warm-up length is " + warmUpLength + " *************");
+                System.out.println();
+
+                for (int i = 0; i < forks; ++i) {
+                    List<Double> times = getTimes(algorithmId, datasetId, warmUpLength, 1);
+                    LocalDateTime measurementTime = LocalDateTime.now();
+
+                    localRecords.add(new Record(
+                            algorithmId, datasetId, "JMH",
+                            author, measurementTime, cpuModel, javaRuntimeVersion, times, comment
+                    ));
+                }
                 records.addAll(localRecords);
             }
 
