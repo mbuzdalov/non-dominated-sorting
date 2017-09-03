@@ -1,15 +1,14 @@
 package ru.ifmo.nds.plotting;
 
-import ru.ifmo.nds.cli.PlotBuilder;
-import ru.ifmo.nds.rundb.IdUtils;
-import ru.ifmo.nds.rundb.Record;
-
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+
+import ru.ifmo.nds.cli.PlotBuilder;
+import ru.ifmo.nds.rundb.IdUtils;
+import ru.ifmo.nds.rundb.Record;
 
 public class LaTeX {
     private LaTeX() {}
@@ -26,6 +25,18 @@ public class LaTeX {
             sum += value;
             ++count;
         }
+
+        double avg() {
+            return sum / count;
+        }
+
+        double errMax() {
+            return max - avg();
+        }
+
+        double errMin() {
+            return avg() - min;
+        }
     }
 
     private static void printLaTeX(PlotBuilder.SinglePlot singlePlot, String factor, PrintWriter out) {
@@ -36,14 +47,11 @@ public class LaTeX {
         out.println("              width=\\textwidth, height=0.7\\textheight, legend pos=outer north east,");
         out.println("              ymin=3e-7, ymax=6, cycle list name=my custom]");
 
-        StringWriter tableBuilder = new StringWriter();
-        PrintWriter tableWriter = new PrintWriter(tableBuilder);
-
         Set<Long> factors = new TreeSet<>();
+        Map<String, Map<Long, Double>> table = new LinkedHashMap<>();
         for (Map.Entry<String, List<Record>> plot : singlePlot.myResults.entrySet()) {
             out.println("\\addplot plot[error bars/.cd, y dir=both, y explicit] table[y error plus=y-max, y error minus=y-min] {");
             out.println("    x y y-min y-max");
-            tableWriter.print("    {" + plot.getKey() + "}");
             TreeMap<Long, Stats> stats = new TreeMap<>();
             for (Record plotPoint : plot.getValue()) {
                 long N = IdUtils
@@ -55,16 +63,17 @@ public class LaTeX {
                     st.add(p);
                 }
             }
+            TreeMap<Long, Double> tableRow = new TreeMap<>();
             for (Map.Entry<Long, Stats> entry : stats.entrySet()) {
-                double avg = entry.getValue().sum / entry.getValue().count;
-                double errMin = avg - entry.getValue().min;
-                double errMax = entry.getValue().max - avg;
-                tableWriter.print(" " + avg);
+                double avg = entry.getValue().avg();
+                double errMin = entry.getValue().errMin();
+                double errMax = entry.getValue().errMax();
+                tableRow.put(entry.getKey(), entry.getValue().avg());
                 out.println("    " + entry.getKey() + " " + avg + " " + errMin + " " + errMax);
             }
+            table.put(plot.getKey(), tableRow);
             out.println("};");
             out.println("\\addlegendentry{" + plot.getKey() + "};");
-            tableWriter.println();
             factors.addAll(stats.keySet());
         }
         out.println("\\end{axis}");
@@ -76,7 +85,17 @@ public class LaTeX {
             out.print(" T" + f);
         }
         out.println();
-        out.println(tableBuilder.getBuffer());
+        for (Map.Entry<String, Map<Long, Double>> row : table.entrySet()) {
+            out.print("    {" + row.getKey() + "}");
+            for (Long col : factors) {
+                if (row.getValue().containsKey(col)) {
+                    out.print(" " + row.getValue().get(col));
+                } else {
+                    out.print(" nan");
+                }
+            }
+            out.println();
+        }
         out.println("}");
         out.println("\\newpage");
     }
