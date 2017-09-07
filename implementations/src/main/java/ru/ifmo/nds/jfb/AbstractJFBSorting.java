@@ -162,61 +162,88 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         return true;
     }
 
-    private void splitInTwo(int from, int until, double median, int obj, boolean equalToLeft) {
-        int left = 0, right = 0;
-        double[] local = transposedPoints[obj];
-        for (int i = from; i < until; ++i) {
-            int ii = indices[i];
-            double v = local[ii];
-            if (v < median || (equalToLeft && v == median)) {
-                splitScratchL[left++] = ii;
-            } else {
-                splitScratchR[right++] = ii;
+    private void splitInTwo(int from, int until, double median, int obj, boolean equalToLeft, double minVal, double maxVal) {
+        if (minVal == median && maxVal == median) {
+            splitL = equalToLeft ? until - from : 0;
+        } else if (minVal > median || !equalToLeft && minVal >= median) {
+            splitL = 0;
+        } else if (maxVal < median || equalToLeft && maxVal <= median) {
+            splitL = until - from;
+        } else {
+            int left = 0, right = 0;
+            double[] local = transposedPoints[obj];
+            for (int i = from; i < until; ++i) {
+                int ii = indices[i];
+                double v = local[ii];
+                if (v < median || (equalToLeft && v == median)) {
+                    splitScratchL[left++] = ii;
+                } else {
+                    splitScratchR[right++] = ii;
+                }
             }
+            System.arraycopy(splitScratchL, 0, indices, from, left);
+            System.arraycopy(splitScratchR, 0, indices, from + left, right);
+            splitL = left;
         }
-        System.arraycopy(splitScratchL, 0, indices, from, left);
-        System.arraycopy(splitScratchR, 0, indices, from + left, right);
-        splitL = left;
     }
 
-    private void splitInThree(int from, int until, double median, int obj) {
-        int l = 0, m = 0, r = 0;
-        double[] local = transposedPoints[obj];
-        for (int i = from; i < until; ++i) {
-            int ii = indices[i];
-            double v = local[ii];
-            if (v < median) {
-                splitScratchL[l++] = ii;
-            } else if (v == median) {
-                splitScratchM[m++] = ii;
-            } else {
-                splitScratchR[r++] = ii;
+    private void splitInThree(int from, int until, double median, int obj, double minVal, double maxVal) {
+        if (minVal == median && maxVal == median) {
+            splitL = 0;
+            splitM = until - from;
+        } else if (minVal > median) {
+            splitL = splitM = 0;
+        } else if (maxVal < median) {
+            splitL = until - from;
+            splitM = 0;
+        } else {
+            int l = 0, m = 0, r = 0;
+            double[] local = transposedPoints[obj];
+            for (int i = from; i < until; ++i) {
+                int ii = indices[i];
+                double v = local[ii];
+                if (v < median) {
+                    splitScratchL[l++] = ii;
+                } else if (v == median) {
+                    splitScratchM[m++] = ii;
+                } else {
+                    splitScratchR[r++] = ii;
+                }
             }
+            System.arraycopy(splitScratchL, 0, indices, from, l);
+            System.arraycopy(splitScratchM, 0, indices, from + l, m);
+            System.arraycopy(splitScratchR, 0, indices, from + l + m, r);
+            splitL = l;
+            splitM = m;
         }
-        System.arraycopy(splitScratchL, 0, indices, from, l);
-        System.arraycopy(splitScratchM, 0, indices, from + l, m);
-        System.arraycopy(splitScratchR, 0, indices, from + l + m, r);
-        splitL = l;
-        splitM = m;
     }
 
     private int mergeTwo(int fromLeft, int untilLeft, int fromRight, int untilRight) {
-        int target = 0;
-        int l = fromLeft, r = fromRight;
-        while (l < untilLeft && r < untilRight) {
-            if (indices[l] <= indices[r]) {
-                splitScratchM[target++] = indices[l++];
-            } else {
-                splitScratchM[target++] = indices[r++];
+        if (fromRight == untilRight) {
+            return untilLeft;
+        } else if (fromLeft == untilLeft || indices[untilLeft - 1] < indices[fromRight]) {
+            if (untilLeft < fromRight) {
+                System.arraycopy(indices, fromRight, indices, untilLeft, untilRight - fromRight);
             }
+            return untilLeft + untilRight - fromRight;
+        } else {
+            int target = 0;
+            int l = fromLeft, r = fromRight;
+            while (l < untilLeft && r < untilRight) {
+                if (indices[l] <= indices[r]) {
+                    splitScratchM[target++] = indices[l++];
+                } else {
+                    splitScratchM[target++] = indices[r++];
+                }
+            }
+            // copy the remainder of right to its place
+            System.arraycopy(indices, r, indices, fromLeft + target + untilLeft - l, untilRight - r);
+            // copy the remainder of left to its place
+            System.arraycopy(indices, l, indices, fromLeft + target, untilLeft - l);
+            // copy the merged part
+            System.arraycopy(splitScratchM, 0, indices, fromLeft, target);
+            return fromLeft + target + untilLeft - l + untilRight - r;
         }
-        // copy the remainder of right to its place
-        System.arraycopy(indices, r, indices, fromLeft + target + untilLeft - l, untilRight - r);
-        // copy the remainder of left to its place
-        System.arraycopy(indices, l, indices, fromLeft + target, untilLeft - l);
-        // copy the merged part
-        System.arraycopy(splitScratchM, 0, indices, fromLeft, target);
-        return fromLeft + target + untilLeft - l + untilRight - r;
     }
 
     protected abstract RankQueryStructure createStructure(int maximumPoints);
@@ -286,7 +313,9 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         int n = until - from;
         medianFinder.resetMedian();
         medianFinder.consumeDataForMedian(transposedPoints[obj], indices, from, until);
-        if (medianFinder.getLastMedianConsumptionMin() == medianFinder.getLastMedianConsumptionMax()) {
+        double objMin = medianFinder.getLastMedianConsumptionMin();
+        double objMax = medianFinder.getLastMedianConsumptionMax();
+        if (objMin == objMax) {
             return helperA(from, until, obj - 1);
         } else {
             double median = medianFinder.findMedian();
@@ -295,7 +324,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
             int equalToMedian = n - smallerThanMedian - largerThanMedian;
             if (equalToMedian < n / 2) {
                 // Few enough median-valued points, use two-way splitting.
-                splitInTwo(from, until, median, obj, smallerThanMedian < largerThanMedian);
+                splitInTwo(from, until, median, obj, smallerThanMedian < largerThanMedian, objMin, objMax);
                 int middle = from + splitL;
                 int newMiddle = helperA(from, middle, obj);
                 int newUntil = helperB(from, newMiddle, middle, until, obj - 1);
@@ -303,7 +332,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
                 return mergeTwo(from, newMiddle, middle, newUntil);
             } else {
                 // Too many median-valued points, use three-way splitting.
-                splitInThree(from, until, median, obj);
+                splitInThree(from, until, median, obj, objMin, objMax);
                 int startMid = from + splitL;
                 int startRight = startMid + splitM;
                 int newStartMid = helperA(from, startMid, obj);
@@ -317,7 +346,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         }
     }
 
-    private int helperA(int from, int until, int obj) {
+    private int helperAW(int from, int until, int obj) {
         int n = until - from;
         if (n <= 2) {
             if (n == 2) {
@@ -329,14 +358,18 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
                     }
                 }
             }
-            return updateFirstNonVisited(until);
+            return until;
         } else if (obj == 1) {
-            return updateFirstNonVisited(sweepA(from, until));
+            return sweepA(from, until);
         } else if (helperAHookCondition(until - from, obj)) {
-            return updateFirstNonVisited(helperAHook(from, until, obj));
+            return helperAHook(from, until, obj);
         } else {
-            return updateFirstNonVisited(helperAMain(from, until, obj));
+            return helperAMain(from, until, obj);
         }
+    }
+
+    private int helperA(int from, int until, int obj) {
+        return updateFirstNonVisited(helperAW(from, until, obj));
     }
 
     private int helperBGood1(int good, int weakFrom, int weakUntil, int obj) {
@@ -428,7 +461,9 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         medianFinder.resetMedian();
         medianFinder.consumeDataForMedian(transposedPoints[obj], indices, goodFrom, goodUntil);
         double goodMaxObj = medianFinder.getLastMedianConsumptionMax();
+        double goodMinObj = medianFinder.getLastMedianConsumptionMin();
         medianFinder.consumeDataForMedian(transposedPoints[obj], indices, weakFrom, weakUntil);
+        double weakMaxObj = medianFinder.getLastMedianConsumptionMax();
         double weakMinObj = medianFinder.getLastMedianConsumptionMin();
         if (goodMaxObj <= weakMinObj) {
             return helperB(goodFrom, goodUntil, weakFrom, weakUntil, obj - 1);
@@ -440,9 +475,9 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
             if (totalEqualToMedian < (goodN + weakN) / 2) {
                 // Few enough median-valued points, use two-way splitting.
                 boolean leanLeft = totalSmallerThanMedian < totalLargerThanMedian;
-                splitInTwo(goodFrom, goodUntil, median, obj, leanLeft);
+                splitInTwo(goodFrom, goodUntil, median, obj, leanLeft, goodMinObj, goodMaxObj);
                 int goodMid = goodFrom + splitL;
-                splitInTwo(weakFrom, weakUntil, median, obj, leanLeft);
+                splitInTwo(weakFrom, weakUntil, median, obj, leanLeft, weakMinObj, weakMaxObj);
                 int weakMid = weakFrom + splitL;
 
                 int newWeakMid = helperB(goodFrom, goodMid, weakFrom, weakMid, obj);
@@ -452,10 +487,10 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
                 return mergeTwo(weakFrom, newWeakMid, weakMid, newWeakUntil);
             } else {
                 // Too many median-valued points, use three-way splitting.
-                splitInThree(goodFrom, goodUntil, median, obj);
+                splitInThree(goodFrom, goodUntil, median, obj, goodMinObj, goodMaxObj);
                 int goodMidL = goodFrom + splitL;
                 int goodMidR = goodMidL + splitM;
-                splitInThree(weakFrom, weakUntil, median, obj);
+                splitInThree(weakFrom, weakUntil, median, obj, weakMinObj, weakMaxObj);
                 int weakMidL = weakFrom + splitL;
                 int weakMidR = weakMidL + splitM;
 
@@ -470,38 +505,42 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         }
     }
 
-    private int helperB(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj) {
+    private int helperBW(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj) {
         int goodN = goodUntil - goodFrom;
         int weakN = weakUntil - weakFrom;
         if (goodN > 0 && weakN > 0) {
             if (goodN == 1) {
-                return updateFirstNonVisited(helperBGood1(goodFrom, weakFrom, weakUntil, obj));
+                return helperBGood1(goodFrom, weakFrom, weakUntil, obj);
             } else if (weakN == 1) {
-                return updateFirstNonVisited(helperBWeak1(goodFrom, goodUntil, weakFrom, obj));
+                return helperBWeak1(goodFrom, goodUntil, weakFrom, obj);
             } else if (obj == 1) {
-                return updateFirstNonVisited(sweepB(goodFrom, goodUntil, weakFrom, weakUntil));
+                return sweepB(goodFrom, goodUntil, weakFrom, weakUntil);
             } else if (helperBHookCondition(goodFrom, goodUntil, weakFrom, weakUntil, obj)) {
-                return updateFirstNonVisited(helperBHook(goodFrom, goodUntil, weakFrom, weakUntil, obj));
+                return helperBHook(goodFrom, goodUntil, weakFrom, weakUntil, obj);
             } else {
                 int maxGoodRank = getMaxRank(goodFrom, goodUntil);
                 int maxWeakRank = getMaxRank(weakFrom, weakUntil);
                 if (maxWeakRank <= maxGoodRank) {
                     // nothing to filter, pass by. This happens regularly.
-                    return updateFirstNonVisited(helperBMain(goodFrom, goodUntil, weakFrom, weakUntil, obj));
+                    return helperBMain(goodFrom, goodUntil, weakFrom, weakUntil, obj);
                 } else {
                     // try to filter something
                     int newWeakUntil = filterByRank(weakFrom, weakUntil, maxGoodRank);
                     int finalWeakUntil = helperBMain(goodFrom, goodUntil, weakFrom, newWeakUntil, obj);
                     if (newWeakUntil != weakUntil) {
-                        return updateFirstNonVisited(mergeTwo(weakFrom, finalWeakUntil, newWeakUntil, weakUntil));
+                        return mergeTwo(weakFrom, finalWeakUntil, newWeakUntil, weakUntil);
                     } else {
-                        return updateFirstNonVisited(finalWeakUntil);
+                        return finalWeakUntil;
                     }
                 }
             }
         } else {
-            return updateFirstNonVisited(weakUntil);
+            return weakUntil;
         }
+    }
+
+    private int helperB(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj) {
+        return updateFirstNonVisited(helperBW(goodFrom, goodUntil, weakFrom, weakUntil, obj));
     }
 
     private void twoDimensionalCase(double[][] points, int[] ranks) {
