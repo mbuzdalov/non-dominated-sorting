@@ -8,8 +8,8 @@ import ru.ifmo.nds.util.*;
 public abstract class AbstractJFBSorting extends NonDominatedSorting {
     // Pre-allocated
     int[] indices;
-    int[] ranks;
-    int maximalMeaningfulRank;
+    private int[] ranks;
+    private int maximalMeaningfulRank;
 
     private DoubleArraySorter sorter;
     private MedianFinder medianFinder;
@@ -122,12 +122,12 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         }
     }
 
-    void reportOverflowedRank(int index) {
+    private void reportOverflowedRank(int index) {
         ranks[index] = maximalMeaningfulRank + 1;
         overflowedIndices[overflowedCount++] = index;
     }
 
-    boolean strictlyDominatesAssumingNotSame(int goodIndex, int weakIndex, int maxObj) {
+    private boolean strictlyDominatesAssumingNotSame(int goodIndex, int weakIndex, int maxObj) {
         double[] goodPoint = points[goodIndex];
         double[] weakPoint = points[weakIndex];
         // Comparison in 0 makes no sense, as due to goodIndex < weakIndex the points are <= in this coordinate.
@@ -355,22 +355,55 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         }
     }
 
+    int updateByPoint(int pointIndex, int from, int until, int obj) {
+        int ri = ranks[pointIndex];
+        if (ri == maximalMeaningfulRank) {
+            return updateByPointCritical(pointIndex, from, until, obj);
+        } else {
+            updateByPointNormal(pointIndex, ri, from, until, obj);
+            return until;
+        }
+    }
+
+    private void updateByPointNormal(int pointIndex, int pointRank, int from, int until, int obj) {
+        for (int i = from; i < until; ++i) {
+            int ii = indices[i];
+            if (ranks[ii] <= pointRank && strictlyDominatesAssumingNotSame(pointIndex, ii, obj)) {
+                ranks[ii] = pointRank + 1;
+            }
+        }
+    }
+
+    private int updateByPointCritical(int pointIndex, int from, int until, int obj) {
+        for (int i = from; i < until; ++i) {
+            int ii = indices[i];
+            if (ranks[ii] <= maximalMeaningfulRank && strictlyDominatesAssumingNotSame(pointIndex, ii, obj)) {
+                return updateByPointWithMove(pointIndex, i, until, obj);
+            }
+        }
+        return until;
+    }
+
+    private int updateByPointWithMove(int pointIndex, int from, int until, int obj) {
+        reportOverflowedRank(indices[from]);
+        int newUntil = from;
+        for (int i = from + 1; i < until; ++i) {
+            int ii = indices[i];
+            if (ranks[ii] <= maximalMeaningfulRank && strictlyDominatesAssumingNotSame(pointIndex, ii, obj)) {
+                reportOverflowedRank(ii);
+            } else {
+                indices[newUntil++] = ii;
+            }
+        }
+        return newUntil;
+    }
+
     private int helperBGood1(int good, int weakFrom, int weakUntil, int obj) {
         int gi = indices[good];
         // Binary search to discard points which are definitely not dominated.
         int bs = Arrays.binarySearch(indices, weakFrom, weakUntil, gi);
         int weakStart = -bs - 1;
-        int targetIndex = weakStart;
-        for (int i = weakStart; i < weakUntil; ++i) {
-            int wi = indices[i];
-            if (strictlyDominatesAssumingNotSame(gi, wi, obj)) {
-                if (!tryUpdateRank(gi, wi)) {
-                    continue;
-                }
-            }
-            indices[targetIndex++] = wi;
-        }
-        return targetIndex;
+        return updateByPoint(gi, weakStart, weakUntil, obj);
     }
 
     private int helperBWeak1(int goodFrom, int goodUntil, int weak, int obj) {
@@ -397,9 +430,6 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
     }
 
     private int getMaxRank(int from, int until) {
-        if (!useRankFilter) {
-            return 0;
-        }
         int rv = 0;
         for (int i = from; i < until; ++i) {
             rv = Math.max(rv, ranks[indices[i]]);

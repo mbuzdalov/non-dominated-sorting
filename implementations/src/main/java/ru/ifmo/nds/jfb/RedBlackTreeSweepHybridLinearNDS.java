@@ -25,49 +25,10 @@ public class RedBlackTreeSweepHybridLinearNDS extends RedBlackTreeSweep {
         }
     }
 
-    private int updateByPointWithMove(int pointIndex, int from, int until, int obj) {
-        reportOverflowedRank(indices[from]);
-        int newUntil = from;
-        for (int i = from + 1; i < until; ++i) {
-            int ii = indices[i];
-            if (ranks[ii] <= maximalMeaningfulRank && strictlyDominatesAssumingNotSame(pointIndex, ii, obj)) {
-                reportOverflowedRank(ii);
-            } else {
-                indices[newUntil++] = ii;
-            }
-        }
-        return newUntil;
-    }
-
-    private void updateByPoint(int pointIndex, int pointRank, int from, int until, int obj) {
-        for (int i = from; i < until; ++i) {
-            int ii = indices[i];
-            if (ranks[ii] <= pointRank && strictlyDominatesAssumingNotSame(pointIndex, ii, obj)) {
-                ranks[ii] = pointRank + 1;
-            }
-        }
-    }
-
-    private int updateByPointCritical(int pointIndex, int from, int until, int obj) {
-        for (int i = from; i < until; ++i) {
-            int ii = indices[i];
-            if (ranks[ii] <= maximalMeaningfulRank && strictlyDominatesAssumingNotSame(pointIndex, ii, obj)) {
-                return updateByPointWithMove(pointIndex, i, until, obj);
-            }
-        }
-        return until;
-    }
-
     @Override
     protected int helperAHook(int from, int until, int obj) {
         for (int left = from; left < until; ++left) {
-            int leftIndex = indices[left];
-            int leftRank = ranks[leftIndex];
-            if (leftRank < maximalMeaningfulRank) {
-                updateByPoint(leftIndex, leftRank, left + 1, until, obj);
-            } else {
-                until = updateByPointCritical(leftIndex, left + 1, until, obj);
-            }
+            until = updateByPoint(indices[left], left + 1, until, obj);
         }
         return until;
     }
@@ -81,15 +42,10 @@ public class RedBlackTreeSweepHybridLinearNDS extends RedBlackTreeSweep {
     protected int helperBHook(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj) {
         for (int good = goodFrom, weakMin = weakFrom; good < goodUntil; ++good) {
             int goodIndex = indices[good];
-            int goodRank = ranks[goodIndex];
             while (weakMin < weakUntil && indices[weakMin] < goodIndex) {
                 ++weakMin;
             }
-            if (goodRank == maximalMeaningfulRank) {
-                weakUntil = updateByPointCritical(goodIndex, weakMin, weakUntil, obj);
-            } else {
-                updateByPoint(goodIndex, goodRank, weakMin, weakUntil, obj);
-            }
+            weakUntil = updateByPoint(goodIndex, weakMin, weakUntil, obj);
         }
         return weakUntil;
     }
