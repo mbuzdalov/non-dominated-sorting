@@ -19,7 +19,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
     private RankQueryStructure rankQuery;
     private int[] internalIndices;
     private double[] lastFrontOrdinates;
-    private int[] splitScratchL, splitScratchM, splitScratchR;
+    private int[] splitScratchM, splitScratchR;
     private double[][] transposedPoints;
 
     private int[] overflowedIndices;
@@ -33,7 +33,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
     private double[][] points;
 
     final boolean useRankFilter;
-    private int firstNonVisitedPosition;
+    private boolean allMeaningfulRanksAreZero;
 
     AbstractJFBSorting(int maximumPoints, int maximumDimension, boolean useRankFilter) {
         super(maximumPoints, maximumDimension);
@@ -49,7 +49,6 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
 
         internalIndices = new int[maximumPoints];
         lastFrontOrdinates = new double[maximumPoints];
-        splitScratchL = new int[maximumPoints];
         splitScratchM = new int[maximumPoints];
         splitScratchR = new int[maximumPoints];
 
@@ -68,7 +67,6 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
 
         internalIndices = null;
         lastFrontOrdinates = null;
-        splitScratchL = null;
         splitScratchM = null;
         splitScratchR = null;
         overflowedIndices = null;
@@ -111,7 +109,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
             }
 
             overflowedCount = 0;
-            firstNonVisitedPosition = 0;
+            allMeaningfulRanksAreZero = true;
 
             // 3.3: Calling the actual sorting
             int nonOverflowed = helperA(0, newN, dim - 1);
@@ -127,11 +125,6 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
                 this.points[i] = null;
             }
         }
-    }
-
-    private int updateFirstNonVisited(int until) {
-        firstNonVisitedPosition = Math.max(firstNonVisitedPosition, until);
-        return until;
     }
 
     void reportOverflowedRank(int index) {
@@ -152,11 +145,14 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
     }
 
     private boolean tryUpdateRank(int goodIndex, int weakIndex) {
-        if (ranks[weakIndex] <= ranks[goodIndex]) {
-            ranks[weakIndex] = 1 + ranks[goodIndex];
-            if (ranks[weakIndex] > maximalMeaningfulRank) {
+        int rg = ranks[goodIndex];
+        if (ranks[weakIndex] <= rg) {
+            if (rg == maximalMeaningfulRank) {
                 reportOverflowedRank(weakIndex);
                 return false;
+            } else {
+                allMeaningfulRanksAreZero = false;
+                ranks[weakIndex] = 1 + ranks[goodIndex];
             }
         }
         return true;
@@ -170,20 +166,19 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         } else if (maxVal < median || equalToLeft && maxVal <= median) {
             splitL = until - from;
         } else {
-            int left = 0, right = 0;
+            int left = from, right = 0;
             double[] local = transposedPoints[obj];
             for (int i = from; i < until; ++i) {
                 int ii = indices[i];
                 double v = local[ii];
                 if (v < median || (equalToLeft && v == median)) {
-                    splitScratchL[left++] = ii;
+                    indices[left++] = ii;
                 } else {
                     splitScratchR[right++] = ii;
                 }
             }
-            System.arraycopy(splitScratchL, 0, indices, from, left);
-            System.arraycopy(splitScratchR, 0, indices, from + left, right);
-            splitL = left;
+            System.arraycopy(splitScratchR, 0, indices, left, right);
+            splitL = left - from;
         }
     }
 
@@ -197,53 +192,50 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
             splitL = until - from;
             splitM = 0;
         } else {
-            int l = 0, m = 0, r = 0;
+            int l = from, m = 0, r = 0;
             double[] local = transposedPoints[obj];
             for (int i = from; i < until; ++i) {
                 int ii = indices[i];
                 double v = local[ii];
                 if (v < median) {
-                    splitScratchL[l++] = ii;
+                    indices[l++] = ii;
                 } else if (v == median) {
                     splitScratchM[m++] = ii;
                 } else {
                     splitScratchR[r++] = ii;
                 }
             }
-            System.arraycopy(splitScratchL, 0, indices, from, l);
-            System.arraycopy(splitScratchM, 0, indices, from + l, m);
-            System.arraycopy(splitScratchR, 0, indices, from + l + m, r);
-            splitL = l;
+            System.arraycopy(splitScratchM, 0, indices, l, m);
+            System.arraycopy(splitScratchR, 0, indices, l + m, r);
+            splitL = l - from;
             splitM = m;
         }
     }
 
     private int mergeTwo(int fromLeft, int untilLeft, int fromRight, int untilRight) {
-        if (fromRight == untilRight) {
-            return untilLeft;
-        } else if (fromLeft == untilLeft || indices[untilLeft - 1] < indices[fromRight]) {
-            if (untilLeft < fromRight) {
-                System.arraycopy(indices, fromRight, indices, untilLeft, untilRight - fromRight);
+        int target = 0;
+        int l = fromLeft, r = fromRight;
+        while (l < untilLeft && r < untilRight) {
+            if (indices[l] <= indices[r]) {
+                splitScratchM[target++] = indices[l++];
+            } else {
+                splitScratchM[target++] = indices[r++];
             }
-            return untilLeft + untilRight - fromRight;
-        } else {
-            int target = 0;
-            int l = fromLeft, r = fromRight;
-            while (l < untilLeft && r < untilRight) {
-                if (indices[l] <= indices[r]) {
-                    splitScratchM[target++] = indices[l++];
-                } else {
-                    splitScratchM[target++] = indices[r++];
-                }
-            }
+        }
+        int newR = fromLeft + target + untilLeft - l;
+        if (r != newR && untilRight > r) {
             // copy the remainder of right to its place
-            System.arraycopy(indices, r, indices, fromLeft + target + untilLeft - l, untilRight - r);
+            System.arraycopy(indices, r, indices, newR, untilRight - r);
+        }
+        if (l != fromLeft + target && untilLeft > l) {
             // copy the remainder of left to its place
             System.arraycopy(indices, l, indices, fromLeft + target, untilLeft - l);
+        }
+        if (target > 0) {
             // copy the merged part
             System.arraycopy(splitScratchM, 0, indices, fromLeft, target);
-            return fromLeft + target + untilLeft - l + untilRight - r;
         }
+        return fromLeft + target + untilLeft - l + untilRight - r;
     }
 
     protected abstract RankQueryStructure createStructure(int maximumPoints);
@@ -266,6 +258,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
             if (result > maximalMeaningfulRank) {
                 reportOverflowedRank(curr);
             } else {
+                allMeaningfulRanksAreZero &= result == 0;
                 indices[newUntil++] = curr;
                 rankQuery.put(currY, result);
             }
@@ -290,11 +283,13 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
                 int goodCurr = indices[goodI++];
                 rankQuery.put(local[goodCurr], ranks[goodCurr]);
             }
-            ranks[weakCurr] = Math.max(ranks[weakCurr],
+            int result = Math.max(ranks[weakCurr],
                     rankQuery.getMaximumWithKeyAtMost(local[weakCurr], ranks[weakCurr]) + 1);
-            if (ranks[weakCurr] > maximalMeaningfulRank) {
+            if (result > maximalMeaningfulRank) {
                 reportOverflowedRank(weakCurr);
             } else {
+                allMeaningfulRanksAreZero &= result == 0;
+                ranks[weakCurr] = result;
                 indices[newWeakUntil++] = weakCurr;
             }
         }
@@ -346,7 +341,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         }
     }
 
-    private int helperAW(int from, int until, int obj) {
+    private int helperA(int from, int until, int obj) {
         int n = until - from;
         if (n <= 2) {
             if (n == 2) {
@@ -366,10 +361,6 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         } else {
             return helperAMain(from, until, obj);
         }
-    }
-
-    private int helperA(int from, int until, int obj) {
-        return updateFirstNonVisited(helperAW(from, until, obj));
     }
 
     private int helperBGood1(int good, int weakFrom, int weakUntil, int obj) {
@@ -414,10 +405,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
     }
 
     private int getMaxRank(int from, int until) {
-        if (!useRankFilter) {
-            return -1;
-        }
-        if (from >= firstNonVisitedPosition) {
+        if (!useRankFilter || allMeaningfulRanksAreZero) {
             return 0;
         }
         int rv = 0;
@@ -427,10 +415,11 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         return rv;
     }
 
-    private int filterByRankMoving(int from, int until, int rankFilter) {
-        int newUntil = from;
-        int bad = 0;
-        splitScratchM[bad++] = indices[from];
+    private int filterByRankMoving(int originalFrom, int from, int until, int rankFilter) {
+        int bad = from - originalFrom;
+        System.arraycopy(indices, originalFrom, splitScratchM, 0, bad);
+        int newUntil = originalFrom;
+        indices[newUntil++] = indices[from];
         for (int i = from + 1; i < until; ++i) {
             int ii = indices[i];
             if (ranks[ii] > rankFilter) {
@@ -443,13 +432,19 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         return newUntil;
     }
 
-    private int filterByRank(int from, int until, int rankFilter) {
-        if (!useRankFilter) {
-            return until;
+    private int filterByRankExceeding(int from, int until, int rankFilter) {
+        for (int i = from + 1; i < until; ++i) {
+            if (ranks[indices[i]] <= rankFilter) {
+                return filterByRankMoving(from, i, until, rankFilter);
+            }
         }
+        return from;
+    }
+
+    private int filterByRank(int from, int until, int rankFilter) {
         for (int i = from; i < until; ++i) {
             if (ranks[indices[i]] > rankFilter) {
-                return filterByRankMoving(i, until, rankFilter);
+                return filterByRankExceeding(i, until, rankFilter);
             }
         }
         return until;
@@ -458,6 +453,10 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
     private int helperBMain(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj) {
         int goodN = goodUntil - goodFrom;
         int weakN = weakUntil - weakFrom;
+        if (weakN == 0) {
+            return weakUntil;
+        }
+
         medianFinder.resetMedian();
         medianFinder.consumeDataForMedian(transposedPoints[obj], indices, goodFrom, goodUntil);
         double goodMaxObj = medianFinder.getLastMedianConsumptionMax();
@@ -505,7 +504,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         }
     }
 
-    private int helperBW(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj) {
+    private int helperB(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj) {
         int goodN = goodUntil - goodFrom;
         int weakN = weakUntil - weakFrom;
         if (goodN > 0 && weakN > 0) {
@@ -537,10 +536,6 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         } else {
             return weakUntil;
         }
-    }
-
-    private int helperB(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj) {
-        return updateFirstNonVisited(helperBW(goodFrom, goodUntil, weakFrom, weakUntil, obj));
     }
 
     private void twoDimensionalCase(double[][] points, int[] ranks) {
