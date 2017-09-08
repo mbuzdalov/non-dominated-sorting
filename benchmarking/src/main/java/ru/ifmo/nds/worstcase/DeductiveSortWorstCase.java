@@ -45,8 +45,7 @@ public class DeductiveSortWorstCase {
     }
 
     private static final List<NonDominatedSortingFactory> factories = Arrays.asList(
-            JensenFortinBuzdalov.getRedBlackTreeSweepImplementation(false),
-            JensenFortinBuzdalov.getRedBlackTreeSweepImplementation(true),
+            JensenFortinBuzdalov.getRedBlackTreeSweepImplementation(),
             FastNonDominatedSorting.getOriginalVersion(),
             DeductiveSort.getInstance()
     );

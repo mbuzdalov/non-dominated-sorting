@@ -1,8 +1,8 @@
 package ru.ifmo.nds.jfb;
 
 public class RedBlackTreeSweepHybridLinearNDS extends RedBlackTreeSweep {
-    public RedBlackTreeSweepHybridLinearNDS(int maximumPoints, int maximumDimension, boolean useRankFilter) {
-        super(maximumPoints, maximumDimension, useRankFilter);
+    public RedBlackTreeSweepHybridLinearNDS(int maximumPoints, int maximumDimension) {
+        super(maximumPoints, maximumDimension);
     }
 
     @Override
@@ -12,8 +12,7 @@ public class RedBlackTreeSweepHybridLinearNDS extends RedBlackTreeSweep {
 
     @Override
     public String getName() {
-        return "Jensen-Fortin-Buzdalov sorting (tree sweep, hybrid with fast NDS"
-                + (useRankFilter ? ", rank filter" : "") + ")";
+        return "Jensen-Fortin-Buzdalov sorting (tree sweep, hybrid with fast NDS)";
     }
 
     @Override

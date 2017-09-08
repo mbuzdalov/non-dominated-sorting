@@ -4,8 +4,8 @@ import ru.ifmo.nds.util.RankQueryStructure;
 import ru.ifmo.nds.util.RedBlackRankQueryStructure;
 
 public class RedBlackTreeSweep extends AbstractJFBSorting {
-    public RedBlackTreeSweep(int maximumPoints, int maximumDimension, boolean useRankFilter) {
-        super(maximumPoints, maximumDimension, useRankFilter);
+    public RedBlackTreeSweep(int maximumPoints, int maximumDimension) {
+        super(maximumPoints, maximumDimension);
     }
 
     @Override
@@ -15,6 +15,6 @@ public class RedBlackTreeSweep extends AbstractJFBSorting {
 
     @Override
     public String getName() {
-        return "Jensen-Fortin-Buzdalov sorting (tree sweep" + (useRankFilter ? ", rank filter" : "") + ")";
+        return "Jensen-Fortin-Buzdalov sorting (tree sweep)";
     }
 }

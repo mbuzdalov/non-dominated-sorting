@@ -118,10 +118,8 @@ public final class IdCollection {
         addNonDominatedSortingFactory("fnds.original", FastNonDominatedSorting.getOriginalVersion());
         addNonDominatedSortingFactory("fnds.linear", FastNonDominatedSorting.getLinearMemoryImplementation());
         addNonDominatedSortingFactory("jfb.fenwick", JensenFortinBuzdalov.getFenwickSweepImplementation());
-        addNonDominatedSortingFactory("jfb.rbtree", JensenFortinBuzdalov.getRedBlackTreeSweepImplementation(false));
-        addNonDominatedSortingFactory("jfb.rbtree.hybrid.fnds", JensenFortinBuzdalov.getRedBlackTreeSweepHybridImplementation(false));
-        addNonDominatedSortingFactory("jfb.rbtree.rankfilter", JensenFortinBuzdalov.getRedBlackTreeSweepImplementation(true));
-        addNonDominatedSortingFactory("jfb.rbtree.rankfilter.hybrid.fnds", JensenFortinBuzdalov.getRedBlackTreeSweepHybridImplementation(true));
+        addNonDominatedSortingFactory("jfb.rbtree", JensenFortinBuzdalov.getRedBlackTreeSweepImplementation());
+        addNonDominatedSortingFactory("jfb.rbtree.hybrid.fnds", JensenFortinBuzdalov.getRedBlackTreeSweepHybridImplementation());
         addNonDominatedSortingFactory("dcns.bs", SumitMishraDivideConquer.getSumitImplementation2016(true, false));
         addNonDominatedSortingFactory("dcns.bss", SumitMishraDivideConquer.getSumitImplementation2016(true, true));
         addNonDominatedSortingFactory("dcns.ss", SumitMishraDivideConquer.getSumitImplementation2016(false, false));
