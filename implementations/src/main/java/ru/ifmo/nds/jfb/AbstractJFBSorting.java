@@ -33,7 +33,6 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
     private double[][] points;
 
     final boolean useRankFilter;
-    private boolean allMeaningfulRanksAreZero;
 
     AbstractJFBSorting(int maximumPoints, int maximumDimension, boolean useRankFilter) {
         super(maximumPoints, maximumDimension);
@@ -109,7 +108,6 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
             }
 
             overflowedCount = 0;
-            allMeaningfulRanksAreZero = true;
 
             // 3.3: Calling the actual sorting
             int nonOverflowed = helperA(0, newN, dim - 1);
@@ -151,7 +149,6 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
                 reportOverflowedRank(weakIndex);
                 return false;
             } else {
-                allMeaningfulRanksAreZero = false;
                 ranks[weakIndex] = 1 + ranks[goodIndex];
             }
         }
@@ -258,7 +255,6 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
             if (result > maximalMeaningfulRank) {
                 reportOverflowedRank(curr);
             } else {
-                allMeaningfulRanksAreZero &= result == 0;
                 indices[newUntil++] = curr;
                 rankQuery.put(currY, result);
             }
@@ -288,7 +284,6 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
             if (result > maximalMeaningfulRank) {
                 reportOverflowedRank(weakCurr);
             } else {
-                allMeaningfulRanksAreZero &= result == 0;
                 ranks[weakCurr] = result;
                 indices[newWeakUntil++] = weakCurr;
             }
@@ -322,7 +317,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
                 splitInTwo(from, until, median, obj, smallerThanMedian < largerThanMedian, objMin, objMax);
                 int middle = from + splitL;
                 int newMiddle = helperA(from, middle, obj);
-                int newUntil = helperB(from, newMiddle, middle, until, obj - 1);
+                int newUntil = helperB(from, newMiddle, middle, until, obj - 1, false);
                 newUntil = helperA(middle, newUntil, obj);
                 return mergeTwo(from, newMiddle, middle, newUntil);
             } else {
@@ -331,10 +326,10 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
                 int startMid = from + splitL;
                 int startRight = startMid + splitM;
                 int newStartMid = helperA(from, startMid, obj);
-                int newStartRight = helperB(from, newStartMid, startMid, startRight, obj - 1);
+                int newStartRight = helperB(from, newStartMid, startMid, startRight, obj - 1, false);
                 newStartRight = helperA(startMid, newStartRight, obj - 1);
                 newStartRight = mergeTwo(from, newStartMid, startMid, newStartRight);
-                int newUntil = helperB(from, newStartRight, startRight, until, obj - 1);
+                int newUntil = helperB(from, newStartRight, startRight, until, obj - 1, false);
                 newUntil = helperA(startRight, newUntil, obj);
                 return mergeTwo(from, newStartRight, startRight, newUntil);
             }
@@ -405,7 +400,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
     }
 
     private int getMaxRank(int from, int until) {
-        if (!useRankFilter || allMeaningfulRanksAreZero) {
+        if (!useRankFilter) {
             return 0;
         }
         int rv = 0;
@@ -450,7 +445,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         return until;
     }
 
-    private int helperBMain(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj) {
+    private int helperBMain(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj, boolean weakHasNonZero) {
         int goodN = goodUntil - goodFrom;
         int weakN = weakUntil - weakFrom;
         if (weakN == 0) {
@@ -465,7 +460,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         double weakMaxObj = medianFinder.getLastMedianConsumptionMax();
         double weakMinObj = medianFinder.getLastMedianConsumptionMin();
         if (goodMaxObj <= weakMinObj) {
-            return helperB(goodFrom, goodUntil, weakFrom, weakUntil, obj - 1);
+            return helperB(goodFrom, goodUntil, weakFrom, weakUntil, obj - 1, weakHasNonZero);
         } else {
             double median = medianFinder.findMedian();
             int totalSmallerThanMedian = medianFinder.howManySmallerThanMedian();
@@ -479,9 +474,9 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
                 splitInTwo(weakFrom, weakUntil, median, obj, leanLeft, weakMinObj, weakMaxObj);
                 int weakMid = weakFrom + splitL;
 
-                int newWeakMid = helperB(goodFrom, goodMid, weakFrom, weakMid, obj);
-                int newWeakUntil = helperB(goodFrom, goodMid, weakMid, weakUntil, obj - 1);
-                newWeakUntil = helperB(goodMid, goodUntil, weakMid, newWeakUntil, obj);
+                int newWeakMid = helperB(goodFrom, goodMid, weakFrom, weakMid, obj, weakHasNonZero);
+                int newWeakUntil = helperB(goodFrom, goodMid, weakMid, weakUntil, obj - 1, weakHasNonZero);
+                newWeakUntil = helperB(goodMid, goodUntil, weakMid, newWeakUntil, obj, true); // maybe not true
                 mergeTwo(goodFrom, goodMid, goodMid, goodUntil);
                 return mergeTwo(weakFrom, newWeakMid, weakMid, newWeakUntil);
             } else {
@@ -493,18 +488,18 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
                 int weakMidL = weakFrom + splitL;
                 int weakMidR = weakMidL + splitM;
 
-                int newWeakMidL = helperB(goodFrom, goodMidL, weakFrom, weakMidL, obj);
-                int newWeakUntil = helperB(goodMidR, goodUntil, weakMidR, weakUntil, obj);
+                int newWeakMidL = helperB(goodFrom, goodMidL, weakFrom, weakMidL, obj, weakHasNonZero);
+                int newWeakUntil = helperB(goodMidR, goodUntil, weakMidR, weakUntil, obj, weakHasNonZero);
                 mergeTwo(goodFrom, goodMidL, goodMidL, goodMidR);
                 newWeakUntil = mergeTwo(weakMidL, weakMidR, weakMidR, newWeakUntil);
-                newWeakUntil = helperB(goodFrom, goodMidR, weakMidL, newWeakUntil, obj - 1);
+                newWeakUntil = helperB(goodFrom, goodMidR, weakMidL, newWeakUntil, obj - 1, true); // maybe not true
                 mergeTwo(goodFrom, goodMidR, goodMidR, goodUntil);
                 return mergeTwo(weakFrom, newWeakMidL, weakMidL, newWeakUntil);
             }
         }
     }
 
-    private int helperB(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj) {
+    private int helperB(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj, boolean weakHasNonZero) {
         int goodN = goodUntil - goodFrom;
         int weakN = weakUntil - weakFrom;
         if (goodN > 0 && weakN > 0) {
@@ -517,15 +512,15 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
             } else if (helperBHookCondition(goodFrom, goodUntil, weakFrom, weakUntil, obj)) {
                 return helperBHook(goodFrom, goodUntil, weakFrom, weakUntil, obj);
             } else {
-                int maxGoodRank = getMaxRank(goodFrom, goodUntil);
-                int maxWeakRank = getMaxRank(weakFrom, weakUntil);
+                int maxGoodRank = weakHasNonZero ? getMaxRank(goodFrom, goodUntil) : 0;
+                int maxWeakRank = weakHasNonZero ? getMaxRank(weakFrom, weakUntil) : 0;
                 if (maxWeakRank <= maxGoodRank) {
                     // nothing to filter, pass by. This happens regularly.
-                    return helperBMain(goodFrom, goodUntil, weakFrom, weakUntil, obj);
+                    return helperBMain(goodFrom, goodUntil, weakFrom, weakUntil, obj, weakHasNonZero);
                 } else {
                     // try to filter something
                     int newWeakUntil = filterByRank(weakFrom, weakUntil, maxGoodRank);
-                    int finalWeakUntil = helperBMain(goodFrom, goodUntil, weakFrom, newWeakUntil, obj);
+                    int finalWeakUntil = helperBMain(goodFrom, goodUntil, weakFrom, newWeakUntil, obj, true);
                     if (newWeakUntil != weakUntil) {
                         return mergeTwo(weakFrom, finalWeakUntil, newWeakUntil, weakUntil);
                     } else {
