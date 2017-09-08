@@ -1,12 +1,9 @@
 package ru.ifmo.nds.jfb;
 
-import ru.ifmo.nds.NonDominatedSorting;
-import ru.ifmo.nds.util.ArrayHelper;
-import ru.ifmo.nds.util.DoubleArraySorter;
-import ru.ifmo.nds.util.MedianFinder;
-import ru.ifmo.nds.util.RankQueryStructure;
-
 import java.util.Arrays;
+
+import ru.ifmo.nds.NonDominatedSorting;
+import ru.ifmo.nds.util.*;
 
 public abstract class AbstractJFBSorting extends NonDominatedSorting {
     // Pre-allocated
@@ -476,7 +473,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
 
                 int newWeakMid = helperB(goodFrom, goodMid, weakFrom, weakMid, obj, weakHasNonZero);
                 int newWeakUntil = helperB(goodFrom, goodMid, weakMid, weakUntil, obj - 1, weakHasNonZero);
-                newWeakUntil = helperB(goodMid, goodUntil, weakMid, newWeakUntil, obj, true); // maybe not true
+                newWeakUntil = helperB(goodMid, goodUntil, weakMid, newWeakUntil, obj, true); // pessimistic
                 mergeTwo(goodFrom, goodMid, goodMid, goodUntil);
                 return mergeTwo(weakFrom, newWeakMid, weakMid, newWeakUntil);
             } else {
@@ -492,7 +489,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
                 int newWeakUntil = helperB(goodMidR, goodUntil, weakMidR, weakUntil, obj, weakHasNonZero);
                 mergeTwo(goodFrom, goodMidL, goodMidL, goodMidR);
                 newWeakUntil = mergeTwo(weakMidL, weakMidR, weakMidR, newWeakUntil);
-                newWeakUntil = helperB(goodFrom, goodMidR, weakMidL, newWeakUntil, obj - 1, true); // maybe not true
+                newWeakUntil = helperB(goodFrom, goodMidR, weakMidL, newWeakUntil, obj - 1, true); // pessimistic
                 mergeTwo(goodFrom, goodMidR, goodMidR, goodUntil);
                 return mergeTwo(weakFrom, newWeakMidL, weakMidL, newWeakUntil);
             }
@@ -512,21 +509,23 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
             } else if (helperBHookCondition(goodFrom, goodUntil, weakFrom, weakUntil, obj)) {
                 return helperBHook(goodFrom, goodUntil, weakFrom, weakUntil, obj);
             } else {
-                int maxGoodRank = weakHasNonZero ? getMaxRank(goodFrom, goodUntil) : 0;
-                int maxWeakRank = weakHasNonZero ? getMaxRank(weakFrom, weakUntil) : 0;
-                if (maxWeakRank <= maxGoodRank) {
-                    // nothing to filter, pass by. This happens regularly.
-                    return helperBMain(goodFrom, goodUntil, weakFrom, weakUntil, obj, weakHasNonZero);
-                } else {
-                    // try to filter something
-                    int newWeakUntil = filterByRank(weakFrom, weakUntil, maxGoodRank);
-                    int finalWeakUntil = helperBMain(goodFrom, goodUntil, weakFrom, newWeakUntil, obj, true);
-                    if (newWeakUntil != weakUntil) {
-                        return mergeTwo(weakFrom, finalWeakUntil, newWeakUntil, weakUntil);
-                    } else {
-                        return finalWeakUntil;
+                if (useRankFilter && weakHasNonZero) {
+                    int maxWeakRank = getMaxRank(weakFrom, weakUntil);
+                    if (weakHasNonZero = maxWeakRank > 0) {
+                        int maxGoodRank = getMaxRank(goodFrom, goodUntil);
+                        if (maxWeakRank > maxGoodRank) {
+                            // try to filter something
+                            int newWeakUntil = filterByRank(weakFrom, weakUntil, maxGoodRank);
+                            int finalWeakUntil = helperBMain(goodFrom, goodUntil, weakFrom, newWeakUntil, obj, true);
+                            if (newWeakUntil != weakUntil) {
+                                return mergeTwo(weakFrom, finalWeakUntil, newWeakUntil, weakUntil);
+                            } else {
+                                return finalWeakUntil;
+                            }
+                        }
                     }
                 }
+                return helperBMain(goodFrom, goodUntil, weakFrom, weakUntil, obj, weakHasNonZero);
             }
         } else {
             return weakUntil;
