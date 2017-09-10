@@ -330,16 +330,24 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         }
     }
 
+    // returns whether weak is meaningful after all checks
+    private boolean ifDominatesUpdateRankAndCheckWhetherMeaningful(int good, int weak, int obj) {
+        if (strictlyDominatesAssumingNotSame(good, weak, obj)) {
+            if (!tryUpdateRank(good, weak)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     private int helperA(int from, int until, int obj) {
         int n = until - from;
         if (n <= 2) {
             if (n == 2) {
                 int goodIndex = indices[from];
                 int weakIndex = indices[from + 1];
-                if (strictlyDominatesAssumingNotSame(goodIndex, weakIndex, obj)) {
-                    if (!tryUpdateRank(goodIndex, weakIndex)) {
-                        return from + 1;
-                    }
+                if (!ifDominatesUpdateRankAndCheckWhetherMeaningful(goodIndex, weakIndex, obj)) {
+                    return from + 1;
                 }
             }
             return until;
@@ -410,10 +418,8 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         int goodFinish = -bs - 1;
         for (int i = goodFrom; i < goodFinish; ++i) {
             int gi = indices[i];
-            if (strictlyDominatesAssumingNotSame(gi, wi, obj)) {
-                if (!tryUpdateRank(gi, wi)) {
-                    return weak;
-                }
+            if (!ifDominatesUpdateRankAndCheckWhetherMeaningful(gi, wi, obj)) {
+                return weak;
             }
         }
         return weak + 1;
