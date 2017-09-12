@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Predicate;
 
 import com.beust.jcommander.IValueValidator;
 import com.beust.jcommander.Parameter;
@@ -91,33 +92,20 @@ public final class Benchmark extends JCommanderRunnable {
     @Parameter(names = "--append", description = "Append to the output file instead of overwriting it.")
     private boolean shouldAppendToOutput;
 
-    private static final String[] jmhIds = {
-            "uniform.hypercube.n10.d2", "uniform.hypercube.n10.d3", "uniform.hypercube.n10.d4",
-            "uniform.hypercube.n10.d5", "uniform.hypercube.n10.d6", "uniform.hypercube.n10.d7",
-            "uniform.hypercube.n10.d8", "uniform.hypercube.n10.d9", "uniform.hypercube.n10.d10",
-            "uniform.hypercube.n100.d2", "uniform.hypercube.n100.d3", "uniform.hypercube.n100.d4",
-            "uniform.hypercube.n100.d5", "uniform.hypercube.n100.d6", "uniform.hypercube.n100.d7",
-            "uniform.hypercube.n100.d8", "uniform.hypercube.n100.d9", "uniform.hypercube.n100.d10",
-            "uniform.hypercube.n1000.d2", "uniform.hypercube.n1000.d3", "uniform.hypercube.n1000.d4",
-            "uniform.hypercube.n1000.d5", "uniform.hypercube.n1000.d6", "uniform.hypercube.n1000.d7",
-            "uniform.hypercube.n1000.d8", "uniform.hypercube.n1000.d9", "uniform.hypercube.n1000.d10",
-            "uniform.hypercube.n10000.d2", "uniform.hypercube.n10000.d3", "uniform.hypercube.n10000.d4",
-            "uniform.hypercube.n10000.d5", "uniform.hypercube.n10000.d6", "uniform.hypercube.n10000.d7",
-            "uniform.hypercube.n10000.d8", "uniform.hypercube.n10000.d9", "uniform.hypercube.n10000.d10",
+    @Parameter(names = "--only-list", description = "Only list datasets to be tested")
+    private boolean onlyList;
 
-            "uniform.hyperplanes.n10.d2.f1", "uniform.hyperplanes.n10.d3.f1", "uniform.hyperplanes.n10.d4.f1",
-            "uniform.hyperplanes.n10.d5.f1", "uniform.hyperplanes.n10.d6.f1", "uniform.hyperplanes.n10.d7.f1",
-            "uniform.hyperplanes.n10.d8.f1", "uniform.hyperplanes.n10.d9.f1", "uniform.hyperplanes.n10.d10.f1",
-            "uniform.hyperplanes.n100.d2.f1", "uniform.hyperplanes.n100.d3.f1", "uniform.hyperplanes.n100.d4.f1",
-            "uniform.hyperplanes.n100.d5.f1", "uniform.hyperplanes.n100.d6.f1", "uniform.hyperplanes.n100.d7.f1",
-            "uniform.hyperplanes.n100.d8.f1", "uniform.hyperplanes.n100.d9.f1", "uniform.hyperplanes.n100.d10.f1",
-            "uniform.hyperplanes.n1000.d2.f1", "uniform.hyperplanes.n1000.d3.f1", "uniform.hyperplanes.n1000.d4.f1",
-            "uniform.hyperplanes.n1000.d5.f1", "uniform.hyperplanes.n1000.d6.f1", "uniform.hyperplanes.n1000.d7.f1",
-            "uniform.hyperplanes.n1000.d8.f1", "uniform.hyperplanes.n1000.d9.f1", "uniform.hyperplanes.n1000.d10.f1",
-            "uniform.hyperplanes.n10000.d2.f1", "uniform.hyperplanes.n10000.d3.f1", "uniform.hyperplanes.n10000.d4.f1",
-            "uniform.hyperplanes.n10000.d5.f1", "uniform.hyperplanes.n10000.d6.f1", "uniform.hyperplanes.n10000.d7.f1",
-            "uniform.hyperplanes.n10000.d8.f1", "uniform.hyperplanes.n10000.d9.f1", "uniform.hyperplanes.n10000.d10.f1"
-    };
+    @Parameter(names = "--remove",
+            variableArity = true,
+            description = "Specify which dataset IDs to remove.",
+            converter = DatasetFilterStringConverter.class)
+    private List<Predicate<String>> removeFilters;
+
+    @Parameter(names = "--retain",
+            variableArity = true,
+            description = "Specify which dataset IDs to retain.",
+            converter = DatasetFilterStringConverter.class)
+    private List<Predicate<String>> retainFilters;
 
     private List<Double> getTimes(String algorithmId,
                                   String datasetId,
@@ -190,6 +178,25 @@ public final class Benchmark extends JCommanderRunnable {
 
     @Override
     protected void run() throws CLIWrapperException {
+        List<String> datasets = new ArrayList<>(IdCollection.getAllDatasetIds());
+        if (removeFilters != null) {
+            for (Predicate<String> removeFilter : removeFilters) {
+                datasets.removeIf(removeFilter);
+            }
+        }
+        if (retainFilters != null) {
+            for (Predicate<String> retainFilter : retainFilters) {
+                datasets.removeIf(retainFilter.negate());
+            }
+        }
+        if (onlyList) {
+            System.out.println("[info] These dataset IDs would have been used:");
+            for (String s : datasets) {
+                System.out.println("[info]   " + s);
+            }
+            return;
+        }
+
         try {
             Path output = Paths.get(outputFileName);
             List<Record> allBenchmarks;
@@ -208,7 +215,7 @@ public final class Benchmark extends JCommanderRunnable {
 
             List<Record> records = new ArrayList<>();
 
-            for (String datasetId : jmhIds) {
+            for (String datasetId : datasets) {
                 System.out.println();
                 System.out.println("**************************************************************");
                 System.out.println("* Algorithm: " + algorithmId + ", dataset: " + datasetId);

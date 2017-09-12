@@ -20,13 +20,13 @@ public class Edit extends JCommanderRunnable {
     @Parameter(names = "--remove",
             variableArity = true,
             description = "Specify which records to remove.",
-            converter = FilterStringConverter.class)
+            converter = RecordFilterStringConverter.class)
     private List<Predicate<Record>> removeFilters;
 
     @Parameter(names = "--retain",
             variableArity = true,
             description = "Specify which records to retain.",
-            converter = FilterStringConverter.class)
+            converter = RecordFilterStringConverter.class)
     private List<Predicate<Record>> retainFilters;
 
     @Parameter(names = "--output", description = "Specify output file to put merge results into.")
@@ -54,25 +54,13 @@ public class Edit extends JCommanderRunnable {
 
         if (removeFilters != null) {
             for (Predicate<Record> filter : removeFilters) {
-                List<Record> newRecords = new ArrayList<>(records.size());
-                for (Record r : records) {
-                    if (!filter.test(r)) {
-                        newRecords.add(r);
-                    }
-                }
-                records = newRecords;
+                records.removeIf(filter);
             }
         }
 
         if (retainFilters != null) {
             for (Predicate<Record> filter : retainFilters) {
-                List<Record> newRecords = new ArrayList<>(records.size());
-                for (Record r : records) {
-                    if (filter.test(r)) {
-                        newRecords.add(r);
-                    }
-                }
-                records = newRecords;
+                records.removeIf(filter.negate());
             }
         }
 

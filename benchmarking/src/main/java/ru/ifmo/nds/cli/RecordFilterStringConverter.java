@@ -12,8 +12,8 @@ import com.beust.jcommander.converters.BaseConverter;
 import ru.ifmo.nds.rundb.IdUtils;
 import ru.ifmo.nds.rundb.Record;
 
-class FilterStringConverter extends BaseConverter<Predicate<Record>> {
-    public FilterStringConverter(String optionName) {
+class RecordFilterStringConverter extends BaseConverter<Predicate<Record>> {
+    public RecordFilterStringConverter(String optionName) {
         super(optionName);
     }
 
