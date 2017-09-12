@@ -11,6 +11,7 @@ import ru.ifmo.nds.rundb.Dataset;
 @State(Scope.Benchmark)
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
+@Timeout(time = 1, timeUnit = TimeUnit.HOURS)
 public class JMHBenchmark {
     private NonDominatedSorting sorting;
     private Dataset dataset;
