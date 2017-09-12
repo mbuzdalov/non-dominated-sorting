@@ -1,13 +1,12 @@
 package ru.ifmo.nds.cli;
 
-import java.util.Arrays;
 import java.util.OptionalInt;
-import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import com.beust.jcommander.converters.BaseConverter;
+import static ru.ifmo.nds.cli.FilterHelpers.*;
 
 import ru.ifmo.nds.rundb.IdUtils;
 import ru.ifmo.nds.rundb.Record;
@@ -19,33 +18,6 @@ class RecordFilterStringConverter extends BaseConverter<Predicate<Record>> {
 
     // Pattern: field op value - for field value matching
     // Pattern: field/n op value - for field value factored by n matching
-
-    private int findNonIdentifier(String s, int from) {
-        int firstNonIdentifier = from;
-        while (firstNonIdentifier < s.length() && Character.isJavaIdentifierPart(s.charAt(firstNonIdentifier))) {
-            ++firstNonIdentifier;
-        }
-        return firstNonIdentifier;
-    }
-
-    private static final class Operator {
-        private final String text;
-        private final BiPredicate<Integer, Integer> operator;
-
-        private Operator(String text, BiPredicate<Integer, Integer> operator) {
-            this.text = text;
-            this.operator = operator;
-        }
-    }
-
-    private static final Operator[] operators = {
-            new Operator("==", Integer::equals),
-            new Operator("!=", (l, r) -> !l.equals(r)),
-            new Operator("<=", (l, r) -> l <= r),
-            new Operator(">=", (l, r) -> l >= r),
-            new Operator("<", (l, r) -> l < r),
-            new Operator(">", (l, r) -> l > r),
-    };
 
     @Override
     public Predicate<Record> convert(String value) {
@@ -76,7 +48,7 @@ class RecordFilterStringConverter extends BaseConverter<Predicate<Record>> {
             }
             throw new IllegalArgumentException("Cannot parse filter '" + value
                     + "': With a factored filter, one of the following operations are expected: "
-                    + Arrays.stream(operators).map(o -> o.text).collect(Collectors.toList()));
+                    + operators.stream().map(o -> o.text).collect(Collectors.toList()));
         } else {
             // Direct value
             if (value.startsWith("==", firstNonIdentifier)) {
