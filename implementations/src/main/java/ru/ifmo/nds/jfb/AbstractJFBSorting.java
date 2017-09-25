@@ -8,8 +8,8 @@ import ru.ifmo.nds.util.*;
 public abstract class AbstractJFBSorting extends NonDominatedSorting {
     // Pre-allocated
     int[] indices;
-    private int[] ranks;
-    private int maximalMeaningfulRank;
+    int[] ranks;
+    int maximalMeaningfulRank;
 
     private DoubleArraySorter sorter;
     private MedianFinder medianFinder;
@@ -124,7 +124,20 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         overflowedIndices[overflowedCount++] = index;
     }
 
-    private boolean strictlyDominatesAssumingNotSame(int goodIndex, int weakIndex, int maxObj) {
+    int kickOutOverflowedRanks(int from, int until) {
+        int newUntil = from;
+        for (int i = from; i < until; ++i) {
+            int ii = indices[i];
+            if (ranks[ii] > maximalMeaningfulRank) {
+                reportOverflowedRank(ii);
+            } else {
+                indices[newUntil++] = ii;
+            }
+        }
+        return newUntil;
+    }
+
+    boolean strictlyDominatesAssumingNotSame(int goodIndex, int weakIndex, int maxObj) {
         double[] goodPoint = points[goodIndex];
         double[] weakPoint = points[weakIndex];
         // Comparison in 0 makes no sense, as due to goodIndex < weakIndex the points are <= in this coordinate.
