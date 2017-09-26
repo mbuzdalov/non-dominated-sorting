@@ -35,12 +35,11 @@ public class RedBlackTreeSweepHybridENS extends RedBlackTreeSweep {
                 for (int i = ensSize[curr] - 1; i >= 0; --i) {
                     if (strictlyDominatesAssumingNotSame(ensCurrIndices[i], index, maxObj)) {
                         dominates = true;
+                        break;
                     }
                 }
                 if (dominates) {
                     lastDominating = curr;
-                } else {
-                    break;
                 }
             }
             curr = ensNext[curr];
@@ -109,8 +108,8 @@ public class RedBlackTreeSweepHybridENS extends RedBlackTreeSweep {
         boolean hasOverflowed = false;
         for (int i = from; i < until; ++i) {
             int ii = indices[i];
-            int r = ensFindRank(ii, obj);
-            ranks[ii] = Math.max(ranks[ii], r);
+            int r = Math.max(ranks[ii], ensFindRank(ii, obj));
+            ranks[ii] = r;
             if (r <= maximalMeaningfulRank) {
                 ensInsertPoint(ii);
             } else {
@@ -134,8 +133,8 @@ public class RedBlackTreeSweepHybridENS extends RedBlackTreeSweep {
                 ensInsertPoint(indices[gi++]);
             }
             int ii = indices[wi];
-            int r = ensFindRank(ii, obj);
-            ranks[ii] = Math.max(ranks[ii], r);
+            int r = Math.max(ranks[ii], ensFindRank(ii, obj));
+            ranks[ii] = r;
             if (r > maximalMeaningfulRank) {
                 hasOverflowed = true;
             }
