@@ -6,27 +6,27 @@ import ru.ifmo.nds.NonDominatedSorting;
 import ru.ifmo.nds.util.*;
 
 public abstract class AbstractJFBSorting extends NonDominatedSorting {
-    // Pre-allocated
+    // Shared resources
     int[] indices;
     int[] ranks;
     int maximalMeaningfulRank;
 
-    private DoubleArraySorter sorter;
-    private MedianFinder medianFinder;
-    private RankQueryStructure rankQuery;
-    private int[] internalIndices;
-    private double[] lastFrontOrdinates;
-    private int[] splitScratchM, splitScratchR;
+    // Data which is immutable throughout the sorting.
+    private double[][] points;
     private double[][] transposedPoints;
 
-    private int overflowedCount;
+    // This is used in preparation phase or in 2D-only sweep.
+    private DoubleArraySorter sorter;
+    private int[] internalIndices;
+    private double[] lastFrontOrdinates;
+
+    private MedianFinder medianFinder;
+    private RankQueryStructure rankQuery;
+    private int[] splitScratchM, splitScratchR;
 
     // Various answers
     private int splitL;
     private int splitM;
-
-    // Partially carrying input data
-    private double[][] points;
 
     AbstractJFBSorting(int maximumPoints, int maximumDimension) {
         super(maximumPoints, maximumDimension);
@@ -97,15 +97,8 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
                 }
             }
 
-            overflowedCount = 0;
-
             // 3.3: Calling the actual sorting
-            int nonOverflowed = helperA(0, newN, dim - 1);
-            if (nonOverflowed + overflowedCount != newN) {
-                throw new AssertionError("nonOverflowed = " + nonOverflowed
-                        + " overflowed = " + overflowedCount
-                        + " newN = " + newN);
-            }
+            helperA(0, newN, dim - 1);
 
             // 3.4: Applying the results back. After that, the argument "ranks" array stops being abused.
             for (int i = 0; i < n; ++i) {
@@ -115,18 +108,11 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         }
     }
 
-    private void reportOverflowedRank(int index) {
-        ranks[index] = maximalMeaningfulRank + 1;
-        ++overflowedCount;
-    }
-
     int kickOutOverflowedRanks(int from, int until) {
         int newUntil = from;
         for (int i = from; i < until; ++i) {
             int ii = indices[i];
-            if (ranks[ii] > maximalMeaningfulRank) {
-                reportOverflowedRank(ii);
-            } else {
+            if (ranks[ii] <= maximalMeaningfulRank) {
                 indices[newUntil++] = ii;
             }
         }
@@ -148,12 +134,8 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
     private boolean tryUpdateRank(int goodIndex, int weakIndex) {
         int rg = ranks[goodIndex];
         if (ranks[weakIndex] <= rg) {
-            if (rg == maximalMeaningfulRank) {
-                reportOverflowedRank(weakIndex);
-                return false;
-            } else {
-                ranks[weakIndex] = 1 + ranks[goodIndex];
-            }
+            ranks[weakIndex] = 1 + ranks[goodIndex];
+            return rg < maximalMeaningfulRank;
         }
         return true;
     }
@@ -255,9 +237,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
             int result = Math.max(ranks[curr],
                     rankQuery.getMaximumWithKeyAtMost(currY, ranks[curr]) + 1);
             ranks[curr] = result;
-            if (result > maximalMeaningfulRank) {
-                reportOverflowedRank(curr);
-            } else {
+            if (result <= maximalMeaningfulRank) {
                 indices[newUntil++] = curr;
                 rankQuery.put(currY, result);
             }
@@ -284,10 +264,8 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
             }
             int result = Math.max(ranks[weakCurr],
                     rankQuery.getMaximumWithKeyAtMost(local[weakCurr], ranks[weakCurr]) + 1);
-            if (result > maximalMeaningfulRank) {
-                reportOverflowedRank(weakCurr);
-            } else {
-                ranks[weakCurr] = result;
+            ranks[weakCurr] = result;
+            if (result <= maximalMeaningfulRank) {
                 indices[newWeakUntil++] = weakCurr;
             }
         }
@@ -399,12 +377,12 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
     }
 
     private int updateByPointWithMove(int pointIndex, int from, int until, int obj) {
-        reportOverflowedRank(indices[from]);
+        ranks[indices[from]] = maximalMeaningfulRank + 1;
         int newUntil = from;
         for (int i = from + 1; i < until; ++i) {
             int ii = indices[i];
             if (ranks[ii] <= maximalMeaningfulRank && strictlyDominatesAssumingNotSame(pointIndex, ii, obj)) {
-                reportOverflowedRank(ii);
+                ranks[ii] = maximalMeaningfulRank + 1;
             } else {
                 indices[newUntil++] = ii;
             }
