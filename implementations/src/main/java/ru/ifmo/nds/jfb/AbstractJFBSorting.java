@@ -148,7 +148,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         } else if (maxVal < median || equalToLeft && maxVal <= median) {
             splitL = until - from;
         } else {
-            int left = from, right = 0;
+            int left = from, right = from;
             double[] local = transposedPoints[obj];
             for (int i = from; i < until; ++i) {
                 int ii = indices[i];
@@ -159,7 +159,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
                     splitScratchR[right++] = ii;
                 }
             }
-            System.arraycopy(splitScratchR, 0, indices, left, right);
+            System.arraycopy(splitScratchR, from, indices, left, right - from);
             splitL = left - from;
         }
     }
@@ -174,7 +174,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
             splitL = until - from;
             splitM = 0;
         } else {
-            int l = from, m = 0, r = 0;
+            int l = from, m = from, r = from;
             double[] local = transposedPoints[obj];
             for (int i = from; i < until; ++i) {
                 int ii = indices[i];
@@ -187,15 +187,15 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
                     splitScratchR[r++] = ii;
                 }
             }
-            System.arraycopy(splitScratchM, 0, indices, l, m);
-            System.arraycopy(splitScratchR, 0, indices, l + m, r);
+            System.arraycopy(splitScratchM, from, indices, l, m - from);
+            System.arraycopy(splitScratchR, from, indices, l + m - from, r - from);
             splitL = l - from;
-            splitM = m;
+            splitM = m - from;
         }
     }
 
     private int mergeTwo(int fromLeft, int untilLeft, int fromRight, int untilRight) {
-        int target = 0;
+        int target = fromLeft;
         int l = fromLeft, r = fromRight;
         while (l < untilLeft && r < untilRight) {
             if (indices[l] <= indices[r]) {
@@ -204,20 +204,20 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
                 splitScratchM[target++] = indices[r++];
             }
         }
-        int newR = fromLeft + target + untilLeft - l;
+        int newR = target + untilLeft - l;
         if (r != newR && untilRight > r) {
             // copy the remainder of right to its place
             System.arraycopy(indices, r, indices, newR, untilRight - r);
         }
-        if (l != fromLeft + target && untilLeft > l) {
+        if (l != target && untilLeft > l) {
             // copy the remainder of left to its place
-            System.arraycopy(indices, l, indices, fromLeft + target, untilLeft - l);
+            System.arraycopy(indices, l, indices, target, untilLeft - l);
         }
-        if (target > 0) {
+        if (target > fromLeft) {
             // copy the merged part
-            System.arraycopy(splitScratchM, 0, indices, fromLeft, target);
+            System.arraycopy(splitScratchM, fromLeft, indices, fromLeft, target - fromLeft);
         }
-        return fromLeft + target + untilLeft - l + untilRight - r;
+        return target + untilLeft - l + untilRight - r;
     }
 
     protected abstract RankQueryStructure createStructure(int maximumPoints);
