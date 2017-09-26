@@ -19,7 +19,6 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
     private int[] splitScratchM, splitScratchR;
     private double[][] transposedPoints;
 
-    private int[] overflowedIndices;
     private int overflowedCount;
 
     // Various answers
@@ -44,8 +43,6 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         lastFrontOrdinates = new double[maximumPoints];
         splitScratchM = new int[maximumPoints];
         splitScratchR = new int[maximumPoints];
-
-        overflowedIndices = new int[maximumPoints];
     }
 
     @Override
@@ -62,7 +59,6 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         lastFrontOrdinates = null;
         splitScratchM = null;
         splitScratchR = null;
-        overflowedIndices = null;
     }
 
     @Override
@@ -121,7 +117,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
 
     private void reportOverflowedRank(int index) {
         ranks[index] = maximalMeaningfulRank + 1;
-        overflowedIndices[overflowedCount++] = index;
+        ++overflowedCount;
     }
 
     int kickOutOverflowedRanks(int from, int until) {
