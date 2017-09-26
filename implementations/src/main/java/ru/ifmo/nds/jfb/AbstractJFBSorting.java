@@ -230,7 +230,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
             }
         }
         rankQuery.init();
-        int newUntil = from;
+        int minOverflow = until;
         for (int i = from; i < until; ++i) {
             int curr = indices[i];
             double currY = local[curr];
@@ -238,12 +238,13 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
                     rankQuery.getMaximumWithKeyAtMost(currY, ranks[curr]) + 1);
             ranks[curr] = result;
             if (result <= maximalMeaningfulRank) {
-                indices[newUntil++] = curr;
                 rankQuery.put(currY, result);
+            } else if (minOverflow > i) {
+                minOverflow = i;
             }
         }
         rankQuery.clear();
-        return newUntil;
+        return kickOutOverflowedRanks(minOverflow, until);
     }
 
     private int sweepB(int goodFrom, int goodUntil, int weakFrom, int weakUntil) {
@@ -255,7 +256,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         }
         rankQuery.init();
         int goodI = goodFrom;
-        int newWeakUntil = weakFrom;
+        int minOverflow = weakUntil;
         for (int weakI = weakFrom; weakI < weakUntil; ++weakI) {
             int weakCurr = indices[weakI];
             while (goodI < goodUntil && indices[goodI] < weakCurr) {
@@ -265,12 +266,12 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
             int result = Math.max(ranks[weakCurr],
                     rankQuery.getMaximumWithKeyAtMost(local[weakCurr], ranks[weakCurr]) + 1);
             ranks[weakCurr] = result;
-            if (result <= maximalMeaningfulRank) {
-                indices[newWeakUntil++] = weakCurr;
+            if (minOverflow > weakI && result > maximalMeaningfulRank) {
+                minOverflow = weakI;
             }
         }
         rankQuery.clear();
-        return newWeakUntil;
+        return kickOutOverflowedRanks(minOverflow, weakUntil);
     }
 
     protected boolean helperAHookCondition(int size, int obj) {
@@ -367,27 +368,17 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
     }
 
     private int updateByPointCritical(int pointIndex, int from, int until, int obj) {
+        int minOverflow = until;
         for (int i = from; i < until; ++i) {
             int ii = indices[i];
-            if (ranks[ii] <= maximalMeaningfulRank && strictlyDominatesAssumingNotSame(pointIndex, ii, obj)) {
-                return updateByPointWithMove(pointIndex, i, until, obj);
-            }
-        }
-        return until;
-    }
-
-    private int updateByPointWithMove(int pointIndex, int from, int until, int obj) {
-        ranks[indices[from]] = maximalMeaningfulRank + 1;
-        int newUntil = from;
-        for (int i = from + 1; i < until; ++i) {
-            int ii = indices[i];
-            if (ranks[ii] <= maximalMeaningfulRank && strictlyDominatesAssumingNotSame(pointIndex, ii, obj)) {
+            if (strictlyDominatesAssumingNotSame(pointIndex, ii, obj)) {
                 ranks[ii] = maximalMeaningfulRank + 1;
-            } else {
-                indices[newUntil++] = ii;
+                if (minOverflow > i) {
+                    minOverflow = i;
+                }
             }
         }
-        return newUntil;
+        return kickOutOverflowedRanks(minOverflow, until);
     }
 
     private int helperBGood1(int good, int weakFrom, int weakUntil, int obj) {

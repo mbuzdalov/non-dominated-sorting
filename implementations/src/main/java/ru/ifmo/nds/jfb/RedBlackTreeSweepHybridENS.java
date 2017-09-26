@@ -112,18 +112,18 @@ public class RedBlackTreeSweepHybridENS extends RedBlackTreeSweep {
     @Override
     protected int helperAHook(int from, int until, int obj) {
         ensInit();
-        boolean hasOverflowed = false;
+        int minOverflow = until;
         for (int i = from; i < until; ++i) {
             int ii = indices[i];
             int r = Math.max(ranks[ii], ensFindRank(ii, obj));
             ranks[ii] = r;
             if (r <= maximalMeaningfulRank) {
                 ensInsertPoint(ii);
-            } else {
-                hasOverflowed = true;
+            } else if (minOverflow > i) {
+                minOverflow = i;
             }
         }
-        return hasOverflowed ? kickOutOverflowedRanks(from, until) : until;
+        return kickOutOverflowedRanks(minOverflow, until);
     }
 
     @Override
@@ -134,7 +134,7 @@ public class RedBlackTreeSweepHybridENS extends RedBlackTreeSweep {
     @Override
     protected int helperBHook(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj) {
         ensInit();
-        boolean hasOverflowed = false;
+        int minOverflowed = weakUntil;
         for (int gi = goodFrom, wi = weakFrom; wi < weakUntil; ++wi) {
             while (gi < goodUntil && indices[gi] < indices[wi]) {
                 ensInsertPoint(indices[gi++]);
@@ -142,10 +142,10 @@ public class RedBlackTreeSweepHybridENS extends RedBlackTreeSweep {
             int ii = indices[wi];
             int r = Math.max(ranks[ii], ensFindRank(ii, obj));
             ranks[ii] = r;
-            if (r > maximalMeaningfulRank) {
-                hasOverflowed = true;
+            if (minOverflowed > wi && r > maximalMeaningfulRank) {
+                minOverflowed = wi;
             }
         }
-        return hasOverflowed ? kickOutOverflowedRanks(weakFrom, weakUntil) : weakUntil;
+        return kickOutOverflowedRanks(minOverflowed, weakUntil);
     }
 }
