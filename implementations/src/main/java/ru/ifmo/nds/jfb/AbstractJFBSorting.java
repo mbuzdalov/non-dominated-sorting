@@ -140,7 +140,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         return true;
     }
 
-    private void splitInTwo(int from, int until, double median, int obj, boolean equalToLeft, double minVal, double maxVal) {
+    private void splitInTwo(int tempFrom, int from, int until, double median, int obj, boolean equalToLeft, double minVal, double maxVal) {
         if (minVal == median && maxVal == median) {
             splitL = equalToLeft ? until - from : 0;
         } else if (minVal > median || !equalToLeft && minVal >= median) {
@@ -148,7 +148,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         } else if (maxVal < median || equalToLeft && maxVal <= median) {
             splitL = until - from;
         } else {
-            int left = from, right = from;
+            int left = from, right = tempFrom;
             double[] local = transposedPoints[obj];
             for (int i = from; i < until; ++i) {
                 int ii = indices[i];
@@ -159,12 +159,12 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
                     splitScratchR[right++] = ii;
                 }
             }
-            System.arraycopy(splitScratchR, from, indices, left, right - from);
+            System.arraycopy(splitScratchR, tempFrom, indices, left, right - tempFrom);
             splitL = left - from;
         }
     }
 
-    private void splitInThree(int from, int until, double median, int obj, double minVal, double maxVal) {
+    private void splitInThree(int tempFrom, int from, int until, double median, int obj, double minVal, double maxVal) {
         if (minVal == median && maxVal == median) {
             splitL = 0;
             splitM = until - from;
@@ -174,7 +174,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
             splitL = until - from;
             splitM = 0;
         } else {
-            int l = from, m = from, r = from;
+            int l = from, m = tempFrom, r = tempFrom;
             double[] local = transposedPoints[obj];
             for (int i = from; i < until; ++i) {
                 int ii = indices[i];
@@ -187,15 +187,15 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
                     splitScratchR[r++] = ii;
                 }
             }
-            System.arraycopy(splitScratchM, from, indices, l, m - from);
-            System.arraycopy(splitScratchR, from, indices, l + m - from, r - from);
+            System.arraycopy(splitScratchM, tempFrom, indices, l, m - tempFrom);
+            System.arraycopy(splitScratchR, tempFrom, indices, l + m - tempFrom, r - tempFrom);
             splitL = l - from;
-            splitM = m - from;
+            splitM = m - tempFrom;
         }
     }
 
-    private int mergeTwo(int fromLeft, int untilLeft, int fromRight, int untilRight) {
-        int target = fromLeft;
+    private int mergeTwo(int tempFrom, int fromLeft, int untilLeft, int fromRight, int untilRight) {
+        int target = tempFrom;
         int l = fromLeft, r = fromRight;
         while (l < untilLeft && r < untilRight) {
             if (indices[l] <= indices[r]) {
@@ -204,20 +204,20 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
                 splitScratchM[target++] = indices[r++];
             }
         }
-        int newR = target + untilLeft - l;
+        int newR = fromLeft + (target - tempFrom) + untilLeft - l;
         if (r != newR && untilRight > r) {
             // copy the remainder of right to its place
             System.arraycopy(indices, r, indices, newR, untilRight - r);
         }
-        if (l != target && untilLeft > l) {
+        if (l != fromLeft + (target - tempFrom) && untilLeft > l) {
             // copy the remainder of left to its place
-            System.arraycopy(indices, l, indices, target, untilLeft - l);
+            System.arraycopy(indices, l, indices, fromLeft + (target - tempFrom), untilLeft - l);
         }
-        if (target > fromLeft) {
+        if (target > tempFrom) {
             // copy the merged part
-            System.arraycopy(splitScratchM, fromLeft, indices, fromLeft, target - fromLeft);
+            System.arraycopy(splitScratchM, tempFrom, indices, fromLeft, target - tempFrom);
         }
-        return target + untilLeft - l + untilRight - r;
+        return fromLeft + (target - tempFrom) + untilLeft - l + untilRight - r;
     }
 
     protected abstract RankQueryStructure createStructure(int maximumPoints);
@@ -296,24 +296,24 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
             int equalToMedian = n - smallerThanMedian - largerThanMedian;
             if (equalToMedian < n / 2) {
                 // Few enough median-valued points, use two-way splitting.
-                splitInTwo(from, until, median, obj, smallerThanMedian < largerThanMedian, objMin, objMax);
+                splitInTwo(from, from, until, median, obj, smallerThanMedian < largerThanMedian, objMin, objMax);
                 int middle = from + splitL;
                 int newMiddle = helperA(from, middle, obj);
-                int newUntil = helperB(from, newMiddle, middle, until, obj - 1);
+                int newUntil = helperB(from, newMiddle, middle, until, obj - 1, from, until);
                 newUntil = helperA(middle, newUntil, obj);
-                return mergeTwo(from, newMiddle, middle, newUntil);
+                return mergeTwo(from, from, newMiddle, middle, newUntil);
             } else {
                 // Too many median-valued points, use three-way splitting.
-                splitInThree(from, until, median, obj, objMin, objMax);
+                splitInThree(from, from, until, median, obj, objMin, objMax);
                 int startMid = from + splitL;
                 int startRight = startMid + splitM;
                 int newStartMid = helperA(from, startMid, obj);
-                int newStartRight = helperB(from, newStartMid, startMid, startRight, obj - 1);
+                int newStartRight = helperB(from, newStartMid, startMid, startRight, obj - 1, from, until);
                 newStartRight = helperA(startMid, newStartRight, obj - 1);
-                newStartRight = mergeTwo(from, newStartMid, startMid, newStartRight);
-                int newUntil = helperB(from, newStartRight, startRight, until, obj - 1);
+                newStartRight = mergeTwo(from, from, newStartMid, startMid, newStartRight);
+                int newUntil = helperB(from, newStartRight, startRight, until, obj - 1, from, until);
                 newUntil = helperA(startRight, newUntil, obj);
-                return mergeTwo(from, newStartRight, startRight, newUntil);
+                return mergeTwo(from, from, newStartRight, startRight, newUntil);
             }
         }
     }
@@ -410,10 +410,14 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         throw new UnsupportedOperationException("helperBHook not yet implemented");
     }
 
-    private int helperBMain(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj) {
+    private int helperBMain(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj, int tempFrom, int tempUntil) {
+        if (tempUntil - tempFrom < goodUntil - goodFrom + weakUntil - weakFrom) {
+            throw new AssertionError();
+        }
+
         int goodN = goodUntil - goodFrom;
         int weakN = weakUntil - weakFrom;
-        if (weakN == 0) {
+        if (goodN == 0 || weakN == 0) {
             return weakUntil;
         }
 
@@ -425,46 +429,29 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         double weakMaxObj = medianFinder.getLastMedianConsumptionMax();
         double weakMinObj = medianFinder.getLastMedianConsumptionMin();
         if (goodMaxObj <= weakMinObj) {
-            return helperB(goodFrom, goodUntil, weakFrom, weakUntil, obj - 1);
+            return helperB(goodFrom, goodUntil, weakFrom, weakUntil, obj - 1, tempFrom, tempUntil);
         } else {
             double median = medianFinder.findMedian();
-            int totalSmallerThanMedian = medianFinder.howManySmallerThanMedian();
-            int totalLargerThanMedian = medianFinder.howManyLargerThanMedian();
-            int totalEqualToMedian = (goodN + weakN) - totalLargerThanMedian - totalSmallerThanMedian;
-            if (totalEqualToMedian < (goodN + weakN) / 2) {
-                // Few enough median-valued points, use two-way splitting.
-                boolean leanLeft = totalSmallerThanMedian < totalLargerThanMedian;
-                splitInTwo(goodFrom, goodUntil, median, obj, leanLeft, goodMinObj, goodMaxObj);
-                int goodMid = goodFrom + splitL;
-                splitInTwo(weakFrom, weakUntil, median, obj, leanLeft, weakMinObj, weakMaxObj);
-                int weakMid = weakFrom + splitL;
+            splitInThree(tempFrom, goodFrom, goodUntil, median, obj, goodMinObj, goodMaxObj);
+            int goodMidL = goodFrom + splitL;
+            int goodMidR = goodMidL + splitM;
+            splitInThree(tempFrom, weakFrom, weakUntil, median, obj, weakMinObj, weakMaxObj);
+            int weakMidL = weakFrom + splitL;
+            int weakMidR = weakMidL + splitM;
+            int tempMid = (tempFrom + tempUntil) >>> 1;
 
-                int newWeakMid = helperB(goodFrom, goodMid, weakFrom, weakMid, obj);
-                int newWeakUntil = helperB(goodMid, goodUntil, weakMid, weakUntil, obj);
-                newWeakUntil = helperB(goodFrom, goodMid, weakMid, newWeakUntil, obj - 1);
-                mergeTwo(goodFrom, goodMid, goodMid, goodUntil);
-                return mergeTwo(weakFrom, newWeakMid, weakMid, newWeakUntil);
-            } else {
-                // Too many median-valued points, use three-way splitting.
-                splitInThree(goodFrom, goodUntil, median, obj, goodMinObj, goodMaxObj);
-                int goodMidL = goodFrom + splitL;
-                int goodMidR = goodMidL + splitM;
-                splitInThree(weakFrom, weakUntil, median, obj, weakMinObj, weakMaxObj);
-                int weakMidL = weakFrom + splitL;
-                int weakMidR = weakMidL + splitM;
+            int newWeakMidL = helperB(goodFrom, goodMidL, weakFrom, weakMidL, obj, tempFrom, tempMid);
+            int newWeakUntil = helperB(goodMidR, goodUntil, weakMidR, weakUntil, obj, tempMid, tempUntil);
 
-                int newWeakMidL = helperB(goodFrom, goodMidL, weakFrom, weakMidL, obj);
-                int newWeakUntil = helperB(goodMidR, goodUntil, weakMidR, weakUntil, obj);
-                mergeTwo(goodFrom, goodMidL, goodMidL, goodMidR);
-                newWeakUntil = mergeTwo(weakMidL, weakMidR, weakMidR, newWeakUntil);
-                newWeakUntil = helperB(goodFrom, goodMidR, weakMidL, newWeakUntil, obj - 1);
-                mergeTwo(goodFrom, goodMidR, goodMidR, goodUntil);
-                return mergeTwo(weakFrom, newWeakMidL, weakMidL, newWeakUntil);
-            }
+            mergeTwo(tempFrom, goodFrom, goodMidL, goodMidL, goodMidR);
+            newWeakUntil = mergeTwo(tempFrom, weakMidL, weakMidR, weakMidR, newWeakUntil);
+            newWeakUntil = helperB(goodFrom, goodMidR, weakMidL, newWeakUntil, obj - 1, tempFrom, tempUntil);
+            mergeTwo(tempFrom, goodFrom, goodMidR, goodMidR, goodUntil);
+            return mergeTwo(tempFrom, weakFrom, newWeakMidL, weakMidL, newWeakUntil);
         }
     }
 
-    private int helperB(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj) {
+    private int helperB(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj, int tempFrom, int tempUntil) {
         int goodN = goodUntil - goodFrom;
         int weakN = weakUntil - weakFrom;
         if (goodN > 0 && weakN > 0) {
@@ -477,7 +464,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
             } else if (helperBHookCondition(goodFrom, goodUntil, weakFrom, weakUntil, obj)) {
                 return helperBHook(goodFrom, goodUntil, weakFrom, weakUntil, obj);
             } else {
-                return helperBMain(goodFrom, goodUntil, weakFrom, weakUntil, obj);
+                return helperBMain(goodFrom, goodUntil, weakFrom, weakUntil, obj, tempFrom, tempUntil);
             }
         } else {
             return weakUntil;
