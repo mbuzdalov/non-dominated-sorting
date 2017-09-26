@@ -471,8 +471,8 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
                 int weakMid = weakFrom + splitL;
 
                 int newWeakMid = helperB(goodFrom, goodMid, weakFrom, weakMid, obj);
-                int newWeakUntil = helperB(goodFrom, goodMid, weakMid, weakUntil, obj - 1);
-                newWeakUntil = helperB(goodMid, goodUntil, weakMid, newWeakUntil, obj);
+                int newWeakUntil = helperB(goodMid, goodUntil, weakMid, weakUntil, obj);
+                newWeakUntil = helperB(goodFrom, goodMid, weakMid, newWeakUntil, obj - 1);
                 mergeTwo(goodFrom, goodMid, goodMid, goodUntil);
                 return mergeTwo(weakFrom, newWeakMid, weakMid, newWeakUntil);
             } else {
