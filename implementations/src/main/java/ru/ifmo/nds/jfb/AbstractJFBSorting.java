@@ -20,7 +20,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
     private int[] internalIndices;
     private double[] lastFrontOrdinates;
 
-    private MedianFinder medianFinder;
+    private double[] medianSwap;
     private RankQueryStructure rankQuery;
     private int[] splitScratchM, splitScratchR;
 
@@ -32,7 +32,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         super(maximumPoints, maximumDimension);
 
         sorter = new DoubleArraySorter(maximumPoints);
-        medianFinder = new MedianFinder(maximumPoints);
+        medianSwap = new double[maximumPoints];
         indices = new int[maximumPoints];
         ranks = new int[maximumPoints];
         points = new double[maximumPoints][];
@@ -48,7 +48,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
     @Override
     protected void closeImpl() throws Exception {
         sorter = null;
-        medianFinder = null;
+        medianSwap = null;
         indices = null;
         ranks = null;
         points = null;
@@ -283,16 +283,15 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
 
     private int helperAMain(int from, int until, int obj) {
         int n = until - from;
-        medianFinder.resetMedian();
-        medianFinder.consumeDataForMedian(transposedPoints[obj], indices, from, until);
-        double objMin = medianFinder.getLastMedianConsumptionMin();
-        double objMax = medianFinder.getLastMedianConsumptionMax();
+        ArrayHelper.transplant(transposedPoints[obj], indices, from, until, medianSwap, from);
+        double objMin = ArrayHelper.min(medianSwap, from, until);
+        double objMax = ArrayHelper.max(medianSwap, from, until);
         if (objMin == objMax) {
             return helperA(from, until, obj - 1);
         } else {
-            double median = medianFinder.findMedian();
-            int smallerThanMedian = medianFinder.howManySmallerThanMedian();
-            int largerThanMedian = medianFinder.howManyLargerThanMedian();
+            double median = ArrayHelper.destructiveMedian(medianSwap, from, until);
+            int smallerThanMedian = ArrayHelper.countSmaller(medianSwap, from, until, median);
+            int largerThanMedian = ArrayHelper.countGreater(medianSwap, from, until, median);
             int equalToMedian = n - smallerThanMedian - largerThanMedian;
             if (equalToMedian < n / 2) {
                 // Few enough median-valued points, use two-way splitting.
@@ -421,17 +420,16 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
             return weakUntil;
         }
 
-        medianFinder.resetMedian();
-        medianFinder.consumeDataForMedian(transposedPoints[obj], indices, goodFrom, goodUntil);
-        double goodMaxObj = medianFinder.getLastMedianConsumptionMax();
-        double goodMinObj = medianFinder.getLastMedianConsumptionMin();
-        medianFinder.consumeDataForMedian(transposedPoints[obj], indices, weakFrom, weakUntil);
-        double weakMaxObj = medianFinder.getLastMedianConsumptionMax();
-        double weakMinObj = medianFinder.getLastMedianConsumptionMin();
+        int medianGood = ArrayHelper.transplant(transposedPoints[obj], indices, goodFrom, goodUntil, medianSwap, tempFrom);
+        double goodMaxObj = ArrayHelper.max(medianSwap, tempFrom, medianGood);
+        double goodMinObj = ArrayHelper.min(medianSwap, tempFrom, medianGood);
+        int medianWeak = ArrayHelper.transplant(transposedPoints[obj], indices, weakFrom, weakUntil, medianSwap, medianGood);
+        double weakMaxObj = ArrayHelper.max(medianSwap, medianGood, medianWeak);
+        double weakMinObj = ArrayHelper.min(medianSwap, medianGood, medianWeak);
         if (goodMaxObj <= weakMinObj) {
             return helperB(goodFrom, goodUntil, weakFrom, weakUntil, obj - 1, tempFrom, tempUntil);
         } else {
-            double median = medianFinder.findMedian();
+            double median = ArrayHelper.destructiveMedian(medianSwap, tempFrom, medianWeak);
             splitInThree(tempFrom, goodFrom, goodUntil, median, obj, goodMinObj, goodMaxObj);
             int goodMidL = goodFrom + splitL;
             int goodMidR = goodMidL + splitM;
