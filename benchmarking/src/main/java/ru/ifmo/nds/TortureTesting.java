@@ -26,8 +26,35 @@ public class TortureTesting {
         return rv;
     }
 
+    private static void printTest(int points, int dimension, double[][] instance, int[] reference) {
+        System.out.println("        groupCheck(new double[][] {");
+        for (int i = 0; i < points; ++i) {
+            System.out.print("                {");
+            for (int j = 0; j < dimension; ++j) {
+                System.out.print(instance[i][j]);
+                if (j + 1 != dimension) {
+                    System.out.print(", ");
+                } else {
+                    System.out.println("},");
+                }
+            }
+        }
+        System.out.println("        }, new int[] {");
+        System.out.print("                ");
+        for (int i = 0; i < points; ++i) {
+            System.out.print(reference[i]);
+            if (i + 1 != points) {
+                System.out.print(",");
+            } else {
+                System.out.println();
+            }
+        }
+        System.out.println("        });");
+
+    }
+
     public static void main(String[] args) throws IOException {
-        int maxPoints = 10000;
+        int maxPoints = 1500;
         int maxDimension = 20;
         List<NonDominatedSortingFactory> sortingFactories = Arrays.asList(
                 FastNonDominatedSorting.getOriginalVersion(),
@@ -74,6 +101,7 @@ public class TortureTesting {
                 } else {
                     for (int i = 0; i < points; ++i) {
                         if (reference[i] != ranks[i]) {
+                            printTest(points, dimension, instance, reference);
                             throw new AssertionError("Ranks do not match: index " + i
                                     + " expected " + reference[i]
                                     + " found " + ranks[i]);
