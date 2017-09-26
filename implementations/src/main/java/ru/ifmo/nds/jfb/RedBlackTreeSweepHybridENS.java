@@ -26,27 +26,27 @@ public class RedBlackTreeSweepHybridENS extends RedBlackTreeSweep {
 
     private int ensFindRank(int index, int maxObj) {
         int curr = ensFirst;
-        int lastDominating = -1;
+        int dominatingIndex = -1;
         int pointRank = ranks[index];
-        while (curr != -1) {
-            if (ensRank[curr] >= pointRank) {
-                boolean dominates = false;
-                int[] ensCurrIndices = ensIndices[curr];
-                for (int i = ensSize[curr] - 1; i >= 0; --i) {
-                    if (strictlyDominatesAssumingNotSame(ensCurrIndices[i], index, maxObj)) {
-                        dominates = true;
-                        break;
-                    }
-                }
-                if (dominates) {
-                    lastDominating = curr;
+        lastCurr = -1;
+        lastIndex = index;
+        while (curr != -1 && ensRank[curr] >= pointRank) {
+            boolean dominates = false;
+            int[] ensCurrIndices = ensIndices[curr];
+            for (int i = ensSize[curr] - 1; i >= 0; --i) {
+                if (strictlyDominatesAssumingNotSame(ensCurrIndices[i], index, maxObj)) {
+                    dominates = true;
+                    break;
                 }
             }
+            if (dominates) {
+                dominatingIndex = curr;
+                break;
+            }
+            lastCurr = curr;
             curr = ensNext[curr];
         }
-        lastCurr = lastDominating;
-        lastIndex = index;
-        return lastDominating == -1 ? 0 : ensRank[lastDominating] + 1;
+        return dominatingIndex == -1 ? 0 : ensRank[dominatingIndex] + 1;
     }
 
     private int ensCreateNewRow(int index, int pointRank, int next) {
@@ -59,21 +59,28 @@ public class RedBlackTreeSweepHybridENS extends RedBlackTreeSweep {
 
     private void ensInsertPoint(int index) {
         int pointRank = ranks[index];
-        if (ensFirst == -1 || ensRank[ensFirst] > pointRank) {
+        if (ensFirst == -1 || ensRank[ensFirst] < pointRank) {
             ensFirst = ensCreateNewRow(index, pointRank, ensFirst);
         } else if (pointRank == ensRank[ensFirst]) {
             ensIndices[ensFirst][ensSize[ensFirst]++] = index;
         } else {
             int prev = index == lastIndex && lastCurr >= 0 ? lastCurr : ensFirst;
-            int next = ensNext[prev];
-            while (next != -1 && ensRank[next] < pointRank) {
-                prev = next;
-                next = ensNext[next];
-            }
-            if (next != -1 && ensRank[next] == pointRank) {
-                ensIndices[next][ensSize[next]++] = index;
+            if (ensRank[prev] == pointRank) {
+                ensIndices[prev][ensSize[prev]++] = index;
             } else {
-                ensNext[prev] = ensCreateNewRow(index, pointRank, next);
+                int next = ensNext[prev];
+                while (next != -1 && ensRank[next] > pointRank) {
+                    if (ensRank[next] >= ensRank[prev]) {
+                        throw new AssertionError();
+                    }
+                    prev = next;
+                    next = ensNext[next];
+                }
+                if (next != -1 && ensRank[next] == pointRank) {
+                    ensIndices[next][ensSize[next]++] = index;
+                } else {
+                    ensNext[prev] = ensCreateNewRow(index, pointRank, next);
+                }
             }
         }
     }
