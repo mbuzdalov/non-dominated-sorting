@@ -12,12 +12,10 @@ public final class RedBlackRankQueryStructure extends RankQueryStructure {
     private final Node[] allNodes;
     private Node root;
     private int size;
-    private final Node[] nodesByRank;
 
     public RedBlackRankQueryStructure(int maximumPoints) {
         allNodes = new Node[maximumPoints];
         root = null;
-        nodesByRank = new Node[maximumPoints];
         size = 0;
     }
 
@@ -36,10 +34,7 @@ public final class RedBlackRankQueryStructure extends RankQueryStructure {
 
     @Override
     public void put(double key, int value) {
-        Node place = nodesByRank[value];
-        if (place == null) {
-            place = minNodeAfterExactByValue(root, value);
-        }
+        Node place = minNodeAfterExactByValue(root, value);
         if (place == null || place.key > key) {
             Node insertionHint = null;
             if (place == null) {
@@ -67,12 +62,6 @@ public final class RedBlackRankQueryStructure extends RankQueryStructure {
 
     @Override
     public int getMaximumWithKeyAtMost(double key, int minimumMeaningfulAnswer) {
-        if (minimumMeaningfulAnswer >= 0 && size > 0) {
-            Node atMin = nodesByRank[Math.min(minimumMeaningfulAnswer, size - 1)];
-            if (atMin != null && atMin.key > key) {
-                return minimumMeaningfulAnswer - 1;
-            }
-        }
         Node q = maxNodeBeforeExact(root, key);
         return q == null ? -1 : q.value;
     }
@@ -101,19 +90,7 @@ public final class RedBlackRankQueryStructure extends RankQueryStructure {
     }
 
     private void setValue(Node node, int value) {
-        if (node.value != -1) {
-            if (nodesByRank[node.value] != node) {
-                throw new AssertionError();
-            }
-            nodesByRank[node.value] = null;
-        }
         node.value = value;
-        if (value != -1) {
-            if (nodesByRank[value] != null) {
-                throw new AssertionError();
-            }
-            nodesByRank[value] = node;
-        }
     }
 
     private Node newNode(double key, int value, Node parent) {
