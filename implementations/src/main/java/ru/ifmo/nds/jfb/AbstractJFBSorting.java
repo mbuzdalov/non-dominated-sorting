@@ -9,11 +9,11 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
     // Shared resources
     int[] indices;
     int[] ranks;
-    int maximalMeaningfulRank;
 
-    // Data which is immutable throughout the sorting.
+    // Data which is immutable throughout the actual sorting.
     private double[][] points;
     private double[][] transposedPoints;
+    int maximalMeaningfulRank;
 
     // This is used in preparation phase or in 2D-only sweep.
     private DoubleArraySorter sorter;
@@ -140,9 +140,9 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
     private int splitInTwo(int tempFrom, int from, int until, double median, int obj, boolean equalToLeft, double minVal, double maxVal) {
         if (minVal == median && maxVal == median) {
             return equalToLeft ? until : from;
-        } else if (minVal > median || !equalToLeft && minVal >= median) {
+        } else if (minVal > median || !equalToLeft && minVal == median) {
             return from;
-        } else if (maxVal < median || equalToLeft && maxVal <= median) {
+        } else if (maxVal < median || equalToLeft && maxVal == median) {
             return until;
         } else {
             int left = from, right = tempFrom;
