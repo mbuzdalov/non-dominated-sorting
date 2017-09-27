@@ -3,10 +3,17 @@ package ru.ifmo.nds.jfb;
 public class RedBlackTreeSweepHybridENS extends RedBlackTreeSweep {
     private static final int MAX_SIZE = 400;
 
-    private ThreadLocal<ENSHelper> ensHelper = ThreadLocal.withInitial(ENSHelper::new);
+    // We have to address Java 7, so leave this as is for a while.
+    @SuppressWarnings("AnonymousHasLambdaAlternative")
+    private ThreadLocal<ENSHelper> ensHelper = new ThreadLocal<ENSHelper>() {
+        @Override
+        protected ENSHelper initialValue() {
+            return new ENSHelper();
+        }
+    };
 
-    public RedBlackTreeSweepHybridENS(int maximumPoints, int maximumDimension) {
-        super(maximumPoints, maximumDimension);
+    public RedBlackTreeSweepHybridENS(int maximumPoints, int maximumDimension, int allowedThreads) {
+        super(maximumPoints, maximumDimension, allowedThreads);
     }
 
     private final class ENSHelper {
@@ -93,7 +100,7 @@ public class RedBlackTreeSweepHybridENS extends RedBlackTreeSweep {
 
     @Override
     public String getName() {
-        return "Jensen-Fortin-Buzdalov sorting (tree sweep, hybrid with ENS)";
+        return "Jensen-Fortin-Buzdalov sorting, " + getThreadDescription() + " (tree sweep, hybrid with ENS)";
     }
 
     @Override

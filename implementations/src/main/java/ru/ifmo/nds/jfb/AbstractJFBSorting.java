@@ -1,11 +1,17 @@
 package ru.ifmo.nds.jfb;
 
 import java.util.Arrays;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.ForkJoinTask;
+import java.util.concurrent.RecursiveAction;
+import java.util.concurrent.RecursiveTask;
 
 import ru.ifmo.nds.NonDominatedSorting;
 import ru.ifmo.nds.util.*;
 
 public abstract class AbstractJFBSorting extends NonDominatedSorting {
+    private static final int FORK_JOIN_THRESHOLD = 400;
+
     // Shared resources
     int[] indices;
     int[] ranks;
@@ -25,8 +31,19 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
     private RankQueryStructure rankQuery;
     private int[] splitScratchM, splitScratchR;
 
-    AbstractJFBSorting(int maximumPoints, int maximumDimension) {
+    private ForkJoinPool pool;
+
+    private final int allowedThreads;
+
+    AbstractJFBSorting(int maximumPoints, int maximumDimension, int allowedThreads) {
         super(maximumPoints, maximumDimension);
+
+        if (allowedThreads == 1) {
+            pool = null; // current thread only execution
+        } else {
+            pool = allowedThreads > 1 ? new ForkJoinPool(allowedThreads) : new ForkJoinPool();
+        }
+        this.allowedThreads = allowedThreads > 0 ? allowedThreads : -1;
 
         sorter = new DoubleArraySorter(maximumPoints);
         medianSwap = new double[maximumPoints];
@@ -56,12 +73,17 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         lastFrontOrdinates = null;
         splitScratchM = null;
         splitScratchR = null;
+
+        if (pool != null) {
+            pool.shutdown();
+            pool = null;
+        }
     }
 
     @Override
     protected final void sortChecked(double[][] points, int[] ranks, int maximalMeaningfulRank) {
-        int n = points.length;
-        int dim = points[0].length;
+        final int n = points.length;
+        final int dim = points[0].length;
         Arrays.fill(ranks, 0);
         ArrayHelper.fillIdentity(internalIndices, n);
         sorter.lexicographicalSort(points, internalIndices, 0, n, dim);
@@ -83,7 +105,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         } else {
             // 3: General case.
             // 3.1: Moving points in a sorted order to internal structures
-            int newN = DoubleArraySorter.retainUniquePoints(points, internalIndices, this.points, ranks);
+            final int newN = DoubleArraySorter.retainUniquePoints(points, internalIndices, this.points, ranks);
             Arrays.fill(this.ranks, 0, newN, 0);
             ArrayHelper.fillIdentity(this.indices, newN);
 
@@ -95,7 +117,17 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
             }
 
             // 3.3: Calling the actual sorting
-            helperA(0, newN, dim - 1);
+            if (pool == null) {
+                helperA(0, newN, dim - 1);
+            } else {
+                RecursiveAction action = new RecursiveAction() {
+                    @Override
+                    protected void compute() {
+                        helperA(0, newN, dim - 1);
+                    }
+                };
+                pool.invoke(action);
+            }
 
             // 3.4: Applying the results back. After that, the argument "ranks" array stops being abused.
             for (int i = 0; i < n; ++i) {
@@ -435,8 +467,14 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
             int weakMidR = weakSplit.startRight;
             int tempMid = (tempFrom + tempUntil) >>> 1;
 
-            int newWeakMidL = helperB(goodFrom, goodMidL, weakFrom, weakMidL, obj, tempFrom, tempMid);
+            ForkJoinTask<Integer> newWeakMidLTask = null;
+            if (pool != null && goodMidL - goodFrom + weakMidL - weakFrom > FORK_JOIN_THRESHOLD) {
+                newWeakMidLTask = helperBAsync(goodFrom, goodMidL, weakFrom, weakMidL, obj, tempFrom, tempMid).fork();
+            }
             int newWeakUntil = helperB(goodMidR, goodUntil, weakMidR, weakUntil, obj, tempMid, tempUntil);
+            int newWeakMidL = newWeakMidLTask != null
+                    ? newWeakMidLTask.join()
+                    : helperB(goodFrom, goodMidL, weakFrom, weakMidL, obj, tempFrom, tempMid);
 
             mergeTwo(tempFrom, goodFrom, goodMidL, goodMidL, goodMidR);
             newWeakUntil = mergeTwo(tempFrom, weakMidL, weakMidR, weakMidR, newWeakUntil);
@@ -444,6 +482,18 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
             mergeTwo(tempFrom, goodFrom, goodMidR, goodMidR, goodUntil);
             return mergeTwo(tempFrom, weakFrom, newWeakMidL, weakMidL, newWeakUntil);
         }
+    }
+
+    private RecursiveTask<Integer> helperBAsync(final int goodFrom, final int goodUntil,
+                                                final int weakFrom, final int weakUntil,
+                                                final int obj,
+                                                final int tempFrom, final int tempUntil) {
+        return new RecursiveTask<Integer>() {
+            @Override
+            protected Integer compute() {
+                return helperB(goodFrom, goodUntil, weakFrom, weakUntil, obj, tempFrom, tempUntil);
+            }
+        };
     }
 
     private int helperB(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj, int tempFrom, int tempUntil) {
@@ -538,5 +588,9 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
             this.startMid = startMid;
             this.startRight = startRight;
         }
+    }
+
+    String getThreadDescription() {
+        return allowedThreads == -1 ? "unlimited threads" : allowedThreads + " thread(s)";
     }
 }

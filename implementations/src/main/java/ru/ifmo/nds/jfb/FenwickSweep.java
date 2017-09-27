@@ -4,8 +4,8 @@ import ru.ifmo.nds.util.FenwickRankQueryStructure;
 import ru.ifmo.nds.util.RankQueryStructure;
 
 public class FenwickSweep extends AbstractJFBSorting {
-    public FenwickSweep(int maximumPoints, int maximumDimension) {
-        super(maximumPoints, maximumDimension);
+    public FenwickSweep(int maximumPoints, int maximumDimension, int allowedThreads) {
+        super(maximumPoints, maximumDimension, allowedThreads);
     }
 
     @Override
@@ -15,7 +15,7 @@ public class FenwickSweep extends AbstractJFBSorting {
 
     @Override
     public String getName() {
-        return "Jensen-Fortin-Buzdalov sorting (Fenwick sweep)";
+        return "Jensen-Fortin-Buzdalov sorting, " + getThreadDescription() + " (Fenwick sweep)";
     }
 
 }

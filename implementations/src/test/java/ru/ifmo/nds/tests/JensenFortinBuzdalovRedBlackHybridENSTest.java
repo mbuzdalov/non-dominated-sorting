@@ -6,6 +6,6 @@ import ru.ifmo.nds.NonDominatedSortingFactory;
 public class JensenFortinBuzdalovRedBlackHybridENSTest extends CorrectnessTestsBase {
     @Override
     protected NonDominatedSortingFactory getFactory() {
-        return JensenFortinBuzdalov.getRedBlackTreeSweepHybridENSImplementation();
+        return JensenFortinBuzdalov.getRedBlackTreeSweepHybridENSImplementation(1);
     }
 }

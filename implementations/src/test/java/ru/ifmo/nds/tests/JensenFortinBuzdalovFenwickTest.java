@@ -6,6 +6,6 @@ import ru.ifmo.nds.NonDominatedSortingFactory;
 public class JensenFortinBuzdalovFenwickTest extends CorrectnessTestsBase {
     @Override
     protected NonDominatedSortingFactory getFactory() {
-        return JensenFortinBuzdalov.getFenwickSweepImplementation();
+        return JensenFortinBuzdalov.getFenwickSweepImplementation(1);
     }
 }

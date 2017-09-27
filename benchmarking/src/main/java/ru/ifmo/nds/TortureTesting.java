@@ -67,10 +67,10 @@ public class TortureTesting {
                 ENS.getENS_BS(),
                 ENS.getENS_SS(),
                 FastNonDominatedSorting.getLinearMemoryImplementation(),
-                JensenFortinBuzdalov.getFenwickSweepImplementation(),
-                JensenFortinBuzdalov.getRedBlackTreeSweepImplementation(),
-                JensenFortinBuzdalov.getRedBlackTreeSweepHybridFNDSImplementation(),
-                JensenFortinBuzdalov.getRedBlackTreeSweepHybridENSImplementation(),
+                JensenFortinBuzdalov.getFenwickSweepImplementation(-1),
+                JensenFortinBuzdalov.getRedBlackTreeSweepImplementation(-1),
+                JensenFortinBuzdalov.getRedBlackTreeSweepHybridFNDSImplementation(-1),
+                JensenFortinBuzdalov.getRedBlackTreeSweepHybridENSImplementation(-1),
                 BestOrderSort.getProteekImplementation(),
                 BestOrderSort.getImprovedImplementation()
         );

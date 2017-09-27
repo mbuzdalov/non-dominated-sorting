@@ -8,24 +8,19 @@ import ru.ifmo.nds.jfb.RedBlackTreeSweepHybridLinearNDS;
 public class JensenFortinBuzdalov {
     private JensenFortinBuzdalov() {}
 
-    private static final NonDominatedSortingFactory FENWICK_SWEEP = FenwickSweep::new;
-    private static final NonDominatedSortingFactory RBTREE_SWEEP = RedBlackTreeSweep::new;
-    private static final NonDominatedSortingFactory RBTREE_SWEEP_FNDS = RedBlackTreeSweepHybridLinearNDS::new;
-    private static final NonDominatedSortingFactory RBTREE_SWEEP_ENS = RedBlackTreeSweepHybridENS::new;
-
-    public static NonDominatedSortingFactory getRedBlackTreeSweepImplementation() {
-        return RBTREE_SWEEP;
+    public static NonDominatedSortingFactory getRedBlackTreeSweepImplementation(int allowedThreads) {
+        return (p, d) -> new RedBlackTreeSweep(p, d, allowedThreads);
     }
 
-    public static NonDominatedSortingFactory getFenwickSweepImplementation() {
-        return FENWICK_SWEEP;
+    public static NonDominatedSortingFactory getFenwickSweepImplementation(int allowedThreads) {
+        return (p, d) -> new FenwickSweep(p, d, allowedThreads);
     }
 
-    public static NonDominatedSortingFactory getRedBlackTreeSweepHybridFNDSImplementation() {
-        return RBTREE_SWEEP_FNDS;
+    public static NonDominatedSortingFactory getRedBlackTreeSweepHybridFNDSImplementation(int allowedThreads) {
+        return (p, d) -> new RedBlackTreeSweepHybridLinearNDS(p, d, allowedThreads);
     }
 
-    public static NonDominatedSortingFactory getRedBlackTreeSweepHybridENSImplementation() {
-        return RBTREE_SWEEP_ENS;
+    public static NonDominatedSortingFactory getRedBlackTreeSweepHybridENSImplementation(int allowedThreads) {
+        return (p, d) -> new RedBlackTreeSweepHybridENS(p, d, allowedThreads);
     }
 }
