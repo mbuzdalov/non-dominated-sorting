@@ -218,6 +218,8 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
 
     private int sweepA(int from, int until) {
         double[] local = transposedPoints[1];
+        RankQueryStructure.RangeHandle rankQuery = this.rankQuery.createHandle(from, until);
+
         if (rankQuery.needsPossibleKeys()) {
             for (int i = from; i < until; ++i) {
                 rankQuery.addPossibleKey(local[indices[i]]);
@@ -241,8 +243,10 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         return kickOutOverflowedRanks(minOverflow, until);
     }
 
-    private int sweepB(int goodFrom, int goodUntil, int weakFrom, int weakUntil) {
+    private int sweepB(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int tempFrom, int tempUntil) {
         double[] local = transposedPoints[1];
+        RankQueryStructure.RangeHandle rankQuery = this.rankQuery.createHandle(tempFrom, tempUntil);
+
         if (rankQuery.needsPossibleKeys()) {
             for (int i = goodFrom; i < goodUntil; ++i) {
                 rankQuery.addPossibleKey(local[indices[i]]);
@@ -451,7 +455,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
             } else if (weakN == 1) {
                 return helperBWeak1(goodFrom, goodUntil, weakFrom, obj);
             } else if (obj == 1) {
-                return sweepB(goodFrom, goodUntil, weakFrom, weakUntil);
+                return sweepB(goodFrom, goodUntil, weakFrom, weakUntil, tempFrom, tempUntil);
             } else if (helperBHookCondition(goodFrom, goodUntil, weakFrom, weakUntil, obj)) {
                 return helperBHook(goodFrom, goodUntil, weakFrom, weakUntil, obj);
             } else {

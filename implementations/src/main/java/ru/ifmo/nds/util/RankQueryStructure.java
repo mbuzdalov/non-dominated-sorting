@@ -7,70 +7,80 @@ package ru.ifmo.nds.util;
  */
 public abstract class RankQueryStructure {
     /**
-     * Returns {@code true} if calls to {@link #addPossibleKey(double)} are necessary, {@code false} otherwise.
-     * @return whether adding possible keys is necessary.
+     * Creates a {@link RangeHandle} that uses the storage of the data structure and performs the actual operations.
+     * @param from the minimum inclusive index of the storage the handle is allowed to use
+     * @param until the maximum exclusive index of the storage the handle is allowed to use
+     * @return the range handle.
      */
-    public abstract boolean needsPossibleKeys();
+    public abstract RangeHandle createHandle(int from, int until);
 
-    /**
-     * Adds a possible key to the structure.
-     *
-     * This operation is possible in the preparation mode,
-     * and may throw exceptions in the initialized mode.
-     *
-     * @param key the possible key.
-     */
-    public abstract void addPossibleKey(double key);
+    public abstract static class RangeHandle {
+        /**
+         * Returns {@code true} if calls to {@link #addPossibleKey(double)} are necessary, {@code false} otherwise.
+         * @return whether adding possible keys is necessary.
+         */
+        public abstract boolean needsPossibleKeys();
 
-    /**
-     * Initializes the internals of the structure.
-     * Since this moment, and until the next call for {@link #clear()},
-     * the structure will be in an initialized mode.
-     */
-    public abstract void init();
+        /**
+         * Adds a possible key to the structure.
+         *
+         * This operation is possible in the preparation mode,
+         * and may throw exceptions in the initialized mode.
+         *
+         * @param key the possible key.
+         */
+        public abstract void addPossibleKey(double key);
 
-    /**
-     * Puts a value for the given key.
-     *
-     * This operation should be performed in the initialized mode,
-     * and may throw exceptions in the preparation mode.
-     *
-     * The value must be non-negative.
-     *
-     * @param key the key.
-     * @param value the value.
-     */
-    public abstract void put(double key, int value);
+        /**
+         * Initializes the internals of the structure.
+         * Since this moment, and until the next call for {@link #clear()},
+         * the structure will be in an initialized mode.
+         */
+        public abstract void init();
 
-    /**
-     * Returns a maximum value, among those which were added to the structure previously
-     * and which were associated with the key smaller than, or equal to, the given key.
-     *
-     * This function supports returning imprecise answers with greater speed.
-     * If one specifies the parameter {@code minimumMeaningfulAnswer} greater than {@code -1},
-     * the search may return faster when it encounters that the answer will be smaller than the given parameter.
-     * In this case, it will return {@code minimumMeaningfulAnswer - 1} or a smaller value.
-     *
-     * A safe value for {@code minimumMeaningfulAnswer} is -1; in this case, no information is lost.
-     *
-     * This operation should be performed in the initialized mode,
-     * and may throw exceptions in the preparation mode.
-     *
-     * @param key the key.
-     * @param minimumMeaningfulAnswer the minimum meaningful answer to return.
-     * @return the maximum found value for another key above this key.
-     */
-    public abstract int getMaximumWithKeyAtMost(double key, int minimumMeaningfulAnswer);
+        /**
+         * Puts a value for the given key.
+         *
+         * This operation should be performed in the initialized mode,
+         * and may throw exceptions in the preparation mode.
+         *
+         * The value must be non-negative.
+         *
+         * @param key the key.
+         * @param value the value.
+         */
+        public abstract void put(double key, int value);
 
-    /**
-     * Clears the existing mappings and moves the data structure to the preparation mode.
-     */
-    public abstract void clear();
+        /**
+         * Returns a maximum value, among those which were added to the structure previously
+         * and which were associated with the key smaller than, or equal to, the given key.
+         *
+         * This function supports returning imprecise answers with greater speed.
+         * If one specifies the parameter {@code minimumMeaningfulAnswer} greater than {@code -1},
+         * the search may return faster when it encounters that the answer will be smaller than the given parameter.
+         * In this case, it will return {@code minimumMeaningfulAnswer - 1} or a smaller value.
+         *
+         * A safe value for {@code minimumMeaningfulAnswer} is -1; in this case, no information is lost.
+         *
+         * This operation should be performed in the initialized mode,
+         * and may throw exceptions in the preparation mode.
+         *
+         * @param key the key.
+         * @param minimumMeaningfulAnswer the minimum meaningful answer to return.
+         * @return the maximum found value for another key above this key.
+         */
+        public abstract int getMaximumWithKeyAtMost(double key, int minimumMeaningfulAnswer);
 
-    /**
-     * Returns {@code true} if the data structure is in the initialized mode
-     * and {@code false} in the preparation mode.
-     * @return whether the data structure is in the initialized mode.
-     */
-    public abstract boolean isInitialized();
+        /**
+         * Clears the existing mappings and moves the data structure to the preparation mode.
+         */
+        public abstract void clear();
+
+        /**
+         * Returns {@code true} if the data structure is in the initialized mode
+         * and {@code false} in the preparation mode.
+         * @return whether the data structure is in the initialized mode.
+         */
+        public abstract boolean isInitialized();
+    }
 }

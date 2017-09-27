@@ -14,7 +14,7 @@ public abstract class RankQueryStructureTestsBase {
     public void randomSmokeTesting() {
         Random random = new Random();
         int upperBound = random.nextInt(100) + 100;
-        RankQueryStructure structure = createStructure(upperBound);
+        RankQueryStructure.RangeHandle structure = createStructure(upperBound).createHandle(0, upperBound);
         for (int times = 0; times < 1000; ++times) {
             int differentPoints = random.nextInt(upperBound) + 1;
 
