@@ -3,99 +3,31 @@ package ru.ifmo.nds.jfb;
 public class RedBlackTreeSweepHybridENS extends RedBlackTreeSweep {
     private static final int MAX_SIZE = 400;
 
-    // We have to address Java 7, so leave this as is for a while.
-    @SuppressWarnings("AnonymousHasLambdaAlternative")
-    private ThreadLocal<ENSHelper> ensHelper = new ThreadLocal<ENSHelper>() {
-        @Override
-        protected ENSHelper initialValue() {
-            return new ENSHelper();
-        }
-    };
+    private int[] sliceRank;
+    private int[] sliceSize;
+    private int[] sliceNext;
+    private int[] slicePoint;
+    private int[] pointIndex;
+    private int[] pointNext;
 
     public RedBlackTreeSweepHybridENS(int maximumPoints, int maximumDimension, int allowedThreads) {
         super(maximumPoints, maximumDimension, allowedThreads);
+        slicePoint = new int[maximumPoints];
+        sliceNext = new int[maximumPoints];
+        sliceSize = new int[maximumPoints];
+        sliceRank = new int[maximumPoints];
+        pointIndex = new int[maximumPoints];
+        pointNext = new int[maximumPoints];
     }
-
-    private final class ENSHelper {
-        private int[][] ensIndices = new int[MAX_SIZE][MAX_SIZE];
-        private int[] ensSize = new int[MAX_SIZE];
-        private int[] ensRank = new int[MAX_SIZE];
-        private int[] ensNext = new int[MAX_SIZE];
-        private int ensFirst, ensCount;
-        private int lastCurr, lastIndex;
-
-        void init() {
-            ensFirst = -1;
-            ensCount = 0;
-        }
-
-        int findRank(int index, int maxObj) {
-            int curr = ensFirst;
-            int dominatingIndex = -1;
-            int pointRank = ranks[index];
-            lastCurr = -1;
-            lastIndex = index;
-            while (curr != -1 && ensRank[curr] >= pointRank) {
-                boolean dominates = false;
-                int[] ensCurrIndices = ensIndices[curr];
-                for (int i = ensSize[curr] - 1; i >= 0; --i) {
-                    if (strictlyDominatesAssumingNotSame(ensCurrIndices[i], index, maxObj)) {
-                        dominates = true;
-                        break;
-                    }
-                }
-                if (dominates) {
-                    dominatingIndex = curr;
-                    break;
-                }
-                lastCurr = curr;
-                curr = ensNext[curr];
-            }
-            return dominatingIndex == -1 ? 0 : ensRank[dominatingIndex] + 1;
-        }
-
-        int createNewRow(int index, int pointRank, int next) {
-            ensRank[ensCount] = pointRank;
-            ensNext[ensCount] = next;
-            ensSize[ensCount] = 1;
-            ensIndices[ensCount][0] = index;
-            return ensCount++;
-        }
-
-        void insertPoint(int index) {
-            int pointRank = ranks[index];
-            if (ensFirst == -1 || ensRank[ensFirst] < pointRank) {
-                ensFirst = createNewRow(index, pointRank, ensFirst);
-            } else if (pointRank == ensRank[ensFirst]) {
-                ensIndices[ensFirst][ensSize[ensFirst]++] = index;
-            } else {
-                int prev = index == lastIndex && lastCurr >= 0 ? lastCurr : ensFirst;
-                if (ensRank[prev] == pointRank) {
-                    ensIndices[prev][ensSize[prev]++] = index;
-                } else {
-                    int next = ensNext[prev];
-                    while (next != -1 && ensRank[next] > pointRank) {
-                        if (ensRank[next] >= ensRank[prev]) {
-                            throw new AssertionError();
-                        }
-                        prev = next;
-                        next = ensNext[next];
-                    }
-                    if (next != -1 && ensRank[next] == pointRank) {
-                        ensIndices[next][ensSize[next]++] = index;
-                    } else {
-                        ensNext[prev] = createNewRow(index, pointRank, next);
-                    }
-                }
-            }
-        }
-    }
-
-
     @Override
     protected void closeImpl() throws Exception {
         super.closeImpl();
-        ensHelper = null;
+        slicePoint = null;
+        sliceNext = null;
+        sliceSize = null;
+        sliceRank = null;
+        pointIndex = null;
+        pointNext = null;
     }
 
     @Override
@@ -114,15 +46,20 @@ public class RedBlackTreeSweepHybridENS extends RedBlackTreeSweep {
 
     @Override
     protected int helperAHook(int from, int until, int obj) {
-        ENSHelper helper = ensHelper.get();
-        helper.init();
+        int sliceCount = 0;
+        int sliceFirst = -1;
+
         int minOverflow = until;
-        for (int i = from; i < until; ++i) {
+        for (int i = from, pointCount = 0; i < until; ++i) {
             int ii = indices[i];
-            int r = Math.max(ranks[ii], helper.findRank(ii, obj));
+            int r = Math.max(ranks[ii], findRank(ii, obj, sliceFirst, sliceCount));
             ranks[ii] = r;
             if (r <= maximalMeaningfulRank) {
-                helper.insertPoint(ii);
+                int ipr = insertPoint(ii, pointCount++, from, sliceFirst, sliceCount);
+                if (ipr >= 0) {
+                    ++sliceCount;
+                    sliceFirst = ipr;
+                }
             } else if (minOverflow > i) {
                 minOverflow = i;
             }
@@ -137,20 +74,85 @@ public class RedBlackTreeSweepHybridENS extends RedBlackTreeSweep {
 
     @Override
     protected int helperBHook(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj, int tempFrom, int tempUntil) {
-        ENSHelper helper = ensHelper.get();
-        helper.init();
+        int sliceCount = 0;
+        int sliceFirst = -1;
+
         int minOverflowed = weakUntil;
         for (int gi = goodFrom, wi = weakFrom; wi < weakUntil; ++wi) {
             while (gi < goodUntil && indices[gi] < indices[wi]) {
-                helper.insertPoint(indices[gi++]);
+                int ipr = insertPoint(indices[gi++], gi - goodFrom, tempFrom, sliceFirst, sliceCount);
+                if (ipr >= 0) {
+                    ++sliceCount;
+                    sliceFirst = ipr;
+                }
             }
             int ii = indices[wi];
-            int r = Math.max(ranks[ii], helper.findRank(ii, obj));
+            int r = Math.max(ranks[ii], findRank(ii, obj, sliceFirst, sliceCount));
             ranks[ii] = r;
             if (minOverflowed > wi && r > maximalMeaningfulRank) {
                 minOverflowed = wi;
             }
         }
         return kickOutOverflowedRanks(minOverflowed, weakUntil);
+    }
+
+    private boolean checkIfDominates(int index, int obj, int slice) {
+        int size = sliceSize[slice];
+        int point = slicePoint[slice];
+        for (int i = 0; i < size; ++i, point = pointNext[point]) {
+            if (strictlyDominatesAssumingNotSame(pointIndex[point], index, obj)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private int findRank(int index, int obj, int sliceFirst, int sliceCount) {
+        int existingRank = ranks[index];
+        for (int slice = sliceFirst, i = 0; i < sliceCount; ++i, slice = sliceNext[slice]) {
+            if (sliceRank[slice] < existingRank) {
+                return existingRank;
+            }
+            if (checkIfDominates(index, obj, slice)) {
+                return sliceRank[slice] + 1;
+            }
+        }
+        return existingRank;
+    }
+
+    // Returns:
+    //           -1 if sliceCount does not change
+    //   sliceFirst if sliceCount changes
+    private int insertPoint(int index, final int pointCount, int swapStart, int sliceFirst, int sliceCount) {
+        int rank = ranks[index];
+        int pointAddress = swapStart + pointCount;
+        pointIndex[pointAddress] = index;
+        int prevSlice = -1;
+        for (int slice = sliceFirst, i = 0; i < sliceCount; ++i, prevSlice = slice, slice = sliceNext[slice]) {
+            if (sliceRank[slice] == rank) {
+                pointNext[pointAddress] = slicePoint[slice];
+                slicePoint[slice] = pointAddress;
+                ++sliceSize[slice];
+                return -1;
+            }
+            if (sliceRank[slice] < rank) {
+                // create new slice between prevSlice and slice
+                break;
+            }
+        }
+        pointNext[pointAddress] = -1;
+        // creating new slice
+        int sliceAddress = swapStart + sliceCount;
+        sliceRank[sliceAddress] = rank;
+        sliceSize[sliceAddress] = 1;
+        slicePoint[sliceAddress] = pointAddress;
+        if (prevSlice != -1) {
+            sliceNext[sliceAddress] = sliceNext[prevSlice];
+            sliceNext[prevSlice] = sliceAddress;
+        } else {
+            sliceNext[sliceAddress] = sliceFirst;
+            sliceFirst = sliceAddress;
+        }
+        return sliceFirst;
     }
 }
