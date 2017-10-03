@@ -434,7 +434,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
     protected boolean helperBHookCondition(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj) {
         return false;
     }
-    protected int helperBHook(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj) {
+    protected int helperBHook(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj, int tempFrom, int tempUntil) {
         throw new UnsupportedOperationException("helperBHook not yet implemented");
     }
 
@@ -507,7 +507,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
             } else if (obj == 1) {
                 return sweepB(goodFrom, goodUntil, weakFrom, weakUntil, tempFrom, tempUntil);
             } else if (helperBHookCondition(goodFrom, goodUntil, weakFrom, weakUntil, obj)) {
-                return helperBHook(goodFrom, goodUntil, weakFrom, weakUntil, obj);
+                return helperBHook(goodFrom, goodUntil, weakFrom, weakUntil, obj, tempFrom, tempUntil);
             } else {
                 return helperBMain(goodFrom, goodUntil, weakFrom, weakUntil, obj, tempFrom, tempUntil);
             }

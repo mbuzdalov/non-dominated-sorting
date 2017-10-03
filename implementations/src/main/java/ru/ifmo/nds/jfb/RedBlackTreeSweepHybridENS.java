@@ -136,7 +136,7 @@ public class RedBlackTreeSweepHybridENS extends RedBlackTreeSweep {
     }
 
     @Override
-    protected int helperBHook(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj) {
+    protected int helperBHook(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj, int tempFrom, int tempUntil) {
         ENSHelper helper = ensHelper.get();
         helper.init();
         int minOverflowed = weakUntil;
