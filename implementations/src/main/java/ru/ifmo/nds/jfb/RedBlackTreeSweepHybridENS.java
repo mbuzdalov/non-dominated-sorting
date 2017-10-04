@@ -52,9 +52,8 @@ public class RedBlackTreeSweepHybridENS extends RedBlackTreeSweep {
         int minOverflow = until;
         for (int i = from, pointCount = 0; i < until; ++i) {
             int ii = indices[i];
-            int r = Math.max(ranks[ii], findRank(ii, obj, sliceFirst, sliceCount));
-            ranks[ii] = r;
-            if (r <= maximalMeaningfulRank) {
+            ranks[ii] = findRank(ii, obj, sliceFirst, sliceCount);
+            if (ranks[ii] <= maximalMeaningfulRank) {
                 int ipr = insertPoint(ii, pointCount++, from, sliceFirst, sliceCount);
                 if (ipr >= 0) {
                     ++sliceCount;
@@ -87,9 +86,8 @@ public class RedBlackTreeSweepHybridENS extends RedBlackTreeSweep {
                 }
             }
             int ii = indices[wi];
-            int r = Math.max(ranks[ii], findRank(ii, obj, sliceFirst, sliceCount));
-            ranks[ii] = r;
-            if (minOverflowed > wi && r > maximalMeaningfulRank) {
+            ranks[ii] = findRank(ii, obj, sliceFirst, sliceCount);
+            if (ranks[ii] > maximalMeaningfulRank && minOverflowed > wi) {
                 minOverflowed = wi;
             }
         }
