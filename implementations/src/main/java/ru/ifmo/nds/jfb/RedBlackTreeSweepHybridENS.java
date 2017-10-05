@@ -44,6 +44,31 @@ public class RedBlackTreeSweepHybridENS extends RedBlackTreeSweep {
         }
     }
 
+    private boolean checkIfDominatesA(int index, int obj, int slice) {
+        if (ranks[index] > sliceRank[slice]) {
+            return true;
+        }
+        int size = sliceSize[slice];
+        int point = slicePoint[slice];
+        for (int i = 0; i < size; ++i, point = pointNext[point]) {
+            if (strictlyDominatesAssumingNotSame(pointIndex[point], index, obj)) {
+                ranks[index] = 1 + sliceRank[slice];
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private int initNewSliceA(int sliceAddress, int nextSlice, int pointIndex, int pointAddress) {
+        sliceRank[sliceAddress] = ranks[pointIndex];
+        sliceSize[sliceAddress] = 1;
+        sliceNext[sliceAddress] = nextSlice;
+        slicePoint[sliceAddress] = pointAddress;
+        pointNext[pointAddress] = -1;
+
+        return sliceAddress;
+    }
+
     @Override
     protected int helperAHook(int from, int until, int obj) {
         int sliceCount = 0;
@@ -52,15 +77,34 @@ public class RedBlackTreeSweepHybridENS extends RedBlackTreeSweep {
         int minOverflow = until;
         for (int i = from, pointCount = 0; i < until; ++i) {
             int ii = indices[i];
-            ranks[ii] = findRank(ii, obj, sliceFirst, sliceCount);
-            if (ranks[ii] <= maximalMeaningfulRank) {
-                int ipr = insertPoint(ii, pointCount++, from, sliceFirst, sliceCount);
-                if (ipr >= 0) {
-                    ++sliceCount;
-                    sliceFirst = ipr;
+            if (sliceFirst == -1 || checkIfDominatesA(ii, obj, sliceFirst)) {
+                // the current point forms its own slice, which will have the maximum known rank.
+                if (ranks[ii] <= maximalMeaningfulRank) {
+                    int pointAddress = from + pointCount++;
+                    pointIndex[pointAddress] = ii;
+                    sliceFirst = initNewSliceA(from + sliceCount++, sliceFirst, ii, pointAddress);
+                } else if (minOverflow > i) {
+                    minOverflow = i;
                 }
-            } else if (minOverflow > i) {
-                minOverflow = i;
+            } else {
+                int prevSlice = sliceFirst, nextSlice = sliceNext[sliceFirst];
+                while (nextSlice != -1 && !checkIfDominatesA(ii, obj, nextSlice)) {
+                    prevSlice = nextSlice;
+                    nextSlice = sliceNext[nextSlice];
+                }
+
+                // our point is dominated by nextSlice (or is the best) ...
+                int pointAddress = from + pointCount++;
+                pointIndex[pointAddress] = ii;
+                if (ranks[ii] == sliceRank[prevSlice]) {
+                    // ... and its rank is exactly the rank of prevSlice
+                    pointNext[pointAddress] = slicePoint[prevSlice];
+                    slicePoint[prevSlice] = pointAddress;
+                    ++sliceSize[prevSlice];
+                } else {
+                    // ... and its rank is between prevSlice and nextSlice
+                    sliceNext[prevSlice] = initNewSliceA(from + sliceCount++, nextSlice, ii, pointAddress);
+                }
             }
         }
         return kickOutOverflowedRanks(minOverflow, until);
@@ -94,24 +138,13 @@ public class RedBlackTreeSweepHybridENS extends RedBlackTreeSweep {
         return kickOutOverflowedRanks(minOverflowed, weakUntil);
     }
 
-    private boolean checkIfDominates(int index, int obj, int slice) {
-        int size = sliceSize[slice];
-        int point = slicePoint[slice];
-        for (int i = 0; i < size; ++i, point = pointNext[point]) {
-            if (strictlyDominatesAssumingNotSame(pointIndex[point], index, obj)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     private int findRank(int index, int obj, int sliceFirst, int sliceCount) {
         int existingRank = ranks[index];
         for (int slice = sliceFirst, i = 0; i < sliceCount; ++i, slice = sliceNext[slice]) {
             if (sliceRank[slice] < existingRank) {
                 return existingRank;
             }
-            if (checkIfDominates(index, obj, slice)) {
+            if (checkIfDominatesA(index, obj, slice)) {
                 return sliceRank[slice] + 1;
             }
         }
