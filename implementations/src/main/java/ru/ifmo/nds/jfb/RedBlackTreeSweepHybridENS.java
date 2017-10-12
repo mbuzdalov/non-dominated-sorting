@@ -110,6 +110,38 @@ public class RedBlackTreeSweepHybridENS extends RedBlackTreeSweep {
         return kickOutOverflowedRanks(minOverflow, until);
     }
 
+    private void quickSortByRankIndex(int from, int to) {
+        int pivot = pointNext[pointIndex[(from + to) >>> 1]];
+        int pivotFirst = from, greaterFirst = to;
+
+        for (int i = from; i <= greaterFirst; ++i) {
+            int pi = pointIndex[i];
+            int value = pointNext[pi];
+            if (value == pivot) {
+                continue;
+            }
+            if (value < pivot) {
+                pointIndex[i] = pointIndex[pivotFirst];
+                pointIndex[pivotFirst++] = pi;
+            } else {
+                int pig = pointIndex[greaterFirst];
+                while (pointNext[pig] > pivot) {
+                    pig = pointIndex[--greaterFirst];
+                }
+                if (pointNext[pig] == pivot) {
+                    pointIndex[i] = pig;
+                } else {
+                    pointIndex[i] = pointIndex[pivotFirst];
+                    pointIndex[pivotFirst++] = pig;
+                }
+                pointIndex[greaterFirst--] = pi;
+            }
+        }
+
+        if (from < --pivotFirst) quickSortByRankIndex(from, pivotFirst);
+        if (++greaterFirst < to) quickSortByRankIndex(greaterFirst, to);
+    }
+
     @Override
     protected boolean helperBHookCondition(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj) {
         return helperAHookCondition(goodUntil - goodFrom + weakUntil - weakFrom, obj);
@@ -117,73 +149,69 @@ public class RedBlackTreeSweepHybridENS extends RedBlackTreeSweep {
 
     @Override
     protected int helperBHook(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj, int tempFrom, int tempUntil) {
-        int sliceCount = 0;
-        int sliceFirst = -1;
+        if (goodFrom == goodUntil || weakFrom == weakUntil) {
+            return weakUntil;
+        }
+        int tempLimit = tempFrom + goodUntil - goodFrom;
+        int sliceLast = tempFrom;
+
+        // Big warning: array names below mean really NOTHING.
+
+        // A complicated preparation in O(N log N), for N = goodUntil - goodFrom.
+        // First, collect ranks and indices into local arrays.
+        for (int gi = goodFrom, ti = tempFrom; gi < goodUntil; ++gi, ++ti) {
+            pointNext[ti] = ranks[indices[gi]];
+            pointIndex[ti] = ti;
+        }
+        // Second, sort the index array by the rank array
+        quickSortByRankIndex(tempFrom, tempLimit - 1);
+        // Third, compute the inverse permutation
+        for (int ti = tempFrom; ti < tempLimit; ++ti) {
+            slicePoint[pointIndex[ti]] = ti;
+        }
+        // Fourth, assign slice index to each point and compute slice-last indices
+        sliceRank[tempFrom] = sliceLast;
+        sliceSize[sliceLast] = tempFrom + 1;
+        for (int ti = tempFrom + 1; ti < tempLimit; ++ti) {
+            if (pointNext[pointIndex[ti]] != pointNext[pointIndex[ti - 1]]) {
+                int prevSize = sliceSize[sliceLast++];
+                sliceSize[sliceLast] = prevSize;
+            }
+            sliceRank[ti] = sliceLast;
+            ++sliceSize[sliceLast];
+        }
+        System.arraycopy(sliceSize, tempFrom, sliceNext, tempFrom, sliceLast + 1 - tempFrom);
 
         int minOverflowed = weakUntil;
         for (int gi = goodFrom, wi = weakFrom; wi < weakUntil; ++wi) {
             while (gi < goodUntil && indices[gi] < indices[wi]) {
-                int ipr = insertPoint(indices[gi++], gi - goodFrom, tempFrom, sliceFirst, sliceCount);
-                if (ipr >= 0) {
-                    ++sliceCount;
-                    sliceFirst = ipr;
-                }
+                int mySlice = sliceRank[slicePoint[gi - goodFrom + tempFrom]];
+                pointIndex[--sliceSize[mySlice]] = indices[gi];
+                ++gi;
             }
             int ii = indices[wi];
-            ranks[ii] = findRank(ii, obj, sliceFirst, sliceCount);
-            if (ranks[ii] > maximalMeaningfulRank && minOverflowed > wi) {
-                minOverflowed = wi;
+            int existingRank = ranks[ii];
+
+            dominationChecks:
+            for (int slice = sliceLast; slice >= tempFrom; --slice) {
+                int from = sliceSize[slice], until = sliceNext[slice];
+                if (from == until) {
+                    continue;
+                }
+                if (ranks[pointIndex[from]] < existingRank) {
+                    break;
+                }
+                for (int t = from; t < until; ++t) {
+                    int ti = pointIndex[t];
+                    if (strictlyDominatesAssumingNotSame(ti, ii, obj)) {
+                        if ((ranks[ii] = ranks[ti] + 1) > maximalMeaningfulRank && minOverflowed > wi) {
+                            minOverflowed = wi;
+                        }
+                        break dominationChecks;
+                    }
+                }
             }
         }
         return kickOutOverflowedRanks(minOverflowed, weakUntil);
-    }
-
-    private int findRank(int index, int obj, int sliceFirst, int sliceCount) {
-        int existingRank = ranks[index];
-        for (int slice = sliceFirst, i = 0; i < sliceCount; ++i, slice = sliceNext[slice]) {
-            if (sliceRank[slice] < existingRank) {
-                return existingRank;
-            }
-            if (checkIfDominatesA(index, obj, slice)) {
-                return sliceRank[slice] + 1;
-            }
-        }
-        return existingRank;
-    }
-
-    // Returns:
-    //           -1 if sliceCount does not change
-    //   sliceFirst if sliceCount changes
-    private int insertPoint(int index, final int pointCount, int swapStart, int sliceFirst, int sliceCount) {
-        int rank = ranks[index];
-        int pointAddress = swapStart + pointCount;
-        pointIndex[pointAddress] = index;
-        int prevSlice = -1;
-        for (int slice = sliceFirst, i = 0; i < sliceCount; ++i, prevSlice = slice, slice = sliceNext[slice]) {
-            if (sliceRank[slice] == rank) {
-                pointNext[pointAddress] = slicePoint[slice];
-                slicePoint[slice] = pointAddress;
-                ++sliceSize[slice];
-                return -1;
-            }
-            if (sliceRank[slice] < rank) {
-                // create new slice between prevSlice and slice
-                break;
-            }
-        }
-        pointNext[pointAddress] = -1;
-        // creating new slice
-        int sliceAddress = swapStart + sliceCount;
-        sliceRank[sliceAddress] = rank;
-        sliceSize[sliceAddress] = 1;
-        slicePoint[sliceAddress] = pointAddress;
-        if (prevSlice != -1) {
-            sliceNext[sliceAddress] = sliceNext[prevSlice];
-            sliceNext[prevSlice] = sliceAddress;
-        } else {
-            sliceNext[sliceAddress] = sliceFirst;
-            sliceFirst = sliceAddress;
-        }
-        return sliceFirst;
     }
 }
