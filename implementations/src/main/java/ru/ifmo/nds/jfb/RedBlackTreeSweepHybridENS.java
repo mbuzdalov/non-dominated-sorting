@@ -1,7 +1,8 @@
 package ru.ifmo.nds.jfb;
 
 public class RedBlackTreeSweepHybridENS extends RedBlackTreeSweep {
-    private static final int MAX_SIZE = 400;
+    private static final int MAX_SIZE = 200;
+    private static final int THRESHOLD_2 = Math.min(100, MAX_SIZE);
 
     private int[] sliceRank;
     private int[] sliceSize;
@@ -19,6 +20,7 @@ public class RedBlackTreeSweepHybridENS extends RedBlackTreeSweep {
         pointIndex = new int[maximumPoints];
         pointNext = new int[maximumPoints];
     }
+
     @Override
     protected void closeImpl() throws Exception {
         super.closeImpl();
@@ -39,7 +41,7 @@ public class RedBlackTreeSweepHybridENS extends RedBlackTreeSweep {
     protected boolean helperAHookCondition(int size, int obj) {
         switch (obj) {
             case 1: return false;
-            case 2: return size < 100;
+            case 2: return size < THRESHOLD_2;
             default: return size < MAX_SIZE;
         }
     }
@@ -147,6 +149,25 @@ public class RedBlackTreeSweepHybridENS extends RedBlackTreeSweep {
         return helperAHookCondition(goodUntil - goodFrom + weakUntil - weakFrom, obj);
     }
 
+    private boolean findRank(int sliceLast, int sliceFirst, int index, int existingRank, int obj) {
+        for (int slice = sliceLast; slice >= sliceFirst; --slice) {
+            int from = sliceSize[slice], until = sliceNext[slice];
+            if (from == until) {
+                continue;
+            }
+            if (ranks[pointIndex[from]] < existingRank) {
+                break;
+            }
+            for (int t = from; t < until; ++t) {
+                int ti = pointIndex[t];
+                if (strictlyDominatesAssumingNotSame(ti, index, obj)) {
+                    return (ranks[index] = ranks[ti] + 1) > maximalMeaningfulRank;
+                }
+            }
+        }
+        return false;
+    }
+
     @Override
     protected int helperBHook(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj, int tempFrom, int tempUntil) {
         if (goodFrom == goodUntil || weakFrom == weakUntil) {
@@ -191,25 +212,8 @@ public class RedBlackTreeSweepHybridENS extends RedBlackTreeSweep {
             }
             int ii = indices[wi];
             int existingRank = ranks[ii];
-
-            dominationChecks:
-            for (int slice = sliceLast; slice >= tempFrom; --slice) {
-                int from = sliceSize[slice], until = sliceNext[slice];
-                if (from == until) {
-                    continue;
-                }
-                if (ranks[pointIndex[from]] < existingRank) {
-                    break;
-                }
-                for (int t = from; t < until; ++t) {
-                    int ti = pointIndex[t];
-                    if (strictlyDominatesAssumingNotSame(ti, ii, obj)) {
-                        if ((ranks[ii] = ranks[ti] + 1) > maximalMeaningfulRank && minOverflowed > wi) {
-                            minOverflowed = wi;
-                        }
-                        break dominationChecks;
-                    }
-                }
+            if (findRank(sliceLast, tempFrom, ii, existingRank, obj) && minOverflowed > wi) {
+                minOverflowed = wi;
             }
         }
         return kickOutOverflowedRanks(minOverflowed, weakUntil);
