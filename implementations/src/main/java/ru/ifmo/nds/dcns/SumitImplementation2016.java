@@ -29,7 +29,7 @@ public class SumitImplementation2016 extends NonDominatedSorting {
     }
 
     @Override
-    protected void closeImpl() throws Exception {
+    protected void closeImpl() {
         arrSetNonDominatedFront = null;
         gamma = null;
     }
