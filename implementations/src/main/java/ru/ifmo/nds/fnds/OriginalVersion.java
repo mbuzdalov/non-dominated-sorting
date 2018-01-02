@@ -53,7 +53,7 @@ public class OriginalVersion extends NonDominatedSorting {
     }
 
     @Override
-    protected void closeImpl() throws Exception {
+    protected void closeImpl() {
         queue = null;
         howManyIDominate = null;
         howManyDominateMe = null;

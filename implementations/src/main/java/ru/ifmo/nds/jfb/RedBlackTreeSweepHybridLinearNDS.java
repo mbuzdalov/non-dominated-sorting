@@ -6,11 +6,6 @@ public class RedBlackTreeSweepHybridLinearNDS extends RedBlackTreeSweep {
     }
 
     @Override
-    protected void closeImpl() throws Exception {
-        super.closeImpl();
-    }
-
-    @Override
     public String getName() {
         return "Jensen-Fortin-Buzdalov sorting, " + getThreadDescription() + " (tree sweep, hybrid with fast NDS)";
     }

@@ -47,9 +47,7 @@ public class Proteek extends NonDominatedSorting {
     }
 
     @Override
-    protected void closeImpl() throws Exception {
-
-    }
+    protected void closeImpl() {}
 
     @Override
     protected void sortChecked(double[][] points, int[] ranks, int maximalMeaningfulRank) {

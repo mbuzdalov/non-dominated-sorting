@@ -60,7 +60,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
     }
 
     @Override
-    protected void closeImpl() throws Exception {
+    protected void closeImpl() {
         sorter = null;
         medianSwap = null;
         indices = null;

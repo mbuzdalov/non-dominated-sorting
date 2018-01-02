@@ -23,7 +23,7 @@ public abstract class ENSBase extends NonDominatedSorting {
 
 
     @Override
-    protected void closeImpl() throws Exception {
+    protected void closeImpl() {
         sorter = null;
         indices = null;
         prevIndex = null;

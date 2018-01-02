@@ -22,7 +22,7 @@ public class RedBlackTreeSweepHybridENS extends RedBlackTreeSweep {
     }
 
     @Override
-    protected void closeImpl() throws Exception {
+    protected void closeImpl() {
         super.closeImpl();
         slicePoint = null;
         sliceNext = null;

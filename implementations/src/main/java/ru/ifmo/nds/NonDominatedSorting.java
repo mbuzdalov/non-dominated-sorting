@@ -48,11 +48,7 @@ public abstract class NonDominatedSorting implements AutoCloseable {
             throw new IllegalStateException("close() has already been called");
         }
         closeWasCalled = true;
-        try {
-            closeImpl();
-        } catch (Exception ex) {
-            throw new RuntimeException(ex);
-        }
+        closeImpl();
     }
 
     /**
@@ -100,9 +96,8 @@ public abstract class NonDominatedSorting implements AutoCloseable {
 
     /**
      * Performs actual release of any resources hold by the algorithm.
-     * @throws Exception if something nasty happens.
      */
-    protected abstract void closeImpl() throws Exception;
+    protected abstract void closeImpl();
 
     /**
      * Performs actual sorting. Assumes the input arrays are valid.

@@ -16,7 +16,7 @@ public class CornerSort {
         }
 
         @Override
-        protected void closeImpl() throws Exception {
+        protected void closeImpl() {
             indices = null;
         }
 
@@ -70,7 +70,7 @@ public class CornerSort {
             return last;
         }
 
-        private void fillNonMeaningulRanks(int[] ranks, int from, int until, int maximalMeaningfulRank) {
+        private void fillNonMeaningfulRanks(int[] ranks, int from, int until, int maximalMeaningfulRank) {
             for (int i = from; i < until; ++i) {
                 ranks[indices[i]] = maximalMeaningfulRank + 1;
             }
@@ -84,7 +84,7 @@ public class CornerSort {
             for (int rank = 0; firstNotYetProcessed < n && rank <= maximalMeaningfulRank; ++rank) {
                 firstNotYetProcessed = peelCurrentRank(points, ranks, firstNotYetProcessed, n, rank);
             }
-            fillNonMeaningulRanks(ranks, firstNotYetProcessed, n, maximalMeaningfulRank);
+            fillNonMeaningfulRanks(ranks, firstNotYetProcessed, n, maximalMeaningfulRank);
         }
     };
 

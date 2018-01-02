@@ -19,7 +19,7 @@ public abstract class AbstractDominanceTree extends NonDominatedSorting {
     }
 
     @Override
-    protected void closeImpl() throws Exception {
+    protected void closeImpl() {
         nodes = null;
         rankMergeArray = null;
     }

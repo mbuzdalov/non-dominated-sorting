@@ -43,7 +43,7 @@ public class Improved extends NonDominatedSorting {
     }
 
     @Override
-    protected void closeImpl() throws Exception {
+    protected void closeImpl() {
         objectiveIndices = null;
         lastFrontIndex = null;
         prevFrontIndex = null;

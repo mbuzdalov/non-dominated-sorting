@@ -22,7 +22,7 @@ public class LinearMemory extends NonDominatedSorting {
     }
 
     @Override
-    protected void closeImpl() throws Exception {
+    protected void closeImpl() {
         howManyDominateMe = null;
         candidates = null;
     }
