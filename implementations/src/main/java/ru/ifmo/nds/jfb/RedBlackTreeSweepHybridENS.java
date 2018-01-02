@@ -1,8 +1,8 @@
 package ru.ifmo.nds.jfb;
 
 public class RedBlackTreeSweepHybridENS extends RedBlackTreeSweep {
-    private static final int MAX_SIZE = 200;
-    private static final int THRESHOLD_2 = Math.min(100, MAX_SIZE);
+    private static final int THRESHOLD_3D = 100;
+    private static final int THRESHOLD_ALL = 200;
 
     private int[] sliceRank;
     private int[] sliceSize;
@@ -41,8 +41,8 @@ public class RedBlackTreeSweepHybridENS extends RedBlackTreeSweep {
     protected boolean helperAHookCondition(int size, int obj) {
         switch (obj) {
             case 1: return false;
-            case 2: return size < THRESHOLD_2;
-            default: return size < MAX_SIZE;
+            case 2: return size < THRESHOLD_3D;
+            default: return size < THRESHOLD_ALL;
         }
     }
 

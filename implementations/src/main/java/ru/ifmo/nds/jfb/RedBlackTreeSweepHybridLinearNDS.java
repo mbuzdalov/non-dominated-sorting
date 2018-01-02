@@ -1,6 +1,9 @@
 package ru.ifmo.nds.jfb;
 
 public class RedBlackTreeSweepHybridLinearNDS extends RedBlackTreeSweep {
+    private static final int THRESHOLD_3D = 70;
+    private static final int THRESHOLD_ALL = 400;
+
     public RedBlackTreeSweepHybridLinearNDS(int maximumPoints, int maximumDimension, int allowedThreads) {
         super(maximumPoints, maximumDimension, allowedThreads);
     }
@@ -14,8 +17,8 @@ public class RedBlackTreeSweepHybridLinearNDS extends RedBlackTreeSweep {
     protected boolean helperAHookCondition(int size, int obj) {
         switch (obj) {
             case 1: return false;
-            case 2: return size < 70;
-            default: return size < 400;
+            case 2: return size < THRESHOLD_3D;
+            default: return size < THRESHOLD_ALL;
         }
     }
 
