@@ -21,7 +21,6 @@ public abstract class ENSBase extends NonDominatedSorting {
         lastRankIndex = new int[maximumPoints];
     }
 
-
     @Override
     protected void closeImpl() {
         sorter = null;

@@ -9,8 +9,8 @@ public final class SplitMergeHelper {
     }
 
     public final int splitInTwo(double[] points, int[] indices,
-                          int tempFrom, int from, int until, double median,
-                          boolean equalToLeft, double minVal, double maxVal) {
+                                int tempFrom, int from, int until, double median,
+                                boolean equalToLeft, double minVal, double maxVal) {
         if (minVal == median && maxVal == median) {
             return equalToLeft ? until : from;
         } else if (minVal > median || !equalToLeft && minVal == median) {
