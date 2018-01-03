@@ -7,7 +7,10 @@ import java.util.concurrent.RecursiveAction;
 import java.util.concurrent.RecursiveTask;
 
 import ru.ifmo.nds.NonDominatedSorting;
-import ru.ifmo.nds.util.*;
+import ru.ifmo.nds.util.ArrayHelper;
+import ru.ifmo.nds.util.DoubleArraySorter;
+import ru.ifmo.nds.util.RankQueryStructure;
+import ru.ifmo.nds.util.SplitMergeHelper;
 
 public abstract class AbstractJFBSorting extends NonDominatedSorting {
     private static final int FORK_JOIN_THRESHOLD = 400;
@@ -29,7 +32,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
     // Data which is interval-shared between threads.
     private double[] medianSwap;
     private RankQueryStructure rankQuery;
-    private int[] splitScratchM, splitScratchR;
+    private SplitMergeHelper splitMerge;
 
     private ForkJoinPool pool;
 
@@ -55,8 +58,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
 
         internalIndices = new int[maximumPoints];
         lastFrontOrdinates = new double[maximumPoints];
-        splitScratchM = new int[maximumPoints];
-        splitScratchR = new int[maximumPoints];
+        splitMerge = new SplitMergeHelper(maximumPoints);
     }
 
     @Override
@@ -71,8 +73,6 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
 
         internalIndices = null;
         lastFrontOrdinates = null;
-        splitScratchM = null;
-        splitScratchR = null;
 
         if (pool != null) {
             pool.shutdown();
@@ -169,83 +169,6 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         return true;
     }
 
-    private int splitInTwo(int tempFrom, int from, int until, double median, int obj, boolean equalToLeft, double minVal, double maxVal) {
-        if (minVal == median && maxVal == median) {
-            return equalToLeft ? until : from;
-        } else if (minVal > median || !equalToLeft && minVal == median) {
-            return from;
-        } else if (maxVal < median || equalToLeft && maxVal == median) {
-            return until;
-        } else {
-            int left = from, right = tempFrom;
-            double[] local = transposedPoints[obj];
-            for (int i = from; i < until; ++i) {
-                int ii = indices[i];
-                double v = local[ii];
-                if (v < median || (equalToLeft && v == median)) {
-                    indices[left++] = ii;
-                } else {
-                    splitScratchR[right++] = ii;
-                }
-            }
-            System.arraycopy(splitScratchR, tempFrom, indices, left, right - tempFrom);
-            return left;
-        }
-    }
-
-    private SplitThreeResult splitInThree(int tempFrom, int from, int until, double median, int obj, double minVal, double maxVal) {
-        if (minVal == median && maxVal == median) {
-            return new SplitThreeResult(from, until);
-        } else if (minVal > median) {
-            return new SplitThreeResult(from, from);
-        } else if (maxVal < median) {
-            return new SplitThreeResult(until, until);
-        } else {
-            int l = from, m = tempFrom, r = tempFrom;
-            double[] local = transposedPoints[obj];
-            for (int i = from; i < until; ++i) {
-                int ii = indices[i];
-                double v = local[ii];
-                if (v < median) {
-                    indices[l++] = ii;
-                } else if (v == median) {
-                    splitScratchM[m++] = ii;
-                } else {
-                    splitScratchR[r++] = ii;
-                }
-            }
-            System.arraycopy(splitScratchM, tempFrom, indices, l, m - tempFrom);
-            System.arraycopy(splitScratchR, tempFrom, indices, l + m - tempFrom, r - tempFrom);
-            return new SplitThreeResult(l, m - tempFrom + l);
-        }
-    }
-
-    private int mergeTwo(int tempFrom, int fromLeft, int untilLeft, int fromRight, int untilRight) {
-        int target = tempFrom;
-        int l = fromLeft, r = fromRight;
-        while (l < untilLeft && r < untilRight) {
-            if (indices[l] <= indices[r]) {
-                splitScratchM[target++] = indices[l++];
-            } else {
-                splitScratchM[target++] = indices[r++];
-            }
-        }
-        int newR = fromLeft + (target - tempFrom) + untilLeft - l;
-        if (r != newR && untilRight > r) {
-            // copy the remainder of right to its place
-            System.arraycopy(indices, r, indices, newR, untilRight - r);
-        }
-        if (l != fromLeft + (target - tempFrom) && untilLeft > l) {
-            // copy the remainder of left to its place
-            System.arraycopy(indices, l, indices, fromLeft + (target - tempFrom), untilLeft - l);
-        }
-        if (target > tempFrom) {
-            // copy the merged part
-            System.arraycopy(splitScratchM, tempFrom, indices, fromLeft, target - tempFrom);
-        }
-        return fromLeft + (target - tempFrom) + untilLeft - l + untilRight - r;
-    }
-
     protected abstract RankQueryStructure createStructure(int maximumPoints);
 
     private int sweepA(int from, int until) {
@@ -325,23 +248,25 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
             int equalToMedian = n - smallerThanMedian - largerThanMedian;
             if (equalToMedian < n / 2) {
                 // Few enough median-valued points, use two-way splitting.
-                int middle = splitInTwo(from, from, until, median, obj, smallerThanMedian < largerThanMedian, objMin, objMax);
+                int middle = splitMerge.splitInTwo(transposedPoints[obj], indices,
+                        from, from, until, median, smallerThanMedian < largerThanMedian, objMin, objMax);
                 int newMiddle = helperA(from, middle, obj);
                 int newUntil = helperB(from, newMiddle, middle, until, obj - 1, from, until);
                 newUntil = helperA(middle, newUntil, obj);
-                return mergeTwo(from, from, newMiddle, middle, newUntil);
+                return splitMerge.mergeTwo(indices, from, from, newMiddle, middle, newUntil);
             } else {
                 // Too many median-valued points, use three-way splitting.
-                SplitThreeResult split = splitInThree(from, from, until, median, obj, objMin, objMax);
-                int startMid = split.startMid;
-                int startRight = split.startRight;
+                long split = splitMerge.splitInThree(transposedPoints[obj], indices,
+                        from, from, until, median, objMin, objMax);
+                int startMid = SplitMergeHelper.extractMid(split);
+                int startRight = SplitMergeHelper.extractRight(split);
                 int newStartMid = helperA(from, startMid, obj);
                 int newStartRight = helperB(from, newStartMid, startMid, startRight, obj - 1, from, until);
                 newStartRight = helperA(startMid, newStartRight, obj - 1);
-                newStartRight = mergeTwo(from, from, newStartMid, startMid, newStartRight);
+                newStartRight = splitMerge.mergeTwo(indices, from, from, newStartMid, startMid, newStartRight);
                 int newUntil = helperB(from, newStartRight, startRight, until, obj - 1, from, until);
                 newUntil = helperA(startRight, newUntil, obj);
-                return mergeTwo(from, from, newStartRight, startRight, newUntil);
+                return splitMerge.mergeTwo(indices, from, from, newStartRight, startRight, newUntil);
             }
         }
     }
@@ -453,12 +378,12 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
             return helperB(goodFrom, goodUntil, weakFrom, weakUntil, obj - 1, tempFrom, tempUntil);
         } else {
             double median = ArrayHelper.destructiveMedian(medianSwap, tempFrom, medianWeak);
-            SplitThreeResult goodSplit = splitInThree(tempFrom, goodFrom, goodUntil, median, obj, goodMinObj, goodMaxObj);
-            int goodMidL = goodSplit.startMid;
-            int goodMidR = goodSplit.startRight;
-            SplitThreeResult weakSplit = splitInThree(tempFrom, weakFrom, weakUntil, median, obj, weakMinObj, weakMaxObj);
-            int weakMidL = weakSplit.startMid;
-            int weakMidR = weakSplit.startRight;
+            long goodSplit = splitMerge.splitInThree(transposedPoints[obj], indices, tempFrom, goodFrom, goodUntil, median, goodMinObj, goodMaxObj);
+            int goodMidL = SplitMergeHelper.extractMid(goodSplit);
+            int goodMidR = SplitMergeHelper.extractRight(goodSplit);
+            long weakSplit = splitMerge.splitInThree(transposedPoints[obj], indices, tempFrom, weakFrom, weakUntil, median, weakMinObj, weakMaxObj);
+            int weakMidL = SplitMergeHelper.extractMid(weakSplit);
+            int weakMidR = SplitMergeHelper.extractRight(weakSplit);
             int tempMid = (tempFrom + tempUntil) >>> 1;
 
             ForkJoinTask<Integer> newWeakMidLTask = null;
@@ -470,11 +395,11 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
                     ? newWeakMidLTask.join()
                     : helperB(goodFrom, goodMidL, weakFrom, weakMidL, obj, tempFrom, tempMid);
 
-            mergeTwo(tempFrom, goodFrom, goodMidL, goodMidL, goodMidR);
-            newWeakUntil = mergeTwo(tempFrom, weakMidL, weakMidR, weakMidR, newWeakUntil);
+            splitMerge.mergeTwo(indices, tempFrom, goodFrom, goodMidL, goodMidL, goodMidR);
+            newWeakUntil = splitMerge.mergeTwo(indices, tempFrom, weakMidL, weakMidR, weakMidR, newWeakUntil);
             newWeakUntil = helperB(goodFrom, goodMidR, weakMidL, newWeakUntil, obj - 1, tempFrom, tempUntil);
-            mergeTwo(tempFrom, goodFrom, goodMidR, goodMidR, goodUntil);
-            return mergeTwo(tempFrom, weakFrom, newWeakMidL, weakMidL, newWeakUntil);
+            splitMerge.mergeTwo(indices, tempFrom, goodFrom, goodMidR, goodMidR, goodUntil);
+            return splitMerge.mergeTwo(indices, tempFrom, weakFrom, newWeakMidL, weakMidL, newWeakUntil);
         }
     }
 
@@ -571,16 +496,6 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
             lastII = ii;
             lastX = cx;
             lastY = cy;
-        }
-    }
-
-    private static final class SplitThreeResult {
-        final int startMid;
-        final int startRight;
-
-        private SplitThreeResult(int startMid, int startRight) {
-            this.startMid = startMid;
-            this.startRight = startRight;
         }
     }
 
