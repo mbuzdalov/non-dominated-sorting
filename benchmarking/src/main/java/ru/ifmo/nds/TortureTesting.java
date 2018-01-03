@@ -67,12 +67,13 @@ public class TortureTesting {
                 ENS.getENS_BS(),
                 ENS.getENS_SS(),
                 FastNonDominatedSorting.getLinearMemoryImplementation(),
-                JensenFortinBuzdalov.getFenwickSweepImplementation(-1),
-                JensenFortinBuzdalov.getRedBlackTreeSweepImplementation(-1),
-                JensenFortinBuzdalov.getRedBlackTreeSweepHybridFNDSImplementation(-1),
-                JensenFortinBuzdalov.getRedBlackTreeSweepHybridENSImplementation(-1),
+                JensenFortinBuzdalov.getFenwickSweepImplementation(1),
+                JensenFortinBuzdalov.getRedBlackTreeSweepImplementation(1),
+                JensenFortinBuzdalov.getRedBlackTreeSweepHybridFNDSImplementation(1),
+                JensenFortinBuzdalov.getRedBlackTreeSweepHybridENSImplementation(1),
                 BestOrderSort.getProteekImplementation(),
-                BestOrderSort.getImprovedImplementation()
+                BestOrderSort.getImprovedImplementation(),
+                ENS.getENS_NDT()
         );
         List<NonDominatedSorting> sortings = sortingFactories
                 .stream()
@@ -93,20 +94,24 @@ public class TortureTesting {
                 System.gc();
                 System.gc();
                 long t0 = System.currentTimeMillis();
-                sorting.sort(instance, ranks, maxRank);
-                long time = System.currentTimeMillis() - t0;
-                System.out.printf("%95s: %d ms%n", sorting.getName(), time);
-                if (reference == null) {
-                    reference = ranks.clone();
-                } else {
-                    for (int i = 0; i < points; ++i) {
-                        if (reference[i] != ranks[i]) {
-                            printTest(points, dimension, instance, reference);
-                            throw new AssertionError("Ranks do not match: index " + i
-                                    + " expected " + reference[i]
-                                    + " found " + ranks[i]);
+                try {
+                    sorting.sort(instance, ranks, maxRank);
+                    long time = System.currentTimeMillis() - t0;
+                    System.out.printf("%95s: %d ms%n", sorting.getName(), time);
+                    if (reference == null) {
+                        reference = ranks.clone();
+                    } else {
+                        for (int i = 0; i < points; ++i) {
+                            if (reference[i] != ranks[i]) {
+                                printTest(points, dimension, instance, reference);
+                                throw new AssertionError("Ranks do not match: index " + i
+                                        + " expected " + reference[i]
+                                        + " found " + ranks[i]);
+                            }
                         }
                     }
+                } catch (Throwable th) {
+                    printTest(points, dimension, instance, reference);
                 }
             }
             System.out.println();

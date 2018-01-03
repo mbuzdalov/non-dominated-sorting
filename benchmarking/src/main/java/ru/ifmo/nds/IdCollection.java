@@ -115,6 +115,7 @@ public final class IdCollection {
 
         addNonDominatedSortingFactory("ens.bs", ENS.getENS_BS());
         addNonDominatedSortingFactory("ens.ss", ENS.getENS_SS());
+        addNonDominatedSortingFactory("ens.ndt", ENS.getENS_NDT());
         addNonDominatedSortingFactory("fnds.original", FastNonDominatedSorting.getOriginalVersion());
         addNonDominatedSortingFactory("fnds.linear", FastNonDominatedSorting.getLinearMemoryImplementation());
         addNonDominatedSortingFactory("jfb.fenwick", JensenFortinBuzdalov.getFenwickSweepImplementation(1));
