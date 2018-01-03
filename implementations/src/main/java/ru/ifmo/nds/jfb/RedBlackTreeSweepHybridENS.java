@@ -149,20 +149,28 @@ public class RedBlackTreeSweepHybridENS extends RedBlackTreeSweep {
         return helperAHookCondition(goodUntil - goodFrom + weakUntil - weakFrom, obj);
     }
 
+    private boolean findWhetherDominates(int from, int until, int index, int obj) {
+        for (int t = from; t < until; ++t) {
+            int ti = pointIndex[t];
+            if (strictlyDominatesAssumingNotSame(ti, index, obj)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private boolean findRank(int sliceLast, int sliceFirst, int index, int existingRank, int obj) {
         for (int slice = sliceLast; slice >= sliceFirst; --slice) {
             int from = sliceSize[slice], until = sliceNext[slice];
             if (from == until) {
                 continue;
             }
-            if (ranks[pointIndex[from]] < existingRank) {
+            int currentRank = ranks[pointIndex[from]];
+            if (currentRank < existingRank) {
                 break;
             }
-            for (int t = from; t < until; ++t) {
-                int ti = pointIndex[t];
-                if (strictlyDominatesAssumingNotSame(ti, index, obj)) {
-                    return (ranks[index] = ranks[ti] + 1) > maximalMeaningfulRank;
-                }
+            if (findWhetherDominates(from, until, index, obj)) {
+                return (ranks[index] = currentRank + 1) > maximalMeaningfulRank;
             }
         }
         return false;
@@ -203,16 +211,20 @@ public class RedBlackTreeSweepHybridENS extends RedBlackTreeSweep {
         }
         System.arraycopy(sliceSize, tempFrom, sliceNext, tempFrom, sliceLast + 1 - tempFrom);
 
+        int sliceMax = tempFrom - 1, sliceMin = sliceLast + 1;
+
         int minOverflowed = weakUntil;
         for (int gi = goodFrom, wi = weakFrom; wi < weakUntil; ++wi) {
-            while (gi < goodUntil && indices[gi] < indices[wi]) {
+            int ii = indices[wi];
+            while (gi < goodUntil && indices[gi] < ii) {
                 int mySlice = sliceRank[slicePoint[gi - goodFrom + tempFrom]];
                 pointIndex[--sliceSize[mySlice]] = indices[gi];
+                sliceMax = Math.max(sliceMax, mySlice);
+                sliceMin = Math.min(sliceMin, mySlice);
                 ++gi;
             }
-            int ii = indices[wi];
             int existingRank = ranks[ii];
-            if (findRank(sliceLast, tempFrom, ii, existingRank, obj) && minOverflowed > wi) {
+            if (findRank(sliceMax, sliceMin, ii, existingRank, obj) && minOverflowed > wi) {
                 minOverflowed = wi;
             }
         }

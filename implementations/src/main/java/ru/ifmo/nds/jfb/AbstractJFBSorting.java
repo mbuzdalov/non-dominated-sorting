@@ -137,7 +137,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         }
     }
 
-    int kickOutOverflowedRanks(int from, int until) {
+    final int kickOutOverflowedRanks(int from, int until) {
         int newUntil = from;
         for (int i = from; i < until; ++i) {
             int ii = indices[i];
@@ -148,7 +148,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         return newUntil;
     }
 
-    boolean strictlyDominatesAssumingNotSame(int goodIndex, int weakIndex, int maxObj) {
+    final boolean strictlyDominatesAssumingNotSame(int goodIndex, int weakIndex, int maxObj) {
         double[] goodPoint = points[goodIndex];
         double[] weakPoint = points[weakIndex];
         // Comparison in 0 makes no sense, as due to goodIndex < weakIndex the points are <= in this coordinate.
@@ -370,7 +370,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         }
     }
 
-    int updateByPoint(int pointIndex, int from, int until, int obj) {
+    final int updateByPoint(int pointIndex, int from, int until, int obj) {
         int ri = ranks[pointIndex];
         if (ri == maximalMeaningfulRank) {
             return updateByPointCritical(pointIndex, from, until, obj);
