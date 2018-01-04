@@ -42,18 +42,35 @@ public final class ArrayHelper {
         int index = (from + until) >>> 1;
         while (from + 1 < until) {
             double pivot = array[++count > 20 ? random.nextInt(from, until) : (from + until) >>> 1];
-            int l = from, r = until - 1;
-            while (l <= r) {
-                while (array[l] < pivot) ++l;
-                while (array[r] > pivot) --r;
-                if (l <= r) {
-                    swap(array, l++, r--);
+            int pivotFirst = from, greaterFirst = until - 1;
+            for (int i = from; i <= greaterFirst; ++i) {
+                double value = array[i];
+                if (value == pivot) {
+                    continue;
+                }
+                if (value < pivot) {
+                    array[i] = array[pivotFirst];
+                    array[pivotFirst++] = value;
+                } else {
+                    double notGreater = array[greaterFirst];
+                    while (notGreater > pivot) {
+                        notGreater = array[--greaterFirst];
+                    }
+                    if (notGreater == pivot) {
+                        array[i] = notGreater;
+                    } else {
+                        array[i] = array[pivotFirst];
+                        array[pivotFirst++] = notGreater;
+                    }
+                    array[greaterFirst--] = value;
                 }
             }
-            if (index <= r) {
-                until = r + 1;
-            } else if (l <= index) {
-                from = l;
+            --pivotFirst;
+            ++greaterFirst;
+            if (index <= pivotFirst) {
+                until = pivotFirst + 1;
+            } else if (index >= greaterFirst) {
+                from = greaterFirst;
             } else {
                 break;
             }
