@@ -115,7 +115,9 @@ public final class IdCollection {
 
         addNonDominatedSortingFactory("ens.bs", ENS.getENS_BS());
         addNonDominatedSortingFactory("ens.ss", ENS.getENS_SS());
-        addNonDominatedSortingFactory("ens.ndt", ENS.getENS_NDT());
+        for (int threshold : new int[] {2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20, 50, 100, 200}) {
+            addNonDominatedSortingFactory("ens.ndt." + threshold, ENS.getENS_NDT(threshold));
+        }
         addNonDominatedSortingFactory("ens.ndt.arrays", ENS.getENS_NDT_Arrays());
         addNonDominatedSortingFactory("fnds.original", FastNonDominatedSorting.getOriginalVersion());
         addNonDominatedSortingFactory("fnds.linear", FastNonDominatedSorting.getLinearMemoryImplementation());

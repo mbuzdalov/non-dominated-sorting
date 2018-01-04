@@ -7,8 +7,6 @@ import ru.ifmo.nds.util.ArrayHelper;
 import ru.ifmo.nds.util.DoubleArraySorter;
 
 public class ENS_NDT extends NonDominatedSorting {
-    private static final int THRESHOLD = 3;
-
     private DoubleArraySorter sorter;
     private SplitBuilder splitBuilder;
     private TreeNode[] levels;
@@ -16,9 +14,11 @@ public class ENS_NDT extends NonDominatedSorting {
     private int[] ranks;
     private double[][] transposedPoints;
     private double[][] points;
+    private final int threshold;
 
-    public ENS_NDT(int maximumPoints, int maximumDimension) {
+    public ENS_NDT(int maximumPoints, int maximumDimension, int threshold) {
         super(maximumPoints, maximumDimension);
+        this.threshold = threshold;
         this.sorter = new DoubleArraySorter(maximumPoints);
         this.splitBuilder = new SplitBuilder(maximumPoints);
         this.levels = new TreeNode[maximumPoints];
@@ -30,7 +30,7 @@ public class ENS_NDT extends NonDominatedSorting {
 
     @Override
     public String getName() {
-        return "ENS-NDT (Objects)";
+        return "ENS-NDT (Objects, threshold = " + threshold + ")";
     }
 
     @Override
@@ -60,10 +60,10 @@ public class ENS_NDT extends NonDominatedSorting {
             }
         }
 
-        Split split = splitBuilder.result(transposedPoints, newN, dim, THRESHOLD);
+        Split split = splitBuilder.result(transposedPoints, newN, dim, threshold);
 
         int maxRank = 1;
-        levels[0] = levels[0].add(this.points[0], split, THRESHOLD);
+        levels[0] = levels[0].add(this.points[0], split, threshold);
         for (int i = 1; i < newN; ++i) {
             double[] current = this.points[i];
             if (levels[0].dominates(current, split)) {
@@ -79,13 +79,13 @@ public class ENS_NDT extends NonDominatedSorting {
                 int rank = left + 1;
                 this.ranks[i] = rank;
                 if (rank <= maximalMeaningfulRank) {
-                    levels[rank] = levels[rank].add(current, split, THRESHOLD);
+                    levels[rank] = levels[rank].add(current, split, threshold);
                     if (rank == maxRank) {
                         ++maxRank;
                     }
                 }
             } else {
-                levels[0] = levels[0].add(current, split, THRESHOLD);
+                levels[0] = levels[0].add(current, split, threshold);
             }
         }
 

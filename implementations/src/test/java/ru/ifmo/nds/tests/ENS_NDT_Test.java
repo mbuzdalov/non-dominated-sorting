@@ -6,6 +6,6 @@ import ru.ifmo.nds.NonDominatedSortingFactory;
 public class ENS_NDT_Test extends CorrectnessTestsBase {
     @Override
     protected NonDominatedSortingFactory getFactory() {
-        return ENS.getENS_NDT();
+        return ENS.getENS_NDT(8);
     }
 }
