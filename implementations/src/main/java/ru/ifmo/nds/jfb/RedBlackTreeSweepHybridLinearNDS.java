@@ -1,8 +1,8 @@
 package ru.ifmo.nds.jfb;
 
 public class RedBlackTreeSweepHybridLinearNDS extends RedBlackTreeSweep {
-    private static final int THRESHOLD_3D = 70;
-    private static final int THRESHOLD_ALL = 400;
+    private static final int THRESHOLD_3D = 30;
+    private static final int THRESHOLD_ALL = 100;
 
     public RedBlackTreeSweepHybridLinearNDS(int maximumPoints, int maximumDimension, int allowedThreads) {
         super(maximumPoints, maximumDimension, allowedThreads);
