@@ -7,7 +7,7 @@ import ru.ifmo.nds.util.ArrayHelper;
 import ru.ifmo.nds.util.DoubleArraySorter;
 
 public class ENS_NDT extends NonDominatedSorting {
-    private static final int THRESHOLD = 50;
+    private static final int THRESHOLD = 3;
 
     private DoubleArraySorter sorter;
     private SplitBuilder splitBuilder;
@@ -30,7 +30,7 @@ public class ENS_NDT extends NonDominatedSorting {
 
     @Override
     public String getName() {
-        return "ENS-NDT";
+        return "ENS-NDT (Objects)";
     }
 
     @Override

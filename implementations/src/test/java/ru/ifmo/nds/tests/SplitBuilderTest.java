@@ -44,9 +44,7 @@ public class SplitBuilderTest {
         }
     }
 
-    @Test
-    public void checkStackOverflowProblem() throws IOException {
-        double[][] points = readDoublesFromResource("test6.in");
+    private void validateOnPoints(double[][] points) {
         int n = points.length;
         int dim = points[0].length;
         int[] indices = new int[n];
@@ -68,5 +66,29 @@ public class SplitBuilderTest {
         }
 
         new SplitBuilder(n).result(transposedPoints, newN, dim, 50);
+    }
+
+    @Test
+    public void checkEqualPointHandling2D() {
+        double[][] pts = new double[1000][2];
+        for (int i = 0; i < pts.length; ++i) {
+            pts[i][0] = i;
+        }
+        validateOnPoints(pts);
+    }
+
+    @Test
+    public void checkEqualPointHandling10D() {
+        double[][] pts = new double[1000][10];
+        for (int i = 0; i < pts.length; ++i) {
+            pts[i][0] = i;
+        }
+        validateOnPoints(pts);
+    }
+
+    @Test
+    public void checkStackOverflowProblem() throws IOException {
+        double[][] points = readDoublesFromResource("test6.in");
+        validateOnPoints(points);
     }
 }

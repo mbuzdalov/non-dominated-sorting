@@ -51,7 +51,8 @@ public class RunOnTest extends JCommanderRunnable {
             long t0 = System.nanoTime();
             int sumMaximumRanks = dataset.runAlgorithm(algorithm, realMaxRank);
             long timeNS = System.nanoTime() - t0;
-            System.out.printf("Run #%d: time %.03g seconds, sum of ranks = %d%n", i + 1, timeNS * 1e-9, sumMaximumRanks);
+            System.out.printf("Run #%d: time %.03g seconds, sum of ranks = %d%n", i + 1,
+                    (timeNS * 1e-9) / dataset.getNumberOfInstances(), sumMaximumRanks);
         }
     }
 
