@@ -116,15 +116,13 @@ public class ENS_NDT_Arrays extends NonDominatedSorting {
     private boolean dominates(int node, int index, Split split) {
         int v1 = nodeArray[2 * node];
         int v2 = nodeArray[2 * node + 1];
-        if (v1 >= 0) {
-            // Terminal node
-            return v1 > 0 && dominates(v1 - 1, index) || v2 > 0 && dominates(v2 - 1, index);
-        } else {
+        if (v1 < 0) {
             // Branching node
-            int goodNode = -v1 - 1;
-            int weakNode = -v2 - 1;
-            return dominates(goodNode, index, split.good) ||
-                   points[index][split.coordinate] >= split.value && dominates(weakNode, index, split.weak);
+            return dominates(-v1 - 1, index, split.good) ||
+                    points[index][split.coordinate] >= split.value && dominates(-v2 - 1, index, split.weak);
+        } else {
+            // Terminal node
+            return v1 > 0 && (dominates(v1 - 1, index) || v2 > 0 && dominates(v2 - 1, index));
         }
     }
 
