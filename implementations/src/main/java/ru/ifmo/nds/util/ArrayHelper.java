@@ -85,26 +85,6 @@ public final class ArrayHelper {
         return targetFrom;
     }
 
-    public static int countSmaller(double[] array, int from, int until, double value) {
-        int rv = 0;
-        for (int i = from; i < until; ++i) {
-            if (array[i] < value) {
-                ++rv;
-            }
-        }
-        return rv;
-    }
-
-    public static int countGreater(double[] array, int from, int until, double value) {
-        int rv = 0;
-        for (int i = from; i < until; ++i) {
-            if (array[i] > value) {
-                ++rv;
-            }
-        }
-        return rv;
-    }
-
     public static double max(double[] array, int from, int until) {
         if (from >= until) {
             return Double.NEGATIVE_INFINITY;

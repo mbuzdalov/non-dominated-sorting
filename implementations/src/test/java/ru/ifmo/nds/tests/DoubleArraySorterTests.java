@@ -25,24 +25,15 @@ public class DoubleArraySorterTests {
                 }
             }
             int[] ranks = new int[size];
-            int[] stableRanks = new int[size];
             Integer[] expectedRanks = new Integer[size];
             for (int i = 0; i < size; ++i) {
                 ranks[i] = i;
-                stableRanks[i] = i;
                 expectedRanks[i] = i;
             }
             Arrays.sort(expectedRanks, Comparator.comparingDouble(o -> points[o][obj]));
-            sorter.stableSort(points, stableRanks, 0, size, obj);
             sorter.sort(points, ranks, 0, size, obj);
             for (int i = 0; i < size; ++i) {
                 Assert.assertEquals(points[expectedRanks[i]][obj], points[ranks[i]][obj], 1e-16);
-                Assert.assertEquals(points[expectedRanks[i]][obj], points[stableRanks[i]][obj], 1e-16);
-            }
-            for (int i = 1; i < size; ++i) {
-                if (points[stableRanks[i - 1]][obj] == points[stableRanks[i]][obj]) {
-                    Assert.assertTrue(stableRanks[i - 1] + " >= " + stableRanks[i], stableRanks[i - 1] < stableRanks[i]);
-                }
             }
         }
     }

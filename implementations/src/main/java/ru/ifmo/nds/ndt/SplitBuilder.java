@@ -39,8 +39,7 @@ public class SplitBuilder {
                     return construct(from, until, nextCoordinate, depth + 1);
                 }
             }
-            int countSmaller = ArrayHelper.countSmaller(medianSwap, from, until, median);
-            if (countSmaller == 0) {
+            if (min == median) {
                 // It can be that median equals to everything from [0; n/2].
                 // This will make a "0 vs n" split and the subsequent stack overflow.
                 // To prevent this, we will increase the median slightly.
