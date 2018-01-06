@@ -235,7 +235,6 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
     }
 
     private int helperAMain(int from, int until, int obj) {
-        int n = until - from;
         ArrayHelper.transplant(transposedPoints[obj], indices, from, until, medianSwap, from);
         double objMin = ArrayHelper.min(medianSwap, from, until);
         double objMax = ArrayHelper.max(medianSwap, from, until);
@@ -243,31 +242,19 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
             return helperA(from, until, obj - 1);
         } else {
             double median = ArrayHelper.destructiveMedian(medianSwap, from, until);
-            int smallerThanMedian = ArrayHelper.countSmaller(medianSwap, from, until, median);
-            int largerThanMedian = ArrayHelper.countGreater(medianSwap, from, until, median);
-            int equalToMedian = n - smallerThanMedian - largerThanMedian;
-            if (equalToMedian < n / 2) {
-                // Few enough median-valued points, use two-way splitting.
-                int middle = splitMerge.splitInTwo(transposedPoints[obj], indices,
-                        from, from, until, median, smallerThanMedian < largerThanMedian, objMin, objMax);
-                int newMiddle = helperA(from, middle, obj);
-                int newUntil = helperB(from, newMiddle, middle, until, obj - 1, from, until);
-                newUntil = helperA(middle, newUntil, obj);
-                return splitMerge.mergeTwo(indices, from, from, newMiddle, middle, newUntil);
-            } else {
-                // Too many median-valued points, use three-way splitting.
-                long split = splitMerge.splitInThree(transposedPoints[obj], indices,
-                        from, from, until, median, objMin, objMax);
-                int startMid = SplitMergeHelper.extractMid(split);
-                int startRight = SplitMergeHelper.extractRight(split);
-                int newStartMid = helperA(from, startMid, obj);
-                int newStartRight = helperB(from, newStartMid, startMid, startRight, obj - 1, from, until);
-                newStartRight = helperA(startMid, newStartRight, obj - 1);
-                newStartRight = splitMerge.mergeTwo(indices, from, from, newStartMid, startMid, newStartRight);
-                int newUntil = helperB(from, newStartRight, startRight, until, obj - 1, from, until);
-                newUntil = helperA(startRight, newUntil, obj);
-                return splitMerge.mergeTwo(indices, from, from, newStartRight, startRight, newUntil);
-            }
+            long split = splitMerge.splitInThree(transposedPoints[obj], indices,
+                    from, from, until, median, objMin, objMax);
+            int startMid = SplitMergeHelper.extractMid(split);
+            int startRight = SplitMergeHelper.extractRight(split);
+
+            int middle = (from + until) >>> 1;
+            splitMerge.mergeTwo(indices, from, from, startMid, startMid, middle);
+            splitMerge.mergeTwo(indices, middle, middle, startRight, startRight, until);
+
+            int newMiddle = helperA(from, middle, obj);
+            int newUntil = helperB(from, newMiddle, middle, until, obj - 1, from, until);
+            newUntil = helperA(middle, newUntil, obj);
+            return splitMerge.mergeTwo(indices, from, from, newMiddle, middle, newUntil);
         }
     }
 
@@ -370,13 +357,13 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
 
         int medianGood = ArrayHelper.transplant(transposedPoints[obj], indices, goodFrom, goodUntil, medianSwap, tempFrom);
         double goodMaxObj = ArrayHelper.max(medianSwap, tempFrom, medianGood);
-        double goodMinObj = ArrayHelper.min(medianSwap, tempFrom, medianGood);
         int medianWeak = ArrayHelper.transplant(transposedPoints[obj], indices, weakFrom, weakUntil, medianSwap, medianGood);
-        double weakMaxObj = ArrayHelper.max(medianSwap, medianGood, medianWeak);
         double weakMinObj = ArrayHelper.min(medianSwap, medianGood, medianWeak);
         if (goodMaxObj <= weakMinObj) {
             return helperB(goodFrom, goodUntil, weakFrom, weakUntil, obj - 1, tempFrom, tempUntil);
         } else {
+            double goodMinObj = ArrayHelper.min(medianSwap, tempFrom, medianGood);
+            double weakMaxObj = ArrayHelper.max(medianSwap, medianGood, medianWeak);
             double median = ArrayHelper.destructiveMedian(medianSwap, tempFrom, medianWeak);
             long goodSplit = splitMerge.splitInThree(transposedPoints[obj], indices, tempFrom, goodFrom, goodUntil, median, goodMinObj, goodMaxObj);
             int goodMidL = SplitMergeHelper.extractMid(goodSplit);
