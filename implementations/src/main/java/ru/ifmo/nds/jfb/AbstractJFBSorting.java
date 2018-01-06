@@ -163,7 +163,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
     private boolean tryUpdateRank(int goodIndex, int weakIndex) {
         int rg = ranks[goodIndex];
         if (ranks[weakIndex] <= rg) {
-            ranks[weakIndex] = 1 + ranks[goodIndex];
+            ranks[weakIndex] = 1 + rg;
             return rg < maximalMeaningfulRank;
         }
         return true;
@@ -345,16 +345,6 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
     }
 
     private int helperBMain(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj, int tempFrom, int tempUntil) {
-        if (tempUntil - tempFrom < goodUntil - goodFrom + weakUntil - weakFrom) {
-            throw new AssertionError();
-        }
-
-        int goodN = goodUntil - goodFrom;
-        int weakN = weakUntil - weakFrom;
-        if (goodN == 0 || weakN == 0) {
-            return weakUntil;
-        }
-
         int medianGood = ArrayHelper.transplant(transposedPoints[obj], indices, goodFrom, goodUntil, medianSwap, tempFrom);
         double goodMaxObj = ArrayHelper.max(medianSwap, tempFrom, medianGood);
         int medianWeak = ArrayHelper.transplant(transposedPoints[obj], indices, weakFrom, weakUntil, medianSwap, medianGood);
