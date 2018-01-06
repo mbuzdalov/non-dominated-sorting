@@ -4,6 +4,7 @@ import java.util.*;
 
 import ru.ifmo.nds.rundb.Dataset;
 import ru.ifmo.nds.rundb.generators.DatasetGenerator;
+import ru.ifmo.nds.rundb.generators.UniformCorrelated;
 import ru.ifmo.nds.rundb.generators.UniformHypercube;
 import ru.ifmo.nds.rundb.generators.UniformHyperplanes;
 
@@ -48,6 +49,7 @@ public final class IdCollection {
     static {
         addGenerator(UniformHypercube.getInstance());
         addGenerator(UniformHyperplanes.getInstance());
+        addGenerator(UniformCorrelated.getInstance());
     }
 
     private static void addNonDominatedSortingFactory(String id, NonDominatedSortingFactory factory) {
