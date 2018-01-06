@@ -12,8 +12,11 @@ public final class DoubleArraySorter {
     private int maxCoordinate = -1;
     private int[] resolver = null;
 
+    private int[] intScratch;
+
     public DoubleArraySorter(int maximumPoints) {
         this.scratch = new double[maximumPoints];
+        this.intScratch = new int[maximumPoints];
     }
 
     private void sortImplInside(int from, int until) {
@@ -71,6 +74,52 @@ public final class DoubleArraySorter {
         this.coordinate = whichCoordinate;
 
         sortImpl(from, until);
+
+        this.points = null;
+        this.indices = null;
+        this.coordinate = -1;
+    }
+
+    private void mergeByScratch(int from, int mid, int until) {
+        int l = from, r = mid, t = from;
+        while (l < mid && r < until) {
+            int ll = indices[l], rr = indices[r];
+            int tt;
+            if (scratch[ll] <= scratch[rr]) {
+                tt = ll;
+                ++l;
+            } else {
+                tt = rr;
+                ++r;
+            }
+            intScratch[t++] = tt;
+        }
+        System.arraycopy(indices, l, indices, r - (mid - l), mid - l);
+        System.arraycopy(intScratch, from, indices, from, t - from);
+    }
+
+    private void stableSortImpl(int from, int until) {
+        if (from + 1 < until) {
+            int mid = (from + until) >>> 1;
+            stableSortImpl(from, mid);
+            stableSortImpl(mid, until);
+            mergeByScratch(from, mid, until);
+        }
+    }
+
+    public void stableSort(double[][] points, int[] indices, int from, int until, int whichCoordinate) {
+        if (until - from > scratch.length) {
+            throw new IllegalArgumentException("The maximum array length to be sorted is " + scratch.length
+                    + ", but you requested from = " + from + " until = " + until + " which is " + (until - from));
+        }
+        this.points = points;
+        this.indices = indices;
+        this.coordinate = whichCoordinate;
+
+        for (int i = from; i < until; ++i) {
+            scratch[i] = points[indices[i]][coordinate];
+        }
+        stableSortImpl(from, until);
 
         this.points = null;
         this.indices = null;
