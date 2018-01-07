@@ -2,10 +2,7 @@ package ru.ifmo.nds.cli;
 
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Predicate;
 
 import com.beust.jcommander.Parameter;
@@ -14,7 +11,7 @@ import ru.ifmo.nds.rundb.Record;
 import ru.ifmo.nds.rundb.Records;
 
 public class Edit extends JCommanderRunnable {
-    @Parameter(names = "--input", variableArity = true, required = true, description = "Specify input files to merge.")
+    @Parameter(names = "--input", variableArity = true, required = true, description = "Specify input files.")
     private List<String> inputFiles;
 
     @Parameter(names = "--remove",
@@ -29,7 +26,7 @@ public class Edit extends JCommanderRunnable {
             converter = RecordFilterStringConverter.class)
     private List<Predicate<Record>> retainFilters;
 
-    @Parameter(names = "--output", description = "Specify output file to put merge results into.")
+    @Parameter(names = "--output", description = "Specify output file to put the results into.")
     private String outputFile;
 
     @Parameter(names = "--append", description = "Append to the output file instead of overwriting it.")
@@ -77,7 +74,11 @@ public class Edit extends JCommanderRunnable {
             for (Record r : records) {
                 values.add(listDistinctFields.extractField(r));
             }
-            for (Object v : values) {
+            Set<String> stringValues = new TreeSet<>();
+            for (Object o : values) {
+                stringValues.add(o.toString());
+            }
+            for (Object v : stringValues) {
                 System.out.println("  " + v);
             }
         }
