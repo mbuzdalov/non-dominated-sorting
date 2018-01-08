@@ -247,14 +247,13 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
             int startMid = SplitMergeHelper.extractMid(split);
             int startRight = SplitMergeHelper.extractRight(split);
 
-            int middle = (from + until) >>> 1;
-            splitMerge.mergeTwo(indices, from, from, startMid, startMid, middle);
-            splitMerge.mergeTwo(indices, middle, middle, startRight, startRight, until);
-
-            int newMiddle = helperA(from, middle, obj);
-            int newUntil = helperB(from, newMiddle, middle, until, obj - 1, from, until);
-            newUntil = helperA(middle, newUntil, obj);
-            return splitMerge.mergeTwo(indices, from, from, newMiddle, middle, newUntil);
+            int newStartMid = helperA(from, startMid, obj);
+            int newStartRight = helperB(from, newStartMid, startMid, startRight, obj - 1, from, until);
+            newStartRight = helperA(startMid, newStartRight, obj - 1);
+            newStartRight = splitMerge.mergeTwo(indices, from, from, newStartMid, startMid, newStartRight);
+            int newUntil = helperB(from, newStartRight, startRight, until, obj - 1, from, until);
+            newUntil = helperA(startRight, newUntil, obj);
+            return splitMerge.mergeTwo(indices, from, from, newStartRight, startRight, newUntil);
         }
     }
 
