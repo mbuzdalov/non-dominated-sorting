@@ -2,7 +2,7 @@ package ru.ifmo.nds.jfb;
 
 public class RedBlackTreeSweepHybridENS extends RedBlackTreeSweep {
     private static final int THRESHOLD_3D = 100;
-    private static final int THRESHOLD_ALL = 400;
+    private static final int THRESHOLD_ALL = 200;
 
     private int[] sliceRank;
     private int[] sliceSize;
