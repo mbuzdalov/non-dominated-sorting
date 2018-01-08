@@ -110,10 +110,13 @@ public final class DoubleArraySorter {
     private void sortWhileResolvingEqualImpl(int from, int until) {
         sortImpl(from, until);
 
+        // after sortImpl, scratch[i] == points[indices[i]][coordinate]
+        // sortByResolver does not alter scratch.
+
         int last = from;
-        double lastX = points[indices[from]][coordinate];
+        double lastX = scratch[from];
         for (int i = from + 1; i < until; ++i) {
-            double currX = points[indices[i]][coordinate];
+            double currX = scratch[i];
             if (currX != lastX) {
                 if (last + 1 < i) {
                     sortByResolver(last, i);
