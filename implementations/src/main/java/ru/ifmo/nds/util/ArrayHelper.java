@@ -36,6 +36,48 @@ public final class ArrayHelper {
         }
     }
 
+    public static double destructiveMedianCenter(double[] array, int from, int until) {
+        ThreadLocalRandom random = ThreadLocalRandom.current();
+        int count = 0;
+        int index = (from + until) >>> 1;
+        while (from + 1 < until) {
+            double pivot = array[++count > 20 ? random.nextInt(from, until) : (from + until) >>> 1];
+            int pivotFirst = from, greaterFirst = until - 1;
+            for (int i = from; i <= greaterFirst; ++i) {
+                double value = array[i];
+                if (value == pivot) {
+                    continue;
+                }
+                if (value < pivot) {
+                    array[i] = array[pivotFirst];
+                    array[pivotFirst++] = value;
+                } else {
+                    double notGreater = array[greaterFirst];
+                    while (notGreater > pivot) {
+                        notGreater = array[--greaterFirst];
+                    }
+                    if (notGreater == pivot) {
+                        array[i] = notGreater;
+                    } else {
+                        array[i] = array[pivotFirst];
+                        array[pivotFirst++] = notGreater;
+                    }
+                    array[greaterFirst--] = value;
+                }
+            }
+            --pivotFirst;
+            ++greaterFirst;
+            if (index <= pivotFirst) {
+                until = pivotFirst + 1;
+            } else if (index >= greaterFirst) {
+                from = greaterFirst;
+            } else {
+                break;
+            }
+        }
+        return array[index];
+    }
+
     public static double destructiveMedian(double[] array, int from, int until) {
         ThreadLocalRandom random = ThreadLocalRandom.current();
         int count = 0;
