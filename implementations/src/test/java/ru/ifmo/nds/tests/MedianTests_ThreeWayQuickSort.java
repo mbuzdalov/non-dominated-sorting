@@ -2,9 +2,9 @@ package ru.ifmo.nds.tests;
 
 import ru.ifmo.nds.util.ArrayHelper;
 
-public class MedianTests_CentralQuickSort extends MedianTestsBase {
+public class MedianTests_ThreeWayQuickSort extends MedianTestsBase {
     @Override
     protected double destructiveMedian(double[] array, int until) {
-        return ArrayHelper.destructiveMedianCenter(array, 0, until);
+        return ArrayHelper.destructiveMedianThreeWay(array, 0, until);
     }
 }

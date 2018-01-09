@@ -36,7 +36,11 @@ public final class ArrayHelper {
         }
     }
 
-    public static double destructiveMedianCenter(double[] array, int from, int until) {
+    public static double destructiveMedian(double[] array, int from, int until) {
+        return destructiveMedian3(array, from, until);
+    }
+
+    public static double destructiveMedianThreeWay(double[] array, int from, int until) {
         ThreadLocalRandom random = ThreadLocalRandom.current();
         int count = 0;
         int index = (from + until) >>> 1;
@@ -78,7 +82,7 @@ public final class ArrayHelper {
         return array[index];
     }
 
-    public static double destructiveMedian(double[] array, int from, int until) {
+    public static double destructiveMedianSimple(double[] array, int from, int until) {
         ThreadLocalRandom random = ThreadLocalRandom.current();
         int count = 0;
         int index = (from + until) >>> 1;
@@ -100,6 +104,37 @@ public final class ArrayHelper {
                 break;
             }
         }
+        return array[index];
+    }
+
+    public static double destructiveMedian3(double[] array, int from, int until) {
+        int index = (from + until) >>> 1;
+        while (from + 1 < until) {
+            double pivot = array[(from + until) >>> 1];
+            if (from + 5 < until) {
+                pivot = (pivot + array[from] + array[until - 1]) / 3;
+            }
+            double vl, vr;
+            int l = from, r = until - 1;
+            while (l <= r) {
+                while ((vl = array[l]) < pivot) ++l;
+                while ((vr = array[r]) > pivot) --r;
+                if (l <= r) {
+                    array[l] = vr;
+                    array[r] = vl;
+                    ++l;
+                    --r;
+                }
+            }
+            if (index <= r) {
+                until = r + 1;
+            } else if (l <= index) {
+                from = l;
+            } else {
+                return array[index];
+            }
+        }
+
         return array[index];
     }
 

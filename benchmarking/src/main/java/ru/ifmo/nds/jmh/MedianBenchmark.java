@@ -21,8 +21,7 @@ public class MedianBenchmark {
             "20", "50", "100",
             "200", "500", "1000",
             "2000", "5000", "10000",
-            "20000", "50000", "100000",
-            "200000", "500000", "1000000"})
+            "20000", "50000", "100000"})
     private int size;
 
     private double[][] data;
@@ -51,14 +50,24 @@ public class MedianBenchmark {
     @Benchmark
     public void simpleQuickSort(Blackhole bh) {
         for (double[] test : data) {
-            bh.consume(ArrayHelper.destructiveMedian(test, 0, test.length));
+            System.arraycopy(test, 0, temp, 0, test.length);
+            bh.consume(ArrayHelper.destructiveMedianSimple(temp, 0, temp.length));
         }
     }
 
     @Benchmark
-    public void centerQuickSort(Blackhole bh) {
+    public void simpleQuickSort3(Blackhole bh) {
         for (double[] test : data) {
-            bh.consume(ArrayHelper.destructiveMedianCenter(test, 0, test.length));
+            System.arraycopy(test, 0, temp, 0, test.length);
+            bh.consume(ArrayHelper.destructiveMedian3(temp, 0, temp.length));
+        }
+    }
+
+    @Benchmark
+    public void threeWayQuickSort(Blackhole bh) {
+        for (double[] test : data) {
+            System.arraycopy(test, 0, temp, 0, test.length);
+            bh.consume(ArrayHelper.destructiveMedianThreeWay(temp, 0, temp.length));
         }
     }
 }
