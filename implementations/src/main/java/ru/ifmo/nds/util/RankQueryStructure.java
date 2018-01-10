@@ -12,32 +12,9 @@ public abstract class RankQueryStructure {
      * @param until the maximum exclusive index of the storage the handle is allowed to use
      * @return the range handle.
      */
-    public abstract RangeHandle createHandle(int from, int until);
+    public abstract RangeHandle createHandle(int storageStart, int from, int until, int[] indices, double[] keys);
 
     public abstract static class RangeHandle {
-        /**
-         * Returns {@code true} if calls to {@link #addPossibleKey(double)} are necessary, {@code false} otherwise.
-         * @return whether adding possible keys is necessary.
-         */
-        public abstract boolean needsPossibleKeys();
-
-        /**
-         * Adds a possible key to the structure.
-         *
-         * This operation is possible in the preparation mode,
-         * and may throw exceptions in the initialized mode.
-         *
-         * @param key the possible key.
-         */
-        public abstract void addPossibleKey(double key);
-
-        /**
-         * Initializes the internals of the structure.
-         * Since this moment, and until the next call for {@link #clear()},
-         * the structure will be in an initialized mode.
-         */
-        public abstract void init();
-
         /**
          * Puts a value for the given key.
          *
@@ -70,17 +47,5 @@ public abstract class RankQueryStructure {
          * @return the maximum found value for another key above this key.
          */
         public abstract int getMaximumWithKeyAtMost(double key, int minimumMeaningfulAnswer);
-
-        /**
-         * Clears the existing mappings and moves the data structure to the preparation mode.
-         */
-        public abstract void clear();
-
-        /**
-         * Returns {@code true} if the data structure is in the initialized mode
-         * and {@code false} in the preparation mode.
-         * @return whether the data structure is in the initialized mode.
-         */
-        public abstract boolean isInitialized();
     }
 }

@@ -173,14 +173,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
 
     private int sweepA(int from, int until) {
         double[] local = transposedPoints[1];
-        RankQueryStructure.RangeHandle rankQuery = this.rankQuery.createHandle(from, until);
-
-        if (rankQuery.needsPossibleKeys()) {
-            for (int i = from; i < until; ++i) {
-                rankQuery.addPossibleKey(local[indices[i]]);
-            }
-        }
-        rankQuery.init();
+        RankQueryStructure.RangeHandle rankQuery = this.rankQuery.createHandle(from, from, until, indices, local);
         int minOverflow = until;
         for (int i = from; i < until; ++i) {
             int curr = indices[i];
@@ -194,20 +187,12 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
                 minOverflow = i;
             }
         }
-        rankQuery.clear();
         return kickOutOverflowedRanks(minOverflow, until);
     }
 
-    private int sweepB(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int tempFrom, int tempUntil) {
+    private int sweepB(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int tempFrom) {
         double[] local = transposedPoints[1];
-        RankQueryStructure.RangeHandle rankQuery = this.rankQuery.createHandle(tempFrom, tempUntil);
-
-        if (rankQuery.needsPossibleKeys()) {
-            for (int i = goodFrom; i < goodUntil; ++i) {
-                rankQuery.addPossibleKey(local[indices[i]]);
-            }
-        }
-        rankQuery.init();
+        RankQueryStructure.RangeHandle rankQuery = this.rankQuery.createHandle(tempFrom, goodFrom, goodUntil, indices, local);
         int goodI = goodFrom;
         int minOverflow = weakUntil;
         for (int weakI = weakFrom; weakI < weakUntil; ++weakI) {
@@ -223,7 +208,6 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
                 minOverflow = weakI;
             }
         }
-        rankQuery.clear();
         return kickOutOverflowedRanks(minOverflow, weakUntil);
     }
 
@@ -400,7 +384,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
             } else if (weakN == 1) {
                 return helperBWeak1(goodFrom, goodUntil, weakFrom, obj);
             } else if (obj == 1) {
-                return sweepB(goodFrom, goodUntil, weakFrom, weakUntil, tempFrom, tempUntil);
+                return sweepB(goodFrom, goodUntil, weakFrom, weakUntil, tempFrom);
             } else if (helperBHookCondition(goodFrom, goodUntil, weakFrom, weakUntil, obj)) {
                 return helperBHook(goodFrom, goodUntil, weakFrom, weakUntil, obj, tempFrom, tempUntil);
             } else {

@@ -12,53 +12,29 @@ public final class FenwickRankQueryStructure extends RankQueryStructure {
     }
 
     @Override
-    public RangeHandle createHandle(int from, int until) {
-        return new RangeHandleImpl(from, until);
+    public RangeHandle createHandle(int storageStart, int from, int until, int[] indices, double[] keys) {
+        return new RangeHandleImpl(storageStart, from, until, indices, keys);
     }
 
     private class RangeHandleImpl extends RankQueryStructure.RangeHandle {
-        private int size = 0;
-        private boolean initialized = false;
+        private final int size;
         private final int offset;
-        private final int limit;
 
-        private RangeHandleImpl(int offset, int limit) {
-            this.offset = offset;
-            this.limit = limit;
-        }
-
-        @Override
-        public boolean needsPossibleKeys() {
-            return true;
-        }
-
-        @Override
-        public void addPossibleKey(double key) {
-            if (initialized) {
-                throw new IllegalStateException("addPossibleKey(double) called in the initialized mode");
+        private RangeHandleImpl(int storageStart, int from, int until, int[] indices, double[] k) {
+            this.offset = storageStart;
+            for (int i = from, j = offset; i < until; ++i, ++j) {
+                keys[j] = k[indices[i]];
             }
-            if (offset + size >= limit) {
-                throw new AssertionError();
-            }
-            keys[offset + size++] = key;
-        }
-
-        @Override
-        public void init() {
-            if (initialized) {
-                throw new IllegalStateException("init() called in the initialized mode");
-            }
-            Arrays.sort(keys, offset, offset + size);
+            int storageEnd = storageStart + until - from;
+            Arrays.sort(keys, storageStart, storageEnd);
             int realSize = 1;
-            for (int i = 1; i < size; ++i) {
-                if (keys[offset + i] != keys[offset + i - 1]) {
-                    keys[offset + realSize++] = keys[offset + i];
+            for (int i = storageStart + 1; i < storageEnd; ++i) {
+                if (keys[i] != keys[i - 1]) {
+                    keys[offset + realSize++] = keys[i];
                 }
             }
             size = realSize;
             Arrays.fill(values, offset, offset + size, -1);
-
-            initialized = true;
         }
 
         private int indexFor(double key) {
@@ -77,9 +53,6 @@ public final class FenwickRankQueryStructure extends RankQueryStructure {
 
         @Override
         public void put(double key, int value) {
-            if (!initialized) {
-                throw new IllegalStateException("put(double, int) called in the preparation mode");
-            }
             int fwi = indexFor(key);
             while (fwi < size) {
                 values[offset + fwi] = Math.max(values[offset + fwi], value);
@@ -89,10 +62,6 @@ public final class FenwickRankQueryStructure extends RankQueryStructure {
 
         @Override
         public int getMaximumWithKeyAtMost(double key, int minimumMeaningfulAnswer) {
-            if (!initialized) {
-                throw new IllegalStateException("getMaximumWithKeyAtMost(double) called in the preparation mode");
-            }
-
             int fwi = indexFor(key);
             if (fwi >= size || fwi < 0) {
                 return -1;
@@ -104,21 +73,6 @@ public final class FenwickRankQueryStructure extends RankQueryStructure {
                 }
                 return rv;
             }
-        }
-
-        @Override
-        public void clear() {
-            if (!initialized) {
-                throw new IllegalStateException("clear() called in the preparation mode");
-            }
-
-            initialized = false;
-            size = 0;
-        }
-
-        @Override
-        public boolean isInitialized() {
-            return initialized;
         }
     }
 }
