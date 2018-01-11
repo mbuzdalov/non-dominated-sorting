@@ -329,38 +329,40 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
 
     private int helperBMain(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj, int tempFrom, int tempUntil) {
         int medianGood = ArrayHelper.transplant(transposedPoints[obj], indices, goodFrom, goodUntil, medianSwap, tempFrom);
-        double goodMaxObj = ArrayHelper.max(medianSwap, tempFrom, medianGood);
+        double goodMinObj = ArrayHelper.min(medianSwap, tempFrom, medianGood);
         int medianWeak = ArrayHelper.transplant(transposedPoints[obj], indices, weakFrom, weakUntil, medianSwap, medianGood);
+        double weakMaxObj = ArrayHelper.max(medianSwap, medianGood, medianWeak);
+        if (weakMaxObj < goodMinObj) {
+            return weakUntil;
+        }
+        double goodMaxObj = ArrayHelper.max(medianSwap, tempFrom, medianGood);
         double weakMinObj = ArrayHelper.min(medianSwap, medianGood, medianWeak);
         if (goodMaxObj <= weakMinObj) {
             return helperB(goodFrom, goodUntil, weakFrom, weakUntil, obj - 1, tempFrom, tempUntil);
-        } else {
-            double goodMinObj = ArrayHelper.min(medianSwap, tempFrom, medianGood);
-            double weakMaxObj = ArrayHelper.max(medianSwap, medianGood, medianWeak);
-            double median = ArrayHelper.destructiveMedian(medianSwap, tempFrom, medianWeak);
-            long goodSplit = splitMerge.splitInThree(transposedPoints[obj], indices, tempFrom, goodFrom, goodUntil, median, goodMinObj, goodMaxObj);
-            int goodMidL = SplitMergeHelper.extractMid(goodSplit);
-            int goodMidR = SplitMergeHelper.extractRight(goodSplit);
-            long weakSplit = splitMerge.splitInThree(transposedPoints[obj], indices, tempFrom, weakFrom, weakUntil, median, weakMinObj, weakMaxObj);
-            int weakMidL = SplitMergeHelper.extractMid(weakSplit);
-            int weakMidR = SplitMergeHelper.extractRight(weakSplit);
-            int tempMid = (tempFrom + tempUntil) >>> 1;
-
-            ForkJoinTask<Integer> newWeakMidLTask = null;
-            if (pool != null && goodMidL - goodFrom + weakMidL - weakFrom > FORK_JOIN_THRESHOLD) {
-                newWeakMidLTask = helperBAsync(goodFrom, goodMidL, weakFrom, weakMidL, obj, tempFrom, tempMid).fork();
-            }
-            int newWeakUntil = helperB(goodMidR, goodUntil, weakMidR, weakUntil, obj, tempMid, tempUntil);
-            int newWeakMidL = newWeakMidLTask != null
-                    ? newWeakMidLTask.join()
-                    : helperB(goodFrom, goodMidL, weakFrom, weakMidL, obj, tempFrom, tempMid);
-
-            splitMerge.mergeTwo(indices, tempFrom, goodFrom, goodMidL, goodMidL, goodMidR);
-            newWeakUntil = splitMerge.mergeTwo(indices, tempFrom, weakMidL, weakMidR, weakMidR, newWeakUntil);
-            newWeakUntil = helperB(goodFrom, goodMidR, weakMidL, newWeakUntil, obj - 1, tempFrom, tempUntil);
-            splitMerge.mergeTwo(indices, tempFrom, goodFrom, goodMidR, goodMidR, goodUntil);
-            return splitMerge.mergeTwo(indices, tempFrom, weakFrom, newWeakMidL, weakMidL, newWeakUntil);
         }
+        double median = ArrayHelper.destructiveMedian(medianSwap, tempFrom, medianWeak);
+        long goodSplit = splitMerge.splitInThree(transposedPoints[obj], indices, tempFrom, goodFrom, goodUntil, median, goodMinObj, goodMaxObj);
+        int goodMidL = SplitMergeHelper.extractMid(goodSplit);
+        int goodMidR = SplitMergeHelper.extractRight(goodSplit);
+        long weakSplit = splitMerge.splitInThree(transposedPoints[obj], indices, tempFrom, weakFrom, weakUntil, median, weakMinObj, weakMaxObj);
+        int weakMidL = SplitMergeHelper.extractMid(weakSplit);
+        int weakMidR = SplitMergeHelper.extractRight(weakSplit);
+        int tempMid = (tempFrom + tempUntil) >>> 1;
+
+        ForkJoinTask<Integer> newWeakMidLTask = null;
+        if (pool != null && goodMidL - goodFrom + weakMidL - weakFrom > FORK_JOIN_THRESHOLD) {
+            newWeakMidLTask = helperBAsync(goodFrom, goodMidL, weakFrom, weakMidL, obj, tempFrom, tempMid).fork();
+        }
+        int newWeakUntil = helperB(goodMidR, goodUntil, weakMidR, weakUntil, obj, tempMid, tempUntil);
+        int newWeakMidL = newWeakMidLTask != null
+                ? newWeakMidLTask.join()
+                : helperB(goodFrom, goodMidL, weakFrom, weakMidL, obj, tempFrom, tempMid);
+
+        splitMerge.mergeTwo(indices, tempFrom, goodFrom, goodMidL, goodMidL, goodMidR);
+        newWeakUntil = splitMerge.mergeTwo(indices, tempFrom, weakMidL, weakMidR, weakMidR, newWeakUntil);
+        newWeakUntil = helperB(goodFrom, goodMidR, weakMidL, newWeakUntil, obj - 1, tempFrom, tempUntil);
+        splitMerge.mergeTwo(indices, tempFrom, goodFrom, goodMidR, goodMidR, goodUntil);
+        return splitMerge.mergeTwo(indices, tempFrom, weakFrom, newWeakMidL, weakMidL, newWeakUntil);
     }
 
     private RecursiveTask<Integer> helperBAsync(final int goodFrom, final int goodUntil,
