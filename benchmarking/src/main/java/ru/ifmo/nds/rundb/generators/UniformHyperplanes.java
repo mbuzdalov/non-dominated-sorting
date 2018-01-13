@@ -69,11 +69,12 @@ public class UniformHyperplanes {
             double[][][] rv = new double[instanceCount][n][d];
             for (int x = 0; x < instanceCount; ++x) {
                 for (int i = 0; i < firstFrontSize; ++i) {
-                    for (int j = 1; j < d; ++j) {
-                        rv[x][i][j] = random.nextDouble();
-                        rv[x][i][0] -= rv[x][i][j];
+                    double sum = 1.0;
+                    for (int j = d - 1; j > 0; --j) {
+                        rv[x][i][j] = sum * (1 - Math.pow(1 - random.nextDouble(), 1.0 / j));
+                        sum -= rv[x][i][j];
                     }
-                    rv[x][i][0] += 0.5 * d;
+                    rv[x][i][0] = sum;
                 }
                 for (int i = firstFrontSize; i < n; ++i) {
                     rv[x][i] = rv[x][i - frontSize].clone();
