@@ -27,35 +27,38 @@ public final class FenwickRankQueryStructure extends RankQueryStructure {
             }
             int storageEnd = storageStart + until - from;
             Arrays.sort(keys, storageStart, storageEnd);
-            int realSize = 1;
+            int uniqueEnd = offset + 1;
+            double prev = keys[offset];
             for (int i = storageStart + 1; i < storageEnd; ++i) {
-                if (keys[i] != keys[i - 1]) {
-                    keys[offset + realSize++] = keys[i];
+                double curr = keys[i];
+                if (curr != prev) {
+                    keys[uniqueEnd] = prev = curr;
+                    ++uniqueEnd;
                 }
             }
-            size = realSize;
-            Arrays.fill(values, offset, offset + size, -1);
+            Arrays.fill(values, offset, uniqueEnd, -1);
+            size = uniqueEnd - offset;
         }
 
         private int indexFor(double key) {
-            int left = -1, right = size;
+            int left = offset - 1, right = offset + size;
             while (right - left > 1) {
                 int mid = (left + right) >>> 1;
-                if (keys[offset + mid] <= key) {
+                if (keys[mid] <= key) {
                     left = mid;
                 } else {
                     right = mid;
                 }
             }
-            return left;
-
+            return left - offset;
         }
 
         @Override
         public void put(double key, int value) {
             int fwi = indexFor(key);
             while (fwi < size) {
-                values[offset + fwi] = Math.max(values[offset + fwi], value);
+                int idx = offset + fwi;
+                values[idx] = Math.max(values[idx], value);
                 fwi |= fwi + 1;
             }
         }
@@ -63,16 +66,12 @@ public final class FenwickRankQueryStructure extends RankQueryStructure {
         @Override
         public int getMaximumWithKeyAtMost(double key, int minimumMeaningfulAnswer) {
             int fwi = indexFor(key);
-            if (fwi >= size || fwi < 0) {
-                return -1;
-            } else {
-                int rv = -1;
-                while (fwi >= 0) {
-                    rv = Math.max(rv, values[offset + fwi]);
-                    fwi = (fwi & (fwi + 1)) - 1;
-                }
-                return rv;
+            int rv = -1;
+            while (fwi >= 0) {
+                rv = Math.max(rv, values[offset + fwi]);
+                fwi = (fwi & (fwi + 1)) - 1;
             }
+            return rv;
         }
     }
 }
