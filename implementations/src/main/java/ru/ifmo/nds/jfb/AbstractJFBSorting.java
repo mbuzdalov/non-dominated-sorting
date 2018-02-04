@@ -311,7 +311,8 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         throw new UnsupportedOperationException("helperAHook not yet implemented");
     }
 
-    private int helperAMain(int from, int until, int obj) {
+    // TODO revert to private
+    protected int helperAMain(int from, int until, int obj) {
         int n = until - from;
         ArrayHelper.transplant(transposedPoints[obj], indices, from, until, medianSwap, from);
         double objMin = ArrayHelper.min(medianSwap, from, until);
@@ -438,7 +439,8 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         throw new UnsupportedOperationException("helperBHook not yet implemented");
     }
 
-    private int helperBMain(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj, int tempFrom, int tempUntil) {
+    // TODO revert to private
+    protected int helperBMain(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj, int tempFrom, int tempUntil) {
         if (tempUntil - tempFrom < goodUntil - goodFrom + weakUntil - weakFrom) {
             throw new AssertionError();
         }
