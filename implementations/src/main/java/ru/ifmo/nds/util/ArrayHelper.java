@@ -126,10 +126,14 @@ public final class ArrayHelper {
                     --r;
                 }
             }
-            if (index <= r) {
+            if (index < r) {
                 until = r + 1;
-            } else if (l <= index) {
+            } else if (l < index) {
                 from = l;
+            } else if (r == index) {
+                return max(array, from, r + 1);
+            } else if (l == index) {
+                return min(array, l, until);
             } else {
                 return array[index];
             }

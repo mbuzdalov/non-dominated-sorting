@@ -24,6 +24,9 @@ public class MedianBenchmark {
             "20000", "50000", "100000"})
     private int size;
 
+    @Param(value = {"hypercube", "discrete"})
+    private String type;
+
     private double[][] data;
     private double[] temp;
 
@@ -31,10 +34,23 @@ public class MedianBenchmark {
     public void initialize() {
         Random random = new Random(size * 723525217);
         data = new double[10][size];
-        for (int i = 0; i < 10; ++i) {
-            for (int j = 0; j < size; ++j) {
-                data[i][j] = random.nextDouble();
-            }
+        switch (type) {
+            case "hypercube":
+                for (int i = 0; i < 10; ++i) {
+                    for (int j = 0; j < size; ++j) {
+                        data[i][j] = random.nextDouble();
+                    }
+                }
+                break;
+            case "discrete":
+                for (int i = 0; i < 10; ++i) {
+                    for (int j = 0; j < size; ++j) {
+                        data[i][j] = random.nextInt(100);
+                    }
+                }
+                break;
+            default:
+                throw new AssertionError("Unknown data type: '" + type + "'");
         }
         temp = new double[size];
     }
