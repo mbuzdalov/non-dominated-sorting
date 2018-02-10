@@ -22,6 +22,7 @@ public class DeductiveSort {
         @Override
         protected void sortChecked(double[][] points, int[] ranks, int maximalMeaningfulRank) {
             int n = points.length;
+            int dim = points[0].length;
             for (int i = 0; i < n; ++i) {
                 indices[i] = i;
             }
@@ -37,7 +38,7 @@ public class DeductiveSort {
                     while (next < last) {
                         int nextI = indices[next];
                         double[] nextP = points[nextI];
-                        int comparison = DominanceHelper.dominanceComparison(currP, nextP);
+                        int comparison = DominanceHelper.dominanceComparison(currP, nextP, dim);
                         if (comparison < 0) {
                             int tmp = indices[--last];
                             indices[last] = indices[next];

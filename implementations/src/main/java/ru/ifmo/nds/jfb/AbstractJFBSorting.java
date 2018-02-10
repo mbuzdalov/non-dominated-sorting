@@ -7,10 +7,7 @@ import java.util.concurrent.RecursiveAction;
 import java.util.concurrent.RecursiveTask;
 
 import ru.ifmo.nds.NonDominatedSorting;
-import ru.ifmo.nds.util.ArrayHelper;
-import ru.ifmo.nds.util.DoubleArraySorter;
-import ru.ifmo.nds.util.RankQueryStructure;
-import ru.ifmo.nds.util.SplitMergeHelper;
+import ru.ifmo.nds.util.*;
 
 public abstract class AbstractJFBSorting extends NonDominatedSorting {
     private static final int FORK_JOIN_THRESHOLD = 400;

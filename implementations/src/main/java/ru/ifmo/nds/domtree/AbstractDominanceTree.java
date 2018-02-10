@@ -97,7 +97,7 @@ public abstract class AbstractDominanceTree extends NonDominatedSorting {
         }
 
         int dominationCompare(Node that) {
-            return DominanceHelper.dominanceComparison(point, that.point);
+            return DominanceHelper.dominanceComparison(point, that.point, point.length);
         }
     }
 }
