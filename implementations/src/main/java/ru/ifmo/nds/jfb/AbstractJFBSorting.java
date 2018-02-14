@@ -210,6 +210,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
     protected boolean helperAHookCondition(int size, int obj) {
         return false;
     }
+
     protected int helperAHook(int from, int until, int obj) {
         throw new UnsupportedOperationException("helperAHook not yet implemented");
     }
@@ -308,6 +309,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
     protected boolean helperBHookCondition(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj) {
         return false;
     }
+
     protected int helperBHook(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj, int tempFrom) {
         throw new UnsupportedOperationException("helperBHook not yet implemented");
     }
