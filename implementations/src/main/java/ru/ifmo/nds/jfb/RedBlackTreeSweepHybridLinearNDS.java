@@ -36,7 +36,7 @@ public class RedBlackTreeSweepHybridLinearNDS extends RedBlackTreeSweep {
     }
 
     @Override
-    protected int helperBHook(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj, int tempFrom, int tempUntil) {
+    protected int helperBHook(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj, int tempFrom) {
         for (int good = goodFrom, weakMin = weakFrom; good < goodUntil; ++good) {
             int goodIndex = indices[good];
             while (weakMin < weakUntil && indices[weakMin] < goodIndex) {

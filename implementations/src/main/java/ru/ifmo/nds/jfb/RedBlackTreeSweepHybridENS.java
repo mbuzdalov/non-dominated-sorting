@@ -177,7 +177,7 @@ public class RedBlackTreeSweepHybridENS extends RedBlackTreeSweep {
     }
 
     @Override
-    protected int helperBHook(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj, int tempFrom, int tempUntil) {
+    protected int helperBHook(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj, int tempFrom) {
         if (goodFrom == goodUntil || weakFrom == weakUntil) {
             return weakUntil;
         }

@@ -228,10 +228,10 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
             int startRight = SplitMergeHelper.extractRight(split);
 
             int newStartMid = helperA(from, startMid, obj);
-            int newStartRight = helperB(from, newStartMid, startMid, startRight, obj - 1, from, until);
+            int newStartRight = helperB(from, newStartMid, startMid, startRight, obj - 1, from);
             newStartRight = helperA(startMid, newStartRight, obj - 1);
             newStartRight = splitMerge.mergeTwo(indices, from, from, newStartMid, startMid, newStartRight);
-            int newUntil = helperB(from, newStartRight, startRight, until, obj - 1, from, until);
+            int newUntil = helperB(from, newStartRight, startRight, until, obj - 1, from);
             newUntil = helperA(startRight, newUntil, obj);
             return splitMerge.mergeTwo(indices, from, from, newStartRight, startRight, newUntil);
         }
@@ -308,14 +308,15 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
     protected boolean helperBHookCondition(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj) {
         return false;
     }
-    protected int helperBHook(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj, int tempFrom, int tempUntil) {
+    protected int helperBHook(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj, int tempFrom) {
         throw new UnsupportedOperationException("helperBHook not yet implemented");
     }
 
-    private int helperBMain(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj, int tempFrom, int tempUntil) {
-        int medianGood = ArrayHelper.transplant(transposedPoints[obj], indices, goodFrom, goodUntil, medianSwap, tempFrom);
+    private int helperBMain(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj, int tempFrom) {
+        double[] currentTransposed = transposedPoints[obj];
+        int medianGood = ArrayHelper.transplant(currentTransposed, indices, goodFrom, goodUntil, medianSwap, tempFrom);
         double goodMinObj = ArrayHelper.min(medianSwap, tempFrom, medianGood);
-        int medianWeak = ArrayHelper.transplant(transposedPoints[obj], indices, weakFrom, weakUntil, medianSwap, medianGood);
+        int medianWeak = ArrayHelper.transplant(currentTransposed, indices, weakFrom, weakUntil, medianSwap, medianGood);
         double weakMaxObj = ArrayHelper.max(medianSwap, medianGood, medianWeak);
         if (weakMaxObj < goodMinObj) {
             return weakUntil;
@@ -323,29 +324,29 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         double goodMaxObj = ArrayHelper.max(medianSwap, tempFrom, medianGood);
         double weakMinObj = ArrayHelper.min(medianSwap, medianGood, medianWeak);
         if (goodMaxObj <= weakMinObj) {
-            return helperB(goodFrom, goodUntil, weakFrom, weakUntil, obj - 1, tempFrom, tempUntil);
+            return helperB(goodFrom, goodUntil, weakFrom, weakUntil, obj - 1, tempFrom);
         }
         double median = ArrayHelper.destructiveMedian(medianSwap, tempFrom, medianWeak);
-        long goodSplit = splitMerge.splitInThree(transposedPoints[obj], indices, tempFrom, goodFrom, goodUntil, median, goodMinObj, goodMaxObj);
+        long goodSplit = splitMerge.splitInThree(currentTransposed, indices, tempFrom, goodFrom, goodUntil, median, goodMinObj, goodMaxObj);
         int goodMidL = SplitMergeHelper.extractMid(goodSplit);
         int goodMidR = SplitMergeHelper.extractRight(goodSplit);
-        long weakSplit = splitMerge.splitInThree(transposedPoints[obj], indices, tempFrom, weakFrom, weakUntil, median, weakMinObj, weakMaxObj);
+        long weakSplit = splitMerge.splitInThree(currentTransposed, indices, tempFrom, weakFrom, weakUntil, median, weakMinObj, weakMaxObj);
         int weakMidL = SplitMergeHelper.extractMid(weakSplit);
         int weakMidR = SplitMergeHelper.extractRight(weakSplit);
-        int tempMid = (tempFrom + tempUntil) >>> 1;
+        int tempMid = tempFrom + ((goodUntil - goodFrom + weakUntil - weakFrom) >>> 1);
 
         ForkJoinTask<Integer> newWeakMidLTask = null;
         if (pool != null && goodMidL - goodFrom + weakMidL - weakFrom > FORK_JOIN_THRESHOLD) {
-            newWeakMidLTask = helperBAsync(goodFrom, goodMidL, weakFrom, weakMidL, obj, tempFrom, tempMid).fork();
+            newWeakMidLTask = helperBAsync(goodFrom, goodMidL, weakFrom, weakMidL, obj, tempFrom).fork();
         }
-        int newWeakUntil = helperB(goodMidR, goodUntil, weakMidR, weakUntil, obj, tempMid, tempUntil);
+        int newWeakUntil = helperB(goodMidR, goodUntil, weakMidR, weakUntil, obj, tempMid);
         int newWeakMidL = newWeakMidLTask != null
                 ? newWeakMidLTask.join()
-                : helperB(goodFrom, goodMidL, weakFrom, weakMidL, obj, tempFrom, tempMid);
+                : helperB(goodFrom, goodMidL, weakFrom, weakMidL, obj, tempFrom);
 
         splitMerge.mergeTwo(indices, tempFrom, goodFrom, goodMidL, goodMidL, goodMidR);
         newWeakUntil = splitMerge.mergeTwo(indices, tempFrom, weakMidL, weakMidR, weakMidR, newWeakUntil);
-        newWeakUntil = helperB(goodFrom, goodMidR, weakMidL, newWeakUntil, obj - 1, tempFrom, tempUntil);
+        newWeakUntil = helperB(goodFrom, goodMidR, weakMidL, newWeakUntil, obj - 1, tempFrom);
         splitMerge.mergeTwo(indices, tempFrom, goodFrom, goodMidR, goodMidR, goodUntil);
         return splitMerge.mergeTwo(indices, tempFrom, weakFrom, newWeakMidL, weakMidL, newWeakUntil);
     }
@@ -353,16 +354,16 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
     private RecursiveTask<Integer> helperBAsync(final int goodFrom, final int goodUntil,
                                                 final int weakFrom, final int weakUntil,
                                                 final int obj,
-                                                final int tempFrom, final int tempUntil) {
+                                                final int tempFrom) {
         return new RecursiveTask<Integer>() {
             @Override
             protected Integer compute() {
-                return helperB(goodFrom, goodUntil, weakFrom, weakUntil, obj, tempFrom, tempUntil);
+                return helperB(goodFrom, goodUntil, weakFrom, weakUntil, obj, tempFrom);
             }
         };
     }
 
-    private int helperB(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj, int tempFrom, int tempUntil) {
+    private int helperB(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj, int tempFrom) {
         if (goodUntil - goodFrom > 0 && weakUntil - weakFrom > 0) {
             int newGoodUntil = -Arrays.binarySearch(indices, goodFrom, goodUntil, indices[weakUntil - 1]) - 1;
             int newWeakFrom = -Arrays.binarySearch(indices, weakFrom, weakUntil, indices[goodFrom]) - 1;
@@ -379,9 +380,9 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
             } else if (obj == 1) {
                 return sweepB(goodFrom, goodUntil, weakFrom, weakUntil, tempFrom);
             } else if (helperBHookCondition(goodFrom, goodUntil, weakFrom, weakUntil, obj)) {
-                return helperBHook(goodFrom, goodUntil, weakFrom, weakUntil, obj, tempFrom, tempUntil);
+                return helperBHook(goodFrom, goodUntil, weakFrom, weakUntil, obj, tempFrom);
             } else {
-                return helperBMain(goodFrom, goodUntil, weakFrom, weakUntil, obj, tempFrom, tempUntil);
+                return helperBMain(goodFrom, goodUntil, weakFrom, weakUntil, obj, tempFrom);
             }
         } else {
             return weakUntil;
