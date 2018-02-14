@@ -295,20 +295,9 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         return kickOutOverflowedRanks(minOverflow, until);
     }
 
-    private int helperBGood1(int good, int weakFrom, int weakUntil, int obj) {
-        int gi = indices[good];
-        // Binary search to discard points which are definitely not dominated.
-        int bs = Arrays.binarySearch(indices, weakFrom, weakUntil, gi);
-        int weakStart = -bs - 1;
-        return updateByPoint(gi, weakStart, weakUntil, obj);
-    }
-
     private int helperBWeak1(int goodFrom, int goodUntil, int weak, int obj) {
         int wi = indices[weak];
-        // Binary search to discard points which definitely do not dominate.
-        int bs = Arrays.binarySearch(indices, goodFrom, goodUntil, wi);
-        int goodFinish = -bs - 1;
-        for (int i = goodFrom; i < goodFinish; ++i) {
+        for (int i = goodFrom; i < goodUntil; ++i) {
             int gi = indices[i];
             if (ifDominatesUpdateRankAndCheckWhetherCanScrapSecond(gi, wi, obj)) {
                 return weak;
@@ -375,11 +364,17 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
     }
 
     private int helperB(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj, int tempFrom, int tempUntil) {
+        if (goodUntil - goodFrom > 0 && weakUntil - weakFrom > 0) {
+            int newGoodUntil = -Arrays.binarySearch(indices, goodFrom, goodUntil, indices[weakUntil - 1]) - 1;
+            int newWeakFrom = -Arrays.binarySearch(indices, weakFrom, weakUntil, indices[goodFrom]) - 1;
+            goodUntil = newGoodUntil;
+            weakFrom = newWeakFrom;
+        }
         int goodN = goodUntil - goodFrom;
         int weakN = weakUntil - weakFrom;
         if (goodN > 0 && weakN > 0) {
             if (goodN == 1) {
-                return helperBGood1(goodFrom, weakFrom, weakUntil, obj);
+                return updateByPoint(indices[goodFrom], weakFrom, weakUntil, obj);
             } else if (weakN == 1) {
                 return helperBWeak1(goodFrom, goodUntil, weakFrom, obj);
             } else if (obj == 1) {
