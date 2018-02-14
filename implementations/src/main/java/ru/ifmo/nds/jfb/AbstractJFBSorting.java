@@ -175,8 +175,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         for (int i = from; i < until; ++i) {
             int curr = indices[i];
             double currY = local[curr];
-            int result = Math.max(ranks[curr],
-                    rankQuery.getMaximumWithKeyAtMost(currY, ranks[curr]) + 1);
+            int result = Math.max(ranks[curr], rankQuery.getMaximumWithKeyAtMost(currY, ranks[curr]) + 1);
             ranks[curr] = result;
             if (result <= maximalMeaningfulRank) {
                 rankQuery.put(currY, result);
