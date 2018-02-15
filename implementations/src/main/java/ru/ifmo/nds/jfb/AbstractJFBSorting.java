@@ -367,10 +367,14 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
 
     private int helperB(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj, int tempFrom) {
         if (goodUntil - goodFrom > 0 && weakUntil - weakFrom > 0) {
-            int newGoodUntil = -Arrays.binarySearch(indices, goodFrom, goodUntil, indices[weakUntil - 1]) - 1;
-            int newWeakFrom = -Arrays.binarySearch(indices, weakFrom, weakUntil, indices[goodFrom]) - 1;
-            goodUntil = newGoodUntil;
-            weakFrom = newWeakFrom;
+            int lastWeakIdx = indices[weakUntil - 1];
+            while (goodFrom < goodUntil && indices[goodUntil - 1] > lastWeakIdx) {
+                --goodUntil;
+            }
+            int firstGoodIdx = indices[goodFrom];
+            while (weakFrom < weakUntil && indices[weakFrom] < firstGoodIdx) {
+                ++weakFrom;
+            }
         }
         int goodN = goodUntil - goodFrom;
         int weakN = weakUntil - weakFrom;
