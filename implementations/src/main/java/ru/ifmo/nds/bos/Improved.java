@@ -12,6 +12,7 @@ public class Improved extends NonDominatedSorting {
     private int[] reindex;
     private double[][] points;
     private int[] ranks;
+    private boolean[] isRanked;
     private int[][] lastFrontIndex;
     private int[][] prevFrontIndex;
 
@@ -34,6 +35,7 @@ public class Improved extends NonDominatedSorting {
         reindex = new int[maximumPoints];
         points = new double[maximumPoints][];
         ranks = new int[maximumPoints];
+        isRanked = new boolean[maximumPoints];
         sorter = new DoubleArraySorter(maximumPoints);
     }
 
@@ -102,7 +104,8 @@ public class Improved extends NonDominatedSorting {
     }
 
     private void rankPoint(int currIndex, int[] prevFI, int[] lastFI, int smallestRank, int maximalMeaningfulRank) {
-        int currRank = smallestRank;
+        int currRank = Math.max(smallestRank, ranks[currIndex]);
+
         // This is currently implemented as sequential search.
         // A binary search implementation is expected as well.
         while (currRank <= maximalMeaningfulRank) {
@@ -121,20 +124,29 @@ public class Improved extends NonDominatedSorting {
             }
             ++currRank;
         }
-        this.ranks[currIndex] = currRank;
+        this.ranks[currIndex] = Math.max(this.ranks[currIndex], currRank);
+        this.isRanked[currIndex] = true;
     }
 
     @Override
     protected void sortChecked(double[][] points, int[] ranks, int maximalMeaningfulRank) {
+        Arrays.fill(ranks, 0, ranks.length, 0);
+        sortCheckedWithRespectToRanks(points, ranks, maximalMeaningfulRank);
+    }
+
+    @Override
+    protected void sortCheckedWithRespectToRanks(double[][] points, int[] ranks, int maximalMeaningfulRank) {
         int origN = ranks.length;
         int dim = points[0].length;
         ArrayHelper.fillIdentity(reindex, origN);
         sorter.lexicographicalSort(points, reindex, 0, origN, dim);
+        System.arraycopy(ranks, 0, this.ranks, 0, ranks.length);
+
         int newN = DoubleArraySorter.retainUniquePoints(points, reindex, this.points, ranks);
         initializeObjectiveIndices(newN, dim);
         maximalMeaningfulRank = Math.min(maximalMeaningfulRank, newN - 1);
 
-        Arrays.fill(this.ranks, 0, newN, -1);
+        Arrays.fill(isRanked, 0, newN, false);
         Arrays.fill(checkIndicesCount, 0, newN, dim);
         Arrays.fill(indexNeededCount, 0, newN, dim);
 
@@ -157,7 +169,7 @@ public class Improved extends NonDominatedSorting {
                 int currIndex = objectiveIndices[oIndex][hIndex];
                 int[] prevFI = prevFrontIndex[oIndex];
                 int[] lastFI = lastFrontIndex[oIndex];
-                if (this.ranks[currIndex] == -1) {
+                if (!this.isRanked[currIndex]) {
                     rankPoint(currIndex, prevFI, lastFI, smallestRank, maximalMeaningfulRank);
                     ++ranked;
                 }
@@ -180,8 +192,9 @@ public class Improved extends NonDominatedSorting {
 
         if (smallestRank > maximalMeaningfulRank) {
             for (int i = 0; i < newN; ++i) {
-                if (this.ranks[i] == -1) {
+                if (!this.isRanked[i]) {
                     this.ranks[i] = maximalMeaningfulRank + 1;
+                    this.isRanked[i] = true;
                 }
             }
         }

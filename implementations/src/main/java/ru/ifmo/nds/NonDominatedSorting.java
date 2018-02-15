@@ -1,7 +1,9 @@
 package ru.ifmo.nds;
 
+import javax.naming.OperationNotSupportedException;
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 /**
  * This is the base for classes which actually perform non-dominated sorting.
@@ -75,6 +77,10 @@ public abstract class NonDominatedSorting implements AutoCloseable {
      *                              The safe value to get all ranks correct is {@code points.length}.
      */
     public final void sort(double[][] points, int[] ranks, int maximalMeaningfulRank) {
+        checkAndSort(points, ranks, maximalMeaningfulRank, false);
+    }
+
+    private void checkAndSort(double[][] points, int[] ranks, int maximalMeaningfulRank, boolean withRespectToRanks) {
         requirePointsAreNonNull(points);
         Objects.requireNonNull(ranks, "The array of ranks must not be null");
 
@@ -93,9 +99,36 @@ public abstract class NonDominatedSorting implements AutoCloseable {
         if (dimension == 0) {
             Arrays.fill(ranks, 0);
         } else {
-            sortChecked(points, ranks, maximalMeaningfulRank);
+            if(withRespectToRanks) {
+                sortCheckedWithRespectToRanks(points, ranks, maximalMeaningfulRank);
+            } else {
+                sortChecked(points, ranks, maximalMeaningfulRank);
+            }
             filterMaximumMeaningfulRank(ranks, maximalMeaningfulRank);
         }
+    }
+
+    /**
+     * Performs non-dominated sorting with respect to ranks.
+     * @param points the array of points to be sorted.
+     * @param ranks the array to be filled with ranks of points.
+     */
+    public final void sortWithRespectToRanks(double[][] points, int[] ranks) {
+        sortWithRespectToRanks(points, ranks, ranks == null ? 0 : ranks.length);
+    }
+
+    /**
+     * Performs non-dominated sorting with respect to ranks. All ranks above the given {@code maximalMeaningfulRank}
+     * will be reported as {@code maximalMeaningfulRank + 1}.
+     *
+     * @param points the array of points to be sorted.
+     * @param ranks the array to be filled with ranks of points.
+     * @param maximalMeaningfulRank the maximal rank which is meaningful to the caller.
+     *                              All ranks above will be reported as {@code maximalMeaningfulRank + 1}.
+     *                              The safe value to get all ranks correct is {@code points.length}.
+     */
+    public final void sortWithRespectToRanks(double[][] points, int[] ranks, int maximalMeaningfulRank) {
+        checkAndSort(points, ranks, maximalMeaningfulRank, true);
     }
 
     /**
@@ -112,6 +145,17 @@ public abstract class NonDominatedSorting implements AutoCloseable {
      *                              All ranks above can be treated as same.
      */
     protected abstract void sortChecked(double[][] points, int[] ranks, int maximalMeaningfulRank);
+
+    /**
+     * Performs actual sorting with respect to ranks. Assumes the input arrays are valid.
+     * @param points the points to be sorted.
+     * @param ranks the array of ranks to be filled.
+     * @param maximalMeaningfulRank the maximal rank which is meaningful to the caller.
+     *                              All ranks above can be treated as same.
+     */
+    protected void sortCheckedWithRespectToRanks(double[][] points, int[] ranks, int maximalMeaningfulRank) {
+        throw new UnsupportedOperationException("sortCheckedWithRespectToRanks not yet implemented");
+    }
 
     private void requirePointsAreNonNull(double[][] points) {
         Objects.requireNonNull(points, "The array of points must not be null");

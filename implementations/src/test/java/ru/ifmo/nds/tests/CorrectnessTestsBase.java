@@ -48,7 +48,7 @@ public abstract class CorrectnessTestsBase {
             sorting.sort(input, actualOutput);
             Assert.assertArrayEquals(expectedOutput, actualOutput);
 
-            for (int maxRankG = maxExpectedOutput; maxRankG >= -maxExpectedOutput; --maxRankG) {
+            for (int maxRankG = maxExpectedOutput; maxRankG >= -maxExpectedOutput; --maxRankG) { // TODO fail for Hybrid JFB + BOS
                 int maxRank = Math.abs(maxRankG);
                 int[] localExpectedOutput = expectedOutput.clone();
                 for (int i = 0; i < localExpectedOutput.length; ++i) {
@@ -337,6 +337,50 @@ public abstract class CorrectnessTestsBase {
                 {-758, -515, -226}, {-786, -98, -268}, {-876, -264, -655}, {-43, -572, -418}, {-158, -517, -647},
                 {-636, -321, -369}, {-19, -547, -935}, {-571, -866, -524}, {-819, -917, -692}, {-555, -487, -980}
         }, new int[] {1, 1, 0, 2, 1, 1, 0, 1, 0, 0});
+    }
+
+    @Test
+    public void small3dOrderTest() {
+        groupCheck(new int[][] {
+                {1, 5, 6},
+                {2, 4, 5},
+                {3, 6, 8},
+                {4, 2, 7},
+                {5, 3, 1},
+                {6, 7, 3},
+                {7, 8, 4},
+                {8, 1, 2}
+        }, new int[] {0, 0, 1, 0, 0, 1, 2, 0});
+    }
+
+    @Test
+    public void small3dTest() {
+        groupCheck(new int[][] {
+                {5, 9, 4},
+                {9, 3, 10},
+                {9, 7, 11},
+                {3, 15, 2},
+                {9, 3, 10},
+                {9, 7, 11},
+                {7, 8, 6},
+                {13, 13, 3},
+                {8, 5, 15},
+                {11, 19, 12}
+        }, new int[] {0, 0, 1, 0, 0, 1, 0, 0, 0, 2});
+    }
+
+    @Test
+    public void fromPaperTest() {
+        groupCheck(new int[][] {
+                {1, 5}, // a
+                {2, 4}, // b
+                {3, 6}, // h
+                {4, 2}, // c
+                {5, 3}, // e
+                {6, 7}, // g
+                {7, 8}, // d
+                {8, 1}  // f
+        }, new int[] {0, 0, 1, 0, 1, 2, 3, 0});
     }
 
     @Test

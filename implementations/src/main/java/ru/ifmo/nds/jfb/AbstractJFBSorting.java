@@ -137,7 +137,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         }
     }
 
-    int kickOutOverflowedRanks(int from, int until) {
+    final int kickOutOverflowedRanks(int from, int until) {
         int newUntil = from;
         for (int i = from; i < until; ++i) {
             int ii = indices[i];
@@ -148,7 +148,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         return newUntil;
     }
 
-    boolean strictlyDominatesAssumingNotSame(int goodIndex, int weakIndex, int maxObj) {
+    final boolean strictlyDominatesAssumingNotSame(int goodIndex, int weakIndex, int maxObj) {
         double[] goodPoint = points[goodIndex];
         double[] weakPoint = points[weakIndex];
         // Comparison in 0 makes no sense, as due to goodIndex < weakIndex the points are <= in this coordinate.
@@ -311,8 +311,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         throw new UnsupportedOperationException("helperAHook not yet implemented");
     }
 
-    // TODO revert to private
-    protected int helperAMain(int from, int until, int obj) {
+    private int helperAMain(int from, int until, int obj) {
         int n = until - from;
         ArrayHelper.transplant(transposedPoints[obj], indices, from, until, medianSwap, from);
         double objMin = ArrayHelper.min(medianSwap, from, until);
@@ -377,7 +376,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         }
     }
 
-    int updateByPoint(int pointIndex, int from, int until, int obj) {
+    final int updateByPoint(int pointIndex, int from, int until, int obj) {
         int ri = ranks[pointIndex];
         if (ri == maximalMeaningfulRank) {
             return updateByPointCritical(pointIndex, from, until, obj);
@@ -439,8 +438,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         throw new UnsupportedOperationException("helperBHook not yet implemented");
     }
 
-    // TODO revert to private
-    protected int helperBMain(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj, int tempFrom, int tempUntil) {
+    private int helperBMain(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj, int tempFrom, int tempUntil) {
         if (tempUntil - tempFrom < goodUntil - goodFrom + weakUntil - weakFrom) {
             throw new AssertionError();
         }
@@ -484,6 +482,22 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
             mergeTwo(tempFrom, goodFrom, goodMidR, goodMidR, goodUntil);
             return mergeTwo(tempFrom, weakFrom, newWeakMidL, weakMidL, newWeakUntil);
         }
+    }
+
+    double[][] getPoints(int from, int until, int k) {
+        final double[][] ps = new double[until - from][k];
+        for (int i = from; i < until; i++) {
+            System.arraycopy(this.points[indices[i]], 0, ps[i - from], 0, k);
+        }
+        return ps;
+    }
+
+    int[] getRanks(int from, int until) {
+        final int[] rs = new int[until - from];
+        for (int i = from; i < until; i++) {
+            rs[i - from] = this.ranks[indices[i]];
+        }
+        return rs;
     }
 
     private RecursiveTask<Integer> helperBAsync(final int goodFrom, final int goodUntil,
