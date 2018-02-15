@@ -12,11 +12,15 @@ public final class RedBlackRankQueryStructure extends RankQueryStructure {
 
     public RedBlackRankQueryStructure(int maximumPoints) {
         allNodes = new Node[maximumPoints];
+        for (int i = 0; i < maximumPoints; ++i) {
+            allNodes[i] = new Node();
+            allNodes[i].index = i;
+        }
     }
 
     @Override
-    public RangeHandle createHandle(int from, int until) {
-        return new RangeHandleImpl(from, until);
+    public RangeHandle createHandle(int storageStart, int from, int until, int[] indices, double[] values) {
+        return new RangeHandleImpl(storageStart, until - from);
     }
 
     private static class Node {
@@ -28,28 +32,15 @@ public final class RedBlackRankQueryStructure extends RankQueryStructure {
     }
 
     private final class RangeHandleImpl extends RankQueryStructure.RangeHandle {
-        private boolean initialized = false;
         private Node root = null;
         private int size = 0;
         private final int offset;
-        private final int limit;
 
-        private RangeHandleImpl(int offset, int limit) {
-            this.offset = offset;
-            this.limit = limit;
-        }
-
-        @Override
-        public boolean needsPossibleKeys() {
-            return false;
-        }
-
-        @Override
-        public void addPossibleKey(double key) {}
-
-        @Override
-        public void init() {
-            initialized = true;
+        private RangeHandleImpl(int storageStart, int maxSize) {
+            this.offset = storageStart;
+            for (int i = 0; i < maxSize; ++i) {
+                setValue(allNodes[storageStart + i], -1);
+            }
         }
 
         @Override
@@ -86,35 +77,12 @@ public final class RedBlackRankQueryStructure extends RankQueryStructure {
             return q == null ? -1 : q.value;
         }
 
-        @Override
-        public void clear() {
-            root = null;
-            for (int i = 0; i < size; ++i) {
-                setValue(allNodes[offset + i], -1);
-            }
-            size = 0;
-            initialized = false;
-        }
-
-        @Override
-        public boolean isInitialized() {
-            return initialized;
-        }
-
         private void setValue(Node node, int value) {
             node.value = value;
         }
 
         private Node newNode(double key, int value, Node parent) {
             int idx = offset + size;
-            if (idx >= limit) {
-                throw new AssertionError();
-            }
-
-            if (allNodes[idx] == null) {
-                allNodes[idx] = new Node();
-                allNodes[idx].index = idx;
-            }
             Node rv = allNodes[idx];
             rv.key = key;
             setValue(rv, value);

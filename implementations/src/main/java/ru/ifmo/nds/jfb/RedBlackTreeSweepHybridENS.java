@@ -1,7 +1,8 @@
 package ru.ifmo.nds.jfb;
 
 public class RedBlackTreeSweepHybridENS extends RedBlackTreeSweep {
-    private static final int MAX_SIZE = 400;
+    private static final int THRESHOLD_3D = 100;
+    private static final int THRESHOLD_ALL = 200;
 
     private int[] sliceRank;
     private int[] sliceSize;
@@ -19,8 +20,9 @@ public class RedBlackTreeSweepHybridENS extends RedBlackTreeSweep {
         pointIndex = new int[maximumPoints];
         pointNext = new int[maximumPoints];
     }
+
     @Override
-    protected void closeImpl() throws Exception {
+    protected void closeImpl() {
         super.closeImpl();
         slicePoint = null;
         sliceNext = null;
@@ -39,8 +41,8 @@ public class RedBlackTreeSweepHybridENS extends RedBlackTreeSweep {
     protected boolean helperAHookCondition(int size, int obj) {
         switch (obj) {
             case 1: return false;
-            case 2: return size < 100;
-            default: return size < MAX_SIZE;
+            case 2: return size < THRESHOLD_3D;
+            default: return size < THRESHOLD_ALL;
         }
     }
 
@@ -147,8 +149,35 @@ public class RedBlackTreeSweepHybridENS extends RedBlackTreeSweep {
         return helperAHookCondition(goodUntil - goodFrom + weakUntil - weakFrom, obj);
     }
 
+    private boolean findWhetherDominates(int from, int until, int index, int obj) {
+        for (int t = from; t < until; ++t) {
+            int ti = pointIndex[t];
+            if (strictlyDominatesAssumingNotSame(ti, index, obj)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean findRank(int sliceLast, int sliceFirst, int index, int existingRank, int obj) {
+        for (int slice = sliceLast; slice >= sliceFirst; --slice) {
+            int from = sliceSize[slice], until = sliceNext[slice];
+            if (from == until) {
+                continue;
+            }
+            int currentRank = ranks[pointIndex[from]];
+            if (currentRank < existingRank) {
+                break;
+            }
+            if (findWhetherDominates(from, until, index, obj)) {
+                return (ranks[index] = currentRank + 1) > maximalMeaningfulRank;
+            }
+        }
+        return false;
+    }
+
     @Override
-    protected int helperBHook(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj, int tempFrom, int tempUntil) {
+    protected int helperBHook(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj, int tempFrom) {
         if (goodFrom == goodUntil || weakFrom == weakUntil) {
             return weakUntil;
         }
@@ -182,34 +211,21 @@ public class RedBlackTreeSweepHybridENS extends RedBlackTreeSweep {
         }
         System.arraycopy(sliceSize, tempFrom, sliceNext, tempFrom, sliceLast + 1 - tempFrom);
 
+        int sliceMax = tempFrom - 1, sliceMin = sliceLast + 1;
+
         int minOverflowed = weakUntil;
         for (int gi = goodFrom, wi = weakFrom; wi < weakUntil; ++wi) {
-            while (gi < goodUntil && indices[gi] < indices[wi]) {
+            int ii = indices[wi];
+            while (gi < goodUntil && indices[gi] < ii) {
                 int mySlice = sliceRank[slicePoint[gi - goodFrom + tempFrom]];
                 pointIndex[--sliceSize[mySlice]] = indices[gi];
+                sliceMax = Math.max(sliceMax, mySlice);
+                sliceMin = Math.min(sliceMin, mySlice);
                 ++gi;
             }
-            int ii = indices[wi];
             int existingRank = ranks[ii];
-
-            dominationChecks:
-            for (int slice = sliceLast; slice >= tempFrom; --slice) {
-                int from = sliceSize[slice], until = sliceNext[slice];
-                if (from == until) {
-                    continue;
-                }
-                if (ranks[pointIndex[from]] < existingRank) {
-                    break;
-                }
-                for (int t = from; t < until; ++t) {
-                    int ti = pointIndex[t];
-                    if (strictlyDominatesAssumingNotSame(ti, ii, obj)) {
-                        if ((ranks[ii] = ranks[ti] + 1) > maximalMeaningfulRank && minOverflowed > wi) {
-                            minOverflowed = wi;
-                        }
-                        break dominationChecks;
-                    }
-                }
+            if (findRank(sliceMax, sliceMin, ii, existingRank, obj) && minOverflowed > wi) {
+                minOverflowed = wi;
             }
         }
         return kickOutOverflowedRanks(minOverflowed, weakUntil);

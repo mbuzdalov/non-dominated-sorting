@@ -53,7 +53,7 @@ public class OriginalVersion extends NonDominatedSorting {
     }
 
     @Override
-    protected void closeImpl() throws Exception {
+    protected void closeImpl() {
         queue = null;
         howManyIDominate = null;
         howManyDominateMe = null;
@@ -67,8 +67,9 @@ public class OriginalVersion extends NonDominatedSorting {
 
     private void comparePointWithOthers(int index, double[][] points, int from, int until) {
         double[] pi = points[index];
+        int dim = pi.length;
         for (int j = from; j < until; ++j) {
-            int comp = dominanceComparison(pi, points[j]);
+            int comp = dominanceComparison(pi, points[j], dim);
             switch (comp) {
                 case -1:
                     pushToDominateList(index, j);

@@ -21,9 +21,8 @@ public abstract class ENSBase extends NonDominatedSorting {
         lastRankIndex = new int[maximumPoints];
     }
 
-
     @Override
-    protected void closeImpl() throws Exception {
+    protected void closeImpl() {
         sorter = null;
         indices = null;
         prevIndex = null;
@@ -32,8 +31,9 @@ public abstract class ENSBase extends NonDominatedSorting {
 
     boolean frontDominates(int frontIndex, double[][] points, double[] point) {
         int index = lastRankIndex[frontIndex];
+        int dim = point.length;
         while (index >= 0) {
-            if (DominanceHelper.strictlyDominates(points[index], point)) {
+            if (DominanceHelper.strictlyDominates(points[index], point, dim)) {
                 return true;
             }
             index = prevIndex[index];

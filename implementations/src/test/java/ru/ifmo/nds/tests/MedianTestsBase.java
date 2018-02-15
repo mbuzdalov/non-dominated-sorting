@@ -9,7 +9,9 @@ import org.junit.Test;
 
 import ru.ifmo.nds.util.ArrayHelper;
 
-public class ArrayHelperTests {
+public abstract class MedianTestsBase {
+    protected abstract double destructiveMedian(double[] array, int until);
+
     private void checkMedian(Function<Random, Double> generator) {
         Random random = new Random();
         double[] medianSwap = new double[100];
@@ -26,7 +28,7 @@ public class ArrayHelperTests {
                     ArrayHelper.swap(indices, i, random.nextInt(i + 1));
                 }
                 int mc = ArrayHelper.transplant(points, indices, 0, size, medianSwap, 0);
-                double median = ArrayHelper.destructiveMedian(medianSwap, 0, mc);
+                double median = destructiveMedian(medianSwap, mc);
                 double[] originalPoints = points.clone();
                 Arrays.sort(points);
                 Assert.assertEquals(Arrays.toString(originalPoints), points[size / 2], median, 1e-16);

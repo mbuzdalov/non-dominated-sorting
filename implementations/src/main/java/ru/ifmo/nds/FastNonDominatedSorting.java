@@ -3,9 +3,6 @@ package ru.ifmo.nds;
 import ru.ifmo.nds.fnds.LinearMemory;
 import ru.ifmo.nds.fnds.OriginalVersion;
 
-/**
- *
- */
 public class FastNonDominatedSorting {
     private FastNonDominatedSorting() {}
 

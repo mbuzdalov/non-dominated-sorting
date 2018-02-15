@@ -298,6 +298,23 @@ public abstract class CorrectnessTestsBase {
     }
 
     @Test
+    public void singleMeaningfulRow() {
+        int n = 100, d = 5;
+        int[][] data = new int[n][d];
+        int[] ranks = new int[n];
+        for (int i = 0; i < d; ++i) {
+            for (int j = 0; j < n; ++j) {
+                data[j][i] = j;
+                ranks[j] = j;
+            }
+            groupCheck(data, ranks);
+            for (int j = 0; j < n; ++j) {
+                data[j][i] = 0;
+            }
+        }
+    }
+
+    @Test
     public void hyperplane2D() {
         hyperplaneImpl(2);
     }

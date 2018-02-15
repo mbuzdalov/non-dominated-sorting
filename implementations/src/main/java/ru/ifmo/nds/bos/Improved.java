@@ -45,7 +45,7 @@ public class Improved extends NonDominatedSorting {
     }
 
     @Override
-    protected void closeImpl() throws Exception {
+    protected void closeImpl() {
         objectiveIndices = null;
         lastFrontIndex = null;
         prevFrontIndex = null;
@@ -65,6 +65,7 @@ public class Improved extends NonDominatedSorting {
         }
         double[] p1 = points[i1];
         double[] p2 = points[i2];
+        int dim = p1.length;
 
         // I have not yet validated this empirically,
         // but when needed count is high, the simple loop is preferable.
@@ -89,7 +90,7 @@ public class Improved extends NonDominatedSorting {
             checkIndicesCount[i1] = count;
             return true;
         } else {
-            return DominanceHelper.strictlyDominates(p1, p2);
+            return DominanceHelper.strictlyDominates(p1, p2, dim);
         }
     }
 

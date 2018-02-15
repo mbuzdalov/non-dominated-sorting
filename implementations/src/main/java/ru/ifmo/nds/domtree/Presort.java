@@ -21,7 +21,7 @@ public class Presort extends AbstractDominanceTree {
     }
 
     @Override
-    protected void closeImpl() throws Exception {
+    protected void closeImpl() {
         super.closeImpl();
         points = null;
         ranks = null;

@@ -42,20 +42,22 @@ public final class DoubleArraySorter {
         this.coordinate = coordinate;
         sortImpl(from, until);
 
-        int last = from;
-        double lastX = scratch[from];
-        for (int i = from + 1; i < until; ++i) {
-            double currX = scratch[i];
-            if (currX != lastX) {
-                if (last + 1 < i && coordinate + 1 < maxCoordinate) {
-                    lexSortImpl(last, i, coordinate + 1);
+        if (coordinate + 1 < maxCoordinate) {
+            int last = from;
+            double lastX = scratch[from];
+            for (int i = from + 1; i < until; ++i) {
+                double currX = scratch[i];
+                if (currX != lastX) {
+                    if (last + 1 < i) {
+                        lexSortImpl(last, i, coordinate + 1);
+                    }
+                    last = i;
+                    lastX = currX;
                 }
-                last = i;
-                lastX = currX;
             }
-        }
-        if (last + 1 < until && coordinate + 1 < maxCoordinate) {
-            lexSortImpl(last, until, coordinate + 1);
+            if (last + 1 < until) {
+                lexSortImpl(last, until, coordinate + 1);
+            }
         }
     }
 
@@ -108,10 +110,13 @@ public final class DoubleArraySorter {
     private void sortWhileResolvingEqualImpl(int from, int until) {
         sortImpl(from, until);
 
+        // after sortImpl, scratch[i] == points[indices[i]][coordinate]
+        // sortByResolver does not alter scratch.
+
         int last = from;
-        double lastX = points[indices[from]][coordinate];
+        double lastX = scratch[from];
         for (int i = from + 1; i < until; ++i) {
-            double currX = points[indices[i]][coordinate];
+            double currX = scratch[i];
             if (currX != lastX) {
                 if (last + 1 < i) {
                     sortByResolver(last, i);

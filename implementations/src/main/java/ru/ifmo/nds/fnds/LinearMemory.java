@@ -22,15 +22,16 @@ public class LinearMemory extends NonDominatedSorting {
     }
 
     @Override
-    protected void closeImpl() throws Exception {
+    protected void closeImpl() {
         howManyDominateMe = null;
         candidates = null;
     }
 
     private void comparePointWithOthers(int index, double[][] points, int from, int until) {
         double[] pi = points[index];
+        int dim = pi.length;
         for (int j = from; j < until; ++j) {
-            int comp = dominanceComparison(pi, points[j]);
+            int comp = dominanceComparison(pi, points[j], dim);
             switch (comp) {
                 case -1:
                     ++howManyDominateMe[j];
@@ -67,11 +68,12 @@ public class LinearMemory extends NonDominatedSorting {
 
     private int punchNextPointsBySinglePoint(int index, double[][] points, int nextRankRight, int n) {
         double[] cp = points[candidates[index]];
+        int dim = cp.length;
         for (int nextIndex = nextRankRight; nextIndex < n; ++nextIndex) {
             int nextPoint = candidates[nextIndex];
             double[] np = points[nextPoint];
 
-            if (strictlyDominates(cp, np)) {
+            if (strictlyDominates(cp, np, dim)) {
                 if (--howManyDominateMe[nextPoint] == 0) {
                     ArrayHelper.swap(candidates, nextIndex, nextRankRight);
                     ++nextRankRight;
