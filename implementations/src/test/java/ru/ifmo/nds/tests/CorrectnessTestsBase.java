@@ -48,7 +48,7 @@ public abstract class CorrectnessTestsBase {
             sorting.sort(input, actualOutput);
             Assert.assertArrayEquals(expectedOutput, actualOutput);
 
-            for (int maxRankG = maxExpectedOutput; maxRankG >= -maxExpectedOutput; --maxRankG) { // TODO fail for Hybrid JFB + BOS
+            for (int maxRankG = maxExpectedOutput; maxRankG >= -maxExpectedOutput; --maxRankG) {
                 int maxRank = Math.abs(maxRankG);
                 int[] localExpectedOutput = expectedOutput.clone();
                 for (int i = 0; i < localExpectedOutput.length; ++i) {

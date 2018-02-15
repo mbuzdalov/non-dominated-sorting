@@ -131,7 +131,7 @@ public class Improved extends NonDominatedSorting {
 
     @Override
     protected void sortChecked(double[][] points, int[] ranks, int maximalMeaningfulRank) {
-        Arrays.fill(ranks, 0, ranks.length, 0);
+        Arrays.fill(ranks, 0, ranks.length, -1);
         sortCheckedWithRespectToRanks(points, ranks, maximalMeaningfulRank);
     }
 
@@ -145,7 +145,6 @@ public class Improved extends NonDominatedSorting {
 
         int newN = DoubleArraySorter.retainUniquePoints(points, reindex, this.points, ranks);
         initializeObjectiveIndices(newN, dim);
-        maximalMeaningfulRank = Math.min(maximalMeaningfulRank, newN - 1);
 
         Arrays.fill(isRanked, 0, newN, false);
         Arrays.fill(checkIndicesCount, 0, newN, dim);
@@ -157,8 +156,8 @@ public class Improved extends NonDominatedSorting {
         }
 
         for (int d = 0; d < dim; ++d) {
-            Arrays.fill(lastFrontIndex[d], 0, newN, -1);
-            Arrays.fill(prevFrontIndex[d], 0, newN, -1);
+            Arrays.fill(lastFrontIndex[d], 0, getMaximumPoints(), -1);
+            Arrays.fill(prevFrontIndex[d], 0, getMaximumPoints(), -1);
         }
 
         int smallestRank = 0;
