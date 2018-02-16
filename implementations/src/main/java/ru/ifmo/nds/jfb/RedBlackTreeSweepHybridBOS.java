@@ -1,17 +1,16 @@
 package ru.ifmo.nds.jfb;
 
-import ru.ifmo.nds.NonDominatedSorting;
-import ru.ifmo.nds.bos.Improved;
-
-import java.util.Random;
+import ru.ifmo.nds.bos.ImprovedAdaptedForHybrid;
 
 public class RedBlackTreeSweepHybridBOS extends RedBlackTreeSweep {
-    private final NonDominatedSorting bos;
-    private final Random random = new Random(991);
+    private final ImprovedAdaptedForHybrid bos;
+
+    private static final int THRESHOLD_3D = 100;
+    private static final int THRESHOLD_ALL = 200;
 
     public RedBlackTreeSweepHybridBOS(int maximumPoints, int maximumDimension, int allowedThreads) {
         super(maximumPoints, maximumDimension, allowedThreads);
-        bos = new Improved(maximumPoints, maximumDimension);
+        bos = new ImprovedAdaptedForHybrid(maximumPoints, maximumDimension);
     }
 
     @Override
@@ -23,18 +22,27 @@ public class RedBlackTreeSweepHybridBOS extends RedBlackTreeSweep {
 
     @Override
     protected boolean helperAHookCondition(int size, int obj) {
-        return getMaximumPoints() != size && random.nextBoolean(); // TODO fix
+        switch (obj) {
+            case 1: return false;
+            case 2: return size < THRESHOLD_3D;
+            default: return size < THRESHOLD_ALL;
+        }
     }
 
     @Override
     protected int helperAHook(int from, int until, int obj) {
-        double[][] ps = getPoints(from, until, obj + 1);
-        int[] rs = getRanks(from, until);
+        getPoints(from, until, obj + 1, bos.getTempPoints());
+        getRanks(from, until, bos.getTempRanks());
 
-        bos.sortWithRespectToRanks(ps, rs, maximalMeaningfulRank);
+        bos.sortWithRespectToRanks(
+                bos.getTempPoints(),
+                bos.getTempRanks(),
+                until - from,
+                obj + 1,
+                maximalMeaningfulRank);
 
         for (int i = from; i < until; i++) {
-            ranks[indices[i]] = rs[i - from];
+            ranks[indices[i]] = bos.getTempRanks()[i - from];
         }
         return until;
     }

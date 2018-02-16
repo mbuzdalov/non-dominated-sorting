@@ -353,20 +353,16 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         return splitMerge.mergeTwo(indices, tempFrom, weakFrom, newWeakMidL, weakMidL, newWeakUntil);
     }
 
-    double[][] getPoints(int from, int until, int k) {
-        final double[][] ps = new double[until - from][k];
+    void getPoints(int from, int until, int k, double [][] target) {
         for (int i = from; i < until; i++) {
-            System.arraycopy(this.points[indices[i]], 0, ps[i - from], 0, k);
+            System.arraycopy(this.points[indices[i]], 0, target[i - from], 0, k);
         }
-        return ps;
     }
 
-    int[] getRanks(int from, int until) {
-        final int[] rs = new int[until - from];
+    void getRanks(int from, int until, int[] target) {
         for (int i = from; i < until; i++) {
-            rs[i - from] = this.ranks[indices[i]];
+            target[i - from] = this.ranks[indices[i]];
         }
-        return rs;
     }
 
     private RecursiveTask<Integer> helperBAsync(final int goodFrom, final int goodUntil,
