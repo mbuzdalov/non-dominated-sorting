@@ -4,7 +4,7 @@ package ru.ifmo.nds.util;
  * This is an implementation of the rank query structure using a tailored version of the Red-Black Tree
  * from the Scala collection library.
  *
- * @author Rui Goncalves
+ * @author Rui Gonçalves
  * @author Maxim Buzdalov
  */
 public final class RedBlackRankQueryStructure extends RankQueryStructure {
