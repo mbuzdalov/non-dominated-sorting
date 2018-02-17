@@ -7,14 +7,10 @@ import java.util.Arrays;
 
 public class ImprovedAdaptedForHybrid extends AbstractImproved {
     private boolean[] isRanked;
-    private double[][] tempPoints;
-    private int[] tempRanks;
 
     public ImprovedAdaptedForHybrid(int maximumPoints, int maximumDimension) {
         super(maximumPoints, maximumDimension);
         isRanked = new boolean[maximumPoints];
-        tempPoints = new double[maximumPoints][maximumDimension];
-        tempRanks = new int[maximumPoints];
     }
 
     @Override
@@ -26,8 +22,6 @@ public class ImprovedAdaptedForHybrid extends AbstractImproved {
     protected void closeImpl() {
         super.closeImpl();
         isRanked = null;
-        tempPoints = null;
-        tempRanks = null;
     }
 
     private void rankPoint(int currIndex, int[] prevFI, int[] lastFI, int smallestRank, int maximalMeaningfulRank, int M) {
@@ -111,13 +105,5 @@ public class ImprovedAdaptedForHybrid extends AbstractImproved {
         for (int i = 0; i < N; ++i) {
             ranks[i] = this.ranks[ranks[i]];
         }
-    }
-
-    public double[][] getTempPoints() {
-        return tempPoints;
-    }
-
-    public int[] getTempRanks() {
-        return tempRanks;
     }
 }

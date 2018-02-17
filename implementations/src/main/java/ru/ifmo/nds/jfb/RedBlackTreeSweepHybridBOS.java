@@ -4,6 +4,8 @@ import ru.ifmo.nds.bos.ImprovedAdaptedForHybrid;
 
 public class RedBlackTreeSweepHybridBOS extends RedBlackTreeSweep {
     private final ImprovedAdaptedForHybrid bos;
+    private double[][] tempPoints;
+    private int[] tempRanks;
 
     private static final int THRESHOLD_3D = 100;
     private static final int THRESHOLD_ALL = 200;
@@ -11,6 +13,8 @@ public class RedBlackTreeSweepHybridBOS extends RedBlackTreeSweep {
     public RedBlackTreeSweepHybridBOS(int maximumPoints, int maximumDimension, int allowedThreads) {
         super(maximumPoints, maximumDimension, allowedThreads);
         bos = new ImprovedAdaptedForHybrid(maximumPoints, maximumDimension);
+        tempPoints = new double[maximumPoints][maximumDimension];
+        tempRanks = new int[maximumPoints];
     }
 
     @Override
@@ -31,18 +35,18 @@ public class RedBlackTreeSweepHybridBOS extends RedBlackTreeSweep {
 
     @Override
     protected int helperAHook(int from, int until, int obj) {
-        getPoints(from, until, obj + 1, bos.getTempPoints());
-        getRanks(from, until, bos.getTempRanks());
+        getPoints(from, until, obj + 1, tempPoints);
+        getRanks(from, until, tempRanks);
 
         bos.sortWithRespectToRanks(
-                bos.getTempPoints(),
-                bos.getTempRanks(),
+                tempPoints,
+                tempRanks,
                 until - from,
                 obj + 1,
                 maximalMeaningfulRank);
 
         for (int i = from; i < until; i++) {
-            ranks[indices[i]] = bos.getTempRanks()[i - from];
+            ranks[indices[i]] = tempRanks[i - from];
         }
         return until;
     }
