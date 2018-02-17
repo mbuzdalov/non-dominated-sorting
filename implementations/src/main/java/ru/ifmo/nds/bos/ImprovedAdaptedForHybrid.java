@@ -1,7 +1,7 @@
 package ru.ifmo.nds.bos;
 
 import ru.ifmo.nds.util.ArrayHelper;
-import ru.ifmo.nds.util.DominanceHelper;
+import ru.ifmo.nds.util.DoubleArraySorter;
 
 import java.util.Arrays;
 
@@ -33,26 +33,9 @@ public class ImprovedAdaptedForHybrid extends AbstractImproved {
     private void rankPoint(int currIndex, int[] prevFI, int[] lastFI, int smallestRank, int maximalMeaningfulRank, int M) {
         int currRank = Math.max(smallestRank, ranks[currIndex]);
 
-        // This is currently implemented as sequential search.
-        // A binary search implementation is expected as well.
-        while (currRank <= maximalMeaningfulRank) {
-            int prevIndex = lastFI[currRank];
-            boolean someoneDominatesMe = false;
-            while (prevIndex != -1) {
-                if (dominates(prevIndex, currIndex, M)) {
-                    someoneDominatesMe = true;
-                    break;
-                } else {
-                    prevIndex = prevFI[prevIndex];
-                }
-            }
-            if (!someoneDominatesMe) {
-                break;
-            }
-            ++currRank;
-        }
+        int resultRank = sequentialSearchRank(currRank, currIndex, prevFI, lastFI, maximalMeaningfulRank, M);
 
-        this.ranks[currIndex] = Math.max(this.ranks[currIndex], currRank);
+        this.ranks[currIndex] = Math.max(this.ranks[currIndex], resultRank);
         this.isRanked[currIndex] = true;
     }
 
@@ -63,24 +46,24 @@ public class ImprovedAdaptedForHybrid extends AbstractImproved {
     }
 
     @Override
-    protected void sortCheckedWithRespectToRanks(double[][] points, int[] ranks, int origN, int dim, int maximalMeaningfulRank) {
-        ArrayHelper.fillIdentity(reindex, origN);
-        sorter.lexicographicalSort(points, reindex, 0, origN, dim);
-        System.arraycopy(ranks, 0, this.ranks, 0, origN);
+    protected void sortCheckedWithRespectToRanks(double[][] points, int[] ranks, int N, int M, int maximalMeaningfulRank) {
+        ArrayHelper.fillIdentity(reindex, N);
+        sorter.lexicographicalSort(points, reindex, 0, N, M);
+        System.arraycopy(ranks, 0, this.ranks, 0, N);
 
-        int newN = retainUniquePoints(points, reindex, this.points, ranks, origN);
-        initializeObjectiveIndices(newN, dim);
+        int newN = DoubleArraySorter.retainUniquePoints(points, reindex, this.points, ranks, N);
+        initializeObjectiveIndices(newN, M);
 
         Arrays.fill(isRanked, 0, newN, false);
-        Arrays.fill(checkIndicesCount, 0, newN, dim);
-        Arrays.fill(indexNeededCount, 0, newN, dim);
+        Arrays.fill(checkIndicesCount, 0, newN, M);
+        Arrays.fill(indexNeededCount, 0, newN, M);
 
         for (int i = 0; i < newN; ++i) {
-            ArrayHelper.fillIdentity(checkIndices[i], dim);
-            Arrays.fill(indexNeeded[i], 0, dim, true);
+            ArrayHelper.fillIdentity(checkIndices[i], M);
+            Arrays.fill(indexNeeded[i], 0, M, true);
         }
 
-        for (int d = 0; d < dim; ++d) {
+        for (int d = 0; d < M; ++d) {
             Arrays.fill(lastFrontIndex[d], 0, getMaximumPoints(), -1);
             Arrays.fill(prevFrontIndex[d], 0, getMaximumPoints(), -1);
         }
@@ -90,12 +73,12 @@ public class ImprovedAdaptedForHybrid extends AbstractImproved {
         for (int hIndex = 0, ranked = 0;
              hIndex < newN && smallestRank <= maximalMeaningfulRank && ranked < newN;
              ++hIndex) {
-            for (int oIndex = 0; oIndex < dim; ++oIndex) {
+            for (int oIndex = 0; oIndex < M; ++oIndex) {
                 int currIndex = objectiveIndices[oIndex][hIndex];
                 int[] prevFI = prevFrontIndex[oIndex];
                 int[] lastFI = lastFrontIndex[oIndex];
                 if (!this.isRanked[currIndex]) {
-                    rankPoint(currIndex, prevFI, lastFI, smallestRank, maximalMeaningfulRank, dim);
+                    rankPoint(currIndex, prevFI, lastFI, smallestRank, maximalMeaningfulRank, M);
                     ++ranked;
                 }
                 indexNeeded[currIndex][oIndex] = false;
@@ -124,32 +107,10 @@ public class ImprovedAdaptedForHybrid extends AbstractImproved {
             }
         }
 
-        Arrays.fill(this.points, 0, origN, null);
-        for (int i = 0; i < origN; ++i) {
+        Arrays.fill(this.points, 0, N, null);
+        for (int i = 0; i < N; ++i) {
             ranks[i] = this.ranks[ranks[i]];
         }
-    }
-
-    public static int retainUniquePoints(double[][] sourcePoints,
-                                         int[] sortedIndices,
-                                         double[][] targetPoints,
-                                         int[] reindex,
-                                         int n) {
-        int newN = 1;
-        int lastII = sortedIndices[0];
-        targetPoints[0] = sourcePoints[lastII];
-        reindex[lastII] = 0;
-        for (int i = 1; i < n; ++i) {
-            int currII = sortedIndices[i];
-            if (!ArrayHelper.equal(sourcePoints[lastII], sourcePoints[currII])) {
-                // Copying the point to the internal array.
-                targetPoints[newN] = sourcePoints[currII];
-                lastII = currII;
-                ++newN;
-            }
-            reindex[currII] = newN - 1;
-        }
-        return newN;
     }
 
     public double[][] getTempPoints() {
@@ -158,40 +119,5 @@ public class ImprovedAdaptedForHybrid extends AbstractImproved {
 
     public int[] getTempRanks() {
         return tempRanks;
-    }
-
-    private boolean dominates(int i1, int i2, int M) {
-        if (i1 > i2) {
-            return false;
-        }
-        double[] p1 = points[i1];
-        double[] p2 = points[i2];
-        int dim = M;
-
-        // I have not yet validated this empirically,
-        // but when needed count is high, the simple loop is preferable.
-        if (indexNeededCount[i1] * 3 < M) {
-            int[] checkIdx = checkIndices[i1];
-            boolean[] idxNeeded = indexNeeded[i1];
-
-            int count = checkIndicesCount[i1];
-            int index = 0;
-            while (index < count) {
-                int currIndex = checkIdx[index];
-                if (idxNeeded[currIndex]) {
-                    if (p1[currIndex] > p2[currIndex]) {
-                        checkIndicesCount[i1] = count;
-                        return false;
-                    }
-                    ++index;
-                } else {
-                    checkIdx[index] = checkIdx[--count];
-                }
-            }
-            checkIndicesCount[i1] = count;
-            return true;
-        } else {
-            return DominanceHelper.strictlyDominates(p1, p2, dim);
-        }
     }
 }

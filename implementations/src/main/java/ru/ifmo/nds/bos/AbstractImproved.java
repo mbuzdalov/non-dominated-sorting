@@ -51,16 +51,19 @@ abstract class AbstractImproved extends NonDominatedSorting {
     }
 
     private boolean dominates(int i1, int i2) {
+        return dominates(i1, i2, points[i1].length);
+    }
+
+    private boolean dominates(int i1, int i2, int M) {
         if (i1 > i2) {
             return false;
         }
         double[] p1 = points[i1];
         double[] p2 = points[i2];
-        int dim = p1.length;
 
         // I have not yet validated this empirically,
         // but when needed count is high, the simple loop is preferable.
-        if (indexNeededCount[i1] * 3 < p1.length) {
+        if (indexNeededCount[i1] * 3 < M) {
             int[] checkIdx = checkIndices[i1];
             boolean[] idxNeeded = indexNeeded[i1];
 
@@ -81,16 +84,16 @@ abstract class AbstractImproved extends NonDominatedSorting {
             checkIndicesCount[i1] = count;
             return true;
         } else {
-            return DominanceHelper.strictlyDominates(p1, p2, dim);
+            return DominanceHelper.strictlyDominates(p1, p2, M);
         }
     }
 
-    void initializeObjectiveIndices(int newN, int dim) {
-        for (int d = 0; d < dim; ++d) {
+    void initializeObjectiveIndices(int N, int M) {
+        for (int d = 0; d < M; ++d) {
             int[] currentObjectiveIndex = objectiveIndices[d];
-            ArrayHelper.fillIdentity(currentObjectiveIndex, newN);
+            ArrayHelper.fillIdentity(currentObjectiveIndex, N);
             if (d > 0) {
-                sorter.sortWhileResolvingEqual(this.points, currentObjectiveIndex, 0, newN, d, objectiveIndices[0]);
+                sorter.sortWhileResolvingEqual(this.points, currentObjectiveIndex, 0, N, d, objectiveIndices[0]);
             }
         }
     }
@@ -100,13 +103,22 @@ abstract class AbstractImproved extends NonDominatedSorting {
                              int[] prevFI,
                              int[] lastFI,
                              int maximalMeaningfulRank) {
+        return sequentialSearchRank(currRank, currIndex, prevFI, lastFI, maximalMeaningfulRank, points[0].length);
+    }
+
+    int sequentialSearchRank(int currRank,
+                             int currIndex,
+                             int[] prevFI,
+                             int[] lastFI,
+                             int maximalMeaningfulRank,
+                             int M) {
         // This is currently implemented as sequential search.
         // A binary search implementation is expected as well.
         while (currRank <= maximalMeaningfulRank) {
             int prevIndex = lastFI[currRank];
             boolean someoneDominatesMe = false;
             while (prevIndex != -1) {
-                if (dominates(prevIndex, currIndex)) {
+                if (dominates(prevIndex, currIndex, M)) {
                     someoneDominatesMe = true;
                     break;
                 } else {
