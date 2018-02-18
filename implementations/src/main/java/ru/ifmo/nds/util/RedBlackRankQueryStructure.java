@@ -18,6 +18,13 @@ public final class RedBlackRankQueryStructure extends RankQueryStructure {
         }
     }
 
+    private static int compareDoubles(double l, double r) {
+        // No, it is not the same as Double.compare, since Double.compare(-0.0, 0.0) == -1.
+        // We want to be consistent with DoubleArraySorter which uses comparisons and so thinks that -0.0 == 0.0.
+        //noinspection UseCompareMethod
+        return l < r ? -1 : l > r ? 1 : 0;
+    }
+
     @Override
     public RangeHandle createHandle(int storageStart, int from, int until, int[] indices, double[] values) {
         return new RangeHandleImpl(storageStart);
@@ -137,7 +144,7 @@ public final class RedBlackRankQueryStructure extends RankQueryStructure {
                 int cmp = 1;
                 while (child != null && cmp != 0) {
                     parent = child;
-                    cmp = Double.compare(key, child.key);
+                    cmp = compareDoubles(key, child.key);
                     child = cmp < 0 ? child.left : child.right;
                 }
                 return cmp >= 0 ? parent : predecessor(parent);
@@ -166,7 +173,7 @@ public final class RedBlackRankQueryStructure extends RankQueryStructure {
             int cmp = 1;
             while (child != null && cmp != 0) {
                 parent = child;
-                cmp = Double.compare(key, child.key);
+                cmp = compareDoubles(key, child.key);
                 child = cmp < 0 ? child.left : child.right;
             }
 
