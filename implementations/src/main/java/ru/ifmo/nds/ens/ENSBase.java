@@ -41,14 +41,18 @@ public abstract class ENSBase extends NonDominatedSorting {
         return false;
     }
 
-    int setRank(int pointIndex, int[] ranks, int rank, int maxRank) {
-        if (rank > maxRank) {
-            maxRank = rank;
-            lastRankIndex[maxRank] = -1;
+    int setRank(int pointIndex, int[] ranks, int rank, int maxRank, int maximumMeaningfulRank) {
+        if (rank > maximumMeaningfulRank) {
+            ranks[pointIndex] = maximumMeaningfulRank + 1;
+        } else {
+            if (rank > maxRank) {
+                maxRank = rank;
+                lastRankIndex[maxRank] = -1;
+            }
+            prevIndex[pointIndex] = lastRankIndex[rank];
+            lastRankIndex[rank] = pointIndex;
+            ranks[pointIndex] = rank;
         }
-        prevIndex[pointIndex] = lastRankIndex[rank];
-        lastRankIndex[rank] = pointIndex;
-        ranks[pointIndex] = rank;
         return maxRank;
     }
 
