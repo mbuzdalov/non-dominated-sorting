@@ -30,15 +30,26 @@ public abstract class ENSBase extends NonDominatedSorting {
     }
 
     boolean frontDominates(int frontIndex, double[][] points, double[] point) {
+        return frontDominatesWithWork(frontIndex, points, point) >= 0;
+    }
+
+    int frontDominatesWithWork(int frontIndex, double[][] points, double[] point) {
         int index = lastRankIndex[frontIndex];
         int dim = point.length;
-        while (index >= 0) {
-            if (DominanceHelper.strictlyDominates(points[index], point, dim)) {
-                return true;
+        if (dim == 2) {
+            // This is essentially how the 2D case of JFB works.
+            return DominanceHelper.strictlyDominates(points[index], point, dim) ? 1 : -1;
+        } else {
+            int count = 0;
+            while (index >= 0) {
+                ++count;
+                if (DominanceHelper.strictlyDominates(points[index], point, dim)) {
+                    return count;
+                }
+                index = prevIndex[index];
             }
-            index = prevIndex[index];
+            return -count;
         }
-        return false;
     }
 
     int setRank(int pointIndex, int[] ranks, int rank, int maxRank, int maximumMeaningfulRank) {
