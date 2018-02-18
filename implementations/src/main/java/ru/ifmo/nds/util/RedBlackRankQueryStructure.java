@@ -20,12 +20,12 @@ public final class RedBlackRankQueryStructure extends RankQueryStructure {
 
     @Override
     public RangeHandle createHandle(int storageStart, int from, int until, int[] indices, double[] values) {
-        return new RangeHandleImpl(storageStart, until - from);
+        return new RangeHandleImpl(storageStart);
     }
 
     private static class Node {
         double key;
-        int value = -1;
+        int value;
         int index;
         boolean red;
         Node left, right, parent;
@@ -36,11 +36,8 @@ public final class RedBlackRankQueryStructure extends RankQueryStructure {
         private int size = 0;
         private final int offset;
 
-        private RangeHandleImpl(int storageStart, int maxSize) {
+        private RangeHandleImpl(int storageStart) {
             this.offset = storageStart;
-            for (int i = 0; i < maxSize; ++i) {
-                setValue(allNodes[storageStart + i], -1);
-            }
         }
 
         @Override
@@ -422,5 +419,4 @@ public final class RedBlackRankQueryStructure extends RankQueryStructure {
             }
         }
     }
-
 }
