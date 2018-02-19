@@ -20,14 +20,12 @@ public abstract class NonDominatedSorting implements AutoCloseable {
 
     /**
      * Returns the name of the algorithm.
-     *
      * @return the name of the algorithm.
      */
     public abstract String getName();
 
     /**
      * Returns the maximum number of points this sorter can handle.
-     *
      * @return the maximum number of points this sorter can handle.
      */
     public final int getMaximumPoints() {
@@ -36,7 +34,6 @@ public abstract class NonDominatedSorting implements AutoCloseable {
 
     /**
      * Returns the maximum number of dimensions this sorter can handle.
-     *
      * @return the maximum number of dimensions this sorter can handle.
      */
     public final int getMaximumDimension() {
@@ -56,7 +53,6 @@ public abstract class NonDominatedSorting implements AutoCloseable {
 
     /**
      * Performs non-dominated sorting.
-     *
      * @param points the array of points to be sorted.
      * @param ranks the array to be filled with ranks of points.
      */
@@ -153,7 +149,6 @@ public abstract class NonDominatedSorting implements AutoCloseable {
 
     /**
      * Performs actual sorting. Assumes the input arrays are valid.
-     *
      * @param points the points to be sorted.
      * @param ranks the array of ranks to be filled.
      * @param maximalMeaningfulRank the maximal rank which is meaningful to the caller.

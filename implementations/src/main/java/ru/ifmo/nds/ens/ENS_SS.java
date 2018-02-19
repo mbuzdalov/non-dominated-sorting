@@ -25,7 +25,7 @@ public class ENS_SS extends ENSBase {
         for (int i = 0; i < n; ++i) {
             int index = indices[i];
             int currRank = findRank(points, index, maxRank);
-            maxRank = setRank(index, ranks, currRank, maxRank);
+            maxRank = setRank(index, ranks, currRank, maxRank, maximalMeaningfulRank);
         }
     }
 

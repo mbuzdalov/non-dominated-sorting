@@ -30,25 +30,40 @@ public abstract class ENSBase extends NonDominatedSorting {
     }
 
     boolean frontDominates(int frontIndex, double[][] points, double[] point) {
-        int index = lastRankIndex[frontIndex];
-        int dim = point.length;
-        while (index >= 0) {
-            if (DominanceHelper.strictlyDominates(points[index], point, dim)) {
-                return true;
-            }
-            index = prevIndex[index];
-        }
-        return false;
+        return frontDominatesWithWork(frontIndex, points, point) >= 0;
     }
 
-    int setRank(int pointIndex, int[] ranks, int rank, int maxRank) {
-        if (rank > maxRank) {
-            maxRank = rank;
-            lastRankIndex[maxRank] = -1;
+    int frontDominatesWithWork(int frontIndex, double[][] points, double[] point) {
+        int index = lastRankIndex[frontIndex];
+        int dim = point.length;
+        if (dim == 2) {
+            // This is essentially how the 2D case of JFB works.
+            return DominanceHelper.strictlyDominates(points[index], point, dim) ? 1 : -1;
+        } else {
+            int count = 0;
+            while (index >= 0) {
+                ++count;
+                if (DominanceHelper.strictlyDominates(points[index], point, dim)) {
+                    return count;
+                }
+                index = prevIndex[index];
+            }
+            return -count;
         }
-        prevIndex[pointIndex] = lastRankIndex[rank];
-        lastRankIndex[rank] = pointIndex;
-        ranks[pointIndex] = rank;
+    }
+
+    int setRank(int pointIndex, int[] ranks, int rank, int maxRank, int maximumMeaningfulRank) {
+        if (rank > maximumMeaningfulRank) {
+            ranks[pointIndex] = maximumMeaningfulRank + 1;
+        } else {
+            if (rank > maxRank) {
+                maxRank = rank;
+                lastRankIndex[maxRank] = -1;
+            }
+            prevIndex[pointIndex] = lastRankIndex[rank];
+            lastRankIndex[rank] = pointIndex;
+            ranks[pointIndex] = rank;
+        }
         return maxRank;
     }
 
