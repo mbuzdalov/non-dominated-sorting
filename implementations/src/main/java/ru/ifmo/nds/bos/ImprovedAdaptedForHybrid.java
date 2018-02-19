@@ -35,17 +35,14 @@ public class ImprovedAdaptedForHybrid extends AbstractImproved {
 
     @Override
     protected void sortChecked(double[][] points, int[] ranks, int maximalMeaningfulRank) {
-        Arrays.fill(ranks, 0, ranks.length, -1);
-        sortCheckedWithRespectToRanks(points, ranks, ranks.length, points[0].length, maximalMeaningfulRank);
+        throw new UnsupportedOperationException("ImprovedAdaptedForHybrid sorting doesn't work alone");
     }
 
-    @Override
-    protected void sortCheckedWithRespectToRanks(double[][] points, int[] ranks, int N, int M, int maximalMeaningfulRank) {
+    public void sortCheckedWithRespectToRanks(double[][] points, int[] ranks, int N, int M, int maximalMeaningfulRank) {
         ArrayHelper.fillIdentity(reindex, N);
-        sorter.lexicographicalSort(points, reindex, 0, N, M);
         System.arraycopy(ranks, 0, this.ranks, 0, N);
 
-        int newN = DoubleArraySorter.retainUniquePoints(points, reindex, this.points, ranks, N);
+        int newN = DoubleArraySorter.retainUniquePoints(points, reindex, this.points, ranks, N, M);
         initializeObjectiveIndices(newN, M);
 
         Arrays.fill(isRanked, 0, newN, false);
@@ -57,9 +54,12 @@ public class ImprovedAdaptedForHybrid extends AbstractImproved {
             Arrays.fill(indexNeeded[i], 0, M, true);
         }
 
+        int maxRank = ArrayHelper.max(this.ranks, 0, N);
+        maximalMeaningfulRank = Math.min(maximalMeaningfulRank, maxRank + N);
+        int maxFrontIndex = Math.min(maxRank + N + 1, getMaximumPoints());
         for (int d = 0; d < M; ++d) {
-            Arrays.fill(lastFrontIndex[d], 0, getMaximumPoints(), -1);
-            Arrays.fill(prevFrontIndex[d], 0, getMaximumPoints(), -1);
+            Arrays.fill(lastFrontIndex[d], 0, maxFrontIndex, -1);
+            Arrays.fill(prevFrontIndex[d], 0, maxFrontIndex, -1);
         }
 
         int smallestRank = 0;

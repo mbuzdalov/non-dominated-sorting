@@ -7,7 +7,7 @@ public class RedBlackTreeSweepHybridBOS extends RedBlackTreeSweep {
     private double[][] tempPoints;
     private int[] tempRanks;
 
-    private static final int THRESHOLD_3D = 100;
+    private static final int THRESHOLD_3D = 20;
     private static final int THRESHOLD_ALL = 200;
 
     public RedBlackTreeSweepHybridBOS(int maximumPoints, int maximumDimension, int allowedThreads) {
@@ -38,7 +38,7 @@ public class RedBlackTreeSweepHybridBOS extends RedBlackTreeSweep {
         getPoints(from, until, obj + 1, tempPoints);
         getRanks(from, until, tempRanks);
 
-        bos.sortWithRespectToRanks(
+        bos.sortCheckedWithRespectToRanks(
                 tempPoints,
                 tempRanks,
                 until - from,

@@ -22,7 +22,14 @@ public final class ArrayHelper {
         if (al != b.length) {
             return false;
         }
-        for (int i = 0; i < al; ++i) {
+        return equal(a, b, a.length);
+    }
+
+    public static boolean equal(double[] a, double[] b, int M) {
+        if(a.length < M || b.length < M) {
+           throw new IllegalArgumentException("Points have less dimension then M");
+        }
+        for (int i = 0; i < M; ++i) {
             if (a[i] != b[i]) {
                 return false;
             }
@@ -156,6 +163,21 @@ public final class ArrayHelper {
             double rv = array[from];
             for (int i = from + 1; i < until; ++i) {
                 double v = array[i];
+                if (rv < v) {
+                    rv = v;
+                }
+            }
+            return rv;
+        }
+    }
+
+    public static int max(int[] array, int from, int until) {
+        if (from >= until) {
+            return Integer.MIN_VALUE;
+        } else {
+            int rv = array[from];
+            for (int i = from + 1; i < until; ++i) {
+                int v = array[i];
                 if (rv < v) {
                     rv = v;
                 }
