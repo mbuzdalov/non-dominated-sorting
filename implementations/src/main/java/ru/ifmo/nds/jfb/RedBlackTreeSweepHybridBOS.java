@@ -2,10 +2,14 @@ package ru.ifmo.nds.jfb;
 
 import ru.ifmo.nds.bos.ImprovedAdaptedForHybrid;
 
+import java.util.Arrays;
+import java.util.Random; // TODO delete
+
 public class RedBlackTreeSweepHybridBOS extends RedBlackTreeSweep {
     private final ImprovedAdaptedForHybrid bos;
     private double[][] tempPoints;
     private int[] tempRanks;
+    private Random random = new Random(239); // TODO delete
 
     private static final int THRESHOLD_3D = 20;
     private static final int THRESHOLD_ALL = 200;
@@ -50,4 +54,44 @@ public class RedBlackTreeSweepHybridBOS extends RedBlackTreeSweep {
         }
         return until;
     }
+
+    @Override
+    protected boolean helperBHookCondition(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj) {
+//        return random.nextBoolean(); // TODO fix некоторые тесты парают !
+        return true;
+    }
+
+    @Override
+    protected int helperBHook(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj, int tempFrom) {
+        for(int i = 0; i < getMaximumPoints(); i++) { // TODO delete
+            Arrays.fill(tempPoints[i], -1);
+        }
+        Arrays.fill(tempRanks, -1); // TODO delete
+        getPoints(0, Math.max(goodUntil, weakUntil), obj + 1, tempPoints); // TODO fix max
+        getRanks(0, Math.max(goodUntil, weakUntil), tempRanks); // TODO fix max
+
+        int newWeakUntil = bos.sortCheckedWithRespectToRanksHelperB(
+                tempPoints,
+                tempRanks,
+                goodFrom,
+                goodUntil,
+                weakFrom,
+                weakUntil,
+                obj + 1,
+                maximalMeaningfulRank);
+
+        for (int i = goodFrom; i < goodUntil; i++) {
+            ranks[indices[i]] = tempRanks[i];
+        }
+
+        for (int i = weakFrom; i < weakUntil; i++) {
+            ranks[indices[i]] = tempRanks[i];
+        }
+
+        if(newWeakUntil == -1) {
+            throw new IllegalStateException("Invalid newWeakUntil");
+        }
+        return newWeakUntil;
+    }
 }
+

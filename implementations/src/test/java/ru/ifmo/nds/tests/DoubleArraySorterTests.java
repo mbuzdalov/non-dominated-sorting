@@ -5,9 +5,11 @@ import java.util.Comparator;
 import java.util.Random;
 import java.util.function.Function;
 
-import org.junit.Assert;
 import org.junit.Test;
 import ru.ifmo.nds.util.DoubleArraySorter;
+
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 
 public class DoubleArraySorterTests {
     private void checkSort(Function<Random, Double> generator) {
@@ -33,7 +35,7 @@ public class DoubleArraySorterTests {
             Arrays.sort(expectedRanks, Comparator.comparingDouble(o -> points[o][obj]));
             sorter.sort(points, ranks, 0, size, obj);
             for (int i = 0; i < size; ++i) {
-                Assert.assertEquals(points[expectedRanks[i]][obj], points[ranks[i]][obj], 1e-16);
+                assertEquals(points[expectedRanks[i]][obj], points[ranks[i]][obj], 1e-16);
             }
         }
     }
@@ -72,8 +74,64 @@ public class DoubleArraySorterTests {
             Arrays.sort(expectedIndices, Comparator.comparingDouble((Integer o) -> array[o][0]).thenComparingInt(o -> resolver[o]));
             sorter.sortWhileResolvingEqual(array, indices, 0, size, 0, resolver);
             for (int i = 0; i < size; ++i) {
-                Assert.assertEquals(array[expectedIndices[i]][0], array[indices[i]][0], 1e-16);
+                assertEquals(array[expectedIndices[i]][0], array[indices[i]][0], 1e-16);
             }
         }
+    }
+
+    @Test
+    public void retainUniquePoints() throws Exception {
+        double[][] sourcePoints = {{1, 1}, {1, 1}, {1, 1}, {2, 2}, {3, 3}};
+        int[] sortedIndices = {0, 1, 2, 3, 4};
+        double[][] targetPoints = new double[5][];
+        int[] reindex = new int[5];
+
+        int newN = DoubleArraySorter.retainUniquePoints(sourcePoints, sortedIndices, targetPoints, reindex, 5);
+        assertEquals(3, newN);
+
+        int[] expectedReindex = {0, 0, 0, 1, 2};
+        assertArrayEquals(expectedReindex, reindex);
+    }
+
+    @Test
+    public void retainUniquePointsWithDimension() throws Exception {
+        double[][] sourcePoints = {{1, 1, 7}, {1, 1, 8}, {1, 1, 9}, {2, 2, 10}, {3, 3, 11}};
+        int[] sortedIndices = {0, 1, 2, 3, 4};
+        double[][] targetPoints = new double[5][];
+        int[] reindex = new int[5];
+
+        int newN = DoubleArraySorter.retainUniquePoints(sourcePoints, sortedIndices, targetPoints, reindex, 5, 2);
+        assertEquals(3, newN);
+
+        int[] expectedReindex = {0, 0, 0, 1, 2};
+        assertArrayEquals(expectedReindex, reindex);
+    }
+
+    @Test
+    public void retainUniquePointsInRange() throws Exception {
+        double[][] sourcePoints = {{123, 123}, {1, 1}, {1, 1}, {1, 1}, {2, 2}, {3, 3}, {123, 123}, {123, 123}};
+        int[] sortedIndices = {0, 1, 2, 3, 4, 5, 6, 7};
+        double[][] targetPoints = new double[7][];
+        int[] reindex = new int[7];
+
+        int newN = DoubleArraySorter.retainUniquePoints(sourcePoints, sortedIndices, targetPoints, reindex, 0, 1, 6, 2);
+        assertEquals(3, newN);
+
+        int[] expectedReindex = {0, 0, 0, 0, 1, 2, 0};
+        assertArrayEquals(expectedReindex, reindex);
+    }
+
+    @Test
+    public void retainUniquePointsInRangeWithTargetFrom() throws Exception {
+        double[][] sourcePoints = {{123, 123}, {1, 1}, {1, 1}, {1, 1}, {2, 2}, {3, 3}, {123, 123}, {123, 123}};
+        int[] sortedIndices = {0, 1, 2, 3, 4, 5, 6, 7};
+        double[][] targetPoints = new double[7][];
+        int[] reindex = new int[7];
+
+        int newN = DoubleArraySorter.retainUniquePoints(sourcePoints, sortedIndices, targetPoints, reindex, 1, 1, 6, 2);
+        assertEquals(3, newN);
+
+        int[] expectedReindex = {0, 1, 1, 1, 2, 3, 0};
+        assertArrayEquals(expectedReindex, reindex);
     }
 }

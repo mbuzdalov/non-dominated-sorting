@@ -178,4 +178,30 @@ public final class DoubleArraySorter {
         }
         return newN;
     }
+
+    public static int retainUniquePoints(double[][] sourcePoints, // TODO fix duplicate code with prev method
+                                         int[] sortedIndices,
+                                         double[][] targetPoints,
+                                         int[] reindex,
+                                         int targetFrom,
+                                         int from,
+                                         int until,
+                                         int M) {
+        int newN = 1;
+        int lastII = sortedIndices[from];
+        targetPoints[targetFrom] = sourcePoints[lastII];
+        reindex[lastII] = targetFrom;
+        for (int i = from + 1 ; i < until; ++i) {
+            int currII = sortedIndices[i];
+            if (!ArrayHelper.equal(sourcePoints[lastII], sourcePoints[currII], M)) {
+                // Copying the point to the internal array.
+                ++targetFrom;
+                targetPoints[targetFrom] = sourcePoints[currII];
+                lastII = currII;
+                ++newN;
+            }
+            reindex[currII] = targetFrom;
+        }
+        return newN;
+    }
 }
