@@ -54,7 +54,7 @@ abstract class AbstractImproved extends NonDominatedSorting {
         return dominates(i1, i2, points[i1].length);
     }
 
-    private boolean dominates(int i1, int i2, int M) {
+    boolean dominates(int i1, int i2, int M) {
         if (i1 > i2) {
             return false;
         }
@@ -118,8 +118,7 @@ abstract class AbstractImproved extends NonDominatedSorting {
             int prevIndex = lastFI[currRank];
             boolean someoneDominatesMe = false;
             while (prevIndex != -1) {
-//                if (dominates(prevIndex, currIndex, M)) { // TODO revert !!! fix ru.ifmo.nds.tests.CorrectnessTestsBase#hypercube5D
-                if(DominanceHelper.strictlyDominates(this.points[prevIndex], this.points[currIndex], M)) {
+                if (dominates(prevIndex, currIndex, M)) {
                     someoneDominatesMe = true;
                     break;
                 } else {

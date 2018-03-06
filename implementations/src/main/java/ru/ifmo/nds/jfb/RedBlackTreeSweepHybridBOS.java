@@ -30,11 +30,12 @@ public class RedBlackTreeSweepHybridBOS extends RedBlackTreeSweep {
 
     @Override
     protected boolean helperAHookCondition(int size, int obj) {
-        switch (obj) {
-            case 1: return false;
-            case 2: return size < THRESHOLD_3D;
-            default: return size < THRESHOLD_ALL;
-        }
+//        switch (obj) {
+//            case 1: return false;
+//            case 2: return size < THRESHOLD_3D;
+//            default: return size < THRESHOLD_ALL;
+//        }
+        return false;
     }
 
     @Override
@@ -58,7 +59,8 @@ public class RedBlackTreeSweepHybridBOS extends RedBlackTreeSweep {
     @Override
     protected boolean helperBHookCondition(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj) {
 //        return random.nextBoolean(); // TODO fix некоторые тесты парают !
-        return true;
+        return goodFrom != 0;
+//        return true;
     }
 
     @Override

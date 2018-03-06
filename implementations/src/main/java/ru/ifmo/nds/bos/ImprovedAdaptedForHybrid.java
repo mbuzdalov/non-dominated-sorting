@@ -9,12 +9,19 @@ public class ImprovedAdaptedForHybrid extends AbstractImproved {
     private boolean[] isRanked;
     private int[] compressedRanks;
     private int[] rankReindex;
+    private int[] possibleRanks;
+    private int sizePossibleRanks;
+    private int[] minPossibleRankIndices;
+    private int[] maxPossibleRankIndices;
 
     public ImprovedAdaptedForHybrid(int maximumPoints, int maximumDimension) {
         super(maximumPoints, maximumDimension);
         isRanked = new boolean[maximumPoints];
         compressedRanks = new int[maximumPoints];
         rankReindex = new int[maximumPoints];
+        possibleRanks = new int[maximumPoints];
+        minPossibleRankIndices = new int[maximumPoints];
+        maxPossibleRankIndices = new int[maximumPoints];
     }
 
     @Override
@@ -28,6 +35,9 @@ public class ImprovedAdaptedForHybrid extends AbstractImproved {
         isRanked = null;
         compressedRanks = null;
         rankReindex = null;
+        possibleRanks = null;
+        minPossibleRankIndices = null;
+        maxPossibleRankIndices = null;
     }
 
     private void rankPoint(int currIndex, int[] prevFI, int[] lastFI, int smallestRank, int maximalMeaningfulRank, int M) {
@@ -141,6 +151,8 @@ public class ImprovedAdaptedForHybrid extends AbstractImproved {
             }
         }
 
+        initializePossibilityRanks(goodFrom, newGoodUntil);
+
         for (int i = 0; i < getMaximumDimension(); i++) { // TODO delete init
             Arrays.fill(objectiveIndices[i], -1);
         }
@@ -182,14 +194,23 @@ public class ImprovedAdaptedForHybrid extends AbstractImproved {
              hIndex < sizeUnion && smallestRank <= maximalMeaningfulRank && ranked < sizeUnion;
              ++hIndex) {
             for (int oIndex = 0; oIndex < M && ranked < sizeUnion; ++oIndex) {
+                int minPossibleRankId = minPossibleRankIndices[oIndex];
+                int maxPossibleRankId = maxPossibleRankIndices[oIndex];
                 int currIndex = objectiveIndices[oIndex][hIndex];
                 int[] prevFI = prevFrontIndex[oIndex];
                 int[] lastFI = lastFrontIndex[oIndex];
                 if (!this.isRanked[currIndex]) {
-                    rankPointHelperB(currIndex, prevFI, lastFI, smallestRank, maximalMeaningfulRank, M);
+                    rankPointHelperB(currIndex,
+                            prevFI,
+                            lastFI,
+                            minPossibleRankId,
+                            maxPossibleRankId,
+                            maximalMeaningfulRank,
+                            M);
                     ++ranked;
                 }
                 if (goodFrom <= currIndex && currIndex < newGoodUntil) {
+                    updateMinMaxPossibleRankIndices(oIndex, compressedRanks[currIndex]);
                     indexNeeded[currIndex][oIndex] = false;
                     int myRank = this.compressedRanks[currIndex];
                     if (myRank <= maximalMeaningfulRank) {
@@ -233,13 +254,138 @@ public class ImprovedAdaptedForHybrid extends AbstractImproved {
         return resultWeakUntil;
     }
 
-    private void rankPointHelperB(int currIndex, int[] prevFI, int[] lastFI, int smallestRank, int maximalMeaningfulRank, int M) {
-        int currRank = Math.max(smallestRank, compressedRanks[currIndex]);
+    private void updateMinMaxPossibleRankIndices(int obj, int newRank) {
+        if (maxPossibleRankIndices[obj] == minPossibleRankIndices[obj]) { // пока не было точек из good
+            int id = Arrays.binarySearch(possibleRanks, 0, sizePossibleRanks, newRank);
+            minPossibleRankIndices[obj] = id;
+            maxPossibleRankIndices[obj] = id + 1;
+            return;
+        }
 
-        int resultRank = sequentialSearchRank(currRank, currIndex, prevFI, lastFI, maximalMeaningfulRank, M);
+        if (newRank <= possibleRanks[maxPossibleRankIndices[obj] - 1]
+                && newRank >= possibleRanks[minPossibleRankIndices[obj]]) {
+            return; // границы не надо расширять
+        }
+
+        while (newRank < possibleRanks[minPossibleRankIndices[obj]]) {
+            --minPossibleRankIndices[obj];
+        }
+
+        while (newRank > possibleRanks[maxPossibleRankIndices[obj] - 1]) {
+            ++maxPossibleRankIndices[obj];
+        }
+    }
+
+    private void initializePossibilityRanks(int from, int until) {
+        Arrays.fill(possibleRanks, -1); // TODO delete
+
+        for (int i = from; i < until; ++i) {
+            possibleRanks[i - from] = compressedRanks[i];
+        }
+
+        quickSortByRankIndex(0, until - from);
+
+//        for (int i = from; i < until; ++i) {
+//            possibleRanks[sizePossibleRanks] = compressedRanks[from];
+//        }
+
+        sizePossibleRanks = 1;
+        for (int i = 1; i < until - from; ++i) {
+            if (possibleRanks[i] != possibleRanks[i - 1]) {
+                possibleRanks[sizePossibleRanks] = possibleRanks[i];
+                ++sizePossibleRanks;
+            }
+        }
+
+        Arrays.fill(possibleRanks, sizePossibleRanks, possibleRanks.length, -1); // TODO delete
+
+        Arrays.fill(minPossibleRankIndices, -1); //  TODO delete или нет!
+        Arrays.fill(maxPossibleRankIndices, -1); //  TODO delete или нет!
+    }
+
+    private void quickSortByRankIndex(int from, int until) {
+        Arrays.sort(possibleRanks, from, until); // TODO rewrite ?
+    }
+
+    private void rankPointHelperB(int currIndex,
+                                  int[] prevFI,
+                                  int[] lastFI,
+                                  int minPossibleRankId,
+                                  int maxPossibleRankId,
+                                  int maximalMeaningfulRank,
+                                  int M) {
+        int smallestRank = compressedRanks[currIndex];
+        int resultRank;
+        if (minPossibleRankId == maxPossibleRankId) { // пока не было точек в этом критерии из множества good
+            resultRank = sequentialSearchRank(smallestRank, currIndex, prevFI, lastFI, maximalMeaningfulRank, M);
+        } else {
+            resultRank = sequentialSearchRankHelperB(smallestRank,
+                    minPossibleRankId,
+                    maxPossibleRankId,
+                    currIndex,
+                    prevFI,
+                    lastFI,
+                    maximalMeaningfulRank,
+                    M);
+        }
 
         this.compressedRanks[currIndex] = Math.max(this.compressedRanks[currIndex], resultRank);
         this.isRanked[currIndex] = true;
+    }
+
+    private int sequentialSearchRankHelperB(int smallestRank,
+                                            int minPossibleRankId,
+                                            int maxPossibleRankId,
+                                            int currIndex,
+                                            int[] prevFI,
+                                            int[] lastFI,
+                                            int maximalMeaningfulRank,
+                                            int M) {
+        // This is currently implemented as sequential search.
+        // A binary search implementation is expected as well. // TODO delete. он не получится
+
+        int currRankIndex = maxPossibleRankId - 1;
+
+        while (currRankIndex >= minPossibleRankId
+                && possibleRanks[currRankIndex] <= maximalMeaningfulRank) {
+            int prevIndex = lastFI[possibleRanks[currRankIndex]];
+            boolean someoneDominatesMe = false;
+            while (prevIndex != -1) {
+                if (dominates(prevIndex, currIndex, M)) {
+                    someoneDominatesMe = true;
+                    break;
+                }
+                if (isEquals(prevIndex, currIndex, M)) {
+                    someoneDominatesMe = true; // свойство только для helperB
+                    break;
+                } else {
+                    prevIndex = prevFI[prevIndex];
+                }
+            }
+            if (someoneDominatesMe) { // TODO проверить: "тут наоборот: как только нашли точку, которая
+                // TODO доминирует, то ранг определен
+                break;
+            }
+
+            --currRankIndex;
+        }
+
+        if (currRankIndex < minPossibleRankId) {
+            return smallestRank;  /// TODO can change to 0
+        }
+        return possibleRanks[currRankIndex] + 1;
+    }
+
+    private boolean isEquals(int i1, int i2, int M) {
+        double[] p1 = points[i1];
+        double[] p2 = points[i2];
+
+        for (int i = 0; i < M; ++i) {
+            if (p1[i] != p2[i]) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private void initializeObjectiveIndices(int weakFrom, int weakUntil, int goodFrom, int goodUntil, int M) {
