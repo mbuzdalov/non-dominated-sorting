@@ -15,14 +15,19 @@ import com.beust.jcommander.IValueValidator;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import org.openjdk.jmh.infra.BenchmarkParams;
+import org.openjdk.jmh.profile.CompilerProfiler;
+import org.openjdk.jmh.profile.GCProfiler;
+import org.openjdk.jmh.profile.HotspotCompilationProfiler;
 import org.openjdk.jmh.results.BenchmarkResult;
 import org.openjdk.jmh.results.IterationResult;
 import org.openjdk.jmh.results.Result;
 import org.openjdk.jmh.results.RunResult;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
+import org.openjdk.jmh.runner.options.ChainedOptionsBuilder;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
+import org.openjdk.jmh.runner.options.TimeValue;
 import oshi.SystemInfo;
 
 import ru.ifmo.nds.IdCollection;
@@ -42,15 +47,6 @@ public final class Benchmark extends JCommanderRunnable {
         }
     }
 
-    public static class ToleranceValidator implements IValueValidator<Double> {
-        @Override
-        public void validate(String name, Double value) throws ParameterException {
-            if (value <= 0 || value >= 1) {
-                throw new ParameterException("Value for '" + name + "' must be in (0; 1), you specified " + value + ".");
-            }
-        }
-    }
-
     @Parameter(names = "--algorithmId",
             required = true,
             description = "Specify the algorithm ID to benchmark.")
@@ -61,18 +57,6 @@ public final class Benchmark extends JCommanderRunnable {
             description = "Specify the number of forks (different JVM instances) to be used.",
             validateValueWith = PositiveIntegerValidator.class)
     private Integer forks;
-
-    @Parameter(names = "--tolerance",
-            required = true,
-            description = "Specify the tolerance used to determine warm-up iteration count, should be in (0; 1).",
-            validateValueWith = ToleranceValidator.class)
-    private Double tolerance;
-
-    @Parameter(names = "--plateau",
-            required = true,
-            description = "Specify the plateau size used to determine warm-up iteration count, should be positive.",
-            validateValueWith = PositiveIntegerValidator.class)
-    private Integer plateauSize;
 
     @Parameter(names = "--author",
             required = true,
@@ -95,6 +79,15 @@ public final class Benchmark extends JCommanderRunnable {
     @Parameter(names = "--only-list", description = "Only list datasets to be tested")
     private boolean onlyList;
 
+    @Parameter(names = "--enable-compiler-profiler", description = "Enable the CompilerProfiler from JMH")
+    private boolean enableCompilerProfiler;
+
+    @Parameter(names = "--enable-hotspot-compilation-profiler", description = "Enable the HotspotCompilationProfiler from JMH")
+    private boolean enableHotspotCompilationProfiler;
+
+    @Parameter(names = "--enable-gc-profiler", description = "Enable the GCProfiler from JMH")
+    private boolean enableGCProfiler;
+
     @Parameter(names = "--remove",
             variableArity = true,
             description = "Specify which dataset IDs to remove.",
@@ -108,18 +101,28 @@ public final class Benchmark extends JCommanderRunnable {
     private List<Predicate<String>> retainFilters;
 
     private List<Double> getTimes(String algorithmId,
-                                  String datasetId,
-                                  int warmUps,
-                                  int measurements) throws CLIWrapperException, RunnerException {
-        Options options = new OptionsBuilder()
+                                  String datasetId) throws CLIWrapperException, RunnerException {
+        ChainedOptionsBuilder builder = new OptionsBuilder()
                 .forks(1)
-                .measurementIterations(measurements)
-                .warmupIterations(warmUps)
+                .measurementIterations(1)
+                .measurementTime(TimeValue.seconds(1))
+                .warmupIterations(1)
+                .warmupTime(TimeValue.seconds(6))
                 .param("datasetId", datasetId)
                 .param("algorithmId", algorithmId)
-                .include(JMHBenchmark.class.getName())
-                .build();
+                .include(JMHBenchmark.class.getName());
 
+        if (enableCompilerProfiler) {
+            builder = builder.addProfiler(CompilerProfiler.class);
+        }
+        if (enableGCProfiler) {
+            builder = builder.addProfiler(GCProfiler.class);
+        }
+        if (enableHotspotCompilationProfiler) {
+            builder = builder.addProfiler(HotspotCompilationProfiler.class);
+        }
+
+        Options options = builder.build();
         Collection<RunResult> results = new Runner(options).run();
         List<Double> times = new ArrayList<>();
         for (RunResult result : results) {
@@ -149,31 +152,13 @@ public final class Benchmark extends JCommanderRunnable {
                         ++count;
                     }
                 }
-                if (count != measurements) {
-                    throw new CLIWrapperException("Unable to dig through JMH output: Expected "
-                            + measurements + " measurements, found " + count, null);
+                if (count != 1) {
+                    throw new CLIWrapperException(
+                            "Unable to dig through JMH output: Expected one measurement, found " + count, null);
                 }
             }
         }
         return times;
-    }
-
-    private int getWarmUpLength(List<Double> times) {
-        double expected = times.get(times.size() - 1);
-        int lastCount = 0;
-        for (int i = times.size() - 1; i >= 0; --i) {
-            double curr = times.get(i);
-            if (Math.abs(curr - expected) <= tolerance * Math.min(curr, expected)) {
-                ++lastCount;
-            } else {
-                break;
-            }
-        }
-        if (lastCount >= plateauSize) {
-            return times.size() - lastCount + plateauSize;
-        } else {
-            return -1;
-        }
     }
 
     @Override
@@ -221,28 +206,9 @@ public final class Benchmark extends JCommanderRunnable {
                 System.out.println("* Algorithm: " + algorithmId + ", dataset: " + datasetId);
                 System.out.println("**************************************************************");
                 List<Record> localRecords = new ArrayList<>();
-                int warmUpGuess = 5;
-                int warmUpLength;
-                System.out.println();
-                System.out.println("************* Finding the right warm-up length *************");
-                System.out.println();
-                do {
-                    warmUpGuess *= 2;
-                    List<Double> times = getTimes(algorithmId, datasetId, 0, warmUpGuess);
-                    warmUpLength = getWarmUpLength(times);
-                    if (warmUpLength == -1) {
-                        System.out.println("[warning] " + warmUpGuess
-                                + " iterations is not enough to find a plateau of size " + plateauSize
-                                + " with tolerance " + tolerance + ", doubling...");
-                    }
-                } while (warmUpLength == -1);
-
-                System.out.println();
-                System.out.println("************* Warm-up length is " + warmUpLength + " *************");
-                System.out.println();
 
                 for (int i = 0; i < forks; ++i) {
-                    List<Double> times = getTimes(algorithmId, datasetId, warmUpLength, 1);
+                    List<Double> times = getTimes(algorithmId, datasetId);
                     LocalDateTime measurementTime = LocalDateTime.now();
 
                     localRecords.add(new Record(
