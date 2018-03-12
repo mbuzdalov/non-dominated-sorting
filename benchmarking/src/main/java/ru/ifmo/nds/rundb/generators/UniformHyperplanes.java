@@ -8,7 +8,12 @@ public class UniformHyperplanes {
     private UniformHyperplanes() {}
 
     private static final int[] supportedSizes = {
-            10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000
+            10, 20, 50,
+            100, 200, 500,
+            1000, 2000, 5000,
+            10000, 20000, 50000,
+            100000, 200000, 500000,
+            1000000
     };
     private static final int[] supportedDimensions = {
             2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20, 25, 30

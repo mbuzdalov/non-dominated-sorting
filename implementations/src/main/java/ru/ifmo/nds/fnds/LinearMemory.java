@@ -1,19 +1,21 @@
 package ru.ifmo.nds.fnds;
 
-import static ru.ifmo.nds.util.DominanceHelper.*;
-
 import ru.ifmo.nds.NonDominatedSorting;
 import ru.ifmo.nds.util.ArrayHelper;
+import ru.ifmo.nds.util.DoubleArraySorter;
 
 public class LinearMemory extends NonDominatedSorting {
-    private int[] howManyDominateMe;
-    private int[] candidates;
+    private int[] indices;
+    private int[] ranks;
+    private double[][] points;
+    private DoubleArraySorter sorter;
 
     public LinearMemory(int maximumPoints, int maximumDimension) {
         super(maximumPoints, maximumDimension);
-
-        howManyDominateMe = new int[maximumPoints];
-        candidates = new int[maximumPoints];
+        sorter = new DoubleArraySorter(maximumPoints);
+        indices = new int[maximumPoints];
+        ranks = new int[maximumPoints];
+        points = new double[maximumPoints][];
     }
 
     @Override
@@ -23,105 +25,48 @@ public class LinearMemory extends NonDominatedSorting {
 
     @Override
     protected void closeImpl() {
-        howManyDominateMe = null;
-        candidates = null;
+        sorter = null;
+        indices = null;
+        ranks = null;
     }
 
-    private void comparePointWithOthers(int index, double[][] points, int from, int until) {
-        double[] pi = points[index];
-        int dim = pi.length;
-        for (int j = from; j < until; ++j) {
-            int comp = dominanceComparison(pi, points[j], dim);
-            switch (comp) {
-                case -1:
-                    ++howManyDominateMe[j];
-                    break;
-                case +1:
-                    ++howManyDominateMe[index];
-                    break;
+    private boolean strictlyDominatesAssumingNotSame(int goodIndex, int weakIndex, int dim) {
+        double[] goodPoint = points[goodIndex];
+        double[] weakPoint = points[weakIndex];
+        // Comparison in 0 makes no sense, as due to goodIndex < weakIndex the points are <= in this coordinate.
+        for (int i = dim - 1; i > 0; --i) {
+            if (goodPoint[i] > weakPoint[i]) {
+                return false;
             }
         }
+        return true;
     }
 
-    private void compareAllPoints(double[][] points, int count) {
-        for (int i = 0; i < count; ++i) {
-            comparePointWithOthers(i, points, i + 1, count);
-        }
-    }
-
-    private int moveNonDominatedForward(int count) {
-        int current = 0;
-        for (int i = 0; i < count; ++i) {
-            if (howManyDominateMe[i] == 0) {
-                ArrayHelper.swap(candidates, i, current);
-                ++current;
-            }
-        }
-        return current;
-    }
-
-    private void assignRankToRange(int[] ranks, int rank, int from, int until) {
-        for (int i = from; i < until; ++i) {
-            ranks[candidates[i]] = rank;
-        }
-    }
-
-    private int punchNextPointsBySinglePoint(int index, double[][] points, int nextRankRight, int n) {
-        double[] cp = points[candidates[index]];
-        int dim = cp.length;
-        for (int nextIndex = nextRankRight; nextIndex < n; ++nextIndex) {
-            int nextPoint = candidates[nextIndex];
-            double[] np = points[nextPoint];
-
-            if (strictlyDominates(cp, np, dim)) {
-                if (--howManyDominateMe[nextPoint] == 0) {
-                    ArrayHelper.swap(candidates, nextIndex, nextRankRight);
-                    ++nextRankRight;
+    private void doSorting(int n, int dim, int maximalMeaningfulRank) {
+        ranks[0] = 0;
+        for (int i = 1; i < n; ++i) {
+            int myRank = 0;
+            for (int j = i - 1; myRank <= maximalMeaningfulRank && j >= 0; --j) {
+                int thatRank = ranks[j];
+                if (myRank <= thatRank && strictlyDominatesAssumingNotSame(j, i, dim)) {
+                    myRank = thatRank + 1;
                 }
             }
-        }
-        return nextRankRight;
-    }
-
-    private int punchNextPoints(double[][] points, int currentRankLeft, int currentRankRight, int n) {
-        int nextRankRight = currentRankRight;
-        for (int currIndex = currentRankLeft; currIndex < currentRankRight && nextRankRight < n; ++currIndex) {
-            nextRankRight = punchNextPointsBySinglePoint(currIndex, points, nextRankRight, n);
-        }
-        return nextRankRight;
-    }
-
-    private void assignRanks(double[][] points, int[] ranks, int numberOfRankZeroPoints, int n, int maximalMeaningfulRank) {
-        int currentRankLeft = 0;
-        int currentRankRight = numberOfRankZeroPoints;
-
-        int currentRank = 0;
-        while (currentRankLeft < n) {
-            assignRankToRange(ranks, currentRank, currentRankLeft, currentRankRight);
-            if (currentRank == maximalMeaningfulRank) {
-                assignRankToRange(ranks, currentRank + 1, currentRankRight, n);
-                return;
-            }
-            int nextRankRight = punchNextPoints(points, currentRankLeft, currentRankRight, n);
-            currentRankLeft = currentRankRight;
-            currentRankRight = nextRankRight;
-            ++currentRank;
-        }
-    }
-
-    private void cleanup(int n) {
-        for (int i = 0; i < n; ++i) {
-            howManyDominateMe[i] = 0;
+            ranks[i] = myRank;
         }
     }
 
     @Override
     protected void sortChecked(double[][] points, int[] ranks, int maximalMeaningfulRank) {
-        int n = ranks.length;
-        compareAllPoints(points, n);
-        ArrayHelper.fillIdentity(candidates, n);
-        int rankZeroPoints = moveNonDominatedForward(n);
-        assignRanks(points, ranks, rankZeroPoints, n, maximalMeaningfulRank);
-        cleanup(n);
+        int n = points.length;
+        int dim = points[0].length;
+        ArrayHelper.fillIdentity(indices, n);
+        sorter.lexicographicalSort(points, indices, 0, n, dim);
+        int newN = DoubleArraySorter.retainUniquePoints(points, indices, this.points, ranks);
+        doSorting(newN, dim, maximalMeaningfulRank);
+        for (int i = 0; i < n; ++i) {
+            ranks[i] = this.ranks[ranks[i]];
+            this.points[i] = null;
+        }
     }
 }

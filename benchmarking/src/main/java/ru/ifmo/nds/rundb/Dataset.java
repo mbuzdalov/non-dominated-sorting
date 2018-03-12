@@ -8,13 +8,13 @@ import ru.ifmo.nds.NonDominatedSorting;
 public final class Dataset {
     private final String id;
     private final double[][][] points;
-    private final int[][] actualRanks;
+    private final int[][] placeForRanks;
     private final int maxPoints, maxDimension;
 
     public Dataset(String id, double[][][] points) {
         this.id = Objects.requireNonNull(id);
         this.points = points.clone();
-        this.actualRanks = new int[this.points.length][];
+        this.placeForRanks = new int[this.points.length][];
         int maxPoints = 0, maxDimension = 0;
         for (int i = 0; i < this.points.length; ++i) {
             this.points[i] = this.points[i].clone();
@@ -23,7 +23,7 @@ public final class Dataset {
             for (int j = 0; j < this.points[i].length; ++j) {
                 this.points[i][j] = this.points[i][j].clone();
             }
-            this.actualRanks[i] = new int[this.points[i].length];
+            this.placeForRanks[i] = new int[this.points[i].length];
         }
         this.maxDimension = maxDimension;
         this.maxPoints = maxPoints;
@@ -59,7 +59,7 @@ public final class Dataset {
         int sumMaximumRanks = 0;
         for (int i = 0; i < this.points.length; ++i) {
             double[][] points = this.points[i];
-            int[] ranks = actualRanks[i];
+            int[] ranks = placeForRanks[i];
             Arrays.fill(ranks, 239);
             sorting.sort(points, ranks, maximalMeaningfulRank);
             int maximumRank = -1;
