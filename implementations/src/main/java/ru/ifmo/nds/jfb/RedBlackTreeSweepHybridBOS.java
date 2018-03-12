@@ -10,7 +10,7 @@ public class RedBlackTreeSweepHybridBOS extends RedBlackTreeSweep {
     private int[] tempRanks;
     private Random random = new Random(239); // TODO delete
 
-    private static final int THRESHOLD_3D = 20;
+    private static final int THRESHOLD_3D = 100;
     private static final int THRESHOLD_ALL = 200;
 
     public RedBlackTreeSweepHybridBOS(int maximumPoints, int maximumDimension, int allowedThreads) {
@@ -41,7 +41,7 @@ public class RedBlackTreeSweepHybridBOS extends RedBlackTreeSweep {
 
     @Override
     protected boolean helperBHookCondition(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj) {
-        return goodFrom != 0 && random.nextBoolean(); // TODO fix it
+        return helperAHookCondition(goodUntil - goodFrom + weakUntil - weakFrom, obj);
     }
 
     @Override
@@ -79,10 +79,6 @@ public class RedBlackTreeSweepHybridBOS extends RedBlackTreeSweep {
                 weakUntil,
                 obj + 1,
                 maximalMeaningfulRank);
-
-        for (int i = goodFrom; i < goodUntil; i++) {
-            ranks[indices[i]] = tempRanks[i];
-        }
 
         for (int i = weakFrom; i < weakUntil; i++) {
             ranks[indices[i]] = tempRanks[i];
