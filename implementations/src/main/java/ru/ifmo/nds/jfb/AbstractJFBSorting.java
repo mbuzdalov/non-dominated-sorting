@@ -353,15 +353,15 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         return splitMerge.mergeTwo(indices, tempFrom, weakFrom, newWeakMidL, weakMidL, newWeakUntil);
     }
 
-    void getPoints(int from, int until, int k, double[][] target) {
-        for (int i = from; i < until; i++) {
-            System.arraycopy(this.points[indices[i]], 0, target[i - from], 0, k);
+    void getPoints(int from, int until, int k, double[][] target, int targetFrom) {
+        for (int i = from; i < until; ++i) {
+            System.arraycopy(this.points[indices[i]], 0, target[i - from + targetFrom], 0, k);
         }
     }
 
-    void getRanks(int from, int until, int[] target) {
-        for (int i = from; i < until; i++) {
-            target[i - from] = this.ranks[indices[i]];
+    void getRanks(int from, int until, int[] target, int targetFrom) {
+        for (int i = from; i < until; ++i) {
+            target[i - from + targetFrom] = this.ranks[indices[i]];
         }
     }
 

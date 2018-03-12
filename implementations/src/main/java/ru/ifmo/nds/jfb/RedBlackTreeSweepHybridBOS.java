@@ -2,7 +2,6 @@ package ru.ifmo.nds.jfb;
 
 import ru.ifmo.nds.bos.ImprovedAdaptedForHybrid;
 
-import java.util.Arrays;
 import java.util.Random; // TODO delete
 
 public class RedBlackTreeSweepHybridBOS extends RedBlackTreeSweep {
@@ -31,9 +30,12 @@ public class RedBlackTreeSweepHybridBOS extends RedBlackTreeSweep {
     @Override
     protected boolean helperAHookCondition(int size, int obj) {
         switch (obj) {
-            case 1: return false;
-            case 2: return size < THRESHOLD_3D;
-            default: return size < THRESHOLD_ALL;
+            case 1:
+                return false;
+            case 2:
+                return size < THRESHOLD_3D;
+            default:
+                return size < THRESHOLD_ALL;
         }
     }
 
@@ -44,8 +46,8 @@ public class RedBlackTreeSweepHybridBOS extends RedBlackTreeSweep {
 
     @Override
     protected int helperAHook(int from, int until, int obj) {
-        getPoints(from, until, obj + 1, tempPoints);
-        getRanks(from, until, tempRanks);
+        getPoints(from, until, obj + 1, tempPoints, 0);
+        getRanks(from, until, tempRanks, 0);
 
         bos.sortCheckedWithRespectToRanks(
                 tempPoints,
@@ -62,12 +64,11 @@ public class RedBlackTreeSweepHybridBOS extends RedBlackTreeSweep {
 
     @Override
     protected int helperBHook(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj, int tempFrom) {
-        for(int i = 0; i < getMaximumPoints(); i++) { // TODO delete
-            Arrays.fill(tempPoints[i], -1);
-        }
-        Arrays.fill(tempRanks, -1); // TODO delete
-        getPoints(0, Math.max(goodUntil, weakUntil), obj + 1, tempPoints); // TODO fix max
-        getRanks(0, Math.max(goodUntil, weakUntil), tempRanks); // TODO fix max
+        getPoints(goodFrom, goodUntil, obj + 1, tempPoints, goodFrom);
+        getPoints(weakFrom, weakUntil, obj + 1, tempPoints, weakFrom);
+
+        getRanks(goodFrom, goodUntil, tempRanks, goodFrom);
+        getRanks(weakFrom, weakUntil, tempRanks, weakFrom);
 
         int newWeakUntil = bos.sortCheckedWithRespectToRanksHelperB(
                 tempPoints,
@@ -87,7 +88,7 @@ public class RedBlackTreeSweepHybridBOS extends RedBlackTreeSweep {
             ranks[indices[i]] = tempRanks[i];
         }
 
-        if(newWeakUntil == -1) {
+        if (newWeakUntil == -1) {
             throw new IllegalStateException("Invalid newWeakUntil");
         }
         return kickOutOverflowedRanks(weakFrom, weakUntil);
