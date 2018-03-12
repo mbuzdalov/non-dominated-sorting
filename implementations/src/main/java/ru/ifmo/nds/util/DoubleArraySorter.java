@@ -179,7 +179,7 @@ public final class DoubleArraySorter {
         return newN;
     }
 
-    public static int retainUniquePoints(double[][] sourcePoints, // TODO fix duplicate code with prev method
+    public static int retainUniquePoints(double[][] sourcePoints,
                                          int[] sortedIndices,
                                          double[][] targetPoints,
                                          int[] reindex,
