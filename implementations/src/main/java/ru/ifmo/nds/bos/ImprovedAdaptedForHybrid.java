@@ -13,6 +13,8 @@ public class ImprovedAdaptedForHybrid extends AbstractImproved {
     private int sizePossibleRanks;
     private int[] minPossibleRankIndices;
     private int[] maxPossibleRankIndices;
+    private int[] resolver; // TODO эту переменную можно убрать, потому что она нужна только в одном методе инициализации
+
 
     public ImprovedAdaptedForHybrid(int maximumPoints, int maximumDimension) {
         super(maximumPoints, maximumDimension);
@@ -22,6 +24,7 @@ public class ImprovedAdaptedForHybrid extends AbstractImproved {
         possibleRanks = new int[maximumPoints];
         minPossibleRankIndices = new int[maximumPoints];
         maxPossibleRankIndices = new int[maximumPoints];
+        resolver = new int[getMaximumPoints()];
     }
 
     @Override
@@ -38,6 +41,7 @@ public class ImprovedAdaptedForHybrid extends AbstractImproved {
         possibleRanks = null;
         minPossibleRankIndices = null;
         maxPossibleRankIndices = null;
+        resolver = null;
     }
 
     private void rankPoint(int currIndex, int[] prevFI, int[] lastFI, int smallestRank, int maximalMeaningfulRank, int M) {
@@ -55,11 +59,9 @@ public class ImprovedAdaptedForHybrid extends AbstractImproved {
     }
 
     public void sortCheckedWithRespectToRanks(double[][] points, int[] ranks, int N, int M, int maximalMeaningfulRank) {
-        ArrayHelper.fillIdentity(reindex, N);
         System.arraycopy(ranks, 0, this.ranks, 0, N);
 
         // Instead of retainUniquePoints
-        ArrayHelper.fillIdentity(reindex, N);
         ArrayHelper.fillIdentity(ranks, N);
         System.arraycopy(points, 0, this.points, 0, N);
 
@@ -127,7 +129,7 @@ public class ImprovedAdaptedForHybrid extends AbstractImproved {
         }
     }
 
-    public int sortCheckedWithRespectToRanksHelperB(double[][] points, // TODO разбить на части
+    public int sortCheckedWithRespectToRanksHelperB(double[][] points,
                                                     int[] ranks,
                                                     int goodFrom,
                                                     int goodUntil,
@@ -136,43 +138,22 @@ public class ImprovedAdaptedForHybrid extends AbstractImproved {
                                                     int M,
                                                     int maximalMeaningfulRank) {
 
-        ArrayHelper.fillIdentity(reindex, Math.max(weakUntil, goodUntil)); // TODO rewrite for ranges
-        System.arraycopy(ranks, 0, this.ranks, 0, Math.max(weakUntil, goodUntil)); // TODO rewrite for ranges
-        Arrays.fill(compressedRanks, -1); // TODO delete init
-        Arrays.fill(rankReindex, 0, Math.max(weakUntil, goodUntil), -1); // TODO delete init
+        ArrayHelper.fillIdentity(reindex, Math.max(weakUntil, goodUntil));
+        System.arraycopy(ranks, weakFrom, this.ranks, weakFrom, weakUntil - weakFrom);
+        System.arraycopy(ranks, goodFrom, this.ranks, goodFrom, goodUntil - goodFrom);
 
-
-        // TODO видимо weak сжимать нельзя, или можно, но сжимать только с равными рангами
-
-        // TODO добавим еще один параметр - текущиц ранг. Если ранги равны, можно сжимать.
+        // Для сжатия точек из weak добавим еще один критерий - текущий ранг. // TODO translate
+        // Всегда M < maximumDimension
         for (int i = weakFrom; i < weakUntil; ++i) {
             points[i][M] = ranks[i];
         }
-
         int newWeakUntil = weakFrom + DoubleArraySorter.retainUniquePoints(points, reindex, this.points, rankReindex, weakFrom, weakFrom, weakUntil, M + 1);
-//        int newWeakUntil = weakUntil; // TODO delete new field
+
         int newGoodUntil = goodFrom + DoubleArraySorter.retainUniquePoints(points, reindex, this.points, rankReindex, goodFrom, goodFrom, goodUntil, M);
 
-        for (int i = weakFrom; i < weakUntil; i++) {
-            if (compressedRanks[rankReindex[i]] < this.ranks[i]) { // TODO max
-                compressedRanks[rankReindex[i]] = this.ranks[i];
-            }
-        }
-        for (int i = goodFrom; i < goodUntil; i++) {
-            if (compressedRanks[rankReindex[i]] < this.ranks[i]) { // TODO max
-                compressedRanks[rankReindex[i]] = this.ranks[i];
-            }
-        }
-
+        initializeCompressedRanks(weakFrom, weakUntil, goodFrom, goodUntil);
         initializePossibilityRanks(goodFrom, newGoodUntil);
-
-        for (int i = 0; i < getMaximumDimension(); i++) { // TODO delete init
-            Arrays.fill(objectiveIndices[i], -1);
-        }
-
         initializeObjectiveIndices(weakFrom, newWeakUntil, goodFrom, newGoodUntil, M);
-
-        Arrays.fill(isRanked, false); // TODO delete
 
         Arrays.fill(isRanked, weakFrom, newWeakUntil, false);
         Arrays.fill(isRanked, goodFrom, newGoodUntil, true);
@@ -181,21 +162,22 @@ public class ImprovedAdaptedForHybrid extends AbstractImproved {
         Arrays.fill(indexNeededCount, weakFrom, newWeakUntil, M);
         Arrays.fill(indexNeededCount, goodFrom, newGoodUntil, M);
 
+        int maxRank = -1;
         for (int i = weakFrom; i < newWeakUntil; ++i) {
             ArrayHelper.fillIdentity(checkIndices[i], M);
             Arrays.fill(indexNeeded[i], 0, M, true);
+            maxRank = Math.max(maxRank, this.compressedRanks[i]);
         }
 
         for (int i = goodFrom; i < newGoodUntil; ++i) {
             ArrayHelper.fillIdentity(checkIndices[i], M);
             Arrays.fill(indexNeeded[i], 0, M, true);
+            maxRank = Math.max(maxRank, this.compressedRanks[i]);
         }
 
-        int maxRank = ArrayHelper.max(this.compressedRanks, weakFrom, newWeakUntil);
-        maxRank = Math.max(maxRank, ArrayHelper.max(this.compressedRanks, goodFrom, newGoodUntil)); // TODO можно перенести в циклы выше
-        int sizeUnion = (newWeakUntil - weakFrom) + (newGoodUntil - goodFrom);
+        int sizeUnion = newWeakUntil - weakFrom + newGoodUntil - goodFrom;
         maximalMeaningfulRank = Math.min(maximalMeaningfulRank, maxRank + sizeUnion);
-        int maxFrontIndex = Math.min(maxRank + sizeUnion, getMaximumPoints());
+        int maxFrontIndex = Math.min(getMaximumPoints(), maxRank + sizeUnion);
         for (int d = 0; d < M; ++d) {
             Arrays.fill(lastFrontIndex[d], 0, maxFrontIndex, -1);
             Arrays.fill(prevFrontIndex[d], 0, maxFrontIndex, -1);
@@ -230,7 +212,7 @@ public class ImprovedAdaptedForHybrid extends AbstractImproved {
                         prevFI[currIndex] = lastFI[myRank];
                         lastFI[myRank] = currIndex;
                     }
-                    if (--indexNeededCount[currIndex] == 0) { // TODO где-то тут скорее всего ошибка, см sequentialSearchRank
+                    if (--indexNeededCount[currIndex] == 0) {
                         if (smallestRank < myRank + 1) {
                             smallestRank = myRank + 1;
                             if (smallestRank > maximalMeaningfulRank) {
@@ -267,8 +249,18 @@ public class ImprovedAdaptedForHybrid extends AbstractImproved {
         return resultWeakUntil;
     }
 
+    private void initializeCompressedRanks(int weakFrom, int weakUntil, int goodFrom, int goodUntil) {
+        Arrays.fill(compressedRanks, -1);
+        for (int i = weakFrom; i < weakUntil; i++) {
+            compressedRanks[rankReindex[i]] = Math.max(compressedRanks[rankReindex[i]], this.ranks[i]);
+        }
+        for (int i = goodFrom; i < goodUntil; i++) {
+            compressedRanks[rankReindex[i]] = Math.max(compressedRanks[rankReindex[i]], this.ranks[i]);
+        }
+    }
+
     private void updateMinMaxPossibleRankIndices(int obj, int newRank) {
-        if (maxPossibleRankIndices[obj] == minPossibleRankIndices[obj]) { // пока не было точек из good
+        if (maxPossibleRankIndices[obj] == minPossibleRankIndices[obj]) { // we met the first point from good
             int id = Arrays.binarySearch(possibleRanks, 0, sizePossibleRanks, newRank);
             minPossibleRankIndices[obj] = id;
             maxPossibleRankIndices[obj] = id + 1;
@@ -277,7 +269,7 @@ public class ImprovedAdaptedForHybrid extends AbstractImproved {
 
         if (newRank <= possibleRanks[maxPossibleRankIndices[obj] - 1]
                 && newRank >= possibleRanks[minPossibleRankIndices[obj]]) {
-            return; // границы не надо расширять
+            return; // current borders is correct
         }
 
         while (newRank < possibleRanks[minPossibleRankIndices[obj]]) {
@@ -290,17 +282,9 @@ public class ImprovedAdaptedForHybrid extends AbstractImproved {
     }
 
     private void initializePossibilityRanks(int from, int until) {
-        Arrays.fill(possibleRanks, -1); // TODO delete
+        System.arraycopy(compressedRanks, from, possibleRanks, 0, until - from);
 
-        for (int i = from; i < until; ++i) {
-            possibleRanks[i - from] = compressedRanks[i];
-        }
-
-        quickSortByRankIndex(0, until - from);
-
-//        for (int i = from; i < until; ++i) {
-//            possibleRanks[sizePossibleRanks] = compressedRanks[from];
-//        }
+        Arrays.sort(possibleRanks, 0, until - from);
 
         sizePossibleRanks = 1;
         for (int i = 1; i < until - from; ++i) {
@@ -310,14 +294,8 @@ public class ImprovedAdaptedForHybrid extends AbstractImproved {
             }
         }
 
-        Arrays.fill(possibleRanks, sizePossibleRanks, possibleRanks.length, -1); // TODO delete
-
-        Arrays.fill(minPossibleRankIndices, -1); //  TODO delete или нет!
-        Arrays.fill(maxPossibleRankIndices, -1); //  TODO delete или нет!
-    }
-
-    private void quickSortByRankIndex(int from, int until) {
-        Arrays.sort(possibleRanks, from, until); // TODO rewrite ?
+        Arrays.fill(minPossibleRankIndices, -1);
+        Arrays.fill(maxPossibleRankIndices, -1);
     }
 
     private void rankPointHelperB(int currIndex,
@@ -329,7 +307,7 @@ public class ImprovedAdaptedForHybrid extends AbstractImproved {
                                   int M) {
         int smallestRank = compressedRanks[currIndex];
         int resultRank;
-        if (minPossibleRankId == maxPossibleRankId) { // пока не было точек в этом критерии из множества good
+        if (minPossibleRankId == maxPossibleRankId) { // we haven't met any point from good yet
             resultRank = sequentialSearchRank(smallestRank, currIndex, prevFI, lastFI, maximalMeaningfulRank, M);
         } else {
             resultRank = sequentialSearchRankHelperB(smallestRank,
@@ -354,8 +332,7 @@ public class ImprovedAdaptedForHybrid extends AbstractImproved {
                                             int[] lastFI,
                                             int maximalMeaningfulRank,
                                             int M) {
-        // This is currently implemented as sequential search.
-        // A binary search implementation is expected as well. // TODO delete. он не получится
+        // A binary search implementation isn't possible here.
 
         int currRankIndex = maxPossibleRankId - 1;
 
@@ -369,14 +346,13 @@ public class ImprovedAdaptedForHybrid extends AbstractImproved {
                     break;
                 }
                 if (isEquals(prevIndex, currIndex, M)) {
-                    someoneDominatesMe = true; // свойство только для helperB TODO проверить
+                    someoneDominatesMe = true; // this is valid only for helperB
                     break;
                 } else {
                     prevIndex = prevFI[prevIndex];
                 }
             }
-            if (someoneDominatesMe) { // TODO проверить: "тут наоборот: как только нашли точку, которая
-                // TODO доминирует, то ранг определен
+            if (someoneDominatesMe) {
                 break;
             }
 
@@ -384,7 +360,7 @@ public class ImprovedAdaptedForHybrid extends AbstractImproved {
         }
 
         if (currRankIndex < minPossibleRankId) {
-            return smallestRank;  /// TODO can change to 0
+            return smallestRank;
         }
         return possibleRanks[currRankIndex] + 1;
     }
@@ -402,11 +378,15 @@ public class ImprovedAdaptedForHybrid extends AbstractImproved {
     }
 
     private void initializeObjectiveIndices(int weakFrom, int weakUntil, int goodFrom, int goodUntil, int M) {
-        int newN = (weakUntil - weakFrom) + (goodUntil - goodFrom);
-        int[] resolver = new int[Math.max(weakUntil, goodUntil)]; // TODO fix max // TODO delete?
-        Arrays.fill(resolver, -1);
+        int newN = weakUntil - weakFrom + goodUntil - goodFrom;
+        for (int i = goodFrom; i < goodUntil; ++i) {
+            resolver[i] = i;
+        }
+        for (int i = weakFrom; i < weakUntil; ++i) {
+            resolver[i] = i;
+        }
         for (int d = 0; d < M; ++d) {
-            int[] currentObjectiveIndex = objectiveIndices[d]; // TODO do not it use alloc ?
+            int[] currentObjectiveIndex = objectiveIndices[d];
             for (int i = goodFrom; i < goodUntil; i++) {
                 currentObjectiveIndex[i - goodFrom] = i;
             }
@@ -416,14 +396,7 @@ public class ImprovedAdaptedForHybrid extends AbstractImproved {
             if (d > 0) {
                 sorter.sortWhileResolvingEqual(this.points, currentObjectiveIndex, 0, newN, d, resolver);
             } else {
-                for (int i = goodFrom; i < goodUntil; ++i) {
-                    resolver[i] = i;
-                }
-                for (int i = weakFrom; i < weakUntil; ++i) {
-                    resolver[i] = i;
-                }
-
-                sorter.sortWhileResolvingEqual(this.points, currentObjectiveIndex, 0, newN, 0, resolver); // TODO подумать, можно ли избежать
+                sorter.sortWhileResolvingEqual(this.points, currentObjectiveIndex, 0, newN, 0, resolver);
             }
         }
     }
