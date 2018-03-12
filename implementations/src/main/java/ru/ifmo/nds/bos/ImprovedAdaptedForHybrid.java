@@ -58,14 +58,18 @@ public class ImprovedAdaptedForHybrid extends AbstractImproved {
         ArrayHelper.fillIdentity(reindex, N);
         System.arraycopy(ranks, 0, this.ranks, 0, N);
 
-        int newN = DoubleArraySorter.retainUniquePoints(points, reindex, this.points, ranks, N, M); // TODO delete unique ?
-        initializeObjectiveIndices(newN, M);
+        // Instead of retainUniquePoints
+        ArrayHelper.fillIdentity(reindex, N);
+        ArrayHelper.fillIdentity(ranks, N);
+        System.arraycopy(points, 0, this.points, 0, N);
 
-        Arrays.fill(isRanked, 0, newN, false);
-        Arrays.fill(checkIndicesCount, 0, newN, M);
-        Arrays.fill(indexNeededCount, 0, newN, M);
+        initializeObjectiveIndices(N, M);
 
-        for (int i = 0; i < newN; ++i) {
+        Arrays.fill(isRanked, 0, N, false);
+        Arrays.fill(checkIndicesCount, 0, N, M);
+        Arrays.fill(indexNeededCount, 0, N, M);
+
+        for (int i = 0; i < N; ++i) {
             ArrayHelper.fillIdentity(checkIndices[i], M);
             Arrays.fill(indexNeeded[i], 0, M, true);
         }
@@ -78,10 +82,10 @@ public class ImprovedAdaptedForHybrid extends AbstractImproved {
             Arrays.fill(prevFrontIndex[d], 0, maxFrontIndex, -1);
         }
 
-        int smallestRank = 0;
+        int smallestRank = 0; // TODO min?
 
         for (int hIndex = 0, ranked = 0;
-             hIndex < newN && smallestRank <= maximalMeaningfulRank && ranked < newN;
+             hIndex < N && smallestRank <= maximalMeaningfulRank && ranked < N;
              ++hIndex) {
             for (int oIndex = 0; oIndex < M; ++oIndex) {
                 int currIndex = objectiveIndices[oIndex][hIndex];
@@ -109,7 +113,7 @@ public class ImprovedAdaptedForHybrid extends AbstractImproved {
         }
 
         if (smallestRank > maximalMeaningfulRank) {
-            for (int i = 0; i < newN; ++i) {
+            for (int i = 0; i < N; ++i) {
                 if (!this.isRanked[i]) {
                     this.ranks[i] = maximalMeaningfulRank + 1;
                     this.isRanked[i] = true;
