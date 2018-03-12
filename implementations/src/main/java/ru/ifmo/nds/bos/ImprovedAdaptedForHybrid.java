@@ -129,7 +129,7 @@ public class ImprovedAdaptedForHybrid extends AbstractImproved {
         }
     }
 
-    public int sortCheckedWithRespectToRanksHelperB(double[][] points,
+    public void sortCheckedWithRespectToRanksHelperB(double[][] points,
                                                     int[] ranks,
                                                     int goodFrom,
                                                     int goodUntil,
@@ -238,16 +238,6 @@ public class ImprovedAdaptedForHybrid extends AbstractImproved {
         for (int i = weakFrom; i < weakUntil; i++) {
             ranks[i] = this.compressedRanks[rankReindex[i]];
         }
-
-        int resultWeakUntil = weakUntil;
-        for (int i = weakUntil - 1; i >= weakFrom; --i) { // TODO delete
-            if (ranks[i] > maximalMeaningfulRank) {
-                resultWeakUntil = i;
-            } else {
-                break;
-            }
-        }
-        return resultWeakUntil;
     }
 
     private void initializeCompressedRanks(int weakFrom, int weakUntil, int goodFrom, int goodUntil) {

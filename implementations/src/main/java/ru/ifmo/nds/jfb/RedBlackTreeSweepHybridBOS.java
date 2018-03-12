@@ -70,7 +70,7 @@ public class RedBlackTreeSweepHybridBOS extends RedBlackTreeSweep {
         getRanks(goodFrom, goodUntil, tempRanks, goodFrom);
         getRanks(weakFrom, weakUntil, tempRanks, weakFrom);
 
-        int newWeakUntil = bos.sortCheckedWithRespectToRanksHelperB(
+        bos.sortCheckedWithRespectToRanksHelperB(
                 tempPoints,
                 tempRanks,
                 goodFrom,
@@ -88,9 +88,6 @@ public class RedBlackTreeSweepHybridBOS extends RedBlackTreeSweep {
             ranks[indices[i]] = tempRanks[i];
         }
 
-        if (newWeakUntil == -1) {
-            throw new IllegalStateException("Invalid newWeakUntil");
-        }
         return kickOutOverflowedRanks(weakFrom, weakUntil);
     }
 }
