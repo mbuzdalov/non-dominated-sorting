@@ -233,13 +233,14 @@ public class ImprovedAdaptedForHybrid extends AbstractImproved {
             }
         }
 
-        Arrays.fill(this.points, 0, Math.max(weakUntil, goodUntil), null);
+        Arrays.fill(this.points, weakFrom, weakFrom, null);
+        Arrays.fill(this.points, goodFrom, goodFrom, null);
         for (int i = weakFrom; i < weakUntil; i++) {
             ranks[i] = this.compressedRanks[rankReindex[i]];
         }
 
         int resultWeakUntil = weakUntil;
-        for (int i = weakUntil - 1; i >= weakFrom; --i) {
+        for (int i = weakUntil - 1; i >= weakFrom; --i) { // TODO delete
             if (ranks[i] > maximalMeaningfulRank) {
                 resultWeakUntil = i;
             } else {
