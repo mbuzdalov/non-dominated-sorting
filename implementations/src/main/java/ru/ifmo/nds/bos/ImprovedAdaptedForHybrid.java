@@ -82,7 +82,7 @@ public class ImprovedAdaptedForHybrid extends AbstractImproved {
             Arrays.fill(prevFrontIndex[d], 0, maxFrontIndex, -1);
         }
 
-        int smallestRank = 0; // TODO min?
+        int smallestRank = ArrayHelper.min(this.ranks, 0, N);
 
         for (int hIndex = 0, ranked = 0;
              hIndex < N && smallestRank <= maximalMeaningfulRank && ranked < N;

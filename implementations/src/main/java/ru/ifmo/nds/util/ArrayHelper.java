@@ -200,4 +200,19 @@ public final class ArrayHelper {
             return rv;
         }
     }
+
+    public static int min(int[] array, int from, int until) {
+        if (from >= until) {
+            return Integer.MAX_VALUE;
+        } else {
+            int rv = array[from];
+            for (int i = from + 1; i < until; ++i) {
+                int v = array[i];
+                if (rv > v) {
+                    rv = v;
+                }
+            }
+            return rv;
+        }
+    }
 }
