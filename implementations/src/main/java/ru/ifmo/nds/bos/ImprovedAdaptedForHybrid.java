@@ -137,7 +137,16 @@ public class ImprovedAdaptedForHybrid extends AbstractImproved {
         Arrays.fill(compressedRanks, -1); // TODO delete init
         Arrays.fill(rankReindex, 0, Math.max(weakUntil, goodUntil), -1); // TODO delete init
 
-        int newWeakUntil = weakFrom + DoubleArraySorter.retainUniquePoints(points, reindex, this.points, rankReindex, weakFrom, weakFrom, weakUntil, M);
+
+        // TODO видимо weak сжимать нельзя, или можно, но сжимать только с равными рангами
+
+        // TODO добавим еще один параметр - текущиц ранг. Если ранги равны, можно сжимать.
+        for (int i = weakFrom; i < weakUntil; ++i) {
+            points[i][M] = ranks[i];
+        }
+
+        int newWeakUntil = weakFrom + DoubleArraySorter.retainUniquePoints(points, reindex, this.points, rankReindex, weakFrom, weakFrom, weakUntil, M + 1);
+//        int newWeakUntil = weakUntil; // TODO delete new field
         int newGoodUntil = goodFrom + DoubleArraySorter.retainUniquePoints(points, reindex, this.points, rankReindex, goodFrom, goodFrom, goodUntil, M);
 
         for (int i = weakFrom; i < weakUntil; i++) {
@@ -356,7 +365,7 @@ public class ImprovedAdaptedForHybrid extends AbstractImproved {
                     break;
                 }
                 if (isEquals(prevIndex, currIndex, M)) {
-                    someoneDominatesMe = true; // свойство только для helperB
+                    someoneDominatesMe = true; // свойство только для helperB TODO проверить
                     break;
                 } else {
                     prevIndex = prevFI[prevIndex];

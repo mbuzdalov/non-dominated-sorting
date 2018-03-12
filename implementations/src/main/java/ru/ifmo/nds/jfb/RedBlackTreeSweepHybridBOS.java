@@ -30,12 +30,16 @@ public class RedBlackTreeSweepHybridBOS extends RedBlackTreeSweep {
 
     @Override
     protected boolean helperAHookCondition(int size, int obj) {
-//        switch (obj) {
-//            case 1: return false;
-//            case 2: return size < THRESHOLD_3D;
-//            default: return size < THRESHOLD_ALL;
-//        }
-        return false;
+        switch (obj) {
+            case 1: return false;
+            case 2: return size < THRESHOLD_3D;
+            default: return size < THRESHOLD_ALL;
+        }
+    }
+
+    @Override
+    protected boolean helperBHookCondition(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj) {
+        return goodFrom != 0 && random.nextBoolean(); // TODO fix it
     }
 
     @Override
@@ -53,14 +57,7 @@ public class RedBlackTreeSweepHybridBOS extends RedBlackTreeSweep {
         for (int i = from; i < until; i++) {
             ranks[indices[i]] = tempRanks[i - from];
         }
-        return until;
-    }
-
-    @Override
-    protected boolean helperBHookCondition(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj) {
-//        return random.nextBoolean(); // TODO fix некоторые тесты парают !
-        return goodFrom != 0;
-//        return true;
+        return kickOutOverflowedRanks(from, until);
     }
 
     @Override
@@ -93,7 +90,7 @@ public class RedBlackTreeSweepHybridBOS extends RedBlackTreeSweep {
         if(newWeakUntil == -1) {
             throw new IllegalStateException("Invalid newWeakUntil");
         }
-        return newWeakUntil;
+        return kickOutOverflowedRanks(weakFrom, weakUntil);
     }
 }
 

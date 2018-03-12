@@ -15,7 +15,6 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
     // Shared resources
     int[] indices;
     int[] ranks;
-    int cntHelperB = 0;
 
     // Data which is immutable throughout the actual sorting.
     private double[][] points;
@@ -399,76 +398,12 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
             } else if (obj == 1) {
                 return sweepB(goodFrom, goodUntil, weakFrom, weakUntil, tempFrom);
             } else if (helperBHookCondition(goodFrom, goodUntil, weakFrom, weakUntil, obj)) {
-                int cntB = cntHelperB;
-                if(cntB >= 12) {
-                    System.out.println("START cntHelperB HOOK = " + cntHelperB); // TODO delete log
-                    System.out.println("goodFrom = " + goodFrom);
-                    System.out.println("goodUntil = " + goodUntil);
-                    System.out.println("weakFrom = " + weakFrom);
-                    System.out.println("weakUntil = " + weakUntil);
-                    System.out.println("maximalMeaningfulRank = " + maximalMeaningfulRank);
-                    System.out.println("obj = " + obj);
-                    System.out.println("ranks = " + Arrays.toString(this.ranks));
-                    System.out.println("indices = " + Arrays.toString(this.indices));
-                    System.out.println("---");
-                }
-                cntHelperB++;
-                int ret = helperBHook(goodFrom, goodUntil, weakFrom, weakUntil, obj, tempFrom);
-                if(cntB >= 12) {
-                    System.out.println("END cntHelperB HOOK = " + cntB);
-                    System.out.println("goodFrom = " + goodFrom);
-                    System.out.println("goodUntil = " + goodUntil);
-                    System.out.println("weakFrom = " + weakFrom);
-                    System.out.println("weakUntil = " + weakUntil);
-                    System.out.println("maximalMeaningfulRank = " + maximalMeaningfulRank);
-                    System.out.println("obj = " + obj);
-                    System.out.println("ranks = ");
-                    toStringRanks(this.ranks);
-                    System.out.println("indices = " + Arrays.toString(this.indices));
-                    System.out.println("return = " + ret);
-                    System.out.println("---");
-                }
-                return ret;
+                return helperBHook(goodFrom, goodUntil, weakFrom, weakUntil, obj, tempFrom);
             } else {
-                int cntB = cntHelperB;
-                if (cntB >= 12 && cntB < 30) {
-                    System.out.println("START cntHelperB = " + cntHelperB);
-                    System.out.println("goodFrom = " + goodFrom);
-                    System.out.println("goodUntil = " + goodUntil);
-                    System.out.println("weakFrom = " + weakFrom);
-                    System.out.println("weakUntil = " + weakUntil);
-                    System.out.println("maximalMeaningfulRank = " + maximalMeaningfulRank);
-                    System.out.println("obj = " + obj);
-                    System.out.println("ranks = " + Arrays.toString(this.ranks));
-                    System.out.println("indices = " + Arrays.toString(this.indices));
-                    System.out.println("---");
-                }
-                cntHelperB++;
-                int ret = helperBMain(goodFrom, goodUntil, weakFrom, weakUntil, obj, tempFrom);
-                if (cntB >= 12 && cntB < 30) {
-                    System.out.println("END cntHelperB = " + cntB);
-                    System.out.println("goodFrom = " + goodFrom);
-                    System.out.println("goodUntil = " + goodUntil);
-                    System.out.println("weakFrom = " + weakFrom);
-                    System.out.println("weakUntil = " + weakUntil);
-                    System.out.println("maximalMeaningfulRank = " + maximalMeaningfulRank);
-                    System.out.println("obj = " + obj);
-                    System.out.println("ranks = ");
-                    toStringRanks(this.ranks);
-                    System.out.println("indices = " + Arrays.toString(this.indices));
-                    System.out.println("return = " + ret);
-                    System.out.println("---");
-                }
-                return ret;
+                return helperBMain(goodFrom, goodUntil, weakFrom, weakUntil, obj, tempFrom);
             }
         } else {
             return weakUntil;
-        }
-    }
-
-    private void toStringRanks(int[] ranks) {
-        for(int i = 0; i < ranks.length; i++) {
-            System.out.println("[" + i + "] = " + ranks[i]);
         }
     }
 
