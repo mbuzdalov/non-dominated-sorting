@@ -13,7 +13,6 @@ public class ImprovedAdaptedForHybrid extends AbstractImproved {
     private int sizePossibleRanks;
     private int[] minPossibleRankIndices;
     private int[] maxPossibleRankIndices;
-    private int[] resolver; // TODO эту переменную можно убрать, потому что она нужна только в одном методе инициализации
 
 
     public ImprovedAdaptedForHybrid(int maximumPoints, int maximumDimension) {
@@ -24,7 +23,6 @@ public class ImprovedAdaptedForHybrid extends AbstractImproved {
         possibleRanks = new int[maximumPoints];
         minPossibleRankIndices = new int[maximumDimension];
         maxPossibleRankIndices = new int[maximumDimension];
-        resolver = new int[getMaximumPoints()];
     }
 
     @Override
@@ -41,7 +39,6 @@ public class ImprovedAdaptedForHybrid extends AbstractImproved {
         possibleRanks = null;
         minPossibleRankIndices = null;
         maxPossibleRankIndices = null;
-        resolver = null;
     }
 
     private void rankPoint(int currIndex, int[] prevFI, int[] lastFI, int smallestRank, int maximalMeaningfulRank, int M) {
@@ -84,7 +81,8 @@ public class ImprovedAdaptedForHybrid extends AbstractImproved {
             Arrays.fill(prevFrontIndex[d], 0, maxFrontIndex, -1);
         }
 
-        int smallestRank = ArrayHelper.min(this.ranks, 0, N);
+//        int smallestRank = ArrayHelper.min(this.ranks, 0, N); // примерно так же как smallestRank = 0
+        int smallestRank = 0;
 
         for (int hIndex = 0, ranked = 0;
              hIndex < N && smallestRank <= maximalMeaningfulRank && ranked < N;
@@ -138,38 +136,44 @@ public class ImprovedAdaptedForHybrid extends AbstractImproved {
                                                      int M,
                                                      int maximalMeaningfulRank) {
 
-        ArrayHelper.fillIdentity(reindex, Math.max(weakUntil, goodUntil));
         System.arraycopy(ranks, weakFrom, this.ranks, weakFrom, weakUntil - weakFrom);
         System.arraycopy(ranks, goodFrom, this.ranks, goodFrom, goodUntil - goodFrom);
 
-        // Для сжатия точек из weak добавим еще один критерий - текущий ранг. // TODO translate
-        // Всегда M < maximumDimension
-        for (int i = weakFrom; i < weakUntil; ++i) {
-            points[i][M] = ranks[i];
+        for(int i = weakFrom; i < weakUntil; ++i) {
+            reindex[i] = i;
+            points[i][M] = ranks[i]; // для сжатия
         }
+        for(int i = goodFrom; i < goodUntil; ++i) {
+            reindex[i] = i;
+        }
+
+        // Для сжатия точек из weak добавим еще один критерий - текущий ранг.
+        // Всегда M < maximumDimension
         int newWeakUntil = weakFrom + DoubleArraySorter.retainUniquePoints(points, reindex, this.points, rankReindex, weakFrom, weakFrom, weakUntil, M + 1);
 
         int newGoodUntil = goodFrom + DoubleArraySorter.retainUniquePoints(points, reindex, this.points, rankReindex, goodFrom, goodFrom, goodUntil, M);
 
         initializeCompressedRanks(weakFrom, weakUntil, goodFrom, goodUntil);
         initializePossibilityRanks(goodFrom, newGoodUntil, M);
+
+        // Note: this function uses checkIndicesCount like internal temporary buffer,
+        // please place initialization of checkIndicesCount bellow
         initializeObjectiveIndices(weakFrom, newWeakUntil, goodFrom, newGoodUntil, M);
 
-        Arrays.fill(isRanked, weakFrom, newWeakUntil, false);
-        Arrays.fill(isRanked, goodFrom, newGoodUntil, true);
-        Arrays.fill(checkIndicesCount, weakFrom, newWeakUntil, M);
-        Arrays.fill(checkIndicesCount, goodFrom, newGoodUntil, M);
-        Arrays.fill(indexNeededCount, weakFrom, newWeakUntil, M);
-        Arrays.fill(indexNeededCount, goodFrom, newGoodUntil, M);
-
         int maxRank = -1;
-        for (int i = weakFrom; i < newWeakUntil; ++i) {
+        for(int i = weakFrom; i < newWeakUntil; ++i) {
+            isRanked[i] = false;
+            checkIndicesCount[i] = M;
+            indexNeededCount[i] = M;
             ArrayHelper.fillIdentity(checkIndices[i], M);
             Arrays.fill(indexNeeded[i], 0, M, true);
             maxRank = Math.max(maxRank, this.compressedRanks[i]);
         }
 
-        for (int i = goodFrom; i < newGoodUntil; ++i) {
+        for(int i = goodFrom; i < newGoodUntil; ++i) {
+            isRanked[i] = true;
+            checkIndicesCount[i] = M;
+            indexNeededCount[i] = M;
             ArrayHelper.fillIdentity(checkIndices[i], M);
             Arrays.fill(indexNeeded[i], 0, M, true);
             maxRank = Math.max(maxRank, this.compressedRanks[i]);
@@ -183,12 +187,13 @@ public class ImprovedAdaptedForHybrid extends AbstractImproved {
             Arrays.fill(prevFrontIndex[d], 0, maxFrontIndex, -1);
         }
 
-        int smallestRank = 0; // TODO optimize
+//        int smallestRank = ArrayHelper.min(this.compressedRanks, goodFrom, newGoodUntil); // хуже
+        int smallestRank = 0;
 
         for (int hIndex = 0, ranked = (newGoodUntil - goodFrom);
              hIndex < sizeUnion && smallestRank <= maximalMeaningfulRank && ranked < sizeUnion;
              ++hIndex) {
-            for (int oIndex = 0; oIndex < M && ranked < sizeUnion; ++oIndex) {
+            for (int oIndex = 0; oIndex < M && ranked < sizeUnion && smallestRank <= maximalMeaningfulRank; ++oIndex) {
                 int minPossibleRankId = minPossibleRankIndices[oIndex];
                 int maxPossibleRankId = maxPossibleRankIndices[oIndex];
                 int currIndex = objectiveIndices[oIndex][hIndex];
@@ -241,7 +246,6 @@ public class ImprovedAdaptedForHybrid extends AbstractImproved {
     }
 
     private void initializeCompressedRanks(int weakFrom, int weakUntil, int goodFrom, int goodUntil) {
-        Arrays.fill(compressedRanks, weakFrom, weakUntil, -1);
         Arrays.fill(compressedRanks, goodFrom, goodUntil, -1);
         for (int i = weakFrom; i < weakUntil; ++i) {
             compressedRanks[rankReindex[i]] = this.ranks[i];
@@ -370,12 +374,13 @@ public class ImprovedAdaptedForHybrid extends AbstractImproved {
     }
 
     private void initializeObjectiveIndices(int weakFrom, int weakUntil, int goodFrom, int goodUntil, int M) {
+        // Variable checkIndicesCount is used like internal temporary buffer
         int newN = weakUntil - weakFrom + goodUntil - goodFrom;
         for (int i = goodFrom; i < goodUntil; ++i) {
-            resolver[i] = i;
+            checkIndicesCount[i] = i; // checkIndicesCount == resolver
         }
         for (int i = weakFrom; i < weakUntil; ++i) {
-            resolver[i] = i;
+            checkIndicesCount[i] = i; // checkIndicesCount == resolver
         }
         for (int d = 0; d < M; ++d) {
             int[] currentObjectiveIndex = objectiveIndices[d];
@@ -385,7 +390,7 @@ public class ImprovedAdaptedForHybrid extends AbstractImproved {
             for (int i = weakFrom; i < weakUntil; ++i) {
                 currentObjectiveIndex[goodUntil - goodFrom + i - weakFrom] = i;
             }
-            sorter.sortWhileResolvingEqual(this.points, currentObjectiveIndex, 0, newN, d, resolver);
+            sorter.sortWhileResolvingEqual(this.points, currentObjectiveIndex, 0, newN, d, checkIndicesCount); // checkIndicesCount == resolver
         }
     }
 }
