@@ -92,6 +92,7 @@ public final class IdCollection {
     static {
         addNonDominatedSortingFactory("bos.proteek", BestOrderSort.getProteekImplementation());
         addNonDominatedSortingFactory("bos.improved", BestOrderSort.getImprovedImplementation());
+        addNonDominatedSortingFactory("bos.improved.reverse", BestOrderSort.getImprovedReverseImplementation());
         addNonDominatedSortingFactory("bos.adapted.for.hybrid", BestOrderSort.getImprovedAdaptedForHybridImplementation());
         addNonDominatedSortingFactory("corner", CornerSort.getInstance());
         addNonDominatedSortingFactory("deductive", DeductiveSort.getInstance());
