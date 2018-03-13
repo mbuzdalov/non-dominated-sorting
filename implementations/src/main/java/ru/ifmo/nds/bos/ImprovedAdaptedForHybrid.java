@@ -139,11 +139,11 @@ public class ImprovedAdaptedForHybrid extends AbstractImproved {
         System.arraycopy(ranks, weakFrom, this.ranks, weakFrom, weakUntil - weakFrom);
         System.arraycopy(ranks, goodFrom, this.ranks, goodFrom, goodUntil - goodFrom);
 
-        for(int i = weakFrom; i < weakUntil; ++i) {
+        for (int i = weakFrom; i < weakUntil; ++i) {
             reindex[i] = i;
             points[i][M] = ranks[i]; // для сжатия
         }
-        for(int i = goodFrom; i < goodUntil; ++i) {
+        for (int i = goodFrom; i < goodUntil; ++i) {
             reindex[i] = i;
         }
 
@@ -161,7 +161,7 @@ public class ImprovedAdaptedForHybrid extends AbstractImproved {
         initializeObjectiveIndices(weakFrom, newWeakUntil, goodFrom, newGoodUntil, M);
 
         int maxRank = -1;
-        for(int i = weakFrom; i < newWeakUntil; ++i) {
+        for (int i = weakFrom; i < newWeakUntil; ++i) {
             isRanked[i] = false;
             checkIndicesCount[i] = M;
             indexNeededCount[i] = M;
@@ -170,7 +170,7 @@ public class ImprovedAdaptedForHybrid extends AbstractImproved {
             maxRank = Math.max(maxRank, this.compressedRanks[i]);
         }
 
-        for(int i = goodFrom; i < newGoodUntil; ++i) {
+        for (int i = goodFrom; i < newGoodUntil; ++i) {
             isRanked[i] = true;
             checkIndicesCount[i] = M;
             indexNeededCount[i] = M;
@@ -306,13 +306,12 @@ public class ImprovedAdaptedForHybrid extends AbstractImproved {
         if (minPossibleRankId == maxPossibleRankId) { // we haven't met any point from good yet
             resultRank = sequentialSearchRank(smallestRank, currIndex, prevFI, lastFI, maximalMeaningfulRank, M);
         } else {
-            resultRank = sequentialSearchRankHelperB(smallestRank,
+            resultRank = sequentialSearchRankHelperB(
                     minPossibleRankId,
                     maxPossibleRankId,
                     currIndex,
                     prevFI,
                     lastFI,
-                    maximalMeaningfulRank,
                     M);
         }
 
@@ -320,20 +319,17 @@ public class ImprovedAdaptedForHybrid extends AbstractImproved {
         this.isRanked[currIndex] = true;
     }
 
-    private int sequentialSearchRankHelperB(int smallestRank,
-                                            int minPossibleRankId,
+    private int sequentialSearchRankHelperB(int minPossibleRankId,
                                             int maxPossibleRankId,
                                             int currIndex,
                                             int[] prevFI,
                                             int[] lastFI,
-                                            int maximalMeaningfulRank,
                                             int M) {
         // A binary search implementation isn't possible here.
 
         int currRankIndex = maxPossibleRankId - 1;
 
-        while (currRankIndex >= minPossibleRankId
-                && possibleRanks[currRankIndex] <= maximalMeaningfulRank) {
+        while (currRankIndex >= minPossibleRankId) {
             int prevIndex = lastFI[possibleRanks[currRankIndex]];
             boolean someoneDominatesMe = false;
             while (prevIndex != -1) {
@@ -356,7 +352,7 @@ public class ImprovedAdaptedForHybrid extends AbstractImproved {
         }
 
         if (currRankIndex < minPossibleRankId) {
-            return smallestRank;
+            return 0;
         }
         return possibleRanks[currRankIndex] + 1;
     }
