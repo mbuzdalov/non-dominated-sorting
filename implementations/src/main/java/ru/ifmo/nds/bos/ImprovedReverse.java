@@ -15,7 +15,7 @@ public class ImprovedReverse extends AbstractImproved {
 
     @Override
     public String getName() {
-        return "Best Order Sort (improved implementation)";
+        return "Best Order Sort (reversed improved implementation)";
     }
 
     @Override
