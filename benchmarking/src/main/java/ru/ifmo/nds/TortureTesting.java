@@ -74,7 +74,8 @@ public class TortureTesting {
                 BestOrderSort.getProteekImplementation(),
                 BestOrderSort.getImprovedImplementation(),
                 ENS.getENS_NDT(8),
-                ENS.getENS_NDT_Arrays()
+                ENS.getENS_NDT_Arrays(),
+                ENS.getENS_NDT_OneTree(1)
         );
         List<NonDominatedSorting> sortings = sortingFactories
                 .stream()
