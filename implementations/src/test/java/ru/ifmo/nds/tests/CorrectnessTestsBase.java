@@ -207,6 +207,30 @@ public abstract class CorrectnessTestsBase {
     }
 
     @Test
+    public void multiple1DUnequalDecreasing() {
+        int n = 100;
+        int[][] input = new int[n][1];
+        int[] output = new int[n];
+        for (int i = 0; i < n; ++i) {
+            input[i][0] = n - i;
+            output[i] = n - i - 1;
+        }
+        groupCheck(input, output);
+    }
+
+    @Test
+    public void multiple1DUnequalIncreasing() {
+        int n = 100;
+        int[][] input = new int[n][1];
+        int[] output = new int[n];
+        for (int i = 0; i < n; ++i) {
+            input[i][0] = i + 1;
+            output[i] = i;
+        }
+        groupCheck(input, output);
+    }
+
+    @Test
     public void two1DEqual() {
         groupCheck(new int[][] {{2}, {2}}, new int[] {0, 0});
     }
