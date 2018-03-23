@@ -95,7 +95,7 @@ public class ENS_NDT_AdaptedForHybrid extends NonDominatedSorting {
         // TODO изменить порядок обхода
 
         for (int i = weakFrom; i < newWeakUntil; ++i) {
-            this.compressedRanks[i] = tree.evaluateRank(this.points[i], this.compressedRanks[i], split, maximalMeaningfulRank);
+            this.compressedRanks[i] = tree.evaluateRank(this.points[i], this.compressedRanks[i], split);
         }
 
         Arrays.fill(this.points, weakFrom, weakFrom, null);

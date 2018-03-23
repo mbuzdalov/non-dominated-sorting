@@ -3,7 +3,7 @@ package ru.ifmo.nds.ndt;
 public abstract class TreeRankNode {
     public abstract TreeRankNode add(double[] point, int rank, Split split, int splitThreshold);
 
-    public abstract int evaluateRank(double[] point, int rank, Split split, int maximalMeaningfulRank);
+    public abstract int evaluateRank(double[] point, int rank, Split split);
 
     public abstract int getMaxRank();
 
@@ -16,8 +16,8 @@ public abstract class TreeRankNode {
         }
 
         @Override
-        public int evaluateRank(double[] point, int rank, Split split, int maximalMeaningfulRank) {
-            return rank; // никто не доминирует
+        public int evaluateRank(double[] point, int rank, Split split) {
+            return rank;
         }
 
         @Override
@@ -71,15 +71,18 @@ public abstract class TreeRankNode {
         }
 
         @Override
-        public int evaluateRank(double[] point, int rank, Split split, int maximalMeaningfulRank) {
-            if(getMaxRank() < rank) {
+        public int evaluateRank(double[] point, int rank, Split split) {
+            if (getMaxRank() < rank) {
                 return rank;
             }
 
             int maxObj = point.length - 1; // TODO fix
             pointLoop:
-            for (int i = 0; i < size; ++i) {
+            for (int i = size - 1; i >= 0; --i) { // TODO
                 double[] current = points[i];
+                if(this.ranks[i] + 1 < rank) {
+                    continue;
+                }
                 // objective 0 is not compared since points are presorted.
                 for (int o = maxObj; o > 0; --o) {
                     if (current[o] > point[o]) {
@@ -119,25 +122,21 @@ public abstract class TreeRankNode {
         }
 
         @Override
-        public int evaluateRank(double[] point, int rank, Split split, int maximalMeaningfulRank) {
-            if(getMaxRank() < rank) {
+        public int evaluateRank(double[] point, int rank, Split split) {
+            if (getMaxRank() < rank) {
                 return rank;
             }
-            if(good != null) {
-                int resultRank = good.evaluateRank(point, rank, split.good, maximalMeaningfulRank);
-                if(resultRank > maximalMeaningfulRank) {
-                    return maximalMeaningfulRank + 1;
-                }
-                if(resultRank > rank) {
-                    rank = resultRank;
-                }
+
+            int resultRank = -1;
+            if (weak != null && point[split.coordinate] >= split.value) {
+                resultRank = weak.evaluateRank(point, rank, split.weak);
             }
 
-            if(weak != null && point[split.coordinate] >= split.value) {
-                return weak.evaluateRank(point, rank, split.weak, maximalMeaningfulRank);
+            if (good != null) {
+                resultRank = good.evaluateRank(point, Math.max(resultRank, rank), split.good);
             }
 
-            return rank;
+            return Math.max(resultRank, rank);
         }
 
 
