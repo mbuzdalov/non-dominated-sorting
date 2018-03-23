@@ -132,6 +132,22 @@ public class ENS_NDT_Arrays extends NonDominatedSorting {
         int dim = points[0].length;
         ArrayHelper.fillIdentity(indices, n);
         sorter.lexicographicalSort(points, indices, 0, n, points[0].length);
+
+        if (dim == 1) {
+            int currRank = ranks[indices[0]] = 0;
+            double prevValue = points[indices[0]][0];
+            for (int i = 1; i < n; ++i) {
+                int ii = indices[i];
+                double currValue = points[ii][0];
+                if (prevValue != currValue) {
+                    ++currRank;
+                    prevValue = currValue;
+                }
+                ranks[ii] = currRank;
+            }
+            return;
+        }
+
         int newN = DoubleArraySorter.retainUniquePoints(points, indices, this.points, ranks);
         Arrays.fill(this.ranks, 0, newN, 0);
         Arrays.fill(this.nodeArray, 0, 2 * newN, 0);
