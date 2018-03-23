@@ -149,19 +149,58 @@ public final class DoubleArraySorter {
     }
 
     public static int retainUniquePoints(double[][] sourcePoints, int[] sortedIndices, double[][] targetPoints, int[] reindex) {
-        int n = sourcePoints.length, newN = 1;
+        int n = sourcePoints.length;
+        return retainUniquePoints(sourcePoints, sortedIndices, targetPoints, reindex, n);
+    }
+
+    public static int retainUniquePoints(double[][] sourcePoints,
+                                         int[] sortedIndices,
+                                         double[][] targetPoints,
+                                         int[] reindex,
+                                         int N) {
+        return retainUniquePoints(sourcePoints, sortedIndices, targetPoints, reindex, N, sourcePoints[0].length);
+    }
+
+    public static int retainUniquePoints(double[][] sourcePoints, int[] sortedIndices, double[][] targetPoints, int[] reindex, int N, int M) {
+        int newN = 1;
         int lastII = sortedIndices[0];
         targetPoints[0] = sourcePoints[lastII];
         reindex[lastII] = 0;
-        for (int i = 1; i < n; ++i) {
+        for (int i = 1; i < N; ++i) {
             int currII = sortedIndices[i];
-            if (!ArrayHelper.equal(sourcePoints[lastII], sourcePoints[currII])) {
+            if (!ArrayHelper.equal(sourcePoints[lastII], sourcePoints[currII], M)) {
                 // Copying the point to the internal array.
                 targetPoints[newN] = sourcePoints[currII];
                 lastII = currII;
                 ++newN;
             }
             reindex[currII] = newN - 1;
+        }
+        return newN;
+    }
+
+    public static int retainUniquePoints(double[][] sourcePoints,
+                                         int[] sortedIndices,
+                                         double[][] targetPoints,
+                                         int[] reindex,
+                                         int targetFrom,
+                                         int from,
+                                         int until,
+                                         int M) {
+        int newN = 1;
+        int lastII = sortedIndices[from];
+        targetPoints[targetFrom] = sourcePoints[lastII];
+        reindex[lastII] = targetFrom;
+        for (int i = from + 1 ; i < until; ++i) {
+            int currII = sortedIndices[i];
+            if (!ArrayHelper.equal(sourcePoints[lastII], sourcePoints[currII], M)) {
+                // Copying the point to the internal array.
+                ++targetFrom;
+                targetPoints[targetFrom] = sourcePoints[currII];
+                lastII = currII;
+                ++newN;
+            }
+            reindex[currII] = targetFrom;
         }
         return newN;
     }

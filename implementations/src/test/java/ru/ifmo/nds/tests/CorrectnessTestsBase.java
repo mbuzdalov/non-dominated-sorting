@@ -357,6 +357,34 @@ public abstract class CorrectnessTestsBase {
     }
 
     @Test
+    public void small3dOrderTest() {
+        groupCheck(new int[][] {
+                {1, 5, 6},
+                {2, 4, 5},
+                {3, 6, 8},
+                {4, 2, 7},
+                {5, 3, 1},
+                {6, 7, 3},
+                {7, 8, 4},
+                {8, 1, 2}
+        }, new int[] {0, 0, 1, 0, 0, 1, 2, 0});
+    }
+
+    @Test
+    public void fromNDTreePaperTest() throws Exception {
+        groupCheck(new int[][] {
+                {1, 5},
+                {2, 2},
+                {4, 1},
+                {7, 3},
+                {5, 4},
+                {6, 8},
+                {8, 5},
+                {3, 7}
+        }, new int[] {0, 0, 0, 1, 1, 2, 2, 1});
+    }
+
+    @Test
     public void generatedTest3() {
         groupCheck(new int[][] {
                 {1, 4, 3, 3, 1, 1}, {3, 5, 4, 6, 7, 1}, {1, 2, 2, 3, 8, 0}, {0, 2, 4, 8, 3, 5}, {0, 2, 7, 4, 2, 9},
