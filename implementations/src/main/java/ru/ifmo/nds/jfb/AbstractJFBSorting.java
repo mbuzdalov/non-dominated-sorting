@@ -157,6 +157,18 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         return true;
     }
 
+    void getPoints(int from, int until, int k, double[][] target, int targetFrom) {
+        for (int i = from; i < until; ++i) {
+            System.arraycopy(this.points[indices[i]], 0, target[i - from + targetFrom], 0, k);
+        }
+    }
+
+    void getRanks(int from, int until, int[] target, int targetFrom) {
+        for (int i = from; i < until; ++i) {
+            target[i - from + targetFrom] = this.ranks[indices[i]];
+        }
+    }
+
     private boolean tryUpdateRank(int goodIndex, int weakIndex) {
         int rg = ranks[goodIndex];
         if (ranks[weakIndex] <= rg) {
