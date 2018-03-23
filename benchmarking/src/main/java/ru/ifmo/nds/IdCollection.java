@@ -121,7 +121,11 @@ public final class IdCollection {
         for (int threshold : new int[] {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20, 50, 100, 200}) {
             addNonDominatedSortingFactory("ens.ndt." + threshold, ENS.getENS_NDT(threshold));
         }
-        addNonDominatedSortingFactory("ens.ndt.one.tree.1", ENS.getENS_NDT_OneTree(1));
+
+        for (int threshold : new int[] {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20, 50, 100, 200}) {
+            addNonDominatedSortingFactory("ens.ndt.one.tree." + threshold, ENS.getENS_NDT_OneTree(threshold));
+        }
+
         addNonDominatedSortingFactory("ens.ndt.arrays", ENS.getENS_NDT_Arrays());
         addNonDominatedSortingFactory("fnds.original", FastNonDominatedSorting.getOriginalVersion());
         addNonDominatedSortingFactory("fnds.linear", FastNonDominatedSorting.getLinearMemoryImplementation());

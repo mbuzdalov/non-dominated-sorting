@@ -25,7 +25,7 @@ public class SplitBuilderOneTree {
 
     private Split construct(int from, int until, int coordinate, int depth) {
         if (from + threshold < until) {
-            int nextCoordinate = coordinate + 1 == maxCoordinate ? 0 : coordinate + 1;
+            int nextCoordinate = coordinate + 1 == maxCoordinate ? 0 : coordinate + 1; // TODO возможно можно начинать и с 1
             ArrayHelper.transplant(transposedPoints[coordinate], indices, from, until, medianSwap, from);
             double median = ArrayHelper.destructiveMedian(medianSwap, from, until);
             double min = ArrayHelper.min(medianSwap, from, until);
@@ -65,7 +65,7 @@ public class SplitBuilderOneTree {
         for (int i = transposedPoints[0].length - 1; i >= 0; --i) {
             indices[i] = i;
         }
-        Split result = construct(0, nPoints, 0, 0); // TODO начинать с 0
+        Split result = construct(0, nPoints, 0, 0); // TODO возможно можно начинать и с 1
         this.transposedPoints = null;
         this.threshold = -1;
         return result;
@@ -79,7 +79,7 @@ public class SplitBuilderOneTree {
         for (int i = until - 1; i >= from; --i) {
             indices[i] = i;
         }
-        Split result = construct(from, until, 0, 0); // TODO начинать с 0
+        Split result = construct(from, until, 0, 0); // TODO возможно можно начинать и с 1
         this.transposedPoints = null;
         this.threshold = -1;
         return result;

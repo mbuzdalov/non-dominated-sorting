@@ -78,7 +78,7 @@ public abstract class TreeRankNode {
 
             int maxObj = point.length - 1; // TODO fix
             pointLoop:
-            for (int i = size - 1; i >= 0; --i) { // TODO
+            for (int i = 0; i < size; ++i) { // TODO
                 double[] current = points[i];
                 if(this.ranks[i] + 1 < rank) {
                     continue;
@@ -89,7 +89,7 @@ public abstract class TreeRankNode {
                         continue pointLoop;
                     }
                 }
-                return this.ranks[i] + 1;
+                rank = Math.max(this.ranks[i] + 1, rank);
             }
             return rank;
         }
