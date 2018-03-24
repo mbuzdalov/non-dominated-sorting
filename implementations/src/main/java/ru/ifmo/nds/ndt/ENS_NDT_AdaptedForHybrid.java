@@ -7,9 +7,12 @@ import java.util.Arrays;
 
 public class ENS_NDT_AdaptedForHybrid extends NonDominatedSorting {
     private SplitBuilder splitBuilder;
+    private DoubleArraySorter sorter;
     private TreeRankNode tree;
     private double[][] transposedPoints;
     private final int threshold;
+    private int[] indices;
+    private int[] resolver;
 
     public ENS_NDT_AdaptedForHybrid(int maximumPoints, int maximumDimension, int threshold) {
         super(maximumPoints, maximumDimension);
@@ -17,6 +20,9 @@ public class ENS_NDT_AdaptedForHybrid extends NonDominatedSorting {
         this.splitBuilder = new SplitBuilder(maximumPoints);
         this.tree = TreeRankNode.EMPTY;
         this.transposedPoints = new double[maximumDimension][maximumPoints];
+        this.indices = new int[maximumPoints];
+        this.resolver = new int[maximumPoints];
+        this.sorter = new DoubleArraySorter(maximumPoints);
     }
 
     @Override
@@ -29,6 +35,9 @@ public class ENS_NDT_AdaptedForHybrid extends NonDominatedSorting {
         splitBuilder = null;
         tree = null;
         transposedPoints = null;
+        indices = null;
+        resolver = null;
+        sorter = null;
     }
 
     @Override
@@ -56,21 +65,42 @@ public class ENS_NDT_AdaptedForHybrid extends NonDominatedSorting {
             }
         }
 
-        Split split = splitBuilder.result(transposedPoints, goodFrom, goodUntil, M, threshold);
-        tree = TreeRankNode.EMPTY;
-        tree = tree.add(points[goodFrom], ranks[goodFrom], split, threshold);
-        for (int i = goodFrom + 1; i < goodUntil; ++i) {
-            tree = tree.add(points[i], ranks[i], split, threshold);
+        for (int i = goodFrom; i < goodUntil; ++i) {
+            indices[i - goodFrom] = i;
         }
-        // TODO подумать про порядок обхода
-        // правильным будет лексикографический обход?
-
         for (int i = weakFrom; i < weakUntil; ++i) {
-            int resultRank = tree.evaluateRank(points[i], ranks[i], split, M); // TODO delete
-            if(resultRank != ranks[i]) {
-                ranks[i] = resultRank;
-            }
+            indices[goodUntil - goodFrom + i - weakFrom] = i;
         }
+        int sizeUnion = goodUntil - goodFrom + weakUntil - weakFrom;
+//        sorter.lexicographicalSort(points, indices, 0, sizeUnion, M); // вот в таком порядке надо обходить точки
+        for (int i = goodFrom; i < goodUntil; ++i) {
+            resolver[i] = i;
+        }
+        for (int i = weakFrom; i < weakUntil; ++i) {
+            resolver[i] = i;
+        }
+        sorter.sortWhileResolvingEqual(points, indices, 0, sizeUnion, 0, resolver);
+        // вот в таком порядке надо обходить точки
+
+        Split split = splitBuilder.result(transposedPoints, goodFrom, goodUntil, M, threshold);
+
+        tree = TreeRankNode.EMPTY;
+
+
+        //        // TODO подумать про порядок обхода
+//        // правильным будет лексикографический обход
+
+        for(int i = 0; i < sizeUnion; ++i) {
+            int id = indices[i];
+            if(id >= goodFrom && id < goodUntil) {
+                tree = tree.add(points[id], ranks[id], split, threshold);
+                continue;
+            }
+
+            ranks[id] = tree.evaluateRank(points[id], ranks[id], split, M);
+        }
+
+
 
         tree = null;
         Arrays.fill(points, weakFrom, weakFrom, null);
