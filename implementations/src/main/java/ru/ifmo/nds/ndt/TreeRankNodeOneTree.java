@@ -1,18 +1,20 @@
 package ru.ifmo.nds.ndt;
 
-public abstract class TreeRankNode {
-    public abstract TreeRankNode add(double[] point, int rank, Split split, int splitThreshold);
+public abstract class TreeRankNodeOneTree {
+    public abstract TreeRankNodeOneTree add(double[] point, int rank, Split split, int splitThreshold);
 
     public abstract int evaluateRank(double[] point, int rank, Split split, int M);
 
+    public abstract int evaluateRank(double[] point, int rank, Split split);
+
     public abstract int getMaxRank();
 
-    public static final TreeRankNode EMPTY = new EmptyRankNode();
+    public static final TreeRankNodeOneTree EMPTY = new EmptyRankNodeOneTree();
 
-    private static class EmptyRankNode extends TreeRankNode {
+    private static class EmptyRankNodeOneTree extends TreeRankNodeOneTree {
         @Override
-        public TreeRankNode add(double[] point, int rank, Split split, int splitThreshold) {
-            return new TerminalRankNode().add(point, rank, split, splitThreshold);
+        public TreeRankNodeOneTree add(double[] point, int rank, Split split, int splitThreshold) {
+            return new TerminalRankNodeOneTree().add(point, rank, split, splitThreshold);
         }
 
         @Override
@@ -21,25 +23,30 @@ public abstract class TreeRankNode {
         }
 
         @Override
+        public int evaluateRank(double[] point, int rank, Split split) {
+            return evaluateRank(point, rank, split, point.length - 1);
+        }
+
+        @Override
         public int getMaxRank() {
             return -1;
         }
     }
 
-    private static class TerminalRankNode extends TreeRankNode {
+    private static class TerminalRankNodeOneTree extends TreeRankNodeOneTree {
         private int size;
         private double[][] points;
         private int[] ranks;
         int maxRank;
 
-        private TerminalRankNode() {
+        private TerminalRankNodeOneTree() {
             this.points = null;
             this.size = 0;
             this.ranks = null;
         }
 
         @Override
-        public TreeRankNode add(double[] point, int rank, Split split, int splitThreshold) {
+        public TreeRankNodeOneTree add(double[] point, int rank, Split split, int splitThreshold) {
             if (points == null) {
                 points = new double[splitThreshold][];
                 ranks = new int[splitThreshold];
@@ -69,8 +76,8 @@ public abstract class TreeRankNode {
                     maxRank = Math.max(maxRank, rank);
                     return this;
                 }
-                TerminalRankNode weak = new TerminalRankNode();
-                TerminalRankNode good = new TerminalRankNode();
+                TerminalRankNodeOneTree weak = new TerminalRankNodeOneTree();
+                TerminalRankNodeOneTree good = new TerminalRankNodeOneTree();
                 // actually, nulls are perfect here,
                 // but we will not hurt the hearts of those who suffered from NPE
                 Split weakSplit = split.weak, goodSplit = split.good;
@@ -83,7 +90,7 @@ public abstract class TreeRankNode {
                         weak.add(points[i], ranks[i], weakSplit, splitThreshold);
                     }
                 }
-                TreeRankNode rv = new BranchingRankNode(good, weak);
+                TreeRankNodeOneTree rv = new BranchingRankNodeOneTree(good, weak);
                 return rv.add(point, rank, split, splitThreshold);
             } else {
                 points[size] = point;
@@ -100,8 +107,8 @@ public abstract class TreeRankNode {
                 return rank;
             }
 
-//            int maxObj = point.length - 1; // TODO fix
-            int maxObj = M - 1; //  последний критерий, по которому будем сравнивать
+            int maxObj = point.length - 1; // TODO fix
+//            int maxObj = M - 1; //  последний критерий, по которому будем сравнивать
             pointLoop:
             for (int i = 0; i < size; ++i) { // TODO
                 double[] current = points[i];
@@ -114,7 +121,7 @@ public abstract class TreeRankNode {
                 // сопадают, это значит, что точка weak доминируется точкой
                 // из good. Правда только для helperB
                 // TODO для OneTree надо сдлеать отдельную версию TreeNode'ов
-                for (int o = maxObj; o >= 0; --o) { // Для гибридного нам нельзя пропускать 0 координату,
+                for (int o = maxObj; o > 0; --o) { // Для гибридного нам нельзя пропускать 0 координату,
                     // потому что weak и good не сравнивали по 0 координате никогда
                     // TODO сделать 2 версии TreeNode'ов ?
                     if (current[o] > point[o]) {
@@ -128,23 +135,28 @@ public abstract class TreeRankNode {
         }
 
         @Override
+        public int evaluateRank(double[] point, int rank, Split split) {
+            return evaluateRank(point, rank, split, point.length - 1);
+        }
+
+        @Override
         public int getMaxRank() {
             return maxRank;
         }
     }
 
-    private static class BranchingRankNode extends TreeRankNode {
-        private TreeRankNode good, weak;
+    private static class BranchingRankNodeOneTree extends TreeRankNodeOneTree {
+        private TreeRankNodeOneTree good, weak;
         private int maxRank;
 
-        private BranchingRankNode(TreeRankNode good, TreeRankNode weak) {
+        private BranchingRankNodeOneTree(TreeRankNodeOneTree good, TreeRankNodeOneTree weak) {
             this.weak = weak;
             this.good = good;
             this.maxRank = Math.max(good.getMaxRank(), weak.getMaxRank());
         }
 
         @Override
-        public TreeRankNode add(double[] point, int rank, Split split, int splitThreshold) {
+        public TreeRankNodeOneTree add(double[] point, int rank, Split split, int splitThreshold) {
             maxRank = Math.max(rank, maxRank);
             if (point[split.coordinate] >= split.value) {
                 weak = weak.add(point, rank, split.weak, splitThreshold);
@@ -170,6 +182,11 @@ public abstract class TreeRankNode {
             }
 
             return Math.max(resultRank, rank);
+        }
+
+        @Override
+        public int evaluateRank(double[] point, int rank, Split split) {
+            return evaluateRank(point, rank, split, point.length - 1);
         }
 
         @Override

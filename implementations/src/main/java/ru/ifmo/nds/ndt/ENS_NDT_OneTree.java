@@ -9,7 +9,7 @@ import java.util.Arrays;
 public class ENS_NDT_OneTree extends NonDominatedSorting {
     private DoubleArraySorter sorter;
     private SplitBuilder splitBuilder;
-    private TreeRankNode tree;
+    private TreeRankNodeOneTree tree;
     private int[] indices;
     private int[] ranks;
     private double[][] transposedPoints;
@@ -21,7 +21,7 @@ public class ENS_NDT_OneTree extends NonDominatedSorting {
         this.threshold = threshold;
         this.sorter = new DoubleArraySorter(maximumPoints);
         this.splitBuilder = new SplitBuilder(maximumPoints);
-        this.tree = TreeRankNode.EMPTY;
+        this.tree = TreeRankNodeOneTree.EMPTY;
         this.indices = new int[maximumPoints];
         this.ranks = new int[maximumPoints];
         this.transposedPoints = new double[maximumDimension][maximumPoints];
@@ -69,7 +69,7 @@ public class ENS_NDT_OneTree extends NonDominatedSorting {
         int newN = DoubleArraySorter.retainUniquePoints(points, indices, this.points, ranks);
         Arrays.fill(this.ranks, 0, newN, 0);
 
-        tree = TreeRankNode.EMPTY;
+        tree = TreeRankNodeOneTree.EMPTY;
         for (int i = 0; i < newN; ++i) {
             for (int j = 0; j < dim; ++j) {
                 transposedPoints[j][i] = this.points[i][j];
