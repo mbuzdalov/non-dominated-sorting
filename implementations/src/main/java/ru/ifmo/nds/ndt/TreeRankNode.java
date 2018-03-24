@@ -45,6 +45,30 @@ public abstract class TreeRankNode {
                 ranks = new int[splitThreshold];
             }
             if (size == points.length) {
+                if(split == null) {
+                    // это значит, что что по всем координатам кроме 0 наша точка совпадает с
+                    // какой-то(последней?, любой?) точкой из points
+                    // TODO проверить
+                    // подменим последнюю точку
+
+//                    for(int i = 1; i < point.length; ++i) { // TODO delete
+//                        if(point[i] != this.points[size - 1][i]) {
+//                            throw new IllegalStateException("----");
+//                        }
+//                    }
+//
+//                    if(points[size - 1][0] > point[0]) {  // TODO delete
+//                        throw new IllegalStateException("points[size - 1][0] > point[0]");
+//                    }
+//                    if(ranks[size-1] > rank) { // TODO delete
+//                        throw new IllegalStateException("ranks[size-1] > rank");
+//                    }
+
+                    points[size - 1] = point;
+                    ranks[size - 1] = rank;
+                    maxRank = Math.max(maxRank, rank);
+                    return this;
+                }
                 TerminalRankNode weak = new TerminalRankNode();
                 TerminalRankNode good = new TerminalRankNode();
                 // actually, nulls are perfect here,
