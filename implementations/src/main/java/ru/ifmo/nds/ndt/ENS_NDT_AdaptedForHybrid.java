@@ -7,7 +7,7 @@ import java.util.Arrays;
 
 public class ENS_NDT_AdaptedForHybrid extends NonDominatedSorting {
     private DoubleArraySorter sorter;
-    private SplitBuilderOneTree splitBuilder;
+    private SplitBuilder splitBuilder;
     private TreeRankNode tree;
     private int[] indices;
     private int[] ranks;
@@ -22,7 +22,7 @@ public class ENS_NDT_AdaptedForHybrid extends NonDominatedSorting {
         super(maximumPoints, maximumDimension);
         this.threshold = threshold;
         this.sorter = new DoubleArraySorter(maximumPoints);
-        this.splitBuilder = new SplitBuilderOneTree(maximumPoints);
+        this.splitBuilder = new SplitBuilder(maximumPoints);
         this.tree = TreeRankNode.EMPTY;
         this.indices = new int[maximumPoints];
         this.ranks = new int[maximumPoints];

@@ -70,4 +70,19 @@ public class SplitBuilder {
         this.threshold = -1;
         return result;
     }
+
+    public Split result(double[][] transposedPoints, int from, int until, int dimension, int threshold) {
+        // TODO пересмотреть весь метод
+        this.transposedPoints = transposedPoints;
+        this.threshold = threshold;
+        this.maxCoordinate = dimension;
+        this.nSplits = 0;
+        for (int i = until - 1; i >= from; --i) {
+            indices[i] = i;
+        }
+        Split result = construct(from, until, 1, 0);
+        this.transposedPoints = null;
+        this.threshold = -1;
+        return result;
+    }
 }
