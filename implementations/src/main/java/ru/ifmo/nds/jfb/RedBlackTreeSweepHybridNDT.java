@@ -13,7 +13,12 @@ public class RedBlackTreeSweepHybridNDT extends RedBlackTreeSweep {
 
         tempPoints = new double[maximumPoints][maximumDimension];
         tempRanks = new int[maximumPoints];
-        ndtSorter = new ENS_NDT_AdaptedForHybrid(maximumPoints, maximumDimension, 1);
+        ndtSorter = new ENS_NDT_AdaptedForHybrid(maximumPoints, maximumDimension, 8);
+    }
+
+    @Override
+    public String getName() {
+        return "Jensen-Fortin-Buzdalov sorting, " + getThreadDescription() + " (tree sweep, hybrid with " + ndtSorter.getName() + ")";
     }
 
     @Override
