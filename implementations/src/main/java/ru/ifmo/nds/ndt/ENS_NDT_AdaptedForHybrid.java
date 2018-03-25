@@ -43,8 +43,7 @@ public class ENS_NDT_AdaptedForHybrid extends NonDominatedSorting {
     @Override
     protected void sortChecked(double[][] points, int[] ranks, int maximalMeaningfulRank) {
         throw new UnsupportedOperationException("ENS_NDT_AdaptedForHybrid sorting doesn't work alone");
-
-        // TODO вспомнить почему
+        // иначе появится много ненужного
     }
 
     public void sortHelperB(double[][] points,
@@ -73,13 +72,15 @@ public class ENS_NDT_AdaptedForHybrid extends NonDominatedSorting {
         for (int i = weakFrom; i < weakUntil; ++i) {
             indices[goodUntil - goodFrom + i - weakFrom] = i;
         }
-        int sizeUnion = goodUntil - goodFrom + weakUntil - weakFrom;
+
         for (int i = goodFrom; i < goodUntil; ++i) {
             resolver[i] = i;
         }
         for (int i = weakFrom; i < weakUntil; ++i) {
             resolver[i] = i;
         }
+
+        int sizeUnion = goodUntil - goodFrom + weakUntil - weakFrom;
         sorter.sortWhileResolvingEqual(points, indices, 0, sizeUnion, 0, resolver);
 
         Split split = splitBuilder.result(transposedPoints, goodFrom, goodUntil, M, threshold);

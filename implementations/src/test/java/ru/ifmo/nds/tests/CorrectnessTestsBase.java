@@ -876,7 +876,7 @@ public abstract class CorrectnessTestsBase {
         }, new int[]{0, 0, 1, 1, 0, 1, 1, 0, 2, 2, 1, 1, 0, 1, 1, 2, 1, 0});
     }
 
-    @Test // TODO падает RedBlackTreeSweepHybridNDTTest с bucket size = 1
+    @Test
     public void generatedTest9() throws Exception {
         double[][] points = new double[][]{
                 {2, 12, 18, 4},{0, 14, 16, 7},{2, 2, 13, 13},{4, 5, 0, 15},{18, 6, 14, 4},{13, 18, 4, 19},

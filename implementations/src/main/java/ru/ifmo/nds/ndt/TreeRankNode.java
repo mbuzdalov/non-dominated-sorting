@@ -46,10 +46,9 @@ public abstract class TreeRankNode {
             }
             if (size == points.length) {
                 if (split == null) {
-                    // это значит, что что по всем координатам кроме 0 наша точка совпадает с
-                    // какой-то(последней?, любой?) точкой из points
-                    // TODO проверить
-                    // подменим последнюю точку
+                    // если мы находимся в терминальной в смысле split вершине, то bucket size всегда = 1
+                    // то есть будем работаеть только с points[0] и ranks[0]
+                    // TODO почему нельзя сразу, если split == null?
 
                     points[size - 1] = point;
                     ranks[size - 1] = Math.max(ranks[size - 1], rank);
@@ -97,7 +96,7 @@ public abstract class TreeRankNode {
                 }
                 // objective 0 is not compared since points are presorted.
 
-                for (int o = M - 1; o > 0; --o) { // TODO добавить проверку, если нашли уже ранг выше, но не проверять тек точку
+                for (int o = M - 1; o > 0; --o) {
                     if (current[o] > point[o]) {
                         continue pointLoop;
                     }

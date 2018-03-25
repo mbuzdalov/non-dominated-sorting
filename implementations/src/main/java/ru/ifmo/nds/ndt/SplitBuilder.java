@@ -72,7 +72,6 @@ public class SplitBuilder {
     }
 
     public Split result(double[][] transposedPoints, int from, int until, int dimension, int threshold) {
-        // TODO пересмотреть весь метод
         this.transposedPoints = transposedPoints;
         this.threshold = threshold;
         this.maxCoordinate = dimension;
