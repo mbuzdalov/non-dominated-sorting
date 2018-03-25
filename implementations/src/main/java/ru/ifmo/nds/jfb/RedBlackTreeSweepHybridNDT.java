@@ -8,12 +8,15 @@ public class RedBlackTreeSweepHybridNDT extends RedBlackTreeSweep {
     private double[][] tempPoints;
     private int[] tempRanks;
 
+    private static final int THRESHOLD_3D = 100;
+    private static final int THRESHOLD_ALL = 20000;
+
     public RedBlackTreeSweepHybridNDT(int maximumPoints, int maximumDimension, int allowedThreads) {
         super(maximumPoints, maximumDimension, allowedThreads);
 
         tempPoints = new double[maximumPoints][maximumDimension];
         tempRanks = new int[maximumPoints];
-        ndtSorter = new ENS_NDT_AdaptedForHybrid(maximumPoints, maximumDimension, 8);
+        ndtSorter = new ENS_NDT_AdaptedForHybrid(maximumPoints, maximumDimension, 8); // TODO вытащить в параметры 
     }
 
     @Override
@@ -22,9 +25,34 @@ public class RedBlackTreeSweepHybridNDT extends RedBlackTreeSweep {
     }
 
     @Override
-    protected boolean helperBHookCondition(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj) {
-        return true;
+    protected boolean helperAHookCondition(int size, int obj) {
+        switch (obj) {
+            case 1: return false;
+            case 2: return size < THRESHOLD_3D;
+            default: return size < THRESHOLD_ALL;
+        }
     }
+
+    @Override
+    protected boolean helperBHookCondition(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj) {
+        return helperAHookCondition(goodUntil - goodFrom + weakUntil - weakFrom, obj);
+    }
+
+    @Override
+    protected int helperAHook(int from, int until, int obj) {
+        getPoints(from, until, obj + 1, tempPoints, from);
+
+        getRanks(from, until, tempRanks, from);
+
+        ndtSorter.sortHelperB(tempPoints, tempRanks, from, until, obj + 1, maximalMeaningfulRank);
+
+        for (int i = from; i < until; i++) {
+            ranks[indices[i]] = tempRanks[i];
+        }
+
+        return kickOutOverflowedRanks(from, until);
+    }
+
 
     @Override
     protected int helperBHook(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj, int tempFrom) {

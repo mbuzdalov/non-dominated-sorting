@@ -72,7 +72,6 @@ public class ENS_NDT_AdaptedForHybrid extends NonDominatedSorting {
             indices[goodUntil - goodFrom + i - weakFrom] = i;
         }
         int sizeUnion = goodUntil - goodFrom + weakUntil - weakFrom;
-//        sorter.lexicographicalSort(points, indices, 0, sizeUnion, M); // вот в таком порядке надо обходить точки
         for (int i = goodFrom; i < goodUntil; ++i) {
             resolver[i] = i;
         }
@@ -80,19 +79,15 @@ public class ENS_NDT_AdaptedForHybrid extends NonDominatedSorting {
             resolver[i] = i;
         }
         sorter.sortWhileResolvingEqual(points, indices, 0, sizeUnion, 0, resolver);
-        // вот в таком порядке надо обходить точки
 
         Split split = splitBuilder.result(transposedPoints, goodFrom, goodUntil, M, threshold);
 
         tree = TreeRankNode.EMPTY;
 
-
-        //        // TODO подумать про порядок обхода
-//        // правильным будет лексикографический обход
-
-        for(int i = 0; i < sizeUnion; ++i) {
+        //  лексикографический обход
+        for (int i = 0; i < sizeUnion; ++i) {
             int id = indices[i];
-            if(id >= goodFrom && id < goodUntil) {
+            if (id >= goodFrom && id < goodUntil) {
                 tree = tree.add(points[id], ranks[id], split, threshold);
                 continue;
             }
@@ -101,11 +96,35 @@ public class ENS_NDT_AdaptedForHybrid extends NonDominatedSorting {
         }
 
 
+        tree = null;
+    }
+
+    public void sortHelperB(double[][] points,
+                            int[] ranks,
+                            int from,
+                            int until,
+                            int M,
+                            int maximalMeaningfulRank) {
+
+        for (int i = from; i < until; ++i) {
+            for (int j = 0; j < M; ++j) {
+                transposedPoints[j][i] = points[i][j];
+            }
+        }
+
+        Split split = splitBuilder.result(transposedPoints, from, until, M, threshold);
+
+        tree = TreeRankNode.EMPTY;
+        tree = tree.add(points[from], ranks[from], split, threshold);
+        for (int i = from + 1; i < until; ++i) {
+            ranks[i] = tree.evaluateRank(points[i], ranks[i], split, M);
+
+            if (ranks[i] <= maximalMeaningfulRank) {
+                tree = tree.add(points[i], ranks[i], split, threshold);
+            }
+        }
 
         tree = null;
-        Arrays.fill(points, weakFrom, weakFrom, null);
-        Arrays.fill(points, goodFrom, goodFrom, null);
-
     }
 
 }
