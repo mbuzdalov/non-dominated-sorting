@@ -9,7 +9,7 @@ import java.util.Arrays;
 public class ENS_NDT_OneTree extends NonDominatedSorting {
     private DoubleArraySorter sorter;
     private SplitBuilder splitBuilder;
-    private TreeRankNodeOneTree tree;
+    private TreeRankNode tree;
     private int[] indices;
     private int[] ranks;
     private double[][] transposedPoints;
@@ -21,7 +21,7 @@ public class ENS_NDT_OneTree extends NonDominatedSorting {
         this.threshold = threshold;
         this.sorter = new DoubleArraySorter(maximumPoints);
         this.splitBuilder = new SplitBuilder(maximumPoints);
-        this.tree = TreeRankNodeOneTree.EMPTY;
+        this.tree = TreeRankNode.EMPTY;
         this.indices = new int[maximumPoints];
         this.ranks = new int[maximumPoints];
         this.transposedPoints = new double[maximumDimension][maximumPoints];
@@ -69,7 +69,7 @@ public class ENS_NDT_OneTree extends NonDominatedSorting {
         int newN = DoubleArraySorter.retainUniquePoints(points, indices, this.points, ranks);
         Arrays.fill(this.ranks, 0, newN, 0);
 
-        tree = TreeRankNodeOneTree.EMPTY;
+        tree = TreeRankNode.EMPTY;
         for (int i = 0; i < newN; ++i) {
             for (int j = 0; j < dim; ++j) {
                 transposedPoints[j][i] = this.points[i][j];
@@ -81,7 +81,7 @@ public class ENS_NDT_OneTree extends NonDominatedSorting {
         tree = tree.add(this.points[0], 0, split, threshold);
         for (int i = 1; i < newN; ++i) {
             double[] current = this.points[i];
-            int resultRank = tree.evaluateRank(current, 0, split);
+            int resultRank = tree.evaluateRank(current, 0, split, dim);
             if (resultRank <= maximalMeaningfulRank) {
                 this.ranks[i] = resultRank;
                 if (i != newN - 1) { // не будем добавлять посл точку в дерево

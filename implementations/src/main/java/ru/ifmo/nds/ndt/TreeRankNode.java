@@ -89,23 +89,15 @@ public abstract class TreeRankNode {
                 return rank;
             }
 
-//            int maxObj = point.length - 1; // TODO fix
-            int maxObj = M - 1; //  последний критерий, по которому будем сравнивать
             pointLoop:
-            for (int i = 0; i < size; ++i) { // TODO
+            for (int i = 0; i < size; ++i) { // TODO возможно поменять порядок обхода
                 double[] current = points[i];
                 if (this.ranks[i] + 1 < rank) {
                     continue;
                 }
                 // objective 0 is not compared since points are presorted.
-//                boolean allEquals = true; // это похоже уже выполняется, поэтому не надо
-                // добавим проверку на allEquals, если все координаты
-                // сопадают, это значит, что точка weak доминируется точкой
-                // из good. Правда только для helperB
-                // TODO для OneTree надо сдлеать отдельную версию TreeNode'ов
-                for (int o = maxObj; o >= 0; --o) { // Для гибридного нам нельзя пропускать 0 координату,
-                    // потому что weak и good не сравнивали по 0 координате никогда
-                    // TODO сделать 2 версии TreeNode'ов ?
+
+                for (int o = M - 1; o > 0; --o) { // TODO добавить проверку, если нашли уже ранг выше, но не проверять тек точку
                     if (current[o] > point[o]) {
                         continue pointLoop;
                     }

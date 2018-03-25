@@ -43,6 +43,8 @@ public class ENS_NDT_AdaptedForHybrid extends NonDominatedSorting {
     @Override
     protected void sortChecked(double[][] points, int[] ranks, int maximalMeaningfulRank) {
         throw new UnsupportedOperationException("ENS_NDT_AdaptedForHybrid sorting doesn't work alone");
+
+        // TODO вспомнить почему
     }
 
     public void sortHelperB(double[][] points,
