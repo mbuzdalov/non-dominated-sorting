@@ -16,7 +16,7 @@ public class RedBlackTreeSweepHybridNDT extends RedBlackTreeSweep {
 
         tempPoints = new double[maximumPoints][maximumDimension];
         tempRanks = new int[maximumPoints];
-        ndtSorter = new ENS_NDT_AdaptedForHybrid(maximumPoints, maximumDimension, 8); // TODO вытащить в параметры 
+        ndtSorter = new ENS_NDT_AdaptedForHybrid(maximumPoints, maximumDimension, 8); // TODO вытащить в параметры threshold
     }
 
     @Override

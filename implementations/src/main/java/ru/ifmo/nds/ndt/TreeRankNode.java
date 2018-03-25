@@ -51,22 +51,10 @@ public abstract class TreeRankNode {
                     // TODO проверить
                     // подменим последнюю точку
 
-//                    for(int i = 1; i < point.length; ++i) { // TODO delete
-//                        if(point[i] != this.points[size - 1][i]) {
-//                            throw new IllegalStateException("----");
-//                        }
-//                    }
-//
-//                    if(points[size - 1][0] > point[0]) {  // TODO delete
-//                        throw new IllegalStateException("points[size - 1][0] > point[0]");
-//                    }
-//                    if(ranks[size-1] > rank) { // TODO delete
-//                        throw new IllegalStateException("ranks[size-1] > rank");
-//                    }
-
                     points[size - 1] = point;
-                    ranks[size - 1] = rank;
+                    ranks[size - 1] = Math.max(ranks[size - 1], rank);
                     maxRank = Math.max(maxRank, rank);
+
                     return this;
                 }
                 TerminalRankNode weak = new TerminalRankNode();
@@ -90,6 +78,7 @@ public abstract class TreeRankNode {
                 ranks[size] = rank;
                 size++;
                 maxRank = Math.max(maxRank, rank);
+
                 return this;
             }
         }
