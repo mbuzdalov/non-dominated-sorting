@@ -71,11 +71,14 @@ public class TortureTesting {
                 JensenFortinBuzdalov.getRedBlackTreeSweepImplementation(1),
                 JensenFortinBuzdalov.getRedBlackTreeSweepHybridFNDSImplementation(1),
                 JensenFortinBuzdalov.getRedBlackTreeSweepHybridENSImplementation(1),
+                JensenFortinBuzdalov.getRedBlackTreeSweepHybridNDTImplementation(1, 8),
+                JensenFortinBuzdalov.getRedBlackTreeSweepHybridNDTImplementation(1, 1),
                 BestOrderSort.getProteekImplementation(),
                 BestOrderSort.getImprovedImplementation(),
                 ENS.getENS_NDT(8),
                 ENS.getENS_NDT_Arrays(),
-                ENS.getENS_NDT_OneTree(8)
+                ENS.getENS_NDT_OneTree(8),
+                ENS.getENS_NDT_OneTree(1)
         );
         List<NonDominatedSorting> sortings = sortingFactories
                 .stream()
