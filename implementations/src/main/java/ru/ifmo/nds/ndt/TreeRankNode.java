@@ -50,9 +50,16 @@ public abstract class TreeRankNode {
                     // то есть будем работаеть только с points[0] и ranks[0]
                     // TODO почему нельзя сразу, если split == null?
 
-                    points[size - 1] = point;
-                    ranks[size - 1] = Math.max(ranks[size - 1], rank);
+                    // TODO оптимизация нужна ?
+                    points[0] = point;
+                    ranks[0] = Math.max(ranks[0], rank);
                     maxRank = Math.max(maxRank, rank);
+                    size = 1;
+                    //
+
+//                    points[size - 1] = point;
+//                    ranks[size - 1] = Math.max(ranks[size - 1], rank);
+//                    maxRank = Math.max(maxRank, rank);
 
                     return this;
                 }
