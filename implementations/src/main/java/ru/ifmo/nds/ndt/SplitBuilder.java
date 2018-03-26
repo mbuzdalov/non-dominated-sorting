@@ -34,7 +34,7 @@ public class SplitBuilder {
                 if (depth == maxCoordinate) {
                     // When all median values are equal for all remaining coordinates,
                     // we have no choice other to fail splitting
-                    return null;
+                    return null; // TODO заменить на класс
                 } else {
                     return construct(from, until, nextCoordinate, depth + 1);
                 }
@@ -53,7 +53,7 @@ public class SplitBuilder {
                     construct(mid, until, nextCoordinate, 0));
             return rv;
         } else {
-            return null;
+            return null;  // TODO TODO заменить на класс
         }
     }
 

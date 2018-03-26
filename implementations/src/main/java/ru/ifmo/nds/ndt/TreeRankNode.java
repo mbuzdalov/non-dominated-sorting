@@ -44,21 +44,25 @@ public abstract class TreeRankNode {
                 points = new double[splitThreshold][];
                 ranks = new int[splitThreshold];
             }
-            if (size == points.length) {
-                if (split == null) {
-                    // если мы находимся в терминальной в смысле split вершине, то bucket size всегда = 1
-                    // то есть будем работаеть только с points[0] и ranks[0]
-                    // TODO почему нельзя выше?
 
-                    // TODO оптимизация нужна ?
+            // TODO перенести логику про split == "null"
+//            points = new double[1][];
+//            ranks = new int[1];
+//            points[0] = point;
+//            ranks[0] = Math.max(ranks[0], rank);
+//            maxRank = Math.max(maxRank, rank);
+//            size = 1;
+//            return this;
+
+            if (size == points.length) {
+                if (split == null) { // TODO перенести наверх
+
+                    points = new double[1][];
+                    ranks = new int[1];
                     points[0] = point;
                     ranks[0] = Math.max(ranks[0], rank);
                     maxRank = Math.max(maxRank, rank);
                     size = 1;
-
-//                    points[size - 1] = point;
-//                    ranks[size - 1] = Math.max(ranks[size - 1], rank);
-//                    maxRank = Math.max(maxRank, rank);
 
                     return this;
                 }
@@ -95,13 +99,12 @@ public abstract class TreeRankNode {
             }
 
             pointLoop:
-            for (int i = 0; i < size; ++i) { // TODO возможно надо поменять порядок обхода
+            for (int i = size - 1; i >= 0; --i) {
                 double[] current = points[i];
-                if (this.ranks[i] + 1 < rank) {
+                if (this.ranks[i] < rank) {
                     continue;
                 }
                 // objective 0 is not compared since points are presorted.
-
                 for (int o = M - 1; o > 0; --o) {
                     if (current[o] > point[o]) {
                         continue pointLoop;
