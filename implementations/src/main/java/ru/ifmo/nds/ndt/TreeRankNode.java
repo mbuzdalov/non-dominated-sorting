@@ -48,14 +48,13 @@ public abstract class TreeRankNode {
                 if (split == null) {
                     // если мы находимся в терминальной в смысле split вершине, то bucket size всегда = 1
                     // то есть будем работаеть только с points[0] и ranks[0]
-                    // TODO почему нельзя сразу, если split == null?
+                    // TODO почему нельзя выше?
 
                     // TODO оптимизация нужна ?
                     points[0] = point;
                     ranks[0] = Math.max(ranks[0], rank);
                     maxRank = Math.max(maxRank, rank);
                     size = 1;
-                    //
 
 //                    points[size - 1] = point;
 //                    ranks[size - 1] = Math.max(ranks[size - 1], rank);
@@ -96,7 +95,7 @@ public abstract class TreeRankNode {
             }
 
             pointLoop:
-            for (int i = 0; i < size; ++i) { // TODO возможно поменять порядок обхода
+            for (int i = 0; i < size; ++i) { // TODO возможно надо поменять порядок обхода
                 double[] current = points[i];
                 if (this.ranks[i] + 1 < rank) {
                     continue;

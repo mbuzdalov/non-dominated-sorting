@@ -44,7 +44,7 @@ public class RedBlackTreeSweepHybridNDT extends RedBlackTreeSweep {
 
         getRanks(from, until, tempRanks, from);
 
-        ndtSorter.sortHelperB(tempPoints, tempRanks, from, until, obj + 1, maximalMeaningfulRank);
+        ndtSorter.sortHelperA(tempPoints, tempRanks, from, until, obj + 1, maximalMeaningfulRank);
 
         for (int i = from; i < until; i++) {
             ranks[indices[i]] = tempRanks[i];

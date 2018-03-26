@@ -102,7 +102,7 @@ public class ENS_NDT_AdaptedForHybrid extends NonDominatedSorting {
         tree = null;
     }
 
-    public void sortHelperB(double[][] points,
+    public void sortHelperA(double[][] points,
                             int[] ranks,
                             int from,
                             int until,
