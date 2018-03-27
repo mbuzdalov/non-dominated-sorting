@@ -55,17 +55,23 @@ public abstract class TreeRankNode {
 //            return this;
 
             if (size == points.length) {
-                if (split == null) { // TODO перенести наверх
-
-                    points = new double[1][];
-                    ranks = new int[1];
-                    points[0] = point;
-                    ranks[0] = Math.max(ranks[0], rank);
-                    maxRank = Math.max(maxRank, rank);
-                    size = 1;
-
+                if(split == null) {
+                    if(size == 1) {
+                        points[0] = point;
+                        maxRank = Math.max(maxRank, rank);
+                        ranks[0] = maxRank;
+                    } else {
+                        points = new double[1][];
+                        ranks = new int[1];
+                        points[0] = point;
+                        maxRank = Math.max(maxRank, rank);
+                        ranks[0] = maxRank;
+                        size = 1;
+                    }
                     return this;
                 }
+
+
                 TerminalRankNode weak = new TerminalRankNode();
                 TerminalRankNode good = new TerminalRankNode();
                 // actually, nulls are perfect here,
@@ -85,7 +91,7 @@ public abstract class TreeRankNode {
             } else {
                 size++;
                 for (int i = size - 1; i >= 0; --i) {
-                    if(i == 0) {
+                    if (i == 0) {
                         points[i] = point;
                         ranks[i] = rank;
                         break;
