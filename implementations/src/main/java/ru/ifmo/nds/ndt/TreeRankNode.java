@@ -83,9 +83,22 @@ public abstract class TreeRankNode {
                 TreeRankNode rv = new BranchingRankNode(good, weak);
                 return rv.add(point, rank, split, splitThreshold);
             } else {
-                points[size] = point;
-                ranks[size] = rank;
                 size++;
+                for (int i = size - 1; i >= 0; --i) {
+                    if(i == 0) {
+                        points[i] = point;
+                        ranks[i] = rank;
+                        break;
+                    }
+                    if (ranks[i - 1] <= rank) {
+                        points[i] = point;
+                        ranks[i] = rank;
+                        break;
+                    } else {
+                        points[i] = points[i - 1];
+                        ranks[i] = ranks[i - 1];
+                    }
+                }
                 maxRank = Math.max(maxRank, rank);
 
                 return this;
@@ -102,7 +115,7 @@ public abstract class TreeRankNode {
             for (int i = size - 1; i >= 0; --i) {
                 double[] current = points[i];
                 if (this.ranks[i] < rank) {
-                    continue;
+                    break;
                 }
                 // objective 0 is not compared since points are presorted.
                 for (int o = M - 1; o > 0; --o) {
@@ -112,6 +125,7 @@ public abstract class TreeRankNode {
                 }
 
                 rank = Math.max(this.ranks[i] + 1, rank);
+                break;
             }
             return rank;
         }
