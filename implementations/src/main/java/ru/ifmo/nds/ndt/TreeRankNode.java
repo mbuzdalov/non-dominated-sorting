@@ -40,38 +40,24 @@ public abstract class TreeRankNode {
 
         @Override
         public TreeRankNode add(double[] point, int rank, Split split, int splitThreshold) {
+            if (split == Split.NullMaxDepth.INSTANCE) {
+                if (points == null) {
+                    points = new double[1][];
+                    ranks = new int[1];
+                    size = 1;
+                }
+                points[0] = point;
+                maxRank = Math.max(maxRank, rank);
+                ranks[0] = maxRank;
+                return this;
+            }
+
             if (points == null) {
                 points = new double[splitThreshold][];
                 ranks = new int[splitThreshold];
             }
 
-            // TODO перенести логику про split == "null"
-//            points = new double[1][];
-//            ranks = new int[1];
-//            points[0] = point;
-//            ranks[0] = Math.max(ranks[0], rank);
-//            maxRank = Math.max(maxRank, rank);
-//            size = 1;
-//            return this;
-
             if (size == points.length) {
-                if(split == null) {
-                    if(size == 1) {
-                        points[0] = point;
-                        maxRank = Math.max(maxRank, rank);
-                        ranks[0] = maxRank;
-                    } else {
-                        points = new double[1][];
-                        ranks = new int[1];
-                        points[0] = point;
-                        maxRank = Math.max(maxRank, rank);
-                        ranks[0] = maxRank;
-                        size = 1;
-                    }
-                    return this;
-                }
-
-
                 TerminalRankNode weak = new TerminalRankNode();
                 TerminalRankNode good = new TerminalRankNode();
                 // actually, nulls are perfect here,
