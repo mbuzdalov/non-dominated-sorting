@@ -5,28 +5,56 @@ import ru.ifmo.nds.util.DoubleArraySorter;
 
 import java.util.Arrays;
 
-public class Improved extends AbstractImproved {
-    public Improved(int maximumPoints, int maximumDimension) {
+public class ImprovedReverse extends AbstractImproved {
+    private int[] biggestRanks;
+
+    public ImprovedReverse(int maximumPoints, int maximumDimension) {
         super(maximumPoints, maximumDimension);
+        biggestRanks = new int[maximumDimension];
     }
 
     @Override
     public String getName() {
-        return "Best Order Sort (improved implementation)";
+        return "Best Order Sort (reversed improved implementation)";
     }
 
     @Override
     protected void closeImpl() {
         super.closeImpl();
+        biggestRanks = null;
     }
 
-    private void rankPoint(int currIndex, int[] prevFI, int[] lastFI, int smallestRank, int maximalMeaningfulRank) {
-        this.ranks[currIndex] = sequentialSearchRank(
-                smallestRank,
-                currIndex,
-                prevFI,
-                lastFI,
-                maximalMeaningfulRank);
+    private void rankPointReverse(int smallestRank,
+                                  int biggestRank,
+                                  int currIndex,
+                                  int[] prevFI,
+                                  int[] lastFI,
+                                  int M) {
+        int currRank = biggestRank - 1;
+
+        while (currRank >= smallestRank) {
+            int prevIndex = lastFI[currRank];
+            boolean someoneDominatesMe = false;
+            while (prevIndex != -1) {
+                if (dominates(prevIndex, currIndex, M)) {
+                    someoneDominatesMe = true;
+                    break;
+                } else {
+                    prevIndex = prevFI[prevIndex];
+                }
+            }
+            if (someoneDominatesMe) {
+                break;
+            }
+
+            --currRank;
+        }
+
+        if (currRank < smallestRank) {
+            this.ranks[currIndex] = smallestRank;
+        } else {
+            this.ranks[currIndex]=  currRank + 1;
+        }
     }
 
     @Override
@@ -54,6 +82,7 @@ public class Improved extends AbstractImproved {
         }
 
         int smallestRank = 0;
+        Arrays.fill(biggestRanks, 0, dim, 1);
 
         for (int hIndex = 0, ranked = 0;
              hIndex < newN && smallestRank <= maximalMeaningfulRank && ranked < newN;
@@ -63,11 +92,12 @@ public class Improved extends AbstractImproved {
                 int[] prevFI = prevFrontIndex[oIndex];
                 int[] lastFI = lastFrontIndex[oIndex];
                 if (this.ranks[currIndex] == -1) {
-                    rankPoint(currIndex, prevFI, lastFI, smallestRank, maximalMeaningfulRank);
+                    rankPointReverse(smallestRank, biggestRanks[oIndex], currIndex, prevFI, lastFI, this.points[0].length);
                     ++ranked;
                 }
                 indexNeeded[currIndex][oIndex] = false;
                 int myRank = this.ranks[currIndex];
+                biggestRanks[oIndex] = Math.max(biggestRanks[oIndex], myRank + 1);
                 if (myRank <= maximalMeaningfulRank) {
                     prevFI[currIndex] = lastFI[myRank];
                     lastFI[myRank] = currIndex;

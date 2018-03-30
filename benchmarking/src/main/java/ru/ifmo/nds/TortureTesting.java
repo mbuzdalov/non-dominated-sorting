@@ -71,6 +71,7 @@ public class TortureTesting {
                 JensenFortinBuzdalov.getRedBlackTreeSweepImplementation(1),
                 JensenFortinBuzdalov.getRedBlackTreeSweepHybridFNDSImplementation(1),
                 JensenFortinBuzdalov.getRedBlackTreeSweepHybridENSImplementation(1),
+                JensenFortinBuzdalov.getRedBlackTreeSweepHybridBOSImplementation(1),
                 BestOrderSort.getProteekImplementation(),
                 BestOrderSort.getImprovedImplementation(),
                 ENS.getENS_NDT(8),

@@ -92,6 +92,8 @@ public final class IdCollection {
     static {
         addNonDominatedSortingFactory("bos.proteek", BestOrderSort.getProteekImplementation());
         addNonDominatedSortingFactory("bos.improved", BestOrderSort.getImprovedImplementation());
+        addNonDominatedSortingFactory("bos.improved.reverse", BestOrderSort.getImprovedReverseImplementation());
+        addNonDominatedSortingFactory("bos.adapted.for.hybrid", BestOrderSort.getImprovedAdaptedForHybridImplementation());
         addNonDominatedSortingFactory("corner", CornerSort.getInstance());
         addNonDominatedSortingFactory("deductive", DeductiveSort.getInstance());
 
@@ -128,6 +130,7 @@ public final class IdCollection {
         addNonDominatedSortingFactory("jfb.rbtree", JensenFortinBuzdalov.getRedBlackTreeSweepImplementation(1));
         addNonDominatedSortingFactory("jfb.rbtree.hybrid.fnds", JensenFortinBuzdalov.getRedBlackTreeSweepHybridFNDSImplementation(1));
         addNonDominatedSortingFactory("jfb.rbtree.hybrid.ens", JensenFortinBuzdalov.getRedBlackTreeSweepHybridENSImplementation(1));
+        addNonDominatedSortingFactory("jfb.rbtree.hybrid.bos", JensenFortinBuzdalov.getRedBlackTreeSweepHybridBOSImplementation(1));
         for (int threads = 2; threads <= 8; ++threads) {
             addNonDominatedSortingFactory("jfb.rbtree.th" + threads, JensenFortinBuzdalov.getRedBlackTreeSweepImplementation(threads));
             addNonDominatedSortingFactory("jfb.rbtree.hybrid.fnds.th" + threads, JensenFortinBuzdalov.getRedBlackTreeSweepHybridFNDSImplementation(threads));
