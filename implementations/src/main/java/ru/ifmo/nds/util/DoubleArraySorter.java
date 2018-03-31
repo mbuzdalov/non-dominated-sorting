@@ -149,8 +149,7 @@ public final class DoubleArraySorter {
     }
 
     public static int retainUniquePoints(double[][] sourcePoints, int[] sortedIndices, double[][] targetPoints, int[] reindex) {
-        int n = sourcePoints.length;
-        return retainUniquePoints(sourcePoints, sortedIndices, targetPoints, reindex, n);
+        return retainUniquePoints(sourcePoints, sortedIndices, targetPoints, reindex, sourcePoints.length);
     }
 
     public static int retainUniquePoints(double[][] sourcePoints,
@@ -175,32 +174,6 @@ public final class DoubleArraySorter {
                 ++newN;
             }
             reindex[currII] = newN - 1;
-        }
-        return newN;
-    }
-
-    public static int retainUniquePoints(double[][] sourcePoints,
-                                         int[] sortedIndices,
-                                         double[][] targetPoints,
-                                         int[] reindex,
-                                         int targetFrom,
-                                         int from,
-                                         int until,
-                                         int M) {
-        int newN = 1;
-        int lastII = sortedIndices[from];
-        targetPoints[targetFrom] = sourcePoints[lastII];
-        reindex[lastII] = targetFrom;
-        for (int i = from + 1 ; i < until; ++i) {
-            int currII = sortedIndices[i];
-            if (!ArrayHelper.equal(sourcePoints[lastII], sourcePoints[currII], M)) {
-                // Copying the point to the internal array.
-                ++targetFrom;
-                targetPoints[targetFrom] = sourcePoints[currII];
-                lastII = currII;
-                ++newN;
-            }
-            reindex[currII] = targetFrom;
         }
         return newN;
     }

@@ -66,7 +66,7 @@ public class SplitBuilder {
         this.threshold = threshold;
         this.maxCoordinate = dimension;
         this.nSplits = 0;
-        for (int i = until - 1; i >= from; --i) {
+        for (int i = from; i < until; ++i) {
             indices[i] = i;
         }
         Split result = construct(from, until, 1, 0);

@@ -3,8 +3,6 @@ package ru.ifmo.nds.ndt;
 import ru.ifmo.nds.NonDominatedSorting;
 import ru.ifmo.nds.util.DoubleArraySorter;
 
-import java.util.Arrays;
-
 public class ENS_NDT_AdaptedForHybrid extends NonDominatedSorting {
     private SplitBuilder splitBuilder;
     private DoubleArraySorter sorter;
@@ -127,5 +125,4 @@ public class ENS_NDT_AdaptedForHybrid extends NonDominatedSorting {
 
         tree = null;
     }
-
 }

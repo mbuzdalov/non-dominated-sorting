@@ -53,7 +53,6 @@ public class RedBlackTreeSweepHybridNDT extends RedBlackTreeSweep {
         return kickOutOverflowedRanks(from, until);
     }
 
-
     @Override
     protected int helperBHook(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj, int tempFrom) {
         getPoints(goodFrom, goodUntil, obj + 1, tempPoints, goodFrom);

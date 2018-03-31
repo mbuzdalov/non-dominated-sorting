@@ -26,9 +26,6 @@ public final class ArrayHelper {
     }
 
     public static boolean equal(double[] a, double[] b, int M) {
-        if(a.length < M || b.length < M) {
-           throw new IllegalArgumentException("Points have less dimension then M");
-        }
         for (int i = 0; i < M; ++i) {
             if (a[i] != b[i]) {
                 return false;

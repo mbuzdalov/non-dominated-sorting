@@ -120,12 +120,9 @@ public final class IdCollection {
         addNonDominatedSortingFactory("ens.ss", ENS.getENS_SS());
         for (int threshold : new int[] {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20, 50, 100, 200}) {
             addNonDominatedSortingFactory("ens.ndt." + threshold, ENS.getENS_NDT(threshold));
-        }
-
-        for (int threshold : new int[] {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20, 50, 100, 200}) {
             addNonDominatedSortingFactory("ens.ndt.one.tree." + threshold, ENS.getENS_NDT_OneTree(threshold));
+            addNonDominatedSortingFactory("jfb.rbtree.hybrid.ndt." + threshold, JensenFortinBuzdalov.getRedBlackTreeSweepHybridNDTImplementation(threshold));
         }
-
         addNonDominatedSortingFactory("ens.ndt.arrays", ENS.getENS_NDT_Arrays());
         addNonDominatedSortingFactory("fnds.original", FastNonDominatedSorting.getOriginalVersion());
         addNonDominatedSortingFactory("fnds.linear", FastNonDominatedSorting.getLinearMemoryImplementation());
@@ -133,9 +130,6 @@ public final class IdCollection {
         addNonDominatedSortingFactory("jfb.rbtree", JensenFortinBuzdalov.getRedBlackTreeSweepImplementation(1));
         addNonDominatedSortingFactory("jfb.rbtree.hybrid.fnds", JensenFortinBuzdalov.getRedBlackTreeSweepHybridFNDSImplementation(1));
         addNonDominatedSortingFactory("jfb.rbtree.hybrid.ens", JensenFortinBuzdalov.getRedBlackTreeSweepHybridENSImplementation(1));
-        for (int threshold : new int[] {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20, 50, 100, 200}) {
-            addNonDominatedSortingFactory("jfb.rbtree.hybrid.ndt." + threshold, JensenFortinBuzdalov.getRedBlackTreeSweepHybridNDTImplementation(threshold));
-        }
         for (int threads = 2; threads <= 8; ++threads) {
             addNonDominatedSortingFactory("jfb.rbtree.th" + threads, JensenFortinBuzdalov.getRedBlackTreeSweepImplementation(threads));
             addNonDominatedSortingFactory("jfb.rbtree.hybrid.fnds.th" + threads, JensenFortinBuzdalov.getRedBlackTreeSweepHybridFNDSImplementation(threads));
