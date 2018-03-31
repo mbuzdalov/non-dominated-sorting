@@ -40,7 +40,7 @@ public abstract class TreeRankNode {
 
         @Override
         public TreeRankNode add(double[] point, int rank, Split split, int splitThreshold) {
-            if (split == Split.NullMaxDepth.INSTANCE) {
+            if (split == Split.NULL_MAX_DEPTH) {
                 if (points == null) {
                     points = new double[1][];
                     ranks = new int[1];

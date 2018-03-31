@@ -12,17 +12,6 @@ class Split {
         this.weak = weak;
     }
 
-    static class NullMaxDepth extends Split {
-        static Split INSTANCE = new NullMaxDepth();
-
-        private NullMaxDepth() {
-        }
-    }
-
-    static class NullPoints extends Split {
-        static Split INSTANCE = new NullPoints();
-
-        private NullPoints() {
-        }
-    }
+    static final Split NULL_MAX_DEPTH = new Split();
+    static final Split NULL_POINTS = new Split();
 }
