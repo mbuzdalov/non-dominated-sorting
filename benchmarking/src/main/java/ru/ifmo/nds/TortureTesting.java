@@ -102,7 +102,7 @@ public class TortureTesting {
                 try {
                     sorting.sort(instance, ranks, maxRank);
                     long time = System.currentTimeMillis() - t0;
-                    System.out.printf("%95s: %d ms%n", sorting.getName(), time);
+                    System.out.printf("%102s: %d ms%n", sorting.getName(), time);
                     if (reference == null) {
                         reference = ranks.clone();
                     } else {
