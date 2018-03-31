@@ -7,7 +7,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
 public class TortureTesting {
-    private static ThreadLocalRandom random = ThreadLocalRandom.current();
+    private static final ThreadLocalRandom random = ThreadLocalRandom.current();
     private static double[][] generateCloud(int points, int dimension) {
         double[][] rv = new double[points][dimension];
         if (random.nextBoolean()) {
@@ -71,10 +71,14 @@ public class TortureTesting {
                 JensenFortinBuzdalov.getRedBlackTreeSweepImplementation(1),
                 JensenFortinBuzdalov.getRedBlackTreeSweepHybridFNDSImplementation(1),
                 JensenFortinBuzdalov.getRedBlackTreeSweepHybridENSImplementation(1),
+                JensenFortinBuzdalov.getRedBlackTreeSweepHybridNDTImplementation(8),
+                JensenFortinBuzdalov.getRedBlackTreeSweepHybridNDTImplementation(1),
                 BestOrderSort.getProteekImplementation(),
                 BestOrderSort.getImprovedImplementation(),
                 ENS.getENS_NDT(8),
-                ENS.getENS_NDT_Arrays()
+                ENS.getENS_NDT_Arrays(),
+                ENS.getENS_NDT_OneTree(8),
+                ENS.getENS_NDT_OneTree(1)
         );
         List<NonDominatedSorting> sortings = sortingFactories
                 .stream()
@@ -98,7 +102,7 @@ public class TortureTesting {
                 try {
                     sorting.sort(instance, ranks, maxRank);
                     long time = System.currentTimeMillis() - t0;
-                    System.out.printf("%95s: %d ms%n", sorting.getName(), time);
+                    System.out.printf("%102s: %d ms%n", sorting.getName(), time);
                     if (reference == null) {
                         reference = ranks.clone();
                     } else {
@@ -113,6 +117,7 @@ public class TortureTesting {
                     }
                 } catch (Throwable th) {
                     printTest(points, dimension, instance, reference);
+                    System.exit(1);
                 }
             }
             System.out.println();

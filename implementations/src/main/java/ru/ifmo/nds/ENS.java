@@ -5,6 +5,7 @@ import ru.ifmo.nds.ens.ENS_SS;
 import ru.ifmo.nds.ens.ENS_HS;
 import ru.ifmo.nds.ndt.ENS_NDT;
 import ru.ifmo.nds.ndt.ENS_NDT_Arrays;
+import ru.ifmo.nds.ndt.ENS_NDT_OneTree;
 
 public class ENS {
     private ENS() {}
@@ -29,6 +30,10 @@ public class ENS {
     public static NonDominatedSortingFactory getENS_NDT(int threshold) {
         // currently, the best value for threshold seems to be 8.
         return (int maxPoints, int maxDimension) -> new ENS_NDT(maxPoints, maxDimension, threshold);
+    }
+
+    public static NonDominatedSortingFactory getENS_NDT_OneTree(int threshold) {
+        return (int maxPoints, int maxDimension) -> new ENS_NDT_OneTree(maxPoints, maxDimension, threshold);
     }
 
     public static NonDominatedSortingFactory getENS_NDT_Arrays() {

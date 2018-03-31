@@ -19,10 +19,11 @@ public final class ArrayHelper {
 
     public static boolean equal(double[] a, double[] b) {
         int al = a.length;
-        if (al != b.length) {
-            return false;
-        }
-        for (int i = 0; i < al; ++i) {
+        return al == b.length && equal(a, b, al);
+    }
+
+    private static boolean equal(double[] a, double[] b, int prefixLength) {
+        for (int i = 0; i < prefixLength; ++i) {
             if (a[i] != b[i]) {
                 return false;
             }

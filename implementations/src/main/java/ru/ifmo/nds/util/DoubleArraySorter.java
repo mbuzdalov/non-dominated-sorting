@@ -149,11 +149,11 @@ public final class DoubleArraySorter {
     }
 
     public static int retainUniquePoints(double[][] sourcePoints, int[] sortedIndices, double[][] targetPoints, int[] reindex) {
-        int n = sourcePoints.length, newN = 1;
+        int newN = 1;
         int lastII = sortedIndices[0];
         targetPoints[0] = sourcePoints[lastII];
         reindex[lastII] = 0;
-        for (int i = 1; i < n; ++i) {
+        for (int i = 1; i < sourcePoints.length; ++i) {
             int currII = sortedIndices[i];
             if (!ArrayHelper.equal(sourcePoints[lastII], sourcePoints[currII])) {
                 // Copying the point to the internal array.

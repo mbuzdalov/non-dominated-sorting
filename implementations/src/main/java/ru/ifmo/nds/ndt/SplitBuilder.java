@@ -34,7 +34,7 @@ public class SplitBuilder {
                 if (depth == maxCoordinate) {
                     // When all median values are equal for all remaining coordinates,
                     // we have no choice other to fail splitting
-                    return null;
+                    return Split.NULL_MAX_DEPTH;
                 } else {
                     return construct(from, until, nextCoordinate, depth + 1);
                 }
@@ -53,7 +53,7 @@ public class SplitBuilder {
                     construct(mid, until, nextCoordinate, 0));
             return rv;
         } else {
-            return null;
+            return Split.NULL_POINTS;
         }
     }
 
@@ -62,10 +62,22 @@ public class SplitBuilder {
         this.threshold = threshold;
         this.maxCoordinate = dimension;
         this.nSplits = 0;
-        for (int i = transposedPoints[0].length - 1; i >= 0; --i) {
+        for (int i = 0; i < nPoints; ++i) {
             indices[i] = i;
         }
         Split result = construct(0, nPoints, 1, 0);
+        this.transposedPoints = null;
+        this.threshold = -1;
+        return result;
+    }
+
+    public Split result(double[][] transposedPoints, int from, int until, int[] indices, int dimension, int threshold) {
+        this.transposedPoints = transposedPoints;
+        this.threshold = threshold;
+        this.maxCoordinate = dimension;
+        this.nSplits = 0;
+        System.arraycopy(indices, from, this.indices, from, until - from);
+        Split result = construct(from, until, 1, 0);
         this.transposedPoints = null;
         this.threshold = -1;
         return result;

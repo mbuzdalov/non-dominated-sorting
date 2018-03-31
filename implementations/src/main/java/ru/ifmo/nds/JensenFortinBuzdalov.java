@@ -1,9 +1,6 @@
 package ru.ifmo.nds;
 
-import ru.ifmo.nds.jfb.FenwickSweep;
-import ru.ifmo.nds.jfb.RedBlackTreeSweep;
-import ru.ifmo.nds.jfb.RedBlackTreeSweepHybridENS;
-import ru.ifmo.nds.jfb.RedBlackTreeSweepHybridLinearNDS;
+import ru.ifmo.nds.jfb.*;
 
 public class JensenFortinBuzdalov {
     private JensenFortinBuzdalov() {}
@@ -22,5 +19,9 @@ public class JensenFortinBuzdalov {
 
     public static NonDominatedSortingFactory getRedBlackTreeSweepHybridENSImplementation(int allowedThreads) {
         return (p, d) -> new RedBlackTreeSweepHybridENS(p, d, allowedThreads);
+    }
+
+    public static NonDominatedSortingFactory getRedBlackTreeSweepHybridNDTImplementation(int threshold) {
+        return (p, d) -> new RedBlackTreeSweepHybridNDT(p, d, threshold);
     }
 }

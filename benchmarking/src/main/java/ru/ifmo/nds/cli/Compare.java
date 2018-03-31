@@ -54,7 +54,7 @@ public class Compare extends JCommanderRunnable {
 
     // taken from http://math.usask.ca/~laverty/S245/Tables/wmw.pdf
     // and fixed to be symmetric
-    private static int[][] mannWhitneyU = new int[][] {
+    private static final int[][] mannWhitneyU = new int[][] {
             {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
             {-1, -1, -1, -1, -1, -1, -1,  0,  0,  0,  0,  1,  1,  1,  1,  1,  2,  2,  2,  2},
             {-1, -1, -1, -1,  0,  1,  1,  2,  2,  3,  3,  4,  4,  5,  5,  6,  6,  7,  7,  8},
