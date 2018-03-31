@@ -5,7 +5,7 @@ public abstract class TreeRankNode {
 
     public abstract int evaluateRank(double[] point, int rank, Split split, int M);
 
-    public abstract int getMaxRank();
+    protected abstract int getMaxRank();
 
     public static final TreeRankNode EMPTY = new EmptyRankNode();
 
@@ -77,12 +77,7 @@ public abstract class TreeRankNode {
             } else {
                 size++;
                 for (int i = size - 1; i >= 0; --i) {
-                    if (i == 0) {
-                        points[i] = point;
-                        ranks[i] = rank;
-                        break;
-                    }
-                    if (ranks[i - 1] <= rank) {
+                    if (i == 0 || ranks[i - 1] <= rank) {
                         points[i] = point;
                         ranks[i] = rank;
                         break;
@@ -99,31 +94,32 @@ public abstract class TreeRankNode {
 
         @Override
         public int evaluateRank(double[] point, int rank, Split split, int M) {
-            if (getMaxRank() < rank) {
+            if (maxRank < rank) {
                 return rank;
             }
 
-            pointLoop:
             for (int i = size - 1; i >= 0; --i) {
                 double[] current = points[i];
-                if (this.ranks[i] < rank) {
-                    break;
+                if (ranks[i] < rank) {
+                    return rank;
                 }
+                boolean dominates = true;
                 // objective 0 is not compared since points are presorted.
                 for (int o = M - 1; o > 0; --o) {
                     if (current[o] > point[o]) {
-                        continue pointLoop;
+                        dominates = false;
+                        break;
                     }
                 }
-
-                rank = Math.max(this.ranks[i] + 1, rank);
-                break;
+                if (dominates) {
+                    return ranks[i] + 1;
+                }
             }
             return rank;
         }
 
         @Override
-        public int getMaxRank() {
+        protected int getMaxRank() {
             return maxRank;
         }
     }
@@ -151,24 +147,20 @@ public abstract class TreeRankNode {
 
         @Override
         public int evaluateRank(double[] point, int rank, Split split, int M) {
-            if (getMaxRank() < rank) {
+            if (maxRank < rank) {
                 return rank;
             }
-
-            int resultRank = -1;
             if (weak != null && point[split.coordinate] >= split.value) {
-                resultRank = weak.evaluateRank(point, rank, split.weak, M);
+                rank = weak.evaluateRank(point, rank, split.weak, M);
             }
-
             if (good != null) {
-                resultRank = good.evaluateRank(point, Math.max(resultRank, rank), split.good, M);
+                rank = good.evaluateRank(point, rank, split.good, M);
             }
-
-            return Math.max(resultRank, rank);
+            return rank;
         }
 
         @Override
-        public int getMaxRank() {
+        protected int getMaxRank() {
             return maxRank;
         }
     }

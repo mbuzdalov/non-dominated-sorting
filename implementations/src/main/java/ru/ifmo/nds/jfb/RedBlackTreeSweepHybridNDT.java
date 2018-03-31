@@ -11,6 +11,7 @@ public class RedBlackTreeSweepHybridNDT extends RedBlackTreeSweep {
     private SplitBuilder splitBuilder;
     private TreeRankNode tree;
     private final int threshold;
+    private double[][] localPoints;
 
     public RedBlackTreeSweepHybridNDT(int maximumPoints, int maximumDimension, int threshold) {
         super(maximumPoints, maximumDimension, 1);
@@ -18,6 +19,7 @@ public class RedBlackTreeSweepHybridNDT extends RedBlackTreeSweep {
         this.threshold = threshold;
         this.splitBuilder = new SplitBuilder(maximumPoints);
         this.tree = TreeRankNode.EMPTY;
+        this.localPoints = new double[maximumPoints][maximumDimension];
     }
 
     @Override
@@ -25,6 +27,7 @@ public class RedBlackTreeSweepHybridNDT extends RedBlackTreeSweep {
         super.closeImpl();
         splitBuilder = null;
         tree = null;
+        localPoints = null;
     }
 
     @Override
@@ -48,17 +51,21 @@ public class RedBlackTreeSweepHybridNDT extends RedBlackTreeSweep {
 
     @Override
     protected int helperAHook(int from, int until, int obj) {
-        Split split = splitBuilder.result(transposedPoints, from, until, indices, obj + 1, threshold);
+        int M = obj + 1;
+        Split split = splitBuilder.result(transposedPoints, from, until, indices, M, threshold);
+
+        for (int i = from; i < until; ++i) {
+            System.arraycopy(points[indices[i]], 0, localPoints[i], 0, M);
+        }
 
         int minOverflow = until;
-        int M = obj + 1;
         tree = TreeRankNode.EMPTY;
         for (int i = from; i < until; ++i) {
             int idx = indices[i];
-            ranks[idx] = tree.evaluateRank(points[idx], ranks[idx], split, M);
+            ranks[idx] = tree.evaluateRank(localPoints[i], ranks[idx], split, M);
 
             if (ranks[idx] <= maximalMeaningfulRank) {
-                tree = tree.add(points[idx], ranks[idx], split, threshold);
+                tree = tree.add(localPoints[i], ranks[idx], split, threshold);
             } else if (minOverflow > i) {
                 minOverflow = i;
             }
@@ -69,19 +76,26 @@ public class RedBlackTreeSweepHybridNDT extends RedBlackTreeSweep {
 
     @Override
     protected int helperBHook(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj, int tempFrom) {
-        Split split = splitBuilder.result(transposedPoints, goodFrom, goodUntil, indices, obj + 1, threshold);
+        int M = obj + 1;
+        Split split = splitBuilder.result(transposedPoints, goodFrom, goodUntil, indices, M, threshold);
+
+        for (int good = goodFrom; good < goodUntil; ++good) {
+            System.arraycopy(points[indices[good]], 0, localPoints[good], 0, M);
+        }
+        for (int weak = weakFrom; weak < weakUntil; ++weak) {
+            System.arraycopy(points[indices[weak]], 0, localPoints[weak], 0, M);
+        }
 
         int minOverflow = weakUntil;
-        int M = obj + 1;
         tree = TreeRankNode.EMPTY;
         for (int good = goodFrom, weak = weakFrom; weak < weakUntil; ++weak) {
             int wi = indices[weak];
             int gi;
             while (good < goodUntil && (gi = indices[good]) < wi) {
-                tree = tree.add(points[gi], ranks[gi], split, threshold);
+                tree = tree.add(localPoints[good], ranks[gi], split, threshold);
                 ++good;
             }
-            ranks[wi] = tree.evaluateRank(points[wi], ranks[wi], split, M);
+            ranks[wi] = tree.evaluateRank(localPoints[weak], ranks[wi], split, M);
             if (minOverflow > weak && ranks[wi] > maximalMeaningfulRank) {
                 minOverflow = weak;
             }
