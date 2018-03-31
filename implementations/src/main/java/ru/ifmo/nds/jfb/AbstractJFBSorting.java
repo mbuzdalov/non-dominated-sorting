@@ -17,8 +17,8 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
     int[] ranks;
 
     // Data which is immutable throughout the actual sorting.
-    private double[][] points;
-    private double[][] transposedPoints;
+    double[][] points;
+    double[][] transposedPoints;
     int maximalMeaningfulRank;
 
     // This is used in preparation phase or in 2D-only sweep.

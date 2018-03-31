@@ -117,6 +117,7 @@ public class TortureTesting {
                     }
                 } catch (Throwable th) {
                     printTest(points, dimension, instance, reference);
+                    System.exit(1);
                 }
             }
             System.out.println();

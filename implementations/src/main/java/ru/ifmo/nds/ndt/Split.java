@@ -1,6 +1,6 @@
 package ru.ifmo.nds.ndt;
 
-class Split {
+public class Split {
     int coordinate;
     double value;
     Split good, weak;
@@ -12,6 +12,6 @@ class Split {
         this.weak = weak;
     }
 
-    static final Split NULL_MAX_DEPTH = new Split();
-    static final Split NULL_POINTS = new Split();
+    public static final Split NULL_MAX_DEPTH = new Split();
+    public static final Split NULL_POINTS = new Split();
 }

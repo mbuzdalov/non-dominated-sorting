@@ -58,17 +58,25 @@ public class SplitBuilder {
     }
 
     public Split result(double[][] transposedPoints, int nPoints, int dimension, int threshold) {
-        return result(transposedPoints, 0, nPoints, dimension, threshold);
-    }
-
-    public Split result(double[][] transposedPoints, int from, int until, int dimension, int threshold) {
         this.transposedPoints = transposedPoints;
         this.threshold = threshold;
         this.maxCoordinate = dimension;
         this.nSplits = 0;
-        for (int i = from; i < until; ++i) {
+        for (int i = 0; i < nPoints; ++i) {
             indices[i] = i;
         }
+        Split result = construct(0, nPoints, 1, 0);
+        this.transposedPoints = null;
+        this.threshold = -1;
+        return result;
+    }
+
+    public Split result(double[][] transposedPoints, int from, int until, int[] indices, int dimension, int threshold) {
+        this.transposedPoints = transposedPoints;
+        this.threshold = threshold;
+        this.maxCoordinate = dimension;
+        this.nSplits = 0;
+        System.arraycopy(indices, from, this.indices, from, until - from);
         Split result = construct(from, until, 1, 0);
         this.transposedPoints = null;
         this.threshold = -1;
