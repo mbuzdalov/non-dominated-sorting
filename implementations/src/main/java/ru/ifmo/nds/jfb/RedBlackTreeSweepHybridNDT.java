@@ -48,25 +48,32 @@ public class RedBlackTreeSweepHybridNDT extends RedBlackTreeSweep {
 
     @Override
     protected int helperAHook(int from, int until, int obj) {
-        sortHelperA(from, until, obj + 1, maximalMeaningfulRank);
-        return kickOutOverflowedRanks(from, until);
+        Split split = splitBuilder.result(transposedPoints, from, until, indices, obj + 1, threshold);
+
+        int minOverflow = until;
+        int M = obj + 1;
+        tree = TreeRankNode.EMPTY;
+        for (int i = from; i < until; ++i) {
+            int idx = indices[i];
+            ranks[idx] = tree.evaluateRank(points[idx], ranks[idx], split, M);
+
+            if (ranks[idx] <= maximalMeaningfulRank) {
+                tree = tree.add(points[idx], ranks[idx], split, threshold);
+            } else if (minOverflow > i) {
+                minOverflow = i;
+            }
+        }
+        tree = null;
+        return kickOutOverflowedRanks(minOverflow, until);
     }
 
     @Override
     protected int helperBHook(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj, int tempFrom) {
-        sortHelperB(goodFrom, goodUntil, weakFrom, weakUntil, obj + 1);
-        return kickOutOverflowedRanks(weakFrom, weakUntil);
-    }
+        Split split = splitBuilder.result(transposedPoints, goodFrom, goodUntil, indices, obj + 1, threshold);
 
-    private void sortHelperB(int goodFrom,
-                            int goodUntil,
-                            int weakFrom,
-                            int weakUntil,
-                            int M) {
-        Split split = splitBuilder.result(transposedPoints, goodFrom, goodUntil, indices, M, threshold);
-
+        int minOverflow = weakUntil;
+        int M = obj + 1;
         tree = TreeRankNode.EMPTY;
-
         for (int good = goodFrom, weak = weakFrom; weak < weakUntil; ++weak) {
             int wi = indices[weak];
             int gi;
@@ -75,26 +82,11 @@ public class RedBlackTreeSweepHybridNDT extends RedBlackTreeSweep {
                 ++good;
             }
             ranks[wi] = tree.evaluateRank(points[wi], ranks[wi], split, M);
-        }
-        tree = null;
-    }
-
-    private void sortHelperA(int from,
-                            int until,
-                            int M,
-                            int maximalMeaningfulRank) {
-        Split split = splitBuilder.result(transposedPoints, from, until, indices, M, threshold);
-
-        tree = TreeRankNode.EMPTY;
-        for (int i = from; i < until; ++i) {
-            int idx = indices[i];
-            ranks[idx] = tree.evaluateRank(points[idx], ranks[idx], split, M);
-
-            if (ranks[idx] <= maximalMeaningfulRank) {
-                tree = tree.add(points[idx], ranks[idx], split, threshold);
+            if (minOverflow > weak && ranks[wi] > maximalMeaningfulRank) {
+                minOverflow = weak;
             }
         }
-
         tree = null;
+        return kickOutOverflowedRanks(minOverflow, weakUntil);
     }
 }
