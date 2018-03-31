@@ -7,7 +7,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
 public class TortureTesting {
-    private static ThreadLocalRandom random = ThreadLocalRandom.current();
+    private static final ThreadLocalRandom random = ThreadLocalRandom.current();
     private static double[][] generateCloud(int points, int dimension) {
         double[][] rv = new double[points][dimension];
         if (random.nextBoolean()) {

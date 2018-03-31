@@ -1,18 +1,17 @@
 package ru.ifmo.nds.plotting;
 
-import ru.ifmo.nds.cli.PlotBuilder;
-import ru.ifmo.nds.rundb.IdUtils;
-import ru.ifmo.nds.rundb.Record;
-
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+
+import ru.ifmo.nds.cli.PlotBuilder;
+import ru.ifmo.nds.rundb.IdUtils;
+import ru.ifmo.nds.rundb.Record;
 
 public class Plotly {
     private Plotly() {}

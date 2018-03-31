@@ -70,6 +70,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
 
         internalIndices = null;
         lastFrontOrdinates = null;
+        splitMerge = null;
 
         if (pool != null) {
             pool.shutdown();
@@ -155,18 +156,6 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
             }
         }
         return true;
-    }
-
-    void getPoints(int from, int until, int k, double[][] target, int targetFrom) {
-        for (int i = from, targetI = targetFrom; i < until; ++i, ++targetI) {
-            System.arraycopy(this.points[indices[i]], 0, target[targetI], 0, k);
-        }
-    }
-
-    void getRanks(int from, int until, int[] target, int targetFrom) {
-        for (int i = from, targetI = targetFrom; i < until; ++i, ++targetI) {
-            target[targetI] = this.ranks[indices[i]];
-        }
     }
 
     private boolean tryUpdateRank(int goodIndex, int weakIndex) {

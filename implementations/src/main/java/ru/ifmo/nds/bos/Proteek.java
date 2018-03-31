@@ -68,8 +68,8 @@ public class Proteek extends NonDominatedSorting {
         }
     }
     private static class Node {
-        int data;
-        Node link;
+        final int data;
+        final Node link;
 
         Node(int d, Node n) {
             data = d;

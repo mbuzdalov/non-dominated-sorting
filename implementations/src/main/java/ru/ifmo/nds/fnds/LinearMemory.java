@@ -25,9 +25,10 @@ public class LinearMemory extends NonDominatedSorting {
 
     @Override
     protected void closeImpl() {
-        sorter = null;
         indices = null;
         ranks = null;
+        points = null;
+        sorter = null;
     }
 
     private boolean strictlyDominatesAssumingNotSame(int goodIndex, int weakIndex, int dim) {
