@@ -134,7 +134,7 @@ public final class IdCollection {
         addNonDominatedSortingFactory("jfb.rbtree.hybrid.fnds", JensenFortinBuzdalov.getRedBlackTreeSweepHybridFNDSImplementation(1));
         addNonDominatedSortingFactory("jfb.rbtree.hybrid.ens", JensenFortinBuzdalov.getRedBlackTreeSweepHybridENSImplementation(1));
         for (int threshold : new int[] {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20, 50, 100, 200}) {
-            addNonDominatedSortingFactory("jfb.rbtree.hybrid.ndt." + threshold, JensenFortinBuzdalov.getRedBlackTreeSweepHybridNDTImplementation(1, threshold));
+            addNonDominatedSortingFactory("jfb.rbtree.hybrid.ndt." + threshold, JensenFortinBuzdalov.getRedBlackTreeSweepHybridNDTImplementation(threshold));
         }
         for (int threads = 2; threads <= 8; ++threads) {
             addNonDominatedSortingFactory("jfb.rbtree.th" + threads, JensenFortinBuzdalov.getRedBlackTreeSweepImplementation(threads));

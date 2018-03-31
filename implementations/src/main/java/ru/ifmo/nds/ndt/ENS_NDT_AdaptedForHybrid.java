@@ -43,7 +43,7 @@ public class ENS_NDT_AdaptedForHybrid extends NonDominatedSorting {
     @Override
     protected void sortChecked(double[][] points, int[] ranks, int maximalMeaningfulRank) {
         throw new UnsupportedOperationException("ENS_NDT_AdaptedForHybrid sorting doesn't work alone");
-        // иначе появится много ненужного
+        // in order to avoid creating unnecessary fields
     }
 
     public void sortHelperB(double[][] points,
@@ -52,9 +52,7 @@ public class ENS_NDT_AdaptedForHybrid extends NonDominatedSorting {
                             int goodUntil,
                             int weakFrom,
                             int weakUntil,
-                            int M,
-                            int maximalMeaningfulRank) {
-
+                            int M) {
         for (int i = goodFrom; i < goodUntil; ++i) {
             for (int j = 0; j < M; ++j) {
                 transposedPoints[j][i] = points[i][j];
@@ -87,7 +85,7 @@ public class ENS_NDT_AdaptedForHybrid extends NonDominatedSorting {
 
         tree = TreeRankNode.EMPTY;
 
-        //  лексикографический обход
+        // lexicographical order
         for (int i = 0; i < sizeUnion; ++i) {
             int id = indices[i];
             if (id >= goodFrom && id < goodUntil) {

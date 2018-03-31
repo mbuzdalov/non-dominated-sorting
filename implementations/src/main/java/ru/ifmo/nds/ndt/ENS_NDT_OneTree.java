@@ -81,14 +81,9 @@ public class ENS_NDT_OneTree extends NonDominatedSorting {
         tree = tree.add(this.points[0], 0, split, threshold);
         for (int i = 1; i < newN; ++i) {
             double[] current = this.points[i];
-            int resultRank = tree.evaluateRank(current, 0, split, dim);
-            if (resultRank <= maximalMeaningfulRank) {
-                this.ranks[i] = resultRank;
-                if (i != newN - 1) { // не будем добавлять посл точку в дерево
-                    tree = tree.add(current, this.ranks[i], split, threshold);
-                }
-            } else {
-                this.ranks[i] = maximalMeaningfulRank + 1;
+            this.ranks[i] = tree.evaluateRank(current, 0, split, dim);
+            if (this.ranks[i] <= maximalMeaningfulRank) {
+                tree = tree.add(current, this.ranks[i], split, threshold);
             }
         }
 
