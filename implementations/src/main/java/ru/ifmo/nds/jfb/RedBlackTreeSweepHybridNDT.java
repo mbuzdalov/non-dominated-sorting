@@ -11,8 +11,8 @@ public class RedBlackTreeSweepHybridNDT extends RedBlackTreeSweep {
     private static final int THRESHOLD_3D = 100;
     private static final int THRESHOLD_ALL = 20000;
 
-    public RedBlackTreeSweepHybridNDT(int maximumPoints, int maximumDimension, int allowedThreads, int threshold) {
-        super(maximumPoints, maximumDimension, allowedThreads);
+    public RedBlackTreeSweepHybridNDT(int maximumPoints, int maximumDimension, int threshold) {
+        super(maximumPoints, maximumDimension, 1);
 
         tempPoints = new double[maximumPoints][maximumDimension];
         tempRanks = new int[maximumPoints];
