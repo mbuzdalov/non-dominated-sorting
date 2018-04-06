@@ -15,7 +15,7 @@ import ru.ifmo.nds.util.DominanceHelper;
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
 @Timeout(time = 10)
-@Warmup(iterations = 10)
+@Warmup(iterations = 4)
 @Measurement(iterations = 3)
 @Fork(value = 3)
 public class DominanceHelperBenchmark {
@@ -59,11 +59,11 @@ public class DominanceHelperBenchmark {
                 for (int i = 0; i < nInstances; ++i) {
                     int diffIndex = random.nextInt(size);
                     for (int j = 0; j < size; ++j) {
-                        instances[i][0][j] = random.nextDouble();
+                        instances[i][1][j] = random.nextDouble();
                         if (random.nextBoolean() || j == diffIndex) {
-                            instances[i][1][j] = instances[i][0][j];
+                            instances[i][0][j] = instances[i][1][j];
                         } else {
-                            instances[i][1][j] = instances[i][0][j] - random.nextDouble();
+                            instances[i][0][j] = instances[i][1][j] + random.nextDouble();
                         }
                     }
                 }
@@ -79,30 +79,16 @@ public class DominanceHelperBenchmark {
     }
 
     @Benchmark
-    public void dominanceComparison1(Blackhole bh) {
+    public void dominanceComparison(Blackhole bh) {
         for (double[][] instance : instances) {
-            bh.consume(DominanceHelper.dominanceComparison1(instance[0], instance[1], size));
+            bh.consume(DominanceHelper.dominanceComparison(instance[0], instance[1], size));
         }
     }
 
     @Benchmark
-    public void dominanceComparison2(Blackhole bh) {
+    public void strictlyDominates(Blackhole bh) {
         for (double[][] instance : instances) {
-            bh.consume(DominanceHelper.dominanceComparison2(instance[0], instance[1], size));
-        }
-    }
-
-    @Benchmark
-    public void strictlyDominates1(Blackhole bh) {
-        for (double[][] instance : instances) {
-            bh.consume(DominanceHelper.strictlyDominates1(instance[0], instance[1], size));
-        }
-    }
-
-    @Benchmark
-    public void strictlyDominates2(Blackhole bh) {
-        for (double[][] instance : instances) {
-            bh.consume(DominanceHelper.strictlyDominates2(instance[0], instance[1], size));
+            bh.consume(DominanceHelper.strictlyDominates(instance[0], instance[1], size));
         }
     }
 
