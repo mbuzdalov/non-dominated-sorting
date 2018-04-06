@@ -338,19 +338,25 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         int weakMidR = SplitMergeHelper.extractRight(weakSplit);
         int tempMid = tempFrom + ((goodUntil - goodFrom + weakUntil - weakFrom) >>> 1);
 
+        int newWeakUntil = helperB(goodFrom, goodMidL, weakMidR, weakUntil, obj - 1, tempFrom);
+        newWeakUntil = helperB(goodMidL, goodMidR, weakMidR, newWeakUntil, obj - 1, tempFrom);
+
+        int newWeakMidR = helperB(goodFrom, goodMidL, weakMidL, weakMidR, obj - 1, tempFrom);
+        newWeakMidR = helperB(goodMidL, goodMidR, weakMidL, newWeakMidR, obj - 1, tempFrom);
+
         ForkJoinTask<Integer> newWeakMidLTask = null;
         if (pool != null && goodMidL - goodFrom + weakMidL - weakFrom > FORK_JOIN_THRESHOLD) {
             newWeakMidLTask = helperBAsync(goodFrom, goodMidL, weakFrom, weakMidL, obj, tempFrom).fork();
         }
-        int newWeakUntil = helperB(goodMidR, goodUntil, weakMidR, weakUntil, obj, tempMid);
+        newWeakUntil = helperB(goodMidR, goodUntil, weakMidR, newWeakUntil, obj, tempMid);
         int newWeakMidL = newWeakMidLTask != null
                 ? newWeakMidLTask.join()
                 : helperB(goodFrom, goodMidL, weakFrom, weakMidL, obj, tempFrom);
 
         splitMerge.mergeTwo(indices, tempFrom, goodFrom, goodMidL, goodMidL, goodMidR);
-        newWeakUntil = splitMerge.mergeTwo(indices, tempFrom, weakMidL, weakMidR, weakMidR, newWeakUntil);
-        newWeakUntil = helperB(goodFrom, goodMidR, weakMidL, newWeakUntil, obj - 1, tempFrom);
         splitMerge.mergeTwo(indices, tempFrom, goodFrom, goodMidR, goodMidR, goodUntil);
+
+        newWeakUntil = splitMerge.mergeTwo(indices, tempFrom, weakMidL, newWeakMidR, weakMidR, newWeakUntil);
         return splitMerge.mergeTwo(indices, tempFrom, weakFrom, newWeakMidL, weakMidL, newWeakUntil);
     }
 
