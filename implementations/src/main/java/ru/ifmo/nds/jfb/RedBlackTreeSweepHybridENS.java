@@ -32,61 +32,30 @@ public class RedBlackTreeSweepHybridENS extends RedBlackTreeSweep {
         }
     }
 
-    private int getSliceRank(int offset, int index) {
-        return space[offset + 3 * index];
-    }
-    private void setSliceRank(int offset, int index, int value) {
-        space[offset + 3 * index] = value;
-    }
-    private int getNextSlice(int offset, int index) {
-        return space[offset + 3 * index + 1];
-    }
-    private void setNextSlice(int offset, int index, int value) {
-        space[offset + 3 * index + 1] = value;
-    }
-    private int getSliceFirstPoint(int offset, int index) {
-        return space[offset + 3 * index + 2];
-    }
-    private void setSliceFirstPoint(int offset, int index, int value) {
-        space[offset + 3 * index + 2] = value;
-    }
-    private int getPointIndex(int offset, int index) {
-        return space[offset + 2 * index];
-    }
-    private void setPointIndex(int offset, int index, int value) {
-        space[offset + 2 * index] = value;
-    }
-    private int getNextPoint(int offset, int index) {
-        return space[offset + 2 * index + 1];
-    }
-    private void setNextPoint(int offset, int index, int value) {
-        space[offset + 2 * index + 1] = value;
-    }
-
-    private boolean checkIfDominatesA(int sliceOffset, int sliceIndex, int pointOffset, int obj, int weakIndex) {
-        int sliceRank = getSliceRank(sliceOffset, sliceIndex);
+    private boolean checkIfDominatesA(int sliceIndex, int obj, int weakIndex) {
+        int sliceRank = space[sliceIndex];
         if (ranks[weakIndex] > sliceRank) {
             return true;
         }
-        int virtualGoodIndex = getSliceFirstPoint(sliceOffset, sliceIndex);
+        int virtualGoodIndex = space[sliceIndex + 2];
         while (virtualGoodIndex != -1) {
-            int realGoodIndex = getPointIndex(pointOffset, virtualGoodIndex);
+            int realGoodIndex = space[virtualGoodIndex];
             if (strictlyDominatesAssumingNotSame(realGoodIndex, weakIndex, obj)) {
                 ranks[weakIndex] = 1 + sliceRank;
                 return true;
             }
-            virtualGoodIndex = getNextPoint(pointOffset, virtualGoodIndex);
+            virtualGoodIndex = space[virtualGoodIndex + 1];
         }
         return false;
     }
 
-    private void initNewSliceA(int sliceOffset, int prevSlice, int currSlice, int nextSlice, int rank, int firstPointIndex) {
-        setSliceRank(sliceOffset, currSlice, rank);
-        setSliceFirstPoint(sliceOffset, currSlice, firstPointIndex);
+    private void initNewSliceA(int prevSlice, int currSlice, int nextSlice, int rank, int firstPointIndex) {
+        space[currSlice] = rank;
+        space[currSlice + 1] = nextSlice;
+        space[currSlice + 2] = firstPointIndex;
         if (prevSlice != -1) {
-            setNextSlice(sliceOffset, prevSlice, currSlice);
+            space[prevSlice + 1] = currSlice;
         }
-        setNextSlice(sliceOffset, currSlice, nextSlice);
     }
 
     @Override
@@ -94,45 +63,45 @@ public class RedBlackTreeSweepHybridENS extends RedBlackTreeSweep {
         int sliceOffset = from * STORAGE_MULTIPLE;
         int pointOffset = sliceOffset + 3 * (until - from);
 
-        int sliceCount = 0;
+        int sliceCurrent = sliceOffset - 3;
         int sliceFirst = -1;
 
         int minOverflow = until;
-        for (int i = from, pointCount = 0; i < until; ++i) {
+        for (int i = from, pointIndex = pointOffset; i < until; ++i) {
             int ii = indices[i];
-            if (sliceCount == 0 || checkIfDominatesA(sliceOffset, sliceFirst, pointOffset, obj, ii)) {
+            if (sliceFirst == -1 || checkIfDominatesA(sliceFirst, obj, ii)) {
                 if (ranks[ii] <= maximalMeaningfulRank) {
-                    initNewSliceA(sliceOffset, -1, sliceCount, sliceFirst, ranks[ii], pointCount);
-                    setNextPoint(pointOffset, pointCount, -1);
-                    setPointIndex(pointOffset, pointCount, ii);
-                    sliceFirst = sliceCount;
-                    ++sliceCount;
-                    ++pointCount;
+                    sliceCurrent += 3;
+                    initNewSliceA(-1, sliceCurrent, sliceFirst, ranks[ii], pointIndex);
+                    space[pointIndex] = ii;
+                    space[pointIndex + 1] = -1;
+                    sliceFirst = sliceCurrent;
+                    pointIndex += 2;
                 } else if (minOverflow > i) {
                     minOverflow = i;
                 }
             } else {
                 int prevSlice = sliceFirst, nextSlice;
-                while ((nextSlice = getNextSlice(sliceOffset, prevSlice)) != -1) {
-                    if (checkIfDominatesA(sliceOffset, nextSlice, pointOffset, obj, ii)) {
+                while ((nextSlice = space[prevSlice + 1]) != -1) {
+                    if (checkIfDominatesA(nextSlice, obj, ii)) {
                         break;
                     }
                     prevSlice = nextSlice;
                 }
                 // prevSlice does not dominate, nextSlice already dominates
-                setPointIndex(pointOffset, pointCount, ii);
+                space[pointIndex] = ii;
                 int currRank = ranks[ii];
-                if (currRank == getSliceRank(sliceOffset, prevSlice)) {
+                if (currRank == space[prevSlice]) {
                     // insert the current point into prevSlice
-                    setNextPoint(pointOffset, pointCount, getSliceFirstPoint(sliceOffset, prevSlice));
-                    setSliceFirstPoint(sliceOffset, prevSlice, pointCount);
+                    space[pointIndex + 1] = space[prevSlice + 2];
+                    space[prevSlice + 2] = pointIndex;
                 } else {
+                    sliceCurrent += 3;
                     // create a new slice and insert it between prevSlice and nextSlice
-                    initNewSliceA(sliceOffset, prevSlice, sliceCount, nextSlice, currRank, pointCount);
-                    setNextPoint(pointOffset, pointCount, -1);
-                    ++sliceCount;
+                    initNewSliceA(prevSlice, sliceCurrent, nextSlice, currRank, pointIndex);
+                    space[pointIndex + 1] = -1;
                 }
-                ++pointCount;
+                pointIndex += 2;
             }
         }
         return kickOutOverflowedRanks(minOverflow, until);
