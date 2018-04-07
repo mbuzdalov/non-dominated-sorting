@@ -121,12 +121,12 @@ public class RedBlackTreeSweepHybridENS extends RedBlackTreeSweep {
         int left = from, right = to;
         int pivot = (space[space[from]] + space[space[to]]) / 2;
         while (left <= right) {
-            while (space[space[left]] < pivot) ++left;
-            while (space[space[right]] > pivot) --right;
+            int sl, sr;
+            while (space[sl = space[left]] < pivot) ++left;
+            while (space[sr = space[right]] > pivot) --right;
             if (left <= right) {
-                int tmp = space[left];
-                space[left] = space[right];
-                space[right] = tmp;
+                space[left] = sr;
+                space[right] = sl;
                 ++left;
                 --right;
             }
@@ -153,10 +153,13 @@ public class RedBlackTreeSweepHybridENS extends RedBlackTreeSweep {
         int minUpdated = weakUntil;
         for (int weak = weakFrom, good = goodFrom; weak < weakUntil; ++weak) {
             int wi = indices[weak];
+            if (ranks[wi] > rank) {
+                continue;
+            }
             while (good < goodUntil && indices[good] < wi) {
                 ++good;
             }
-            if (ranks[wi] <= rank && checkWhetherDominates(indices, goodFrom, good, wi, obj)) {
+            if (checkWhetherDominates(indices, goodFrom, good, wi, obj)) {
                 ranks[wi] = rank + 1;
                 minUpdated = weak;
             }
@@ -219,8 +222,9 @@ public class RedBlackTreeSweepHybridENS extends RedBlackTreeSweep {
                 int wi = indices[weak];
                 int gi;
                 while (good < goodUntil && (gi = indices[good]) < wi) {
-                    int sliceIndex = space[ranksAndSlicesOffset + good - goodFrom];
-                    space[space[sliceIndex + 1]++] = gi;
+                    int sliceTailIndex = space[ranksAndSlicesOffset + good - goodFrom] + 1;
+                    space[space[sliceTailIndex]] = gi;
+                    ++space[sliceTailIndex];
                     ++good;
                 }
                 int currSlice = sliceOffset;
@@ -231,7 +235,7 @@ public class RedBlackTreeSweepHybridENS extends RedBlackTreeSweep {
                     if (from == until) {
                         currSlice += 2;
                     } else {
-                        int currRank = ranks[space[from]];
+                        int currRank = ranks[space[until - 1]];
                         if (currRank < weakRank) {
                             currSlice += 2;
                         } else if (checkWhetherDominates(space, from, until, wi, obj)) {
