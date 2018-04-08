@@ -1,5 +1,7 @@
 package ru.ifmo.nds.util;
 
+import java.util.Arrays;
+
 public final class SplitMergeHelper {
     private final int[] scratchM, scratchR;
 
@@ -66,7 +68,21 @@ public final class SplitMergeHelper {
         }
     }
 
-    public final int mergeTwo(int[] indices, int tempFrom, int fromLeft, int untilLeft, int fromRight, int untilRight) {
+    public final int mergeThree(int[] indices, int tempFrom,
+                                int fromLeft, int untilLeft,
+                                int fromMid, int untilMid,
+                                int fromRight, int untilRight) {
+        if (fromMid != untilMid) {
+            untilLeft = mergeTwo(indices, tempFrom, fromLeft, untilLeft, fromMid, untilMid);
+        }
+        return mergeTwo(indices, tempFrom, fromLeft, untilLeft, fromRight, untilRight);
+    }
+
+    private int mergeTwo(int[] indices, int tempFrom, int fromLeft, int untilLeft, int fromRight, int untilRight) {
+        if (fromRight == untilRight) {
+            return untilLeft;
+        }
+        fromLeft = -Arrays.binarySearch(indices, fromLeft, untilLeft, indices[fromRight]) - 1;
         int target = tempFrom;
         int l = fromLeft, r = fromRight;
         if (l < untilLeft && r < untilRight) {

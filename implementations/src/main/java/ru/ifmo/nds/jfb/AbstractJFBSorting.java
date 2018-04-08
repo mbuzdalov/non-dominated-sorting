@@ -236,8 +236,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
             newUntil = helperB(startMid, newStartRight, startRight, newUntil, obj - 1, from);
             newUntil = helperA(startRight, newUntil, obj);
 
-            newStartRight = splitMerge.mergeTwo(indices, from, from, newStartMid, startMid, newStartRight);
-            return splitMerge.mergeTwo(indices, from, from, newStartRight, startRight, newUntil);
+            return splitMerge.mergeThree(indices, from, from, newStartMid, startMid, newStartRight, startRight, newUntil);
         }
     }
 
@@ -355,11 +354,9 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
                 ? newWeakMidLTask.join()
                 : helperB(goodFrom, goodMidL, weakFrom, weakMidL, obj, tempFrom);
 
-        splitMerge.mergeTwo(indices, tempFrom, goodFrom, goodMidL, goodMidL, goodMidR);
-        splitMerge.mergeTwo(indices, tempFrom, goodFrom, goodMidR, goodMidR, goodUntil);
-
-        newWeakUntil = splitMerge.mergeTwo(indices, tempFrom, weakMidL, newWeakMidR, weakMidR, newWeakUntil);
-        return splitMerge.mergeTwo(indices, tempFrom, weakFrom, newWeakMidL, weakMidL, newWeakUntil);
+        splitMerge.mergeThree(indices, tempFrom, goodFrom, goodMidL, goodMidL, goodMidR, goodMidR, goodUntil);
+        return splitMerge.mergeThree(indices, tempFrom,
+                weakFrom, newWeakMidL, weakMidL, newWeakMidR, weakMidR, newWeakUntil);
     }
 
     private RecursiveTask<Integer> helperBAsync(final int goodFrom, final int goodUntil,
