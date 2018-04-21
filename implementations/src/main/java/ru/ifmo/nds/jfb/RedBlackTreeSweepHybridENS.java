@@ -232,19 +232,17 @@ public class RedBlackTreeSweepHybridENS extends RedBlackTreeSweep {
                 while (currSlice <= sliceLast) {
                     int from = space[currSlice];
                     int until = space[currSlice + 1];
-                    if (from == until) {
-                        currSlice += 2;
-                    } else {
+                    if (from < until) {
                         int currRank = ranks[space[until - 1]];
-                        if (currRank < weakRank) {
-                            currSlice += 2;
-                        } else if (checkWhetherDominates(space, from, until, wi, obj)) {
-                            currSlice += 2;
-                            weakRank = currRank + 1;
-                        } else {
-                            break;
+                        if (currRank >= weakRank) {
+                            if (checkWhetherDominates(space, from, until, wi, obj)) {
+                                weakRank = currRank + 1;
+                            } else {
+                                break;
+                            }
                         }
                     }
+                    currSlice += 2;
                 }
                 ranks[wi] = weakRank;
                 if (minOverflowed > weak && weakRank > maximalMeaningfulRank) {
