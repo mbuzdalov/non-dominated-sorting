@@ -15,7 +15,7 @@ public class ENS_BS extends ENSBase {
         int prevRank = -1;
         for (int i = 0; i < n; ++i) {
             int index = indices[i];
-            double[] curr = points[indices[i]];
+            double[] curr = points[index];
             int currRank;
             if (prev != null && ArrayHelper.equal(prev, curr)) {
                 currRank = prevRank;
