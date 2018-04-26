@@ -1,11 +1,10 @@
 package ru.ifmo.nds.ens;
 
+import java.util.Arrays;
+
 import ru.ifmo.nds.NonDominatedSorting;
 import ru.ifmo.nds.util.ArrayHelper;
-import ru.ifmo.nds.util.DominanceHelper;
 import ru.ifmo.nds.util.DoubleArraySorter;
-
-import java.util.Arrays;
 
 public abstract class ENSBase extends NonDominatedSorting {
     int[] indices;
@@ -46,17 +45,26 @@ public abstract class ENSBase extends NonDominatedSorting {
         return rightRank;
     }
 
+    private boolean strictlyDominatesAssumingNotSame(double[] good, double[] weak, int dim) {
+        for (int i = dim - 1; i > 0; --i) {
+            if (good[i] > weak[i]) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     int frontDominatesWithWork(int frontIndex, double[][] points, double[] point) {
         int index = lastRankIndex[frontIndex];
         int dim = point.length;
         if (dim == 2) {
             // This is essentially how the 2D case of JFB works.
-            return DominanceHelper.strictlyDominates(points[index], point, dim) ? 1 : -1;
+            return strictlyDominatesAssumingNotSame(points[index], point, dim) ? 1 : -1;
         } else {
             int count = 0;
             while (index >= 0) {
                 ++count;
-                if (DominanceHelper.strictlyDominates(points[index], point, dim)) {
+                if (strictlyDominatesAssumingNotSame(points[index], point, dim)) {
                     return count;
                 }
                 index = prevIndex[index];

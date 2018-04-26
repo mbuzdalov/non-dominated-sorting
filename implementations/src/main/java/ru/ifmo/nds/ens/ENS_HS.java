@@ -2,6 +2,8 @@ package ru.ifmo.nds.ens;
 
 import java.util.Arrays;
 
+import ru.ifmo.nds.util.ArrayHelper;
+
 public class ENS_HS extends ENSBase {
     private final int[] weights;
     private int weightSum;
@@ -11,8 +13,7 @@ public class ENS_HS extends ENSBase {
         weights = new int[maximumPoints];
     }
 
-    private int findRank(double[][] points, int index, int maxRank) {
-        double[] point = points[index];
+    private int findRank(double[][] points, double[] point, int maxRank) {
         if (point.length == 2) {
             return findRankByBinarySearch(points, point, -1, maxRank);
         }
@@ -42,14 +43,23 @@ public class ENS_HS extends ENSBase {
     void sortCheckedImpl(double[][] points, int[] ranks, int maximalMeaningfulRank) {
         int n = ranks.length;
         int maxRank = -1;
+        double[] prev = null;
+        int prevRank = -1;
         for (int i = 0; i < n; ++i) {
             int index = indices[i];
-            int rank = findRank(points, index, maxRank);
-            if (rank <= maximalMeaningfulRank) {
-                ++weights[rank];
-                ++weightSum;
+            double[] curr = points[indices[i]];
+            int currRank;
+            if (prev != null && ArrayHelper.equal(prev, curr)) {
+                currRank = prevRank;
+            } else {
+                prevRank = currRank = findRank(points, curr, maxRank);
+                prev = curr;
+                if (currRank <= maximalMeaningfulRank) {
+                    ++weights[currRank];
+                    ++weightSum;
+                }
             }
-            maxRank = setRank(index, ranks, rank, maxRank, maximalMeaningfulRank);
+            maxRank = setRank(index, ranks, currRank, maxRank, maximalMeaningfulRank);
         }
         weightSum = 0;
         Arrays.fill(weights, 0, maxRank + 1, 0);
