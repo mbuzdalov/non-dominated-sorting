@@ -11,19 +11,6 @@ public class ENS_HS extends ENSBase {
         weights = new int[maximumPoints];
     }
 
-    private int findRankByBinarySearch(double[][] points, double[] point, int minRank, int maxRank) {
-        int leftRank = minRank, rightRank = maxRank + 1;
-        while (rightRank - leftRank > 1) {
-            int currRank = (leftRank + rightRank) >>> 1;
-            if (frontDominates(currRank, points, point)) {
-                leftRank = currRank;
-            } else {
-                rightRank = currRank;
-            }
-        }
-        return rightRank;
-    }
-
     private int findRank(double[][] points, int index, int maxRank) {
         double[] point = points[index];
         if (point.length == 2) {

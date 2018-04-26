@@ -33,6 +33,19 @@ public abstract class ENSBase extends NonDominatedSorting {
         return frontDominatesWithWork(frontIndex, points, point) >= 0;
     }
 
+    int findRankByBinarySearch(double[][] points, double[] point, int minRank, int maxRank) {
+        int leftRank = minRank, rightRank = maxRank + 1;
+        while (rightRank - leftRank > 1) {
+            int currRank = (leftRank + rightRank) >>> 1;
+            if (frontDominates(currRank, points, point)) {
+                leftRank = currRank;
+            } else {
+                rightRank = currRank;
+            }
+        }
+        return rightRank;
+    }
+
     int frontDominatesWithWork(int frontIndex, double[][] points, double[] point) {
         int index = lastRankIndex[frontIndex];
         int dim = point.length;
