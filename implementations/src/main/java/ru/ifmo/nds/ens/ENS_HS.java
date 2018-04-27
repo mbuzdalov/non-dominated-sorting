@@ -26,14 +26,16 @@ public class ENS_HS extends ENSBase {
             if (query < 0) {
                 return rank;
             }
-            totalWork += query;
-            remainingN -= weights[rank];
-            --remainingRanks;
-            if (remainingRanks < (1 << logRemainingRanks)) {
-                --logRemainingRanks;
-            }
-            if ((long) (totalWork) * remainingRanks > (long) (remainingN) * logRemainingRanks) {
-                return findRankByBinarySearch(points, point, rank, maxRank);
+            if (rank < maxRank) {
+                totalWork += query;
+                remainingN -= weights[rank];
+                --remainingRanks;
+                if (remainingRanks < (1 << logRemainingRanks)) {
+                    --logRemainingRanks;
+                }
+                if ((long) (totalWork) * remainingRanks > (long) (remainingN) * logRemainingRanks) {
+                    return findRankByBinarySearch(points, point, rank, maxRank);
+                }
             }
         }
         return maxRank + 1;
