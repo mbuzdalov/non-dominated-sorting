@@ -22,5 +22,5 @@ The following algorithms are currently implemented:
 The following contributors would like to acknowledge the support of this research by the [Russian Scientific Foundation](http://рнф.рф/en),
 agreement [17-71-20178](http://рнф.рф/en/enprjcard?rid=17-71-20178):
 
-* @mbuzdalov
-* @markina
+* [Maxim Buzdalov](https://github.com/mbuzdalov)
+* [Margarita Markina](https://github.com/markina)
