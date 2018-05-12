@@ -8,7 +8,6 @@ public class Presort extends AbstractDominanceTree {
     private Node[] concatenationNodes;
     private double[][] points;
     private int[] ranks;
-    private DoubleArraySorter sorter;
     private final InsertionOption insertionOption;
 
     public Presort(int maximumPoints, int maximumDimension, boolean useRecursiveMerge, InsertionOption insertionOption) {
@@ -16,7 +15,6 @@ public class Presort extends AbstractDominanceTree {
         this.insertionOption = insertionOption;
         points = new double[maximumPoints][];
         ranks = new int[maximumPoints];
-        sorter = new DoubleArraySorter(maximumPoints);
         concatenationNodes = new Node[maximumPoints];
     }
 
@@ -25,7 +23,6 @@ public class Presort extends AbstractDominanceTree {
         super.closeImpl();
         points = null;
         ranks = null;
-        sorter = null;
         concatenationNodes = null;
     }
 

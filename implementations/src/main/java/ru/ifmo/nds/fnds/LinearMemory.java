@@ -5,15 +5,11 @@ import ru.ifmo.nds.util.ArrayHelper;
 import ru.ifmo.nds.util.DoubleArraySorter;
 
 public class LinearMemory extends NonDominatedSorting {
-    private int[] indices;
     private int[] ranks;
     private double[][] points;
-    private DoubleArraySorter sorter;
 
     public LinearMemory(int maximumPoints, int maximumDimension) {
         super(maximumPoints, maximumDimension);
-        sorter = new DoubleArraySorter(maximumPoints);
-        indices = new int[maximumPoints];
         ranks = new int[maximumPoints];
         points = new double[maximumPoints][];
     }
@@ -25,10 +21,8 @@ public class LinearMemory extends NonDominatedSorting {
 
     @Override
     protected void closeImpl() {
-        indices = null;
         ranks = null;
         points = null;
-        sorter = null;
     }
 
     private boolean strictlyDominatesAssumingNotSame(int goodIndex, int weakIndex, int dim) {

@@ -12,8 +12,7 @@ import ru.ifmo.nds.util.*;
 public abstract class AbstractJFBSorting extends NonDominatedSorting {
     private static final int FORK_JOIN_THRESHOLD = 400;
 
-    // Shared resources
-    int[] indices;
+    // Shared resources (int[] indices from super also belongs here)
     int[] ranks;
 
     // Data which is immutable throughout the actual sorting.
@@ -22,7 +21,6 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
     int maximalMeaningfulRank;
 
     // This is used in preparation phase or in 2D-only sweep.
-    private DoubleArraySorter sorter;
     private int[] internalIndices;
     private double[] lastFrontOrdinates;
 
@@ -45,9 +43,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         }
         this.allowedThreads = allowedThreads > 0 ? allowedThreads : -1;
 
-        sorter = new DoubleArraySorter(maximumPoints);
         medianSwap = new double[maximumPoints];
-        indices = new int[maximumPoints];
         ranks = new int[maximumPoints];
         points = new double[maximumPoints][];
         transposedPoints = new double[maximumDimension][maximumPoints];
@@ -60,9 +56,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
 
     @Override
     protected void closeImpl() {
-        sorter = null;
         medianSwap = null;
-        indices = null;
         ranks = null;
         points = null;
         rankQuery = null;
@@ -88,16 +82,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
 
         this.maximalMeaningfulRank = maximalMeaningfulRank;
 
-        if (dim == 1) {
-            // 1: This is equivalent to ordinary sorting.
-            for (int i = 0, r = 0; i < n; ++i) {
-                int ii = internalIndices[i];
-                ranks[ii] = r;
-                if (i + 1 < n && points[ii][0] != points[internalIndices[i + 1]][0]) {
-                    ++r;
-                }
-            }
-        } else if (dim == 2) {
+        if (dim == 2) {
             // 2: Special case: binary search.
             twoDimensionalCase(points, ranks);
         } else {

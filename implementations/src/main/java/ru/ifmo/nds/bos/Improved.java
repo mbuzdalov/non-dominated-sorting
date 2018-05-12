@@ -9,7 +9,6 @@ import java.util.Arrays;
 
 public class Improved extends NonDominatedSorting {
     private int[][] objectiveIndices;
-    private int[] reindex;
     private double[][] points;
     private int[] ranks;
     private int[][] lastFrontIndex;
@@ -20,8 +19,6 @@ public class Improved extends NonDominatedSorting {
     private boolean[][] indexNeeded;
     private int[] indexNeededCount;
 
-    private DoubleArraySorter sorter;
-
     public Improved(int maximumPoints, int maximumDimension) {
         super(maximumPoints, maximumDimension);
         objectiveIndices = new int[maximumDimension][maximumPoints];
@@ -31,10 +28,8 @@ public class Improved extends NonDominatedSorting {
         checkIndicesCount = new int[maximumPoints];
         indexNeededCount = new int[maximumPoints];
         indexNeeded = new boolean[maximumPoints][maximumDimension];
-        reindex = new int[maximumPoints];
         points = new double[maximumPoints][];
         ranks = new int[maximumPoints];
-        sorter = new DoubleArraySorter(maximumPoints);
     }
 
     @Override
@@ -51,10 +46,8 @@ public class Improved extends NonDominatedSorting {
         checkIndicesCount = null;
         indexNeeded = null;
         indexNeededCount = null;
-        reindex = null;
         points = null;
         ranks = null;
-        sorter = null;
     }
 
     private boolean dominates(int i1, int i2) {
@@ -129,9 +122,9 @@ public class Improved extends NonDominatedSorting {
     protected void sortChecked(double[][] points, int[] ranks, int maximalMeaningfulRank) {
         int origN = ranks.length;
         int dim = points[0].length;
-        ArrayHelper.fillIdentity(reindex, origN);
-        sorter.lexicographicalSort(points, reindex, 0, origN, dim);
-        int newN = DoubleArraySorter.retainUniquePoints(points, reindex, this.points, ranks);
+        ArrayHelper.fillIdentity(indices, origN);
+        sorter.lexicographicalSort(points, indices, 0, origN, dim);
+        int newN = DoubleArraySorter.retainUniquePoints(points, indices, this.points, ranks);
         initializeObjectiveIndices(newN, dim);
         maximalMeaningfulRank = Math.min(maximalMeaningfulRank, newN - 1);
 

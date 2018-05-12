@@ -7,23 +7,17 @@ import ru.ifmo.nds.util.ArrayHelper;
 import ru.ifmo.nds.util.DoubleArraySorter;
 
 public abstract class ENSBase extends NonDominatedSorting {
-    int[] indices;
     private int[] prevIndex;
     private int[] lastRankIndex;
-    private DoubleArraySorter sorter;
 
     ENSBase(int maximumPoints, int maximumDimension) {
         super(maximumPoints, maximumDimension);
-        sorter = new DoubleArraySorter(maximumPoints);
-        indices = new int[maximumPoints];
         prevIndex = new int[maximumPoints];
         lastRankIndex = new int[maximumPoints];
     }
 
     @Override
     protected void closeImpl() {
-        sorter = null;
-        indices = null;
         prevIndex = null;
         lastRankIndex = null;
     }

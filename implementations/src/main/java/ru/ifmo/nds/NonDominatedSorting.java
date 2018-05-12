@@ -3,6 +3,9 @@ package ru.ifmo.nds;
 import java.util.Arrays;
 import java.util.Objects;
 
+import ru.ifmo.nds.util.ArrayHelper;
+import ru.ifmo.nds.util.DoubleArraySorter;
+
 /**
  * This is the base for classes which actually perform non-dominated sorting.
  *
@@ -13,9 +16,15 @@ public abstract class NonDominatedSorting implements AutoCloseable {
     private final int maximumPoints;
     private final int maximumDimension;
 
+    protected DoubleArraySorter sorter;
+    protected int[] indices;
+
     protected NonDominatedSorting(int maximumPoints, int maximumDimension) {
         this.maximumPoints = maximumPoints;
         this.maximumDimension = maximumDimension;
+
+        sorter = new DoubleArraySorter(maximumPoints);
+        indices = new int[maximumPoints];
     }
 
     /**
@@ -49,6 +58,8 @@ public abstract class NonDominatedSorting implements AutoCloseable {
         }
         closeWasCalled = true;
         closeImpl();
+        sorter = null;
+        indices = null;
     }
 
     /**
@@ -88,6 +99,27 @@ public abstract class NonDominatedSorting implements AutoCloseable {
         int dimension = checkAndGetDimension(points);
         if (dimension == 0) {
             Arrays.fill(ranks, 0);
+        } else if (dimension == 1) {
+            int n = points.length;
+            ArrayHelper.fillIdentity(indices, n);
+            sorter.sort(points, indices, 0, n, 0);
+            double last = Double.NaN;
+            int rank = -1;
+            int index = 0;
+            while (rank <= maximalMeaningfulRank && index < n) {
+                int ii = indices[index];
+                double curr = points[ii][0];
+                if (curr != last) {
+                    ++rank;
+                    last = curr;
+                }
+                ranks[ii] = rank;
+                ++index;
+            }
+            while (index < n) {
+                ranks[indices[index]] = rank;
+                ++index;
+            }
         } else {
             sortChecked(points, ranks, maximalMeaningfulRank);
             filterMaximumMeaningfulRank(ranks, maximalMeaningfulRank);
