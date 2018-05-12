@@ -62,8 +62,8 @@ public final class DoubleArraySorter {
     }
 
     public void sort(double[][] points, int[] indices, int from, int until, int whichCoordinate) {
-        if (until - from > scratch.length) {
-            throw new IllegalArgumentException("The maximum array length to be sorted is " + scratch.length
+        if (until > scratch.length) {
+            throw new IllegalArgumentException("The internal thread-shareable array length is " + scratch.length
                     + ", but you requested from = " + from + " until = " + until + " which is " + (until - from));
         }
         this.points = points;
@@ -78,8 +78,8 @@ public final class DoubleArraySorter {
     }
 
     public void lexicographicalSort(double[][] points, int[] indices, int from, int until, int maxCoordinate) {
-        if (until - from > scratch.length) {
-            throw new IllegalArgumentException("The maximum array length to be sorted is " + scratch.length
+        if (until > scratch.length) {
+            throw new IllegalArgumentException("The internal thread-shareable array length is " + scratch.length
                     + ", but you requested from = " + from + " until = " + until + " which is " + (until - from));
         }
         this.points = points;
@@ -131,8 +131,8 @@ public final class DoubleArraySorter {
     }
 
     public void sortWhileResolvingEqual(double[][] points, int[] indices, int from, int until, int coordinate, int[] resolver) {
-        if (until - from > scratch.length) {
-            throw new IllegalArgumentException("The maximum array length to be sorted is " + scratch.length
+        if (until > scratch.length) {
+            throw new IllegalArgumentException("The internal thread-shareable array length is " + scratch.length
                     + ", but you requested from = " + from + " until = " + until + " which is " + (until - from));
         }
         this.points = points;
