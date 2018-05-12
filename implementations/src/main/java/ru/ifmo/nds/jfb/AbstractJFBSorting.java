@@ -406,62 +406,64 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         int maxRank = 1;
         int n = ranks.length;
 
-        int lastII = internalIndices[0];
-        double lastX = points[lastII][0];
-        double lastY = points[lastII][1];
-        double minY = lastY;
+        double[] firstPoint = points[internalIndices[0]];
+        double lastX = firstPoint[0];
+        double lastY = firstPoint[1];
+        int lastRank = 0;
 
-        // Point 0 always has rank 0.
-        lastFrontOrdinates[0] = lastY;
+        // This is used here instead of lastFrontOrdinates[0] to make it slightly faster.
+        double minY = lastY;
 
         for (int i = 1; i < n; ++i) {
             int ii = internalIndices[i];
-            double cx = points[ii][0];
-            double cy = points[ii][1];
+            double[] pp = points[ii];
+            double currX = pp[0];
+            double currY = pp[1];
 
-            if (cx == lastX && cy == lastY) {
+            if (currX == lastX && currY == lastY) {
                 // Same point as the previous one.
                 // The rank is the same as well.
-                ranks[ii] = ranks[lastII];
-            } else if (cy < minY) {
+                ranks[ii] = lastRank;
+            } else if (currY < minY) {
                 // Y smaller than the smallest Y previously seen.
                 // The rank is thus zero.
-                minY = cy;
+                // ranks[ii] is already 0.
+                minY = currY;
+                lastRank = 0;
             } else {
                 // At least the Y-smallest point dominates our point.
                 int left, right;
-                if (cy < lastY) {
+                if (currY < lastY) {
                     // We are better than the previous point in Y.
                     // This means that we are at least that good.
                     left = 0;
-                    right = ranks[lastII];
+                    right = lastRank;
                 } else {
                     // We are worse (or equal) than the previous point in Y.
                     // This means that we are worse than this point.
-                    left = ranks[lastII];
+                    left = lastRank;
                     right = maxRank;
                 }
                 // Running the binary search.
                 while (right - left > 1) {
                     int mid = (left + right) >>> 1;
                     double midY = lastFrontOrdinates[mid];
-                    if (cy < midY) {
+                    if (currY < midY) {
                         right = mid;
                     } else {
                         left = mid;
                     }
                 }
                 // "right" is now our rank.
-                ranks[ii] = right;
-                lastFrontOrdinates[right] = cy;
+                ranks[ii] = lastRank = right;
+                lastFrontOrdinates[right] = currY;
                 if (right == maxRank && maxRank <= maximalMeaningfulRank) {
                     ++maxRank;
                 }
             }
 
-            lastII = ii;
-            lastX = cx;
-            lastY = cy;
+            lastX = currX;
+            lastY = currY;
         }
     }
 
