@@ -30,7 +30,7 @@ public class MedianBenchmark {
     private double[][] data;
     private double[] temp;
 
-    @Setup(Level.Invocation)
+    @Setup
     public void initialize() {
         Random random = new Random(size * 723525217);
         data = new double[10][size];

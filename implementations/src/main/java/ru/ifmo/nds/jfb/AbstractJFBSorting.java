@@ -38,10 +38,10 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
     AbstractJFBSorting(int maximumPoints, int maximumDimension, int allowedThreads) {
         super(maximumPoints, maximumDimension);
 
-        if (allowedThreads == 1) {
-            pool = null; // current thread only execution
-        } else {
+        if (allowedThreads != 1 && makesSenseRunInParallel(maximumPoints, maximumDimension)) {
             pool = allowedThreads > 1 ? new ForkJoinPool(allowedThreads) : new ForkJoinPool();
+        } else {
+            pool = null; // current thread only execution
         }
         this.allowedThreads = allowedThreads > 0 ? allowedThreads : -1;
 
@@ -115,9 +115,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
             }
 
             // 3.3: Calling the actual sorting
-            if (pool == null) {
-                helperA(0, newN, dim - 1);
-            } else {
+            if (pool != null && makesSenseRunInParallel(n, dim)) {
                 RecursiveAction action = new RecursiveAction() {
                     @Override
                     protected void compute() {
@@ -125,6 +123,8 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
                     }
                 };
                 pool.invoke(action);
+            } else {
+                helperA(0, newN, dim - 1);
             }
 
             // 3.4: Applying the results back. After that, the argument "ranks" array stops being abused.
@@ -232,10 +232,11 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
             int newStartMid = helperA(from, startMid, obj);
             int newStartRight = helperB(from, newStartMid, startMid, startRight, obj - 1, from);
             newStartRight = helperA(startMid, newStartRight, obj - 1);
-            newStartRight = splitMerge.mergeTwo(indices, from, from, newStartMid, startMid, newStartRight);
-            int newUntil = helperB(from, newStartRight, startRight, until, obj - 1, from);
+            int newUntil = helperB(from, newStartMid, startRight, until, obj - 1, from);
+            newUntil = helperB(startMid, newStartRight, startRight, newUntil, obj - 1, from);
             newUntil = helperA(startRight, newUntil, obj);
-            return splitMerge.mergeTwo(indices, from, from, newStartRight, startRight, newUntil);
+
+            return splitMerge.mergeThree(indices, from, from, newStartMid, startMid, newStartRight, startRight, newUntil);
         }
     }
 
@@ -338,20 +339,24 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         int weakMidR = SplitMergeHelper.extractRight(weakSplit);
         int tempMid = tempFrom + ((goodUntil - goodFrom + weakUntil - weakFrom) >>> 1);
 
+        int newWeakUntil = helperB(goodFrom, goodMidL, weakMidR, weakUntil, obj - 1, tempFrom);
+        newWeakUntil = helperB(goodMidL, goodMidR, weakMidR, newWeakUntil, obj - 1, tempFrom);
+
+        int newWeakMidR = helperB(goodFrom, goodMidL, weakMidL, weakMidR, obj - 1, tempFrom);
+        newWeakMidR = helperB(goodMidL, goodMidR, weakMidL, newWeakMidR, obj - 1, tempFrom);
+
         ForkJoinTask<Integer> newWeakMidLTask = null;
         if (pool != null && goodMidL - goodFrom + weakMidL - weakFrom > FORK_JOIN_THRESHOLD) {
             newWeakMidLTask = helperBAsync(goodFrom, goodMidL, weakFrom, weakMidL, obj, tempFrom).fork();
         }
-        int newWeakUntil = helperB(goodMidR, goodUntil, weakMidR, weakUntil, obj, tempMid);
+        newWeakUntil = helperB(goodMidR, goodUntil, weakMidR, newWeakUntil, obj, tempMid);
         int newWeakMidL = newWeakMidLTask != null
                 ? newWeakMidLTask.join()
                 : helperB(goodFrom, goodMidL, weakFrom, weakMidL, obj, tempFrom);
 
-        splitMerge.mergeTwo(indices, tempFrom, goodFrom, goodMidL, goodMidL, goodMidR);
-        newWeakUntil = splitMerge.mergeTwo(indices, tempFrom, weakMidL, weakMidR, weakMidR, newWeakUntil);
-        newWeakUntil = helperB(goodFrom, goodMidR, weakMidL, newWeakUntil, obj - 1, tempFrom);
-        splitMerge.mergeTwo(indices, tempFrom, goodFrom, goodMidR, goodMidR, goodUntil);
-        return splitMerge.mergeTwo(indices, tempFrom, weakFrom, newWeakMidL, weakMidL, newWeakUntil);
+        splitMerge.mergeThree(indices, tempFrom, goodFrom, goodMidL, goodMidL, goodMidR, goodMidR, goodUntil);
+        return splitMerge.mergeThree(indices, tempFrom,
+                weakFrom, newWeakMidL, weakMidL, newWeakMidR, weakMidR, newWeakUntil);
     }
 
     private RecursiveTask<Integer> helperBAsync(final int goodFrom, final int goodUntil,
@@ -458,6 +463,10 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
             lastX = cx;
             lastY = cy;
         }
+    }
+
+    private boolean makesSenseRunInParallel(int nPoints, int dimension) {
+        return nPoints > FORK_JOIN_THRESHOLD && dimension > 3;
     }
 
     String getThreadDescription() {

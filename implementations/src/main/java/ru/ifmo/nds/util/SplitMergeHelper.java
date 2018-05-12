@@ -1,5 +1,7 @@
 package ru.ifmo.nds.util;
 
+import java.util.Arrays;
+
 public final class SplitMergeHelper {
     private final int[] scratchM, scratchR;
 
@@ -23,9 +25,11 @@ public final class SplitMergeHelper {
                 int ii = indices[i];
                 double v = points[ii];
                 if (v < median || (equalToLeft && v == median)) {
-                    indices[left++] = ii;
+                    indices[left] = ii;
+                    ++left;
                 } else {
-                    scratchR[right++] = ii;
+                    scratchR[right] = ii;
+                    ++right;
                 }
             }
             System.arraycopy(scratchR, tempFrom, indices, left, right - tempFrom);
@@ -48,11 +52,14 @@ public final class SplitMergeHelper {
                 int ii = indices[i];
                 double v = points[ii];
                 if (v < median) {
-                    indices[l++] = ii;
+                    indices[l] = ii;
+                    ++l;
                 } else if (v == median) {
-                    scratchM[m++] = ii;
+                    scratchM[m] = ii;
+                    ++m;
                 } else {
-                    scratchR[r++] = ii;
+                    scratchR[r] = ii;
+                    ++r;
                 }
             }
             System.arraycopy(scratchM, tempFrom, indices, l, m - tempFrom);
@@ -61,14 +68,42 @@ public final class SplitMergeHelper {
         }
     }
 
-    public final int mergeTwo(int[] indices, int tempFrom, int fromLeft, int untilLeft, int fromRight, int untilRight) {
+    public final int mergeThree(int[] indices, int tempFrom,
+                                int fromLeft, int untilLeft,
+                                int fromMid, int untilMid,
+                                int fromRight, int untilRight) {
+        if (fromMid != untilMid) {
+            untilLeft = mergeTwo(indices, tempFrom, fromLeft, untilLeft, fromMid, untilMid);
+        }
+        return mergeTwo(indices, tempFrom, fromLeft, untilLeft, fromRight, untilRight);
+    }
+
+    private int mergeTwo(int[] indices, int tempFrom, int fromLeft, int untilLeft, int fromRight, int untilRight) {
+        if (fromRight == untilRight) {
+            return untilLeft;
+        }
+        fromLeft = -Arrays.binarySearch(indices, fromLeft, untilLeft, indices[fromRight]) - 1;
         int target = tempFrom;
         int l = fromLeft, r = fromRight;
-        while (l < untilLeft && r < untilRight) {
-            if (indices[l] <= indices[r]) {
-                scratchM[target++] = indices[l++];
-            } else {
-                scratchM[target++] = indices[r++];
+        if (l < untilLeft && r < untilRight) {
+            int il = indices[l];
+            int ir = indices[r];
+            while (true) {
+                if (il <= ir) {
+                    scratchM[target] = il;
+                    ++target;
+                    if (++l == untilLeft) {
+                        break;
+                    }
+                    il = indices[l];
+                } else {
+                    scratchM[target] = ir;
+                    ++target;
+                    if (++r == untilRight) {
+                        break;
+                    }
+                    ir = indices[r];
+                }
             }
         }
         int newR = fromLeft + (target - tempFrom) + untilLeft - l;
