@@ -22,16 +22,27 @@ public abstract class VanEmdeBoasSet {
      * @return the newly created empty set.
      */
     public static VanEmdeBoasSet create(int scale) {
-        if (scale <= 5) {
-            return new IntBitSet();
-        } else if (scale == 6) {
-            return new LongBitSet();
-        } else if (scale <= 10) {
-            return new IntIntBitSet(scale);
-        } else if (scale <= 12) {
-            return new LongLongBitSet(scale);
-        } else {
-            return new HugeBitSet(scale);
+        switch (scale) {
+            case 0:
+            case 1:
+            case 2:
+            case 3:
+            case 4:
+            case 5:
+                return new IntBitSet();
+            case 6:
+                return new LongBitSet();
+            case 7:
+            case 8:
+            case 9:
+            case 10:
+                return new IntIntBitSet(scale);
+            case 11:
+                return new IntLongBitSet();
+            case 12:
+                return new LongLongBitSet();
+            default:
+                return new HugeBitSet(scale);
         }
     }
 
