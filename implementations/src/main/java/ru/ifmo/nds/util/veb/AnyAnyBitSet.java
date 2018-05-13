@@ -1,5 +1,7 @@
 package ru.ifmo.nds.util.veb;
 
+import java.util.Arrays;
+
 final class AnyAnyBitSet extends VanEmdeBoasSet {
     private final int loBits;
     private final int loMask;
@@ -16,6 +18,7 @@ final class AnyAnyBitSet extends VanEmdeBoasSet {
         loBits = scale / 2;
         loMask = (1 << loBits) - 1;
         clusters = new VanEmdeBoasSet[1 << (scale - loBits)];
+        Arrays.fill(clusters, EmptyBitSet.INSTANCE);
         summary = VanEmdeBoasSet.create(scale - loBits);
     }
 
@@ -44,7 +47,7 @@ final class AnyAnyBitSet extends VanEmdeBoasSet {
         }
         int h = hi(index), l = lo(index);
         VanEmdeBoasSet ch = clusters[h];
-        if (ch == null || l <= ch.min()) {
+        if (l <= ch.min()) {
             h = summary.prev(h);
             return h < 0 ? min : join(h, clusters[h].max());
         } else {
@@ -62,7 +65,7 @@ final class AnyAnyBitSet extends VanEmdeBoasSet {
         }
         int h = hi(index), l = lo(index);
         VanEmdeBoasSet ch = clusters[h];
-        if (ch == null || l >= ch.max()) {
+        if (l >= ch.max()) {
             h = summary.next(h);
             return h >= clusters.length ? max : join(h, clusters[h].min());
         } else {
@@ -77,8 +80,7 @@ final class AnyAnyBitSet extends VanEmdeBoasSet {
         } else if (index == min || index == max) {
             return true;
         }
-        VanEmdeBoasSet ch = clusters[hi(index)];
-        return ch != null && ch.contains(lo(index));
+        return clusters[hi(index)].contains(lo(index));
     }
 
     @Override
@@ -104,7 +106,7 @@ final class AnyAnyBitSet extends VanEmdeBoasSet {
             }
             int l = lo(index), h = hi(index);
             VanEmdeBoasSet ch = clusters[h];
-            if (ch == null) {
+            if (ch == EmptyBitSet.INSTANCE) {
                 clusters[h] = ch = VanEmdeBoasSet.create(loBits);
             }
             if (ch.isEmpty()) {
@@ -136,11 +138,9 @@ final class AnyAnyBitSet extends VanEmdeBoasSet {
         } else if (min < index && index < max) {
             int l = lo(index), h = hi(index);
             VanEmdeBoasSet ch = clusters[h];
-            if (ch != null) {
-                ch.remove(l);
-                if (ch.isEmpty()) {
-                    summary.remove(h);
-                }
+            ch.remove(l);
+            if (ch.isEmpty()) {
+                summary.remove(h);
             }
         }
     }
