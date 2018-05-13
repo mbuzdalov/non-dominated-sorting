@@ -52,7 +52,14 @@ public class VanEmdeBoasSetTest {
                         break;
                     }
                     case 3: {
-                        Assert.assertEquals(bit.nextSetBit(index + 1), veb.next(index));
+                        int vn = veb.next(index);
+                        if (vn >= 1 << scale) {
+                            vn = -1;
+                        }
+                        int nsb = bit.nextSetBit(index + 1);
+                        if (nsb != vn) {
+                            Assert.assertEquals(bit.nextSetBit(index + 1), vn);
+                        }
                         break;
                     }
                     case 4: {

@@ -13,6 +13,14 @@ public class JensenFortinBuzdalov {
         return (p, d) -> new FenwickSweep(p, d, allowedThreads);
     }
 
+    public static NonDominatedSortingFactory getVanEmdeBoasImplementation() {
+        return VanEmdeBoasSweep::new;
+    }
+
+    public static NonDominatedSortingFactory getVanEmdeBoasHybridENSImplementation() {
+        return VanEmdeBoasSweepHybridENS::new;
+    }
+
     public static NonDominatedSortingFactory getRedBlackTreeSweepHybridFNDSImplementation(int allowedThreads) {
         return (p, d) -> new RedBlackTreeSweepHybridLinearNDS(p, d, allowedThreads);
     }

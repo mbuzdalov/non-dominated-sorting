@@ -23,7 +23,7 @@ public abstract class RankQueryStructureTestsBase {
             int differentPoints = random.nextInt(upperBound) + 1;
             int[] keys = new int[differentPoints];
             for (int i = 0; i < differentPoints; ++i) {
-                keys[i] = random.nextInt();
+                keys[i] = random.nextInt(upperBound);
             }
             RankQueryStructure.RangeHandle handle = structure.createHandle(0, 0, differentPoints, indices, keys);
             Arrays.sort(keys);
@@ -38,7 +38,7 @@ public abstract class RankQueryStructureTestsBase {
                     handle.put(keys[keyIndex], newValue);
                     values[keyIndex] = Math.max(values[keyIndex], newValue);
                 } else {
-                    int q = random.nextInt();
+                    int q = random.nextInt(upperBound);
                     int trueAnswer = -1;
                     for (int i = 0; i < differentPoints; ++i) {
                         if (keys[i] <= q) {
