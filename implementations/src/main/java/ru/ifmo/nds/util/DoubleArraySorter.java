@@ -61,6 +61,31 @@ public final class DoubleArraySorter {
         }
     }
 
+    public void compressCoordinates(double[] original, int[] indices, int[] target, int from, int until) {
+        if (until > scratch.length) {
+            throw new IllegalArgumentException("The internal thread-shareable array length is " + scratch.length
+                    + ", but you requested from = " + from + " until = " + until + " which is " + (until - from));
+        }
+        System.arraycopy(original, from, scratch, from, until - from);
+        for (int i = from; i < until; ++i) {
+            indices[i] = i;
+        }
+        this.indices = indices;
+        sortImplInside(from, until);
+        this.indices = null;
+
+        double prev = Double.NaN;
+        for (int i = from, x = -1; i < until; ++i) {
+            int ii = indices[i];
+            double curr = original[ii];
+            if (prev != curr) {
+                prev = curr;
+                ++x;
+            }
+            target[ii] = x;
+        }
+    }
+
     public void sort(double[][] points, int[] indices, int from, int until, int whichCoordinate) {
         if (until > scratch.length) {
             throw new IllegalArgumentException("The internal thread-shareable array length is " + scratch.length

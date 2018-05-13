@@ -21,9 +21,9 @@ public abstract class RankQueryStructureTestsBase {
         ArrayHelper.fillIdentity(indices, upperBound);
         for (int times = 0; times < 1000; ++times) {
             int differentPoints = random.nextInt(upperBound) + 1;
-            double[] keys = new double[differentPoints];
+            int[] keys = new int[differentPoints];
             for (int i = 0; i < differentPoints; ++i) {
-                keys[i] = random.nextDouble();
+                keys[i] = random.nextInt();
             }
             RankQueryStructure.RangeHandle handle = structure.createHandle(0, 0, differentPoints, indices, keys);
             Arrays.sort(keys);
@@ -38,7 +38,7 @@ public abstract class RankQueryStructureTestsBase {
                     handle.put(keys[keyIndex], newValue);
                     values[keyIndex] = Math.max(values[keyIndex], newValue);
                 } else {
-                    double q = random.nextDouble();
+                    int q = random.nextInt();
                     int trueAnswer = -1;
                     for (int i = 0; i < differentPoints; ++i) {
                         if (keys[i] <= q) {

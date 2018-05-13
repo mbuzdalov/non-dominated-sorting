@@ -20,6 +20,8 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
     double[][] transposedPoints;
     int maximalMeaningfulRank;
 
+    private int[] compressedOrdinates;
+
     // This is used in preparation phase or in 2D-only sweep.
     private int[] internalIndices;
     private double[] lastFrontOrdinates;
@@ -52,6 +54,8 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         internalIndices = new int[maximumPoints];
         lastFrontOrdinates = new double[maximumPoints];
         splitMerge = new SplitMergeHelper(maximumPoints);
+
+        compressedOrdinates = new int[maximumPoints];
     }
 
     @Override
@@ -65,6 +69,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         internalIndices = null;
         lastFrontOrdinates = null;
         splitMerge = null;
+        compressedOrdinates = null;
 
         if (pool != null) {
             pool.shutdown();
@@ -90,7 +95,6 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
             // 3.1: Moving points in a sorted order to internal structures
             final int newN = DoubleArraySorter.retainUniquePoints(points, internalIndices, this.points, ranks);
             Arrays.fill(this.ranks, 0, newN, 0);
-            ArrayHelper.fillIdentity(this.indices, newN);
 
             // 3.2: Transposing points. This should fit in cache for reasonable dimensions.
             for (int i = 0; i < newN; ++i) {
@@ -98,6 +102,9 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
                     transposedPoints[j][i] = this.points[i][j];
                 }
             }
+
+            sorter.compressCoordinates(transposedPoints[1], indices, compressedOrdinates, 0, newN);
+            ArrayHelper.fillIdentity(indices, newN);
 
             // 3.3: Calling the actual sorting
             if (pool != null && makesSenseRunInParallel(n, dim)) {
@@ -155,12 +162,12 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
     protected abstract RankQueryStructure createStructure(int maximumPoints);
 
     private int sweepA(int from, int until) {
-        double[] local = transposedPoints[1];
+        int[] local = compressedOrdinates;
         RankQueryStructure.RangeHandle rankQuery = this.rankQuery.createHandle(from, from, until, indices, local);
         int minOverflow = until;
         for (int i = from; i < until; ++i) {
             int curr = indices[i];
-            double currY = local[curr];
+            int currY = local[curr];
             int result = Math.max(ranks[curr], rankQuery.getMaximumWithKeyAtMost(currY, ranks[curr]) + 1);
             ranks[curr] = result;
             if (result <= maximalMeaningfulRank) {
@@ -173,7 +180,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
     }
 
     private int sweepB(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int tempFrom) {
-        double[] local = transposedPoints[1];
+        int[] local = compressedOrdinates;
         RankQueryStructure.RangeHandle rankQuery = this.rankQuery.createHandle(tempFrom, goodFrom, goodUntil, indices, local);
         int goodI = goodFrom;
         int minOverflow = weakUntil;

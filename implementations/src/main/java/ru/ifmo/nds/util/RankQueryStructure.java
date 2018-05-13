@@ -12,7 +12,7 @@ public abstract class RankQueryStructure {
      * @param until the maximum exclusive index of the storage the handle is allowed to use
      * @return the range handle.
      */
-    public abstract RangeHandle createHandle(int storageStart, int from, int until, int[] indices, double[] keys);
+    public abstract RangeHandle createHandle(int storageStart, int from, int until, int[] indices, int[] keys);
 
     public abstract static class RangeHandle {
         /**
@@ -26,7 +26,7 @@ public abstract class RankQueryStructure {
          * @param key the key.
          * @param value the value.
          */
-        public abstract void put(double key, int value);
+        public abstract void put(int key, int value);
 
         /**
          * Returns a maximum value, among those which were added to the structure previously
@@ -46,6 +46,6 @@ public abstract class RankQueryStructure {
          * @param minimumMeaningfulAnswer the minimum meaningful answer to return.
          * @return the maximum found value for another key above this key.
          */
-        public abstract int getMaximumWithKeyAtMost(double key, int minimumMeaningfulAnswer);
+        public abstract int getMaximumWithKeyAtMost(int key, int minimumMeaningfulAnswer);
     }
 }
