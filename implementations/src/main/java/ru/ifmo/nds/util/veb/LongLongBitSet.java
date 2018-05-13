@@ -37,13 +37,13 @@ final class LongLongBitSet extends VanEmdeBoasSet {
         if (index <= min) {
             return -1;
         }
-        int h = hi(index), l = lo(index);
+        int h = hi(index);
         long ch = clusters[h];
-        if (l <= VanEmdeBoasSet.min(ch)) {
+        if (((ch << ~index) << 1) == 0) {
             h = VanEmdeBoasSet.prev(summary, h);
             return h < 0 ? min : join(h, VanEmdeBoasSet.max(clusters[h]));
         } else {
-            return join(h, VanEmdeBoasSet.prev(ch, l));
+            return join(h, VanEmdeBoasSet.prev(ch, index));
         }
     }
 
@@ -55,13 +55,13 @@ final class LongLongBitSet extends VanEmdeBoasSet {
         if (index < min) {
             return min;
         }
-        int h = hi(index), l = lo(index);
+        int h = hi(index);
         long ch = clusters[h];
-        if (l >= VanEmdeBoasSet.max(ch)) {
+        if (((ch >>> index) >> 1) == 0) {
             h = VanEmdeBoasSet.next(summary, h);
             return h >= 64 ? max : join(h, VanEmdeBoasSet.min(clusters[h]));
         } else {
-            return join(h, VanEmdeBoasSet.next(ch, l));
+            return join(h, VanEmdeBoasSet.next(ch, index));
         }
     }
 
@@ -72,7 +72,7 @@ final class LongLongBitSet extends VanEmdeBoasSet {
         } else if (index == min || index == max) {
             return true;
         }
-        return VanEmdeBoasSet.contains(clusters[hi(index)], lo(index));
+        return VanEmdeBoasSet.contains(clusters[hi(index)], index);
     }
 
     @Override
@@ -96,11 +96,11 @@ final class LongLongBitSet extends VanEmdeBoasSet {
                 max = index;
                 index = tmp;
             }
-            int l = lo(index), h = hi(index);
+            int h = hi(index);
             if (clusters[h] == 0) {
                 summary |= 1L << h;
             }
-            clusters[h] |= 1L << l;
+            clusters[h] |= 1L << index;
         }
     }
 
@@ -124,8 +124,8 @@ final class LongLongBitSet extends VanEmdeBoasSet {
             }
             max = newMax;
         } else if (min < index && index < max) {
-            int l = lo(index), h = hi(index);
-            clusters[h] &= ~(1L << l);
+            int h = hi(index);
+            clusters[h] &= ~(1L << index);
             if (clusters[h] == 0) {
                 summary &= ~(1L << h);
             }
@@ -144,9 +144,6 @@ final class LongLongBitSet extends VanEmdeBoasSet {
 
     private int hi(int index) {
         return index >>> 6;
-    }
-    private int lo(int index) {
-        return index & 63;
     }
     private int join(int hi, int lo) {
         return (hi << 6) ^ lo;

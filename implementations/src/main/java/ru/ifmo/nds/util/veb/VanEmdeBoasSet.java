@@ -41,8 +41,10 @@ public abstract class VanEmdeBoasSet {
                 return new IntLongBitSet();
             case 12:
                 return new LongLongBitSet();
+            case 13:
+                return new LongAnyBitSet();
             default:
-                return new HugeBitSet(scale);
+                return new AnyAnyBitSet(scale);
         }
     }
 

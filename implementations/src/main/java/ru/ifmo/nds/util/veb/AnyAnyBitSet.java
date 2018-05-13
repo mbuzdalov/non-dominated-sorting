@@ -1,6 +1,6 @@
 package ru.ifmo.nds.util.veb;
 
-final class HugeBitSet extends VanEmdeBoasSet {
+final class AnyAnyBitSet extends VanEmdeBoasSet {
     private final int loBits;
     private final int loMask;
     private final VanEmdeBoasSet[] clusters;
@@ -9,7 +9,7 @@ final class HugeBitSet extends VanEmdeBoasSet {
 
     private int min, max;
 
-    HugeBitSet(int scale) {
+    AnyAnyBitSet(int scale) {
         limit = 1 << scale;
         min = limit;
         max = -1;

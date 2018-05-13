@@ -57,9 +57,7 @@ public class VanEmdeBoasSetTest {
                             vn = -1;
                         }
                         int nsb = bit.nextSetBit(index + 1);
-                        if (nsb != vn) {
-                            Assert.assertEquals(bit.nextSetBit(index + 1), vn);
-                        }
+                        Assert.assertEquals(nsb, vn);
                         break;
                     }
                     case 4: {

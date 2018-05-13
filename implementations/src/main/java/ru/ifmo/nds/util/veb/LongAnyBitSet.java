@@ -1,16 +1,17 @@
 package ru.ifmo.nds.util.veb;
 
-final class IntLongBitSet extends VanEmdeBoasSet {
-    private static final int limit = 1 << 11;
-    private final int[] clusters;
-    private long summary;
+final class LongAnyBitSet extends VanEmdeBoasSet {
+    private static final int limit = 1 << 13;
+    private final long[] clusters;
+    private IntIntBitSet summary;
+
     private int min, max;
 
-    IntLongBitSet() {
+    LongAnyBitSet() {
         min = limit;
         max = -1;
-        clusters = new int[64];
-        summary = 0;
+        clusters = new long[128];
+        summary = new IntIntBitSet(7);
     }
 
     @Override
@@ -37,9 +38,9 @@ final class IntLongBitSet extends VanEmdeBoasSet {
             return -1;
         }
         int h = hi(index);
-        int ch = clusters[h];
+        long ch = clusters[h];
         if (((ch << ~index) << 1) == 0) {
-            h = VanEmdeBoasSet.prev(summary, h);
+            h = summary.prev(h);
             return h < 0 ? min : join(h, VanEmdeBoasSet.max(clusters[h]));
         } else {
             return join(h, VanEmdeBoasSet.prev(ch, index));
@@ -55,10 +56,10 @@ final class IntLongBitSet extends VanEmdeBoasSet {
             return min;
         }
         int h = hi(index);
-        int ch = clusters[h];
+        long ch = clusters[h];
         if (((ch >>> index) >> 1) == 0) {
-            h = VanEmdeBoasSet.next(summary, h);
-            return h >= 64 ? max : join(h, VanEmdeBoasSet.min(clusters[h]));
+            h = summary.next(h);
+            return h >= 128 ? max : join(h, VanEmdeBoasSet.min(clusters[h]));
         } else {
             return join(h, VanEmdeBoasSet.next(ch, index));
         }
@@ -97,9 +98,9 @@ final class IntLongBitSet extends VanEmdeBoasSet {
             }
             int h = hi(index);
             if (clusters[h] == 0) {
-                summary |= 1L << h;
+                summary.add(h);
             }
-            clusters[h] |= 1 << index;
+            clusters[h] |= 1L << index;
         }
     }
 
@@ -124,9 +125,9 @@ final class IntLongBitSet extends VanEmdeBoasSet {
             max = newMax;
         } else if (min < index && index < max) {
             int h = hi(index);
-            clusters[h] &= ~(1 << index);
+            clusters[h] &= ~(1L << index);
             if (clusters[h] == 0) {
-                summary &= ~(1L << h);
+                summary.remove(h);
             }
         }
     }
@@ -135,16 +136,16 @@ final class IntLongBitSet extends VanEmdeBoasSet {
     public void clear() {
         min = limit;
         max = -1;
-        for (int i = VanEmdeBoasSet.min(summary); i < 64; i = VanEmdeBoasSet.next(summary, i)) {
+        for (int i = summary.min(); i < 128; i = summary.next(i)) {
             clusters[i] = 0;
         }
-        summary = 0;
+        summary.clear();
     }
 
     private int hi(int index) {
-        return index >>> 5;
+        return index >>> 6;
     }
     private int join(int hi, int lo) {
-        return (hi << 5) ^ lo;
+        return (hi << 6) ^ lo;
     }
 }
