@@ -44,11 +44,12 @@ final class IntIntBitSet extends VanEmdeBoasSet {
         }
         int h = hi(index), l = lo(index);
         int ch = clusters[h];
-        if (((ch << ~l) << 1) == 0) {
+        int chs = (ch << ~l) << 1;
+        if (chs == 0) {
             h = VanEmdeBoasSet.prev(summary, h);
             return h < 0 ? min : join(h, VanEmdeBoasSet.max(clusters[h]));
         } else {
-            return join(h, VanEmdeBoasSet.prev(ch, l));
+            return join(h, l - 1 - Integer.numberOfLeadingZeros(chs));
         }
     }
 
@@ -62,11 +63,12 @@ final class IntIntBitSet extends VanEmdeBoasSet {
         }
         int h = hi(index), l = lo(index);
         int ch = clusters[h];
-        if (((ch >>> l) >>> 1) == 0) {
+        int chs = (ch >>> l) >>> 1;
+        if (chs == 0) {
             h = VanEmdeBoasSet.next(summary, h);
             return h >= clusters.length ? max : join(h, VanEmdeBoasSet.min(clusters[h]));
         } else {
-            return join(h, VanEmdeBoasSet.next(ch, l));
+            return join(h, l + 1 + Integer.numberOfTrailingZeros(chs));
         }
     }
 
