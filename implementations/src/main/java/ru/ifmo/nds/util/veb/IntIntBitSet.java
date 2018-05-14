@@ -1,14 +1,12 @@
 package ru.ifmo.nds.util.veb;
 
 final class IntIntBitSet extends VanEmdeBoasSet {
+    private static final int limit = 1 << 10;
     private final int[] clusters;
-    private final int limit;
     private int summary;
-
     private int min, max;
 
     IntIntBitSet(int scale) {
-        limit = 1 << scale;
         min = limit;
         max = -1;
         clusters = new int[1 << (scale - 5)];
