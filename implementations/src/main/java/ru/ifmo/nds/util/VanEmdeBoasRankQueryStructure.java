@@ -34,19 +34,14 @@ public class VanEmdeBoasRankQueryStructure extends RankQueryStructure {
 
         @Override
         public void put(int key, int value) {
-            if (set.contains(key)) {
-                if (values[key] >= value) {
-                    return;
-                }
-                values[key] = value;
-            } else {
-                int prev = set.prev(key);
-                if (prev != -1 && values[prev] >= value) {
-                    return;
-                }
-                set.add(key);
-                values[key] = value;
+            int prevInc = set.prevInclusively(key);
+            if (prevInc != -1 && values[prevInc] >= value) {
+                return;
             }
+            if (prevInc != key) {
+                set.add(key);
+            }
+            values[key] = value;
 
             int next;
             while ((next = set.next(key)) < values.length && values[next] <= value) {
@@ -57,9 +52,7 @@ public class VanEmdeBoasRankQueryStructure extends RankQueryStructure {
 
         @Override
         public int getMaximumWithKeyAtMost(int key, int minimumMeaningfulAnswer) {
-            if (!set.contains(key)) {
-                key = set.prev(key);
-            }
+            key = set.prevInclusively(key);
             return key == -1 ? -1 : values[key];
         }
     }

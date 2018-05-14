@@ -16,6 +16,8 @@ public abstract class VanEmdeBoasSet {
 
     public abstract void clear();
 
+    public abstract int prevInclusively(int index);
+
     /**
      * Creates a new Van Emde Boas set that can fit integers from 0 until 2^scale.
      * @param scale the maximum number of bits in the numbers to store.
@@ -58,6 +60,10 @@ public abstract class VanEmdeBoasSet {
         int mask = value & ~(-1 << index);
         return 31 - Integer.numberOfLeadingZeros(mask);
     }
+    static int prevInclusively(int value, int index) {
+        int mask = value & ~(-2 << index);
+        return 31 - Integer.numberOfLeadingZeros(mask);
+    }
     static int next(int value, int index) {
         int mask = value & ((-1 << index) << 1);
         return Integer.numberOfTrailingZeros(mask);
@@ -74,6 +80,10 @@ public abstract class VanEmdeBoasSet {
     }
     static int prev(long value, int index) {
         long mask = value & ~(-1L << index);
+        return 63 - Long.numberOfLeadingZeros(mask);
+    }
+    static int prevInclusively(long value, int index) {
+        long mask = value & ~(-2L << index);
         return 63 - Long.numberOfLeadingZeros(mask);
     }
     static int next(long value, int index) {

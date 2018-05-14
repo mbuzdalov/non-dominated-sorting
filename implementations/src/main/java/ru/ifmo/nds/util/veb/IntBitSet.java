@@ -47,4 +47,9 @@ final class IntBitSet extends VanEmdeBoasSet {
     public void clear() {
         value = 0;
     }
+
+    @Override
+    public int prevInclusively(int index) {
+        return VanEmdeBoasSet.prevInclusively(value, index);
+    }
 }

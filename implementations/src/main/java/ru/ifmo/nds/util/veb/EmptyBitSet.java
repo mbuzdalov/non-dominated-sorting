@@ -49,4 +49,9 @@ final class EmptyBitSet extends VanEmdeBoasSet {
     public void clear() {
         // do nothing
     }
+
+    @Override
+    public int prevInclusively(int index) {
+        return -1;
+    }
 }

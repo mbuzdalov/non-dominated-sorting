@@ -48,6 +48,24 @@ final class LongAnyBitSet extends VanEmdeBoasSet {
     }
 
     @Override
+    public int prevInclusively(int index) {
+        if (index >= max) {
+            return max;
+        }
+        if (index <= min) {
+            return index == min ? min : -1;
+        }
+        int h = hi(index);
+        long chs = clusters[h] << ~index;
+        if (chs == 0) {
+            h = summary.prev(h);
+            return h < 0 ? min : join(h, VanEmdeBoasSet.max(clusters[h]));
+        } else {
+            return index - Long.numberOfLeadingZeros(chs);
+        }
+    }
+
+    @Override
     public int next(int index) {
         if (index >= max) {
             return limit;

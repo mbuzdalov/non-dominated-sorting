@@ -56,6 +56,24 @@ final class AnyAnyBitSet extends VanEmdeBoasSet {
     }
 
     @Override
+    public int prevInclusively(int index) {
+        if (index >= max) {
+            return max;
+        }
+        if (index <= min) {
+            return index == min ? min : -1;
+        }
+        int h = hi(index), l = lo(index);
+        VanEmdeBoasSet ch = clusters[h];
+        if (l < ch.min()) {
+            h = summary.prev(h);
+            return h < 0 ? min : join(h, clusters[h].max());
+        } else {
+            return join(h, ch.prevInclusively(l));
+        }
+    }
+
+    @Override
     public int next(int index) {
         if (index >= max) {
             return limit;

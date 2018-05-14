@@ -36,7 +36,7 @@ public class VanEmdeBoasSetTest {
             int queries = (1 << scale) * 4;
             for (int t = 0; t < queries; ++t) {
                 int index = random.nextInt(1 << scale);
-                switch (random.nextInt(5)) {
+                switch (random.nextInt(6)) {
                     case 0: {
                         veb.add(index);
                         bit.set(index);
@@ -62,6 +62,10 @@ public class VanEmdeBoasSetTest {
                     }
                     case 4: {
                         Assert.assertEquals(bit.previousSetBit(index - 1), veb.prev(index));
+                        break;
+                    }
+                    case 5: {
+                        Assert.assertEquals(bit.previousSetBit(index), veb.prevInclusively(index));
                         break;
                     }
                 }
