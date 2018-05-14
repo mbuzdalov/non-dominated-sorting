@@ -38,12 +38,12 @@ final class LongLongBitSet extends VanEmdeBoasSet {
             return -1;
         }
         int h = hi(index);
-        long ch = clusters[h];
-        if (((ch << ~index) << 1) == 0) {
+        long chs = (clusters[h] << ~index) << 1;
+        if (chs == 0) {
             h = VanEmdeBoasSet.prev(summary, h);
             return h < 0 ? min : join(h, VanEmdeBoasSet.max(clusters[h]));
         } else {
-            return join(h, VanEmdeBoasSet.prev(ch, index));
+            return index - 1 - Long.numberOfLeadingZeros(chs);
         }
     }
 
@@ -56,12 +56,12 @@ final class LongLongBitSet extends VanEmdeBoasSet {
             return min;
         }
         int h = hi(index);
-        long ch = clusters[h];
-        if (((ch >>> index) >> 1) == 0) {
+        long chs = (clusters[h] >>> index) >>> 1;
+        if (chs == 0) {
             h = VanEmdeBoasSet.next(summary, h);
             return h >= 64 ? max : join(h, VanEmdeBoasSet.min(clusters[h]));
         } else {
-            return join(h, VanEmdeBoasSet.next(ch, index));
+            return index + 1 + Long.numberOfTrailingZeros(chs);
         }
     }
 
@@ -142,10 +142,10 @@ final class LongLongBitSet extends VanEmdeBoasSet {
         summary = 0;
     }
 
-    private int hi(int index) {
+    private static int hi(int index) {
         return index >>> 6;
     }
-    private int join(int hi, int lo) {
+    private static int join(int hi, int lo) {
         return (hi << 6) ^ lo;
     }
 }

@@ -1,8 +1,6 @@
 package ru.ifmo.nds.util.veb;
 
 final class IntIntBitSet extends VanEmdeBoasSet {
-    private final int loBits;
-    private final int loMask;
     private final int[] clusters;
     private final int limit;
     private int summary;
@@ -13,9 +11,7 @@ final class IntIntBitSet extends VanEmdeBoasSet {
         limit = 1 << scale;
         min = limit;
         max = -1;
-        loBits = scale / 2;
-        loMask = (1 << loBits) - 1;
-        clusters = new int[1 << (scale - loBits)];
+        clusters = new int[1 << (scale - 5)];
         summary = 0;
     }
 
@@ -42,14 +38,13 @@ final class IntIntBitSet extends VanEmdeBoasSet {
         if (index <= min) {
             return -1;
         }
-        int h = hi(index), l = lo(index);
-        int ch = clusters[h];
-        int chs = (ch << ~l) << 1;
+        int h = hi(index);
+        int chs = (clusters[h] << ~index) << 1;
         if (chs == 0) {
             h = VanEmdeBoasSet.prev(summary, h);
             return h < 0 ? min : join(h, VanEmdeBoasSet.max(clusters[h]));
         } else {
-            return join(h, l - 1 - Integer.numberOfLeadingZeros(chs));
+            return index - 1 - Integer.numberOfLeadingZeros(chs);
         }
     }
 
@@ -61,14 +56,13 @@ final class IntIntBitSet extends VanEmdeBoasSet {
         if (index < min) {
             return min;
         }
-        int h = hi(index), l = lo(index);
-        int ch = clusters[h];
-        int chs = (ch >>> l) >>> 1;
+        int h = hi(index);
+        int chs = (clusters[h] >>> index) >>> 1;
         if (chs == 0) {
             h = VanEmdeBoasSet.next(summary, h);
             return h >= clusters.length ? max : join(h, VanEmdeBoasSet.min(clusters[h]));
         } else {
-            return join(h, l + 1 + Integer.numberOfTrailingZeros(chs));
+            return index + 1 + Integer.numberOfTrailingZeros(chs);
         }
     }
 
@@ -79,7 +73,7 @@ final class IntIntBitSet extends VanEmdeBoasSet {
         } else if (index == min || index == max) {
             return true;
         }
-        return VanEmdeBoasSet.contains(clusters[hi(index)], lo(index));
+        return VanEmdeBoasSet.contains(clusters[hi(index)], index);
     }
 
     @Override
@@ -103,11 +97,11 @@ final class IntIntBitSet extends VanEmdeBoasSet {
                 max = index;
                 index = tmp;
             }
-            int l = lo(index), h = hi(index);
+            int h = hi(index);
             if (clusters[h] == 0) {
                 summary |= 1 << h;
             }
-            clusters[h] |= 1 << l;
+            clusters[h] |= 1 << index;
         }
     }
 
@@ -131,8 +125,8 @@ final class IntIntBitSet extends VanEmdeBoasSet {
             }
             max = newMax;
         } else if (min < index && index < max) {
-            int l = lo(index), h = hi(index);
-            clusters[h] &= ~(1 << l);
+            int h = hi(index);
+            clusters[h] &= ~(1 << index);
             if (clusters[h] == 0) {
                 summary &= ~(1 << h);
             }
@@ -149,13 +143,10 @@ final class IntIntBitSet extends VanEmdeBoasSet {
         summary = 0;
     }
 
-    private int hi(int index) {
-        return index >>> loBits;
+    private static int hi(int index) {
+        return index >>> 5;
     }
-    private int lo(int index) {
-        return index & loMask;
-    }
-    private int join(int hi, int lo) {
-        return (hi << loBits) ^ lo;
+    private static int join(int hi, int lo) {
+        return (hi << 5) ^ lo;
     }
 }
