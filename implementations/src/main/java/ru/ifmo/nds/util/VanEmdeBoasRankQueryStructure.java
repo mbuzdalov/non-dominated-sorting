@@ -38,15 +38,13 @@ public class VanEmdeBoasRankQueryStructure extends RankQueryStructure {
             if (prevInc != -1 && values[prevInc] >= value) {
                 return;
             }
+            values[key] = value;
+            int next;
+            for (int i = key; (next = set.next(i)) < values.length && values[next] <= value; i = next) {
+                set.remove(next);
+            }
             if (prevInc != key) {
                 set.add(key);
-            }
-            values[key] = value;
-
-            int next;
-            while ((next = set.next(key)) < values.length && values[next] <= value) {
-                set.remove(next);
-                key = next; // not completely necessary due to how vEB works
             }
         }
 
