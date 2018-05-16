@@ -67,9 +67,6 @@ public abstract class VanEmdeBoasSet {
         int mask = value & ((-1 << index) << 1);
         return Integer.numberOfTrailingZeros(mask);
     }
-    static boolean contains(int value, int index) {
-        return ((value >>> index) & 1) == 1;
-    }
 
     static int min(long value) {
         return Long.numberOfTrailingZeros(value);
@@ -88,8 +85,5 @@ public abstract class VanEmdeBoasSet {
     static int next(long value, int index) {
         long mask = value & ((-1L << index) << 1);
         return Long.numberOfTrailingZeros(mask);
-    }
-    static boolean contains(long value, int index) {
-        return ((value >>> index) & 1) == 1;
     }
 }
