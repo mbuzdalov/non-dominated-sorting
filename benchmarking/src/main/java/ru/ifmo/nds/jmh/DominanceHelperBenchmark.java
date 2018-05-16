@@ -91,8 +91,4 @@ public class DominanceHelperBenchmark {
             bh.consume(DominanceHelper.strictlyDominates(instance[0], instance[1], size));
         }
     }
-
-    public static void main(String[] args) throws RunnerException {
-        new Runner(new OptionsBuilder().include(DominanceHelperBenchmark.class.getSimpleName()).build()).run();
-    }
 }
