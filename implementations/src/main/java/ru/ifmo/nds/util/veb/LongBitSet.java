@@ -29,11 +29,6 @@ final class LongBitSet extends VanEmdeBoasSet {
     }
 
     @Override
-    public boolean contains(int index) {
-        return VanEmdeBoasSet.contains(value, index);
-    }
-
-    @Override
     public void add(int index) {
         value |= 1L << index;
     }

@@ -10,7 +10,6 @@ public abstract class VanEmdeBoasSet {
     public abstract int prev(int index);
     public abstract int next(int index);
 
-    public abstract boolean contains(int index);
     public abstract void add(int index);
     public abstract void remove(int index);
 

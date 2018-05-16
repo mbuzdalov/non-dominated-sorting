@@ -31,11 +31,6 @@ final class EmptyBitSet extends VanEmdeBoasSet {
     }
 
     @Override
-    public boolean contains(int index) {
-        return false;
-    }
-
-    @Override
     public void add(int index) {
         // do nothing
     }

@@ -93,11 +93,6 @@ final class AnyAnyBitSet extends VanEmdeBoasSet {
     }
 
     @Override
-    public boolean contains(int index) {
-        return index == min || index == max || index > min && index < max && clusters[hi(index)].contains(lo(index));
-    }
-
-    @Override
     public void add(int index) {
         if (max < 0) {
             min = max = index;

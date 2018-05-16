@@ -86,16 +86,6 @@ final class LongLongBitSet extends VanEmdeBoasSet {
     }
 
     @Override
-    public boolean contains(int index) {
-        if (max < 0) {
-            return false;
-        } else if (index == min || index == max) {
-            return true;
-        }
-        return VanEmdeBoasSet.contains(clusters[hi(index)], index);
-    }
-
-    @Override
     public void add(int index) {
         if (max < 0) {
             min = max = index;
