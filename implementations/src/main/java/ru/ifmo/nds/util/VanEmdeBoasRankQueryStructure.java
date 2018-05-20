@@ -34,18 +34,7 @@ public class VanEmdeBoasRankQueryStructure extends RankQueryStructure {
 
         @Override
         public void put(int key, int value) {
-            int prevInc = set.prevInclusively(key);
-            if (prevInc != -1 && values[prevInc] >= value) {
-                return;
-            }
-            values[key] = value;
-            int next;
-            for (int i = key; (next = set.next(i)) < values.length && values[next] <= value; i = next) {
-                set.remove(next);
-            }
-            if (prevInc != key) {
-                set.add(key);
-            }
+            set.setEnsuringMonotonicity(key, 0, value, values);
         }
 
         @Override

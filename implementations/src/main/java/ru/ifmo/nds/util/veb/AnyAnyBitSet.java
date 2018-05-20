@@ -164,6 +164,159 @@ final class AnyAnyBitSet extends VanEmdeBoasSet {
         summary.clear();
     }
 
+    private boolean cleanupMidMax(int from, int offset, int value, int[] values) {
+        if (!summary.isEmpty()) {
+            for (int i = from == -1 ? summary.min() : summary.next(from); i < clusters.length; i = summary.next(i)) {
+                clusters[i].cleanupUpwards(offset + (i << loBits), value, values);
+                if (clusters[i].isEmpty()) {
+                    summary.remove(i);
+                } else {
+                    return false;
+                }
+            }
+        }
+        return values[offset + max] <= value;
+    }
+
+    @Override
+    public void setEnsuringMonotonicity(int index, int offset, int value, int[] values) {
+        if (max == -1) {
+            // The set was empty. Just set the value.
+            min = max = index;
+            values[offset + index] = value;
+        } else if (min == max) {
+            if (min > index || values[offset + min] < value) {
+                // We definitely update the values.
+                values[offset + index] = value;
+                if (min < index) {
+                    max = index;
+                } else { // also includes min == index
+                    min = index;
+                }
+                if (max > index && values[offset + max] <= value) {
+                    max = min;
+                }
+            } // else we just do not update.
+        } else {
+            if (index < min) {
+                // First of all, insert ourselves.
+                values[offset + index] = value;
+                int oldMin = min;
+                min = index;
+
+                if (values[offset + oldMin] > value) {
+                    // Add the old minimum and break out.
+                    int h = hi(oldMin), l = lo(oldMin);
+                    VanEmdeBoasSet ch = clusters[h];
+                    if (ch == EmptyBitSet.INSTANCE) {
+                        clusters[h] = ch = VanEmdeBoasSet.create(loBits);
+                    }
+                    ch.add(l);
+                    summary.add(h);
+                } else {
+                    // Do not add the old minimum, as it is dominated.
+                    if (cleanupMidMax(-1, offset, value, values)) {
+                        max = min;
+                    }
+                }
+            } else if (index == min) {
+                int idx = offset + index;
+                if (values[idx] < value) {
+                    // Replace the value at the minimum, clean up the tail.
+                    values[idx] = value;
+                    if (cleanupMidMax(-1, offset, value, values)) {
+                        max = min;
+                    }
+                }
+            } else if (max <= index) {
+                // We either replace max or add a new index after max
+                if (values[offset + max] < value) {
+                    values[offset + index] = value;
+                    if (max != index) {
+                        int oldMax = max;
+                        max = index;
+                        add(oldMax);
+                    }
+                }
+            } else if (summary.isEmpty()) {
+                if (values[offset + min] < value) {
+                    values[offset + index] = value;
+                    if (values[offset + max] > value) {
+                        // Normal insertion
+                        int h = hi(index), l = lo(index);
+                        summary.add(h);
+                        VanEmdeBoasSet ch = clusters[h];
+                        if (ch == EmptyBitSet.INSTANCE) {
+                            clusters[h] = ch = VanEmdeBoasSet.create(loBits);
+                        }
+                        ch.add(l);
+                    } else {
+                        // Replacement of max
+                        max = index;
+                    }
+                }
+            } else {
+                int h = hi(index), l = lo(index);
+                VanEmdeBoasSet ch = clusters[h];
+                if (ch.min() > l) {
+                    int hPrev = summary.prev(h);
+                    int iPrev = hPrev == -1 ? min : join(hPrev, clusters[hPrev].max());
+                    if (values[offset + iPrev] >= value) {
+                        return;
+                    }
+                } else {
+                    int lPrev = ch.prevInclusively(l);
+                    if (values[offset + (h << loBits) + lPrev] >= value) {
+                        return;
+                    }
+                }
+                if (ch.isEmpty()) {
+                    if (ch == EmptyBitSet.INSTANCE) {
+                        clusters[h] = ch = VanEmdeBoasSet.create(loBits);
+                    }
+                    summary.add(h);
+                }
+                ch.setEnsuringMonotonicity(index & loMask, offset + (h << loBits), value, values);
+                values[offset + index] = value;
+                if (ch.max() == l) {
+                    if (cleanupMidMax(h, offset, value, values)) {
+                        max = index;
+                        ch.remove(l);
+                        if (ch.isEmpty()) {
+                            summary.remove(h);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    @Override
+    void cleanupUpwards(int offset, int value, int[] values) {
+        if (values[offset + max] <= value) {
+            clear();
+        } else if (values[offset + min] <= value) {
+            if (!summary.isEmpty()) {
+                // need to cleanup at least something
+                for (int i = summary.min(); i < clusters.length; i = summary.next(i)) {
+                    clusters[i].cleanupUpwards(offset + (i << loBits), value, values);
+                    if (!clusters[i].isEmpty()) {
+                        int min = clusters[i].min();
+                        this.min = min + (i << loBits);
+                        clusters[i].remove(min);
+                        if (clusters[i].isEmpty()) {
+                            summary.remove(i);
+                        }
+                        return;
+                    }
+                    summary.remove(i);
+                }
+            }
+            // summary is empty here
+            min = max;
+        }
+    }
+
     private int hi(int index) {
         return index >>> loBits;
     }

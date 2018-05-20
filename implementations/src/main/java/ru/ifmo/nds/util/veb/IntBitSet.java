@@ -47,4 +47,14 @@ final class IntBitSet extends VanEmdeBoasSet {
     public int prevInclusively(int index) {
         return VanEmdeBoasSet.prevInclusively(value, index);
     }
+
+    @Override
+    public void setEnsuringMonotonicity(int index, int offset, int newValue, int[] allValues) {
+        value = VanEmdeBoasSet.setEnsuringMonotonicity(value, index, offset, newValue, allValues);
+    }
+
+    @Override
+    void cleanupUpwards(int offset, int value, int[] values) {
+        this.value = VanEmdeBoasSet.cleanupUpwards(this.value, offset, value, values);
+    }
 }

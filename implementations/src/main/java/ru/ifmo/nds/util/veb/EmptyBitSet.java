@@ -32,7 +32,7 @@ final class EmptyBitSet extends VanEmdeBoasSet {
 
     @Override
     public void add(int index) {
-        // do nothing
+        throw new UnsupportedOperationException("EmptyBitSet is immutable");
     }
 
     @Override
@@ -48,5 +48,15 @@ final class EmptyBitSet extends VanEmdeBoasSet {
     @Override
     public int prevInclusively(int index) {
         return -1;
+    }
+
+    @Override
+    public void setEnsuringMonotonicity(int index, int offset, int value, int[] values) {
+        throw new UnsupportedOperationException("EmptyBitSet is immutable");
+    }
+
+    @Override
+    void cleanupUpwards(int offset, int value, int[] values) {
+        // do nothing
     }
 }

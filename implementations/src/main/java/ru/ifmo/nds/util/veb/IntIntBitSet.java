@@ -150,6 +150,149 @@ final class IntIntBitSet extends VanEmdeBoasSet {
         summary = 0;
     }
 
+    private boolean cleanupMidMax(int from, int offset, int value, int[] values) {
+        if (summary != 0) {
+            for (int i = from == -1 ? VanEmdeBoasSet.min(summary) : VanEmdeBoasSet.next(summary, from);
+                     i < clusters.length;
+                     i = VanEmdeBoasSet.next(summary, i)) {
+                clusters[i] = VanEmdeBoasSet.cleanupUpwards(clusters[i], offset + (i << 5), value, values);
+                if (clusters[i] == 0) {
+                    summary ^= 1 << i;
+                } else {
+                    return false;
+                }
+            }
+        }
+        return values[offset + max] <= value;
+    }
+
+    @Override
+    public void setEnsuringMonotonicity(int index, int offset, int value, int[] values) {
+        if (max == -1) {
+            // The set was empty. Just set the value.
+            min = max = index;
+            values[offset + index] = value;
+        } else if (min == max) {
+            if (min > index || values[offset + min] < value) {
+                // We definitely update the values.
+                values[offset + index] = value;
+                if (min < index) {
+                    max = index;
+                } else { // also includes min == index
+                    min = index;
+                }
+                if (max > index && values[offset + max] <= value) {
+                    max = min;
+                }
+            } // else we just do not update.
+        } else {
+            if (index < min) {
+                // First of all, insert ourselves.
+                values[offset + index] = value;
+                int oldMin = min;
+                min = index;
+
+                if (values[offset + oldMin] > value) {
+                    // Add the old minimum and break out.
+                    int h = hi(oldMin);
+                    clusters[h] |= 1 << oldMin;
+                    summary |= 1 << h;
+                } else {
+                    // Do not add the old minimum, as it is dominated.
+                    if (cleanupMidMax(-1, offset, value, values)) {
+                        max = min;
+                    }
+                }
+            } else if (index == min) {
+                int idx = offset + index;
+                if (values[idx] < value) {
+                    // Replace the value at the minimum, clean up the tail.
+                    values[idx] = value;
+                    if (cleanupMidMax(-1, offset, value, values)) {
+                        max = min;
+                    }
+                }
+            } else if (max <= index) {
+                // We either replace max or add a new index after max
+                if (values[offset + max] < value) {
+                    values[offset + index] = value;
+                    if (max != index) {
+                        int oldMax = max;
+                        max = index;
+                        add(oldMax);
+                    }
+                }
+            } else if (summary == 0) {
+                if (values[offset + min] < value) {
+                    values[offset + index] = value;
+                    if (values[offset + max] > value) {
+                        // Normal insertion
+                        int h = hi(index);
+                        clusters[h] |= 1 << index;
+                        summary |= 1 << h;
+                    } else {
+                        // Replacement of max
+                        max = index;
+                    }
+                }
+            } else {
+                int h = hi(index);
+                int greaterThanCurrentMask = (-1 << index) << 1;
+                int upTo = clusters[h] & ~greaterThanCurrentMask;
+                if (upTo == 0) {
+                    int hPrev = VanEmdeBoasSet.prev(summary, h);
+                    int iPrev = hPrev == -1 ? min : join(hPrev, VanEmdeBoasSet.max(clusters[hPrev]));
+                    if (values[offset + iPrev] >= value) {
+                        return;
+                    }
+                } else {
+                    int lPrev = 31 - Integer.numberOfLeadingZeros(upTo);
+                    if (values[offset + (h << 5) + lPrev] >= value) {
+                        return;
+                    }
+                }
+                summary |= 1 << h;
+                clusters[h] = VanEmdeBoasSet.setEnsuringMonotonicity(clusters[h], index & 31, offset + (h << 5), value, values);
+                values[offset + index] = value;
+                if ((clusters[h] & greaterThanCurrentMask) == 0) {
+                    if (cleanupMidMax(h, offset, value, values)) {
+                        max = index;
+                        clusters[h] ^= 1 << index;
+                        if (clusters[h] == 0) {
+                            summary ^= 1 << h;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    @Override
+    void cleanupUpwards(int offset, int value, int[] values) {
+        if (values[offset + max] <= value) {
+            clear();
+        } else if (values[offset + min] <= value) {
+            if (summary != 0) {
+                // need to cleanup at least something
+                for (int i = VanEmdeBoasSet.min(summary); i < clusters.length; i = VanEmdeBoasSet.next(summary, i)) {
+                    clusters[i] = VanEmdeBoasSet.cleanupUpwards(clusters[i], offset + (i << 5), value, values);
+                    if (clusters[i] != 0) {
+                        int min = VanEmdeBoasSet.min(clusters[i]);
+                        this.min = min + (i << 5);
+                        clusters[i] ^= 1 << min;
+                        if (clusters[i] == 0) {
+                            summary ^= 1 << i;
+                        }
+                        return;
+                    }
+                    summary ^= 1 << i;
+                }
+            }
+            // summary == 0 here
+            min = max;
+        }
+    }
+
     private static int hi(int index) {
         return index >>> 5;
     }
