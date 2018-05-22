@@ -41,7 +41,7 @@ public final class RedBlackRankQueryStructure extends RankQueryStructure {
         }
 
         @Override
-        public void put(int key, int value) {
+        public RangeHandle put(int key, int value) {
             Node place = minNodeAfterExactByValue(root, value);
             if (place == null || place.key > key) {
                 Node insertionHint = null;
@@ -66,6 +66,7 @@ public final class RedBlackRankQueryStructure extends RankQueryStructure {
                     insertionHint.key = key;
                 }
             }
+            return this;
         }
 
         @Override

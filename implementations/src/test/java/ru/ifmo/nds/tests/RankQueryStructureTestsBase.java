@@ -36,7 +36,7 @@ public abstract class RankQueryStructureTestsBase {
                     if (random.nextBoolean()) {
                         int keyIndex = random.nextInt(differentPoints);
                         int newValue = random.nextInt(100);
-                        handle.put(keys[keyIndex], newValue);
+                        handle = handle.put(keys[keyIndex], newValue);
                         values[keyIndex] = Math.max(values[keyIndex], newValue);
                     } else {
                         int q = random.nextInt(upperBound);

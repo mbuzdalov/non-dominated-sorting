@@ -25,8 +25,9 @@ public abstract class RankQueryStructure {
          *
          * @param key the key.
          * @param value the value.
+         * @return the same handle or a new improved handle on the same range.
          */
-        public abstract void put(int key, int value);
+        public abstract RangeHandle put(int key, int value);
 
         /**
          * Returns a maximum value, among those which were added to the structure previously

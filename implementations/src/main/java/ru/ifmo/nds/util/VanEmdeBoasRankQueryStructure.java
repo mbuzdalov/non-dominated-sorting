@@ -33,8 +33,9 @@ public class VanEmdeBoasRankQueryStructure extends RankQueryStructure {
         }
 
         @Override
-        public void put(int key, int value) {
+        public RangeHandle put(int key, int value) {
             set.setEnsuringMonotonicity(key, 0, value, values);
+            return this;
         }
 
         @Override

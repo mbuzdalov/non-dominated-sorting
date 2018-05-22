@@ -54,13 +54,14 @@ public final class FenwickRankQueryStructure extends RankQueryStructure {
         }
 
         @Override
-        public void put(int key, int value) {
+        public RangeHandle put(int key, int value) {
             int fwi = indexFor(key);
             while (fwi < size) {
                 int idx = offset + fwi;
                 values[idx] = Math.max(values[idx], value);
                 fwi |= fwi + 1;
             }
+            return this;
         }
 
         @Override
