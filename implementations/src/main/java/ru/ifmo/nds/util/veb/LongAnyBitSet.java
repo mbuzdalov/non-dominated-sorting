@@ -167,23 +167,30 @@ final class LongAnyBitSet extends VanEmdeBoasSet {
 
     @Override
     public void setEnsuringMonotonicity(int index, int offset, int value, int[] values) {
-        if (max == -1) {
-            // The set was empty. Just set the value.
-            min = max = index;
-            values[offset + index] = value;
-        } else if (min == max) {
-            if (min > index || values[offset + min] < value) {
-                // We definitely update the values.
+        if (min == max) {
+            // Only one element is stored. Consider where we fall...
+            if (index < min) {
                 values[offset + index] = value;
-                if (min < index) {
+                min = index;
+                if (values[offset + max] <= value) {
                     max = index;
-                } else { // also includes min == index
-                    min = index;
                 }
-                if (max > index && values[offset + max] <= value) {
-                    max = min;
+            } else if (index == min) {
+                int oi = offset + index;
+                if (values[oi] < value) {
+                    values[oi] = value;
                 }
-            } // else we just do not update.
+            } else {
+                if (values[offset + min] < value) {
+                    values[offset + index] = value;
+                    max = index;
+                }
+            }
+        } else if (max == -1) {
+            // The set was empty. Just set the value.
+            min = index;
+            max = index;
+            values[offset + index] = value;
         } else {
             if (index < min) {
                 // First of all, insert ourselves.
