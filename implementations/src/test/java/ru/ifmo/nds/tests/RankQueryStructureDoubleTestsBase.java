@@ -7,25 +7,25 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import ru.ifmo.nds.util.ArrayHelper;
-import ru.ifmo.nds.util.RankQueryStructure;
+import ru.ifmo.nds.util.RankQueryStructureDouble;
 
-public abstract class RankQueryStructureTestsBase {
-    protected abstract RankQueryStructure createStructure(int maximumPoints);
+public abstract class RankQueryStructureDoubleTestsBase {
+    protected abstract RankQueryStructureDouble createStructure(int maximumPoints);
 
     @Test
     public void randomSmokeTesting() {
         Random random = new Random(7276572326788L);
         for (int upperBound : new int[] { 30, 60, 1024, 2048, 4096, 8192, 16012, 32716}) {
-            RankQueryStructure structure = createStructure(upperBound);
+            RankQueryStructureDouble structure = createStructure(upperBound);
             int[] indices = new int[upperBound];
             ArrayHelper.fillIdentity(indices, upperBound);
             for (int times = 0; times < 10; ++times) {
                 int differentPoints = random.nextInt(upperBound) + 1;
-                int[] keys = new int[differentPoints];
+                double[] keys = new double[differentPoints];
                 for (int i = 0; i < differentPoints; ++i) {
-                    keys[i] = random.nextInt(upperBound);
+                    keys[i] = random.nextDouble();
                 }
-                RankQueryStructure.RangeHandle handle = structure.createHandle(0, 0, differentPoints, indices, keys);
+                RankQueryStructureDouble.RangeHandle handle = structure.createHandle(0, 0, differentPoints, indices, keys);
                 Arrays.sort(keys);
 
                 int[] values = new int[differentPoints];

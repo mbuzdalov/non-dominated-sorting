@@ -2,12 +2,27 @@ package ru.ifmo.nds.util;
 
 import ru.ifmo.nds.util.veb.VanEmdeBoasSet;
 
-public class VanEmdeBoasRankQueryStructure extends RankQueryStructure {
+public class VanEmdeBoasRankQueryStructureInt extends RankQueryStructureInt {
     private final EmptyOrSingleHandle smallHandle;
 
-    public VanEmdeBoasRankQueryStructure(int maximumPoints) {
+    public VanEmdeBoasRankQueryStructureInt(int maximumPoints) {
         VanEmdeBoasRangeHandle bigHandle = new VanEmdeBoasRangeHandle(maximumPoints);
         smallHandle = new EmptyOrSingleHandle(bigHandle);
+    }
+
+    @Override
+    public String getName() {
+        return "van Emde Boas Tree";
+    }
+
+    @Override
+    public int maximumPoints() {
+        return smallHandle.forTwoOrMore.values.length;
+    }
+
+    @Override
+    public boolean supportsMultipleThreads() {
+        return false;
     }
 
     @Override

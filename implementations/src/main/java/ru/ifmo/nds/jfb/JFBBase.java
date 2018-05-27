@@ -9,18 +9,16 @@ import java.util.concurrent.RecursiveTask;
 import ru.ifmo.nds.NonDominatedSorting;
 import ru.ifmo.nds.util.*;
 
-public abstract class AbstractJFBSorting extends NonDominatedSorting {
+public abstract class JFBBase extends NonDominatedSorting {
     private static final int FORK_JOIN_THRESHOLD = 400;
 
     // Shared resources (int[] indices from super also belongs here)
     int[] ranks;
 
     // Data which is immutable throughout the actual sorting.
-    double[][] points;
+    private double[][] points;
     double[][] transposedPoints;
     int maximalMeaningfulRank;
-
-    private int[] compressedOrdinates;
 
     // This is used in preparation phase or in 2D-only sweep.
     private int[] internalIndices;
@@ -28,15 +26,24 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
 
     // Data which is interval-shared between threads.
     private double[] medianSwap;
-    private RankQueryStructure rankQuery;
     private SplitMergeHelper splitMerge;
+    private HybridAlgorithmWrapper.Instance hybrid;
 
     private ForkJoinPool pool;
 
     private final int allowedThreads;
+    private final String nameAddend;
 
-    AbstractJFBSorting(int maximumPoints, int maximumDimension, int allowedThreads) {
+    JFBBase(int maximumPoints,
+            int maximumDimension,
+            int allowedThreads,
+            HybridAlgorithmWrapper hybridWrapper,
+            String nameAddend) {
         super(maximumPoints, maximumDimension);
+        if (!hybridWrapper.supportsMultipleThreads()) {
+            allowedThreads = 1;
+        }
+        this.nameAddend = nameAddend + ", hybrid: " + hybridWrapper.getName();
 
         if (allowedThreads != 1 && makesSenseRunInParallel(maximumPoints, maximumDimension)) {
             pool = allowedThreads > 1 ? new ForkJoinPool(allowedThreads) : new ForkJoinPool();
@@ -49,13 +56,12 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         ranks = new int[maximumPoints];
         points = new double[maximumPoints][];
         transposedPoints = new double[maximumDimension][maximumPoints];
-        rankQuery = createStructure(maximumPoints);
 
         internalIndices = new int[maximumPoints];
         lastFrontOrdinates = new double[maximumPoints];
         splitMerge = new SplitMergeHelper(maximumPoints);
 
-        compressedOrdinates = new int[maximumPoints];
+        hybrid = hybridWrapper.create(new StateAccessor());
     }
 
     @Override
@@ -63,18 +69,23 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         medianSwap = null;
         ranks = null;
         points = null;
-        rankQuery = null;
         transposedPoints = null;
 
         internalIndices = null;
         lastFrontOrdinates = null;
         splitMerge = null;
-        compressedOrdinates = null;
 
         if (pool != null) {
             pool.shutdown();
             pool = null;
         }
+
+        hybrid = null;
+    }
+
+    @Override
+    public String getName() {
+        return "Jensen-Fortin-Buzdalov, " + getThreadDescription() + ", " + nameAddend;
     }
 
     @Override
@@ -103,7 +114,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
                 }
             }
 
-            sorter.compressCoordinates(transposedPoints[1], indices, compressedOrdinates, 0, newN);
+            postTransposePointHook(newN);
             ArrayHelper.fillIdentity(indices, newN);
 
             // 3.3: Calling the actual sorting
@@ -138,7 +149,7 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         return newUntil;
     }
 
-    final boolean strictlyDominatesAssumingNotSame(int goodIndex, int weakIndex, int maxObj) {
+    private boolean strictlyDominatesAssumingNotSame(int goodIndex, int weakIndex, int maxObj) {
         double[] goodPoint = points[goodIndex];
         double[] weakPoint = points[weakIndex];
         // Comparison in 0 makes no sense, as due to goodIndex < weakIndex the points are <= in this coordinate.
@@ -159,54 +170,10 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         return true;
     }
 
-    protected abstract RankQueryStructure createStructure(int maximumPoints);
+    protected void postTransposePointHook(int newN) {}
 
-    private int sweepA(int from, int until) {
-        int[] local = compressedOrdinates;
-        RankQueryStructure.RangeHandle rankQuery = this.rankQuery.createHandle(from, from, until, indices, local);
-        int minOverflow = until;
-        for (int i = from; i < until; ++i) {
-            int curr = indices[i];
-            int currY = local[curr];
-            int result = Math.max(ranks[curr], rankQuery.getMaximumWithKeyAtMost(currY, ranks[curr]) + 1);
-            ranks[curr] = result;
-            if (result <= maximalMeaningfulRank) {
-                rankQuery = rankQuery.put(currY, result);
-            } else if (minOverflow > i) {
-                minOverflow = i;
-            }
-        }
-        return kickOutOverflowedRanks(minOverflow, until);
-    }
-
-    private int sweepB(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int tempFrom) {
-        int[] local = compressedOrdinates;
-        RankQueryStructure.RangeHandle rankQuery = this.rankQuery.createHandle(tempFrom, goodFrom, goodUntil, indices, local);
-        int goodI = goodFrom;
-        int minOverflow = weakUntil;
-        for (int weakI = weakFrom; weakI < weakUntil; ++weakI) {
-            int weakCurr = indices[weakI];
-            while (goodI < goodUntil && indices[goodI] < weakCurr) {
-                int goodCurr = indices[goodI++];
-                rankQuery = rankQuery.put(local[goodCurr], ranks[goodCurr]);
-            }
-            int result = Math.max(ranks[weakCurr],
-                    rankQuery.getMaximumWithKeyAtMost(local[weakCurr], ranks[weakCurr]) + 1);
-            ranks[weakCurr] = result;
-            if (minOverflow > weakI && result > maximalMeaningfulRank) {
-                minOverflow = weakI;
-            }
-        }
-        return kickOutOverflowedRanks(minOverflow, weakUntil);
-    }
-
-    protected boolean helperAHookCondition(int size, int obj) {
-        return false;
-    }
-
-    protected int helperAHook(int from, int until, int obj) {
-        throw new UnsupportedOperationException("helperAHook not yet implemented");
-    }
+    protected abstract int sweepA(int from, int until);
+    protected abstract int sweepB(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int tempFrom);
 
     private int helperAMain(int from, int until, int obj) {
         ArrayHelper.transplant(transposedPoints[obj], indices, from, until, medianSwap, from);
@@ -249,14 +216,14 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
             return until;
         } else if (obj == 1) {
             return sweepA(from, until);
-        } else if (helperAHookCondition(until - from, obj)) {
-            return helperAHook(from, until, obj);
+        } else if (hybrid.helperAHookCondition(until - from, obj)) {
+            return hybrid.helperAHook(from, until, obj);
         } else {
             return helperAMain(from, until, obj);
         }
     }
 
-    final int updateByPoint(int pointIndex, int from, int until, int obj) {
+    private int updateByPoint(int pointIndex, int from, int until, int obj) {
         int ri = ranks[pointIndex];
         if (ri == maximalMeaningfulRank) {
             return updateByPointCritical(pointIndex, from, until, obj);
@@ -298,14 +265,6 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
             }
         }
         return weak + 1;
-    }
-
-    protected boolean helperBHookCondition(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj) {
-        return false;
-    }
-
-    protected int helperBHook(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj, int tempFrom) {
-        throw new UnsupportedOperationException("helperBHook not yet implemented");
     }
 
     private int helperBMain(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj, int tempFrom) {
@@ -383,8 +342,8 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
                 return helperBWeak1(goodFrom, goodUntil, weakFrom, obj);
             } else if (obj == 1) {
                 return sweepB(goodFrom, goodUntil, weakFrom, weakUntil, tempFrom);
-            } else if (helperBHookCondition(goodFrom, goodUntil, weakFrom, weakUntil, obj)) {
-                return helperBHook(goodFrom, goodUntil, weakFrom, weakUntil, obj, tempFrom);
+            } else if (hybrid.helperBHookCondition(goodFrom, goodUntil, weakFrom, weakUntil, obj)) {
+                return hybrid.helperBHook(goodFrom, goodUntil, weakFrom, weakUntil, obj, tempFrom);
             } else {
                 return helperBMain(goodFrom, goodUntil, weakFrom, weakUntil, obj, tempFrom);
             }
@@ -463,7 +422,43 @@ public abstract class AbstractJFBSorting extends NonDominatedSorting {
         return nPoints > FORK_JOIN_THRESHOLD && dimension > 3;
     }
 
-    String getThreadDescription() {
+    private String getThreadDescription() {
         return allowedThreads == -1 ? "unlimited threads" : allowedThreads + " thread(s)";
+    }
+
+    public class StateAccessor {
+        private StateAccessor() {}
+
+        public final int[] getRanks() {
+            return JFBBase.this.ranks;
+        }
+
+        public final int[] getIndices() {
+            return JFBBase.this.indices;
+        }
+
+        public final double[][] getPoints() {
+            return JFBBase.this.points;
+        }
+
+        public final double[][] getTransposedPoints() {
+            return JFBBase.this.transposedPoints;
+        }
+
+        public final int getMaximalMeaningfulRank() {
+            return JFBBase.this.maximalMeaningfulRank;
+        }
+
+        public final int kickOutOverflowedRanks(int from, int until) {
+            return JFBBase.this.kickOutOverflowedRanks(from, until);
+        }
+
+        public final boolean strictlyDominatesAssumingNotSame(int goodIndex, int weakIndex, int maxObj) {
+            return JFBBase.this.strictlyDominatesAssumingNotSame(goodIndex, weakIndex, maxObj);
+        }
+
+        public final int updateByPoint(int pointIndex, int from, int until, int obj) {
+            return JFBBase.this.updateByPoint(pointIndex, from, until, obj);
+        }
     }
 }

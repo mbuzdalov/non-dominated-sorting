@@ -2,25 +2,40 @@ package ru.ifmo.nds.util;
 
 import java.util.Arrays;
 
-public final class FenwickRankQueryStructure extends RankQueryStructure {
-    private final int[] keys;
+public final class FenwickRankQueryStructureDouble extends RankQueryStructureDouble {
+    private final double[] keys;
     private final int[] values;
 
-    public FenwickRankQueryStructure(int maximumSize) {
-        keys = new int[maximumSize];
+    public FenwickRankQueryStructureDouble(int maximumSize) {
+        keys = new double[maximumSize];
         values = new int[maximumSize];
     }
 
     @Override
-    public RangeHandle createHandle(int storageStart, int from, int until, int[] indices, int[] keys) {
+    public String getName() {
+        return "Fenwick Tree for non-compressed coordinates";
+    }
+
+    @Override
+    public int maximumPoints() {
+        return keys.length;
+    }
+
+    @Override
+    public boolean supportsMultipleThreads() {
+        return true;
+    }
+
+    @Override
+    public RangeHandle createHandle(int storageStart, int from, int until, int[] indices, double[] keys) {
         return new RangeHandleImpl(storageStart, from, until, indices, keys);
     }
 
-    private class RangeHandleImpl extends RankQueryStructure.RangeHandle {
+    private class RangeHandleImpl extends RangeHandle {
         private final int size;
         private final int offset;
 
-        private RangeHandleImpl(int storageStart, int from, int until, int[] indices, int[] k) {
+        private RangeHandleImpl(int storageStart, int from, int until, int[] indices, double[] k) {
             this.offset = storageStart;
             for (int i = from, j = offset; i < until; ++i, ++j) {
                 keys[j] = k[indices[i]];
@@ -28,9 +43,9 @@ public final class FenwickRankQueryStructure extends RankQueryStructure {
             int storageEnd = storageStart + until - from;
             Arrays.sort(keys, storageStart, storageEnd);
             int uniqueEnd = offset + 1;
-            int prev = keys[offset];
+            double prev = keys[offset];
             for (int i = storageStart + 1; i < storageEnd; ++i) {
-                int curr = keys[i];
+                double curr = keys[i];
                 if (curr != prev) {
                     keys[uniqueEnd] = prev = curr;
                     ++uniqueEnd;
@@ -40,7 +55,7 @@ public final class FenwickRankQueryStructure extends RankQueryStructure {
             size = uniqueEnd - offset;
         }
 
-        private int indexFor(int key) {
+        private int indexFor(double key) {
             int left = offset - 1, right = offset + size;
             while (right - left > 1) {
                 int mid = (left + right) >>> 1;
@@ -54,7 +69,7 @@ public final class FenwickRankQueryStructure extends RankQueryStructure {
         }
 
         @Override
-        public RangeHandle put(int key, int value) {
+        public RangeHandle put(double key, int value) {
             int fwi = indexFor(key);
             while (fwi < size) {
                 int idx = offset + fwi;
@@ -65,7 +80,7 @@ public final class FenwickRankQueryStructure extends RankQueryStructure {
         }
 
         @Override
-        public int getMaximumWithKeyAtMost(int key, int minimumMeaningfulAnswer) {
+        public int getMaximumWithKeyAtMost(double key, int minimumMeaningfulAnswer) {
             int fwi = indexFor(key);
             int rv = -1;
             while (fwi >= 0) {

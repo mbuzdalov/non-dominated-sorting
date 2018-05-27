@@ -7,7 +7,7 @@ package ru.ifmo.nds.util;
  * @author Rui Gonçalves
  * @author Maxim Buzdalov
  */
-public final class RedBlackRankQueryStructure extends RankQueryStructure {
+public final class RedBlackRankQueryStructure extends RankQueryStructureDouble {
     private final Node[] allNodes;
 
     public RedBlackRankQueryStructure(int maximumPoints) {
@@ -19,19 +19,34 @@ public final class RedBlackRankQueryStructure extends RankQueryStructure {
     }
 
     @Override
-    public RangeHandle createHandle(int storageStart, int from, int until, int[] indices, int[] values) {
+    public String getName() {
+        return "Red-Black Tree";
+    }
+
+    @Override
+    public int maximumPoints() {
+        return allNodes.length;
+    }
+
+    @Override
+    public boolean supportsMultipleThreads() {
+        return true;
+    }
+
+    @Override
+    public RangeHandle createHandle(int storageStart, int from, int until, int[] indices, double[] values) {
         return new RangeHandleImpl(storageStart);
     }
 
     private static class Node {
-        int key;
+        double key;
         int value;
         int index;
         boolean red;
         Node left, right, parent;
     }
 
-    private final class RangeHandleImpl extends RankQueryStructure.RangeHandle {
+    private final class RangeHandleImpl extends RankQueryStructureDouble.RangeHandle {
         private Node root = null;
         private int size = 0;
         private final int offset;
@@ -41,7 +56,7 @@ public final class RedBlackRankQueryStructure extends RankQueryStructure {
         }
 
         @Override
-        public RangeHandle put(int key, int value) {
+        public RangeHandle put(double key, int value) {
             Node place = minNodeAfterExactByValue(root, value);
             if (place == null || place.key > key) {
                 Node insertionHint = null;
@@ -70,7 +85,7 @@ public final class RedBlackRankQueryStructure extends RankQueryStructure {
         }
 
         @Override
-        public int getMaximumWithKeyAtMost(int key, int minimumMeaningfulAnswer) {
+        public int getMaximumWithKeyAtMost(double key, int minimumMeaningfulAnswer) {
             Node q = maxNodeBeforeExact(root, key);
             return q == null ? -1 : q.value;
         }
@@ -79,7 +94,7 @@ public final class RedBlackRankQueryStructure extends RankQueryStructure {
             node.value = value;
         }
 
-        private Node newNode(int key, int value, Node parent) {
+        private Node newNode(double key, int value, Node parent) {
             int idx = offset + size;
             Node rv = allNodes[idx];
             rv.key = key;
@@ -129,7 +144,7 @@ public final class RedBlackRankQueryStructure extends RankQueryStructure {
             }
         }
 
-        private Node maxNodeBeforeExact(Node node, int key) {
+        private Node maxNodeBeforeExact(Node node, double key) {
             if (node == null) {
                 return null;
             } else {
@@ -138,7 +153,7 @@ public final class RedBlackRankQueryStructure extends RankQueryStructure {
                 int cmp = 1;
                 while (child != null && cmp != 0) {
                     parent = child;
-                    cmp = Integer.compare(key, child.key);
+                    cmp = Double.compare(key, child.key);
                     child = cmp < 0 ? child.left : child.right;
                 }
                 return cmp >= 0 ? parent : predecessor(parent);
@@ -161,13 +176,13 @@ public final class RedBlackRankQueryStructure extends RankQueryStructure {
             }
         }
 
-        private void insert(int key, int value) {
+        private void insert(double key, int value) {
             Node parent = null;
             Node child = root;
             int cmp = 1;
             while (child != null && cmp != 0) {
                 parent = child;
-                cmp = Integer.compare(key, child.key);
+                cmp = Double.compare(key, child.key);
                 child = cmp < 0 ? child.left : child.right;
             }
 

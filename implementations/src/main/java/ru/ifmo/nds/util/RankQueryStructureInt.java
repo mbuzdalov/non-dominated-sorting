@@ -5,7 +5,25 @@ package ru.ifmo.nds.util;
  *
  * @author Maxim Buzdalov
  */
-public abstract class RankQueryStructure {
+public abstract class RankQueryStructureInt {
+    /**
+     * Returns the name of this data structure.
+     * @return the name of this data structure.
+     */
+    public abstract String getName();
+
+    /**
+     * Returns the maximum number of points which is supported by this data structure.
+     * @return the maximum number of points which is supported by this data structure.
+     */
+    public abstract int maximumPoints();
+
+    /**
+     * Returns whether this data structure supports using multiple threads.
+     * @return whether this data structure supports using multiple threads.
+     */
+    public abstract boolean supportsMultipleThreads();
+
     /**
      * Creates a {@link RangeHandle} that uses the storage of the data structure and performs the actual operations.
      * @param from the minimum inclusive index of the storage the handle is allowed to use

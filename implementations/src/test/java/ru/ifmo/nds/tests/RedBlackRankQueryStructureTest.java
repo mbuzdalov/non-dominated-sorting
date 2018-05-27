@@ -1,11 +1,11 @@
 package ru.ifmo.nds.tests;
 
-import ru.ifmo.nds.util.RankQueryStructure;
+import ru.ifmo.nds.util.RankQueryStructureDouble;
 import ru.ifmo.nds.util.RedBlackRankQueryStructure;
 
-public class RedBlackRankQueryStructureTest extends RankQueryStructureTestsBase {
+public class RedBlackRankQueryStructureTest extends RankQueryStructureDoubleTestsBase {
     @Override
-    protected RankQueryStructure createStructure(int maximumPoints) {
+    protected RankQueryStructureDouble createStructure(int maximumPoints) {
         return new RedBlackRankQueryStructure(maximumPoints);
     }
 }
