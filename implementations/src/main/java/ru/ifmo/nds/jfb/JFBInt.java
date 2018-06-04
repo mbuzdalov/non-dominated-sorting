@@ -20,6 +20,13 @@ public class JFBInt extends JFBBase {
     }
 
     @Override
+    protected void closeImpl() {
+        super.closeImpl();
+        rankQuery = null;
+        compressedOrdinates = null;
+    }
+
+    @Override
     protected void postTransposePointHook(int newN) {
         sorter.compressCoordinates(transposedPoints[1], indices, compressedOrdinates, 0, newN);
     }

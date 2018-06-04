@@ -18,6 +18,12 @@ public class JFBDouble extends JFBBase {
     }
 
     @Override
+    protected void closeImpl() {
+        super.closeImpl();
+        rankQuery = null;
+    }
+
+    @Override
     protected int sweepA(int from, int until) {
         double[] local = transposedPoints[1];
         RankQueryStructureDouble.RangeHandle rankQuery = this.rankQuery.createHandle(from, from, until, indices, local);
