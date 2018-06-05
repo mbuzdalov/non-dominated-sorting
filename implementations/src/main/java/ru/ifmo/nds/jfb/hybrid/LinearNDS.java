@@ -25,17 +25,19 @@ public final class LinearNDS extends HybridAlgorithmWrapper {
     }
 
     @Override
-    public HybridAlgorithmWrapper.Instance create(JFBBase.StateAccessor accessor) {
-        return new Instance(accessor);
+    public HybridAlgorithmWrapper.Instance create(int[] ranks, int[] indices, double[][] points, double[][] transposedPoints) {
+        return new Instance(ranks, indices, points);
     }
 
     private static final class Instance extends HybridAlgorithmWrapper.Instance {
-        private final JFBBase.StateAccessor accessor;
+        private final int[] ranks;
         private final int[] indices;
+        private final double[][] points;
 
-        private Instance(JFBBase.StateAccessor accessor) {
-            this.accessor = accessor;
-            this.indices = accessor.getIndices();
+        private Instance(int[] ranks, int[] indices, double[][] points) {
+            this.ranks = ranks;
+            this.indices = indices;
+            this.points = points;
         }
 
         @Override
@@ -48,9 +50,9 @@ public final class LinearNDS extends HybridAlgorithmWrapper {
         }
 
         @Override
-        public int helperAHook(int from, int until, int obj) {
+        public int helperAHook(int from, int until, int obj, int maximalMeaningfulRank) {
             for (int left = from; left < until; ++left) {
-                until = accessor.updateByPoint(indices[left], left + 1, until, obj);
+                until = JFBBase.updateByPoint(ranks, indices, points, maximalMeaningfulRank, indices[left], left + 1, until, obj);
             }
             return until;
         }
@@ -61,13 +63,13 @@ public final class LinearNDS extends HybridAlgorithmWrapper {
         }
 
         @Override
-        public int helperBHook(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj, int tempFrom) {
+        public int helperBHook(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj, int tempFrom, int maximalMeaningfulRank) {
             for (int good = goodFrom, weakMin = weakFrom; good < goodUntil; ++good) {
                 int goodIndex = indices[good];
                 while (weakMin < weakUntil && indices[weakMin] < goodIndex) {
                     ++weakMin;
                 }
-                weakUntil = accessor.updateByPoint(goodIndex, weakMin, weakUntil, obj);
+                weakUntil = JFBBase.updateByPoint(ranks, indices, points, maximalMeaningfulRank, goodIndex, weakMin, weakUntil, obj);
             }
             return weakUntil;
         }

@@ -47,7 +47,7 @@ public class JFBInt extends JFBBase {
                 minOverflow = i;
             }
         }
-        return kickOutOverflowedRanks(minOverflow, until);
+        return kickOutOverflowedRanks(indices, ranks, maximalMeaningfulRank, minOverflow, until);
     }
 
     @Override
@@ -69,6 +69,6 @@ public class JFBInt extends JFBBase {
                 minOverflow = weakI;
             }
         }
-        return kickOutOverflowedRanks(minOverflow, weakUntil);
+        return kickOutOverflowedRanks(indices, ranks, maximalMeaningfulRank, minOverflow, weakUntil);
     }
 }

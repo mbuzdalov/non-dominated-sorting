@@ -23,25 +23,25 @@ public final class ENS extends HybridAlgorithmWrapper {
     }
 
     @Override
-    public HybridAlgorithmWrapper.Instance create(JFBBase.StateAccessor accessor) {
-        return new Instance(accessor, threshold3D, thresholdAll);
+    public HybridAlgorithmWrapper.Instance create(int[] ranks, int[] indices, double[][] points, double[][] transposedPoints) {
+        return new Instance(ranks, indices, points, threshold3D, thresholdAll);
     }
 
     private static final class Instance extends HybridAlgorithmWrapper.Instance {
         private static final int STORAGE_MULTIPLE = 5;
 
-        private final JFBBase.StateAccessor accessor;
         private final int[] space;
         private final int[] ranks;
         private final int[] indices;
+        private final double[][] points;
 
         private final int threshold3D;
         private final int thresholdAll;
 
-        private Instance(JFBBase.StateAccessor accessor, int threshold3D, int thresholdAll) {
-            this.accessor = accessor;
-            this.ranks = accessor.getRanks();
-            this.indices = accessor.getIndices();
+        private Instance(int[] ranks, int[] indices, double[][] points, int threshold3D, int thresholdAll) {
+            this.ranks = ranks;
+            this.indices = indices;
+            this.points = points;
             this.space = new int[STORAGE_MULTIPLE * indices.length];
             this.threshold3D = threshold3D;
             this.thresholdAll = thresholdAll;
@@ -68,7 +68,7 @@ public final class ENS extends HybridAlgorithmWrapper {
             int virtualGoodIndex = space[sliceIndex + 2];
             while (virtualGoodIndex != -1) {
                 int realGoodIndex = space[virtualGoodIndex];
-                if (accessor.strictlyDominatesAssumingNotSame(realGoodIndex, weakIndex, obj)) {
+                if (JFBBase.strictlyDominatesAssumingNotSame(points, realGoodIndex, weakIndex, obj)) {
                     ranks[weakIndex] = 1 + sliceRank;
                     return true;
                 }
@@ -87,13 +87,12 @@ public final class ENS extends HybridAlgorithmWrapper {
         }
 
         @Override
-        public int helperAHook(int from, int until, int obj) {
+        public int helperAHook(int from, int until, int obj, int maximalMeaningfulRank) {
             int sliceOffset = from * STORAGE_MULTIPLE;
             int pointOffset = sliceOffset + 3 * (until - from);
 
             int sliceCurrent = sliceOffset - 3;
             int sliceFirst = -1;
-            int maximalMeaningfulRank = accessor.getMaximalMeaningfulRank();
 
             int minOverflow = until;
             for (int i = from, pointIndex = pointOffset; i < until; ++i) {
@@ -133,7 +132,7 @@ public final class ENS extends HybridAlgorithmWrapper {
                     pointIndex += 2;
                 }
             }
-            return accessor.kickOutOverflowedRanks(minOverflow, until);
+            return JFBBase.kickOutOverflowedRanks(indices, ranks, maximalMeaningfulRank, minOverflow, until);
         }
 
         @Override
@@ -174,7 +173,7 @@ public final class ENS extends HybridAlgorithmWrapper {
         private boolean checkWhetherDominates(int[] array, int goodFrom, int goodUntil, int weakIndex, int obj) {
             for (int good = goodUntil - 1; good >= goodFrom; --good) {
                 int goodIndex = array[good];
-                if (accessor.strictlyDominatesAssumingNotSame(goodIndex, weakIndex, obj)) {
+                if (JFBBase.strictlyDominatesAssumingNotSame(points, goodIndex, weakIndex, obj)) {
                     return true;
                 }
             }
@@ -197,16 +196,17 @@ public final class ENS extends HybridAlgorithmWrapper {
                     minUpdated = weak;
                 }
             }
-            return rank == maximalMeaningfulRank ? accessor.kickOutOverflowedRanks(minUpdated, weakUntil) : weakUntil;
+            return rank == maximalMeaningfulRank
+                    ? JFBBase.kickOutOverflowedRanks(indices, ranks, maximalMeaningfulRank, minUpdated, weakUntil)
+                    : weakUntil;
         }
 
         @Override
-        public int helperBHook(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj, int tempFrom) {
+        public int helperBHook(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj, int tempFrom, int maximalMeaningfulRank) {
             if (goodFrom == goodUntil || weakFrom == weakUntil) {
                 return weakUntil;
             }
             int goodSize = goodUntil - goodFrom;
-            int maximalMeaningfulRank = accessor.getMaximalMeaningfulRank();
 
             int sortedIndicesOffset = tempFrom * STORAGE_MULTIPLE;
             int ranksAndSlicesOffset = sortedIndicesOffset + goodSize;
@@ -283,7 +283,7 @@ public final class ENS extends HybridAlgorithmWrapper {
                         minOverflowed = weak;
                     }
                 }
-                return accessor.kickOutOverflowedRanks(minOverflowed, weakUntil);
+                return JFBBase.kickOutOverflowedRanks(indices, ranks, maximalMeaningfulRank, minOverflowed, weakUntil);
             }
         }
     }

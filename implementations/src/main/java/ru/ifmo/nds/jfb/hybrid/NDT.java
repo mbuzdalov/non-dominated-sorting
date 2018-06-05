@@ -28,12 +28,11 @@ public final class NDT extends HybridAlgorithmWrapper {
     }
 
     @Override
-    public HybridAlgorithmWrapper.Instance create(JFBBase.StateAccessor accessor) {
-        return new Instance(accessor, threshold3D, thresholdAll, treeThreshold);
+    public HybridAlgorithmWrapper.Instance create(int[] ranks, int[] indices, double[][] points, double[][] transposedPoints) {
+        return new Instance(ranks, indices, points, transposedPoints, threshold3D, thresholdAll, treeThreshold);
     }
 
     private static final class Instance extends HybridAlgorithmWrapper.Instance {
-        private final JFBBase.StateAccessor accessor;
         private SplitBuilder splitBuilder;
         private TreeRankNode tree;
 
@@ -48,13 +47,11 @@ public final class NDT extends HybridAlgorithmWrapper {
         private final int thresholdAll;
         private final int threshold;
 
-        private Instance(JFBBase.StateAccessor accessor, int threshold3D, int thresholdAll, int treeThreshold) {
-            this.accessor = accessor;
-
-            this.points = accessor.getPoints();
-            this.indices = accessor.getIndices();
-            this.ranks = accessor.getRanks();
-            this.transposedPoints = accessor.getTransposedPoints();
+        private Instance(int[] ranks, int[] indices, double[][] points, double[][] transposedPoints, int threshold3D, int thresholdAll, int treeThreshold) {
+            this.ranks = ranks;
+            this.indices = indices;
+            this.points = points;
+            this.transposedPoints = transposedPoints;
 
             this.threshold3D = threshold3D;
             this.thresholdAll = thresholdAll;
@@ -82,7 +79,7 @@ public final class NDT extends HybridAlgorithmWrapper {
         }
 
         @Override
-        public int helperAHook(int from, int until, int obj) {
+        public int helperAHook(int from, int until, int obj, int maximalMeaningfulRank) {
             int M = obj + 1;
             Split split = splitBuilder.result(transposedPoints, from, until, indices, M, threshold);
 
@@ -90,7 +87,6 @@ public final class NDT extends HybridAlgorithmWrapper {
                 System.arraycopy(points[indices[i]], 0, localPoints[i], 0, M);
             }
 
-            int maximalMeaningfulRank = accessor.getMaximalMeaningfulRank();
             int minOverflow = until;
             tree = TreeRankNode.EMPTY;
             for (int i = from; i < until; ++i) {
@@ -104,11 +100,11 @@ public final class NDT extends HybridAlgorithmWrapper {
                 }
             }
             tree = null;
-            return accessor.kickOutOverflowedRanks(minOverflow, until);
+            return JFBBase.kickOutOverflowedRanks(indices, ranks, maximalMeaningfulRank, minOverflow, until);
         }
 
         @Override
-        public int helperBHook(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj, int tempFrom) {
+        public int helperBHook(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj, int tempFrom, int maximalMeaningfulRank) {
             int M = obj + 1;
             Split split = splitBuilder.result(transposedPoints, goodFrom, goodUntil, indices, M, threshold);
 
@@ -119,7 +115,6 @@ public final class NDT extends HybridAlgorithmWrapper {
                 System.arraycopy(points[indices[weak]], 0, localPoints[weak], 0, M);
             }
 
-            int maximalMeaningfulRank = accessor.getMaximalMeaningfulRank();
             int minOverflow = weakUntil;
             tree = TreeRankNode.EMPTY;
             for (int good = goodFrom, weak = weakFrom; weak < weakUntil; ++weak) {
@@ -135,7 +130,7 @@ public final class NDT extends HybridAlgorithmWrapper {
                 }
             }
             tree = null;
-            return accessor.kickOutOverflowedRanks(minOverflow, weakUntil);
+            return JFBBase.kickOutOverflowedRanks(indices, ranks, maximalMeaningfulRank, minOverflow, weakUntil);
         }
     }
 }
