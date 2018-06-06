@@ -1,5 +1,7 @@
 package ru.ifmo.nds.ndt;
 
+import ru.ifmo.nds.util.DominanceHelper;
+
 public abstract class TreeNode {
     public abstract TreeNode add(double[] point, Split split, int splitThreshold);
     public abstract boolean dominates(double[] point, Split split);
@@ -58,16 +60,11 @@ public abstract class TreeNode {
         @Override
         public boolean dominates(double[] point, Split split) {
             int maxObj = point.length - 1;
-            pointLoop:
             for (int i = 0; i < size; ++i) {
                 double[] current = points[i];
-                // objective 0 is not compared since points are presorted.
-                for (int o = maxObj; o > 0; --o) {
-                    if (current[o] > point[o]) {
-                        continue pointLoop;
-                    }
+                if (DominanceHelper.strictlyDominatesAssumingNotSame(current, point, maxObj)) {
+                    return true;
                 }
-                return true;
             }
             return false;
         }
