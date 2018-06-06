@@ -243,8 +243,8 @@ public abstract class JFBBase extends NonDominatedSorting {
         double[] wp = points[wi];
         for (int i = goodFrom; i < goodUntil; ++i) {
             int gi = indices[i];
-            int gr = ranks[gi];
-            if (rw <= gr && DominanceHelper.strictlyDominatesAssumingNotSame(points[gi], wp, obj)) {
+            int gr;
+            if (DominanceHelper.strictlyDominatesAssumingNotSame(points[gi], wp, obj) && rw <= (gr = ranks[gi])) {
                 rw = gr + 1;
                 if (gr >= maximalMeaningfulRank) {
                     ranks[wi] = rw;
