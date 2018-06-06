@@ -2,6 +2,7 @@ package ru.ifmo.nds.jfb.hybrid;
 
 import ru.ifmo.nds.jfb.HybridAlgorithmWrapper;
 import ru.ifmo.nds.jfb.JFBBase;
+import ru.ifmo.nds.util.DominanceHelper;
 
 public final class ENS extends HybridAlgorithmWrapper {
     private final int threshold3D;
@@ -66,9 +67,10 @@ public final class ENS extends HybridAlgorithmWrapper {
                 return true;
             }
             int virtualGoodIndex = space[sliceIndex + 2];
+            double[] wp = points[weakIndex];
             while (virtualGoodIndex != -1) {
                 int realGoodIndex = space[virtualGoodIndex];
-                if (JFBBase.strictlyDominatesAssumingNotSame(points, realGoodIndex, weakIndex, obj)) {
+                if (DominanceHelper.strictlyDominatesAssumingNotSame(points[realGoodIndex], wp, obj)) {
                     ranks[weakIndex] = 1 + sliceRank;
                     return true;
                 }
@@ -171,9 +173,10 @@ public final class ENS extends HybridAlgorithmWrapper {
         }
 
         private boolean checkWhetherDominates(int[] array, int goodFrom, int goodUntil, int weakIndex, int obj) {
+            double[] wp = points[weakIndex];
             for (int good = goodUntil - 1; good >= goodFrom; --good) {
                 int goodIndex = array[good];
-                if (JFBBase.strictlyDominatesAssumingNotSame(points, goodIndex, weakIndex, obj)) {
+                if (DominanceHelper.strictlyDominatesAssumingNotSame(points[goodIndex], wp, obj)) {
                     return true;
                 }
             }

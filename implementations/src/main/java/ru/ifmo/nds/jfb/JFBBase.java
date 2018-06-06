@@ -149,27 +149,6 @@ public abstract class JFBBase extends NonDominatedSorting {
         return newUntil;
     }
 
-    public static boolean strictlyDominatesAssumingNotSame(double[][] points, int goodIndex, int weakIndex, int maxObj) {
-        double[] goodPoint = points[goodIndex];
-        double[] weakPoint = points[weakIndex];
-        // Comparison in 0 makes no sense, as due to goodIndex < weakIndex the points are <= in this coordinate.
-        for (int i = maxObj; i > 0; --i) {
-            if (goodPoint[i] > weakPoint[i]) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    private boolean tryUpdateRank(int goodIndex, int weakIndex) {
-        int rg = ranks[goodIndex];
-        if (ranks[weakIndex] <= rg) {
-            ranks[weakIndex] = 1 + rg;
-            return rg < maximalMeaningfulRank;
-        }
-        return true;
-    }
-
     protected void postTransposePointHook(int newN) {}
 
     protected abstract int sweepA(int from, int until);
@@ -199,18 +178,18 @@ public abstract class JFBBase extends NonDominatedSorting {
         }
     }
 
-    private boolean ifDominatesUpdateRankAndCheckWhetherCanScrapSecond(int good, int weak, int obj) {
-        return strictlyDominatesAssumingNotSame(points, good, weak, obj) && !tryUpdateRank(good, weak);
-    }
-
     private int helperA(int from, int until, int obj) {
         int n = until - from;
         if (n <= 2) {
             if (n == 2) {
                 int goodIndex = indices[from];
                 int weakIndex = indices[from + 1];
-                if (ifDominatesUpdateRankAndCheckWhetherCanScrapSecond(goodIndex, weakIndex, obj)) {
-                    return from + 1;
+                int goodRank = ranks[goodIndex];
+                if (ranks[weakIndex] <= goodRank && DominanceHelper.strictlyDominatesAssumingNotSame(points[goodIndex], points[weakIndex], obj)) {
+                    ranks[weakIndex] = 1 + goodRank;
+                    if (goodRank >= maximalMeaningfulRank) {
+                        return from + 1;
+                    }
                 }
             }
             return until;
@@ -234,9 +213,10 @@ public abstract class JFBBase extends NonDominatedSorting {
     }
 
     private static void updateByPointNormal(int[] ranks, int[] indices, double[][] points, int pointIndex, int pointRank, int from, int until, int obj) {
+        double[] pt = points[pointIndex];
         for (int i = from; i < until; ++i) {
             int ii = indices[i];
-            if (ranks[ii] <= pointRank && strictlyDominatesAssumingNotSame(points, pointIndex, ii, obj)) {
+            if (ranks[ii] <= pointRank && DominanceHelper.strictlyDominatesAssumingNotSame(pt, points[ii], obj)) {
                 ranks[ii] = pointRank + 1;
             }
         }
@@ -244,9 +224,10 @@ public abstract class JFBBase extends NonDominatedSorting {
 
     private static int updateByPointCritical(int[] ranks, int[] indices, double[][] points, int maximalMeaningfulRank, int pointIndex, int from, int until, int obj) {
         int minOverflow = until;
+        double[] pt = points[pointIndex];
         for (int i = from; i < until; ++i) {
             int ii = indices[i];
-            if (strictlyDominatesAssumingNotSame(points, pointIndex, ii, obj)) {
+            if (DominanceHelper.strictlyDominatesAssumingNotSame(pt, points[ii], obj)) {
                 ranks[ii] = maximalMeaningfulRank + 1;
                 if (minOverflow > i) {
                     minOverflow = i;
@@ -258,12 +239,20 @@ public abstract class JFBBase extends NonDominatedSorting {
 
     private int helperBWeak1(int goodFrom, int goodUntil, int weak, int obj) {
         int wi = indices[weak];
+        int rw = ranks[wi];
+        double[] wp = points[wi];
         for (int i = goodFrom; i < goodUntil; ++i) {
             int gi = indices[i];
-            if (ifDominatesUpdateRankAndCheckWhetherCanScrapSecond(gi, wi, obj)) {
-                return weak;
+            int gr = ranks[gi];
+            if (rw <= gr && DominanceHelper.strictlyDominatesAssumingNotSame(points[gi], wp, obj)) {
+                rw = gr + 1;
+                if (gr >= maximalMeaningfulRank) {
+                    ranks[wi] = rw;
+                    return weak;
+                }
             }
         }
+        ranks[wi] = rw;
         return weak + 1;
     }
 
