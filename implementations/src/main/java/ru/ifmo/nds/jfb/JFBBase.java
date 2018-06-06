@@ -239,7 +239,7 @@ public abstract class JFBBase extends NonDominatedSorting {
 
     private int helperBWeak1(int goodFrom, int goodUntil, int weak, int obj) {
         int wi = indices[weak];
-        int rw = ranks[wi];
+        int rw = ranks[wi], rw0 = rw;
         double[] wp = points[wi];
         for (int i = goodFrom; i < goodUntil; ++i) {
             int gi = indices[i];
@@ -252,7 +252,9 @@ public abstract class JFBBase extends NonDominatedSorting {
                 }
             }
         }
-        ranks[wi] = rw;
+        if (rw != rw0) {
+            ranks[wi] = rw;
+        }
         return weak + 1;
     }
 
