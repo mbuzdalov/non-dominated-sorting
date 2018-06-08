@@ -237,16 +237,13 @@ public abstract class JFBBase extends NonDominatedSorting {
         return kickOutOverflowedRanks(indices, ranks, maximalMeaningfulRank, minOverflow, until);
     }
 
-    private int helperBWeak1(int goodFrom, int goodUntil, int weak, int obj) {
-        int wi = indices[weak];
-        int rw = ranks[wi], rw0 = rw;
-        double[] wp = points[wi];
-        for (int i = goodFrom; i < goodUntil; ++i) {
+    private int helperBWeak1Generic(int weak, int wi, int obj, int rw, int rw0, double[] wp, int goodMin, int goodMax) {
+        for (int i = goodMax; i >= goodMin; --i) {
             int gi = indices[i];
             int gr = ranks[gi];
             if (rw <= gr && DominanceHelper.strictlyDominatesAssumingNotSame(points[gi], wp, obj)) {
                 rw = gr + 1;
-                if (gr >= maximalMeaningfulRank) {
+                if (rw > maximalMeaningfulRank) {
                     ranks[wi] = rw;
                     return weak;
                 }
@@ -256,6 +253,32 @@ public abstract class JFBBase extends NonDominatedSorting {
             ranks[wi] = rw;
         }
         return weak + 1;
+    }
+
+    private int helperBWeak1Rank0(int weak, int wi, int obj, double[] wp, int goodMin, int goodMax) {
+        for (int i = goodMax; i >= goodMin; --i) {
+            int gi = indices[i];
+            if (DominanceHelper.strictlyDominatesAssumingNotSame(points[gi], wp, obj)) {
+                int newRank = ranks[gi] + 1;
+                if (newRank > maximalMeaningfulRank) {
+                    ranks[wi] = newRank;
+                    return weak;
+                }
+                return helperBWeak1Generic(weak, wi, obj, newRank, 0, wp, goodMin, i - 1);
+            }
+        }
+        return weak + 1;
+    }
+
+    private int helperBWeak1(int goodFrom, int goodUntil, int weak, int obj) {
+        int wi = indices[weak];
+        int rw = ranks[wi];
+        double[] wp = points[wi];
+        if (rw == 0) {
+            return helperBWeak1Rank0(weak, wi, obj, wp, goodFrom, goodUntil - 1);
+        } else {
+            return helperBWeak1Generic(weak, wi, obj, rw, rw, wp, goodFrom, goodUntil - 1);
+        }
     }
 
     private int helperBMain(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj, int tempFrom) {
