@@ -134,7 +134,9 @@ public final class ENS extends HybridAlgorithmWrapper {
                     pointIndex += 2;
                 }
             }
-            return JFBBase.kickOutOverflowedRanks(indices, ranks, maximalMeaningfulRank, minOverflow, until);
+            return minOverflow == until
+                    ? until
+                    : JFBBase.kickOutOverflowedRanks(indices, ranks, maximalMeaningfulRank, minOverflow, until);
         }
 
         @Override
@@ -199,7 +201,7 @@ public final class ENS extends HybridAlgorithmWrapper {
                     minUpdated = weak;
                 }
             }
-            return rank == maximalMeaningfulRank
+            return rank == maximalMeaningfulRank && minUpdated < weakUntil
                     ? JFBBase.kickOutOverflowedRanks(indices, ranks, maximalMeaningfulRank, minUpdated, weakUntil)
                     : weakUntil;
         }
@@ -286,7 +288,9 @@ public final class ENS extends HybridAlgorithmWrapper {
                         minOverflowed = weak;
                     }
                 }
-                return JFBBase.kickOutOverflowedRanks(indices, ranks, maximalMeaningfulRank, minOverflowed, weakUntil);
+                return minOverflowed == weakUntil
+                        ? weakUntil
+                        : JFBBase.kickOutOverflowedRanks(indices, ranks, maximalMeaningfulRank, minOverflowed, weakUntil);
             }
         }
     }

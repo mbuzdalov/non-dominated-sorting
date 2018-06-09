@@ -234,7 +234,9 @@ public abstract class JFBBase extends NonDominatedSorting {
                 }
             }
         }
-        return kickOutOverflowedRanks(indices, ranks, maximalMeaningfulRank, minOverflow, until);
+        return minOverflow == until
+                ? until
+                : kickOutOverflowedRanks(indices, ranks, maximalMeaningfulRank, minOverflow, until);
     }
 
     private int helperBWeak1Generic(int weak, int wi, int obj, int rw, int rw0, double[] wp, int goodMin, int goodMax) {
