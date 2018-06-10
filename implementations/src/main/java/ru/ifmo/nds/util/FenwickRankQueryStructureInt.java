@@ -31,7 +31,7 @@ public final class FenwickRankQueryStructureInt extends RankQueryStructureInt {
         return new RangeHandleImpl(storageStart, from, until, indices, keys);
     }
 
-    private class RangeHandleImpl extends RankQueryStructureInt.RangeHandle {
+    private final class RangeHandleImpl extends RankQueryStructureInt.RangeHandle {
         private final int size;
         private final int offset;
 

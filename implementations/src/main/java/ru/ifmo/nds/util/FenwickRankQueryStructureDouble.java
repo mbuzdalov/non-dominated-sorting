@@ -31,7 +31,7 @@ public final class FenwickRankQueryStructureDouble extends RankQueryStructureDou
         return new RangeHandleImpl(storageStart, from, until, indices, keys);
     }
 
-    private class RangeHandleImpl extends RangeHandle {
+    private final class RangeHandleImpl extends RangeHandle {
         private final int size;
         private final int offset;
 

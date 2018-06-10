@@ -2,7 +2,7 @@ package ru.ifmo.nds.util;
 
 import ru.ifmo.nds.util.veb.VanEmdeBoasSet;
 
-public class VanEmdeBoasRankQueryStructureInt extends RankQueryStructureInt {
+public final class VanEmdeBoasRankQueryStructureInt extends RankQueryStructureInt {
     private final EmptyOrSingleHandle smallHandle;
 
     public VanEmdeBoasRankQueryStructureInt(int maximumPoints) {
@@ -31,7 +31,7 @@ public class VanEmdeBoasRankQueryStructureInt extends RankQueryStructureInt {
         return smallHandle;
     }
 
-    private static class EmptyOrSingleHandle extends RangeHandle {
+    private static final class EmptyOrSingleHandle extends RangeHandle {
         private final VanEmdeBoasRangeHandle forTwoOrMore;
         private int key = Integer.MAX_VALUE, value = Integer.MIN_VALUE;
 
@@ -73,7 +73,7 @@ public class VanEmdeBoasRankQueryStructureInt extends RankQueryStructureInt {
         }
     }
 
-    private static class VanEmdeBoasRangeHandle extends RangeHandle {
+    private static final class VanEmdeBoasRangeHandle extends RangeHandle {
         private final VanEmdeBoasSet set;
         private final int[] values;
 

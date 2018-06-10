@@ -27,7 +27,6 @@ public final class DominanceHelper {
         return true;
     }
 
-
     public static int dominanceComparison(double[] a, double[] b, int dim) {
         boolean hasSmaller = false;
         boolean hasGreater = false;
