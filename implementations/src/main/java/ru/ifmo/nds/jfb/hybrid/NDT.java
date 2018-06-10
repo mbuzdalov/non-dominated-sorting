@@ -100,9 +100,7 @@ public final class NDT extends HybridAlgorithmWrapper {
                 }
             }
             tree = null;
-            return minOverflow == until
-                    ? until
-                    : JFBBase.kickOutOverflowedRanks(indices, ranks, maximalMeaningfulRank, minOverflow, until);
+            return JFBBase.kickOutOverflowedRanks(indices, ranks, maximalMeaningfulRank, minOverflow, until);
         }
 
         @Override
@@ -132,9 +130,7 @@ public final class NDT extends HybridAlgorithmWrapper {
                 }
             }
             tree = null;
-            return minOverflow == weakUntil
-                    ? weakUntil
-                    : JFBBase.kickOutOverflowedRanks(indices, ranks, maximalMeaningfulRank, minOverflow, weakUntil);
+            return JFBBase.kickOutOverflowedRanks(indices, ranks, maximalMeaningfulRank, minOverflow, weakUntil);
         }
     }
 }

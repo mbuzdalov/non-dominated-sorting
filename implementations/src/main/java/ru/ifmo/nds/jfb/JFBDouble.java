@@ -39,9 +39,7 @@ public class JFBDouble extends JFBBase {
                 minOverflow = i;
             }
         }
-        return minOverflow == until
-                ? until
-                : JFBBase.kickOutOverflowedRanks(indices, ranks, maximalMeaningfulRank, minOverflow, until);
+        return JFBBase.kickOutOverflowedRanks(indices, ranks, maximalMeaningfulRank, minOverflow, until);
     }
 
     @Override
@@ -63,8 +61,6 @@ public class JFBDouble extends JFBBase {
                 minOverflow = weakI;
             }
         }
-        return minOverflow == weakUntil
-                ? weakUntil
-                : JFBBase.kickOutOverflowedRanks(indices, ranks, maximalMeaningfulRank, minOverflow, weakUntil);
+        return JFBBase.kickOutOverflowedRanks(indices, ranks, maximalMeaningfulRank, minOverflow, weakUntil);
     }
 }

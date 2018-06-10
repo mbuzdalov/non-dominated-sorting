@@ -143,7 +143,8 @@ public abstract class JFBBase extends NonDominatedSorting {
         for (int i = from; i < until; ++i) {
             int ii = indices[i];
             if (ranks[ii] <= maximalMeaningfulRank) {
-                indices[newUntil++] = ii;
+                indices[newUntil] = ii;
+                ++newUntil;
             }
         }
         return newUntil;
@@ -234,9 +235,7 @@ public abstract class JFBBase extends NonDominatedSorting {
                 }
             }
         }
-        return minOverflow == until
-                ? until
-                : kickOutOverflowedRanks(indices, ranks, maximalMeaningfulRank, minOverflow, until);
+        return kickOutOverflowedRanks(indices, ranks, maximalMeaningfulRank, minOverflow, until);
     }
 
     private int helperBWeak1Generic(int weak, int wi, int obj, int rw, int rw0, double[] wp, int goodMin, int goodMax) {
