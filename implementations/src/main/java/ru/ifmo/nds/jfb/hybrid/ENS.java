@@ -196,7 +196,9 @@ public final class ENS extends HybridAlgorithmWrapper {
                 }
                 if (checkWhetherDominates(indices, goodFrom, good, wi, obj)) {
                     ranks[wi] = rank + 1;
-                    minUpdated = weak;
+                    if (minUpdated > weak) {
+                        minUpdated = weak;
+                    }
                 }
             }
             return rank == maximalMeaningfulRank && minUpdated < weakUntil
