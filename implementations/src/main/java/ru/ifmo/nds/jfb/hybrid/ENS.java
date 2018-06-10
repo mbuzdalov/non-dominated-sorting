@@ -218,8 +218,13 @@ public final class ENS extends HybridAlgorithmWrapper {
             int sliceOffset = ranksAndSlicesOffset + goodSize;
             int pointsBySlicesOffset = sliceOffset + 2 * goodSize;
 
-            int minRank = Integer.MAX_VALUE, maxRank = Integer.MIN_VALUE;
-            for (int i = goodFrom, ri = ranksAndSlicesOffset, si = sortedIndicesOffset; i < goodUntil; ++i, ++ri, ++si) {
+            int minRank = ranks[indices[goodFrom]];
+            int maxRank = minRank;
+            space[ranksAndSlicesOffset] = minRank;
+            space[sortedIndicesOffset] = ranksAndSlicesOffset;
+            for (int i = goodFrom + 1, ri = ranksAndSlicesOffset, si = sortedIndicesOffset; i < goodUntil; ++i) {
+                ++ri;
+                ++si;
                 int rank = ranks[indices[i]];
                 if (minRank > rank) {
                     minRank = rank;
@@ -262,8 +267,9 @@ public final class ENS extends HybridAlgorithmWrapper {
                     int gi;
                     while (good < goodUntil && (gi = indices[good]) < wi) {
                         int sliceTailIndex = space[ranksAndSlicesOffset + good - goodFrom] + 1;
-                        space[space[sliceTailIndex]] = gi;
-                        ++space[sliceTailIndex];
+                        int spaceAtTail = space[sliceTailIndex];
+                        space[spaceAtTail] = gi;
+                        space[sliceTailIndex] = spaceAtTail + 1;
                         ++good;
                     }
                     int currSlice = sliceOffset;
