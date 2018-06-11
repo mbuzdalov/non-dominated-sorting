@@ -169,10 +169,12 @@ public abstract class JFBBase extends NonDominatedSorting {
             int startRight = SplitMergeHelper.extractRight(split);
 
             int newStartMid = helperA(from, startMid, obj);
-            int newStartRight = helperB(from, newStartMid, startMid, startRight, obj - 1, from);
-            newStartRight = helperA(startMid, newStartRight, obj - 1);
-            int newUntil = helperB(from, newStartMid, startRight, until, obj - 1, from);
-            newUntil = helperB(startMid, newStartRight, startRight, newUntil, obj - 1, from);
+            --obj;
+            int newStartRight = helperB(from, newStartMid, startMid, startRight, obj, from);
+            newStartRight = helperA(startMid, newStartRight, obj);
+            int newUntil = helperB(from, newStartMid, startRight, until, obj, from);
+            newUntil = helperB(startMid, newStartRight, startRight, newUntil, obj, from);
+            ++obj;
             newUntil = helperA(startRight, newUntil, obj);
 
             return splitMerge.mergeThree(indices, from, from, newStartMid, startMid, newStartRight, startRight, newUntil);
@@ -305,11 +307,13 @@ public abstract class JFBBase extends NonDominatedSorting {
         int weakMidR = SplitMergeHelper.extractRight(weakSplit);
         int tempMid = tempFrom + ((goodUntil - goodFrom + weakUntil - weakFrom) >>> 1);
 
-        int newWeakUntil = helperB(goodFrom, goodMidL, weakMidR, weakUntil, obj - 1, tempFrom);
-        newWeakUntil = helperB(goodMidL, goodMidR, weakMidR, newWeakUntil, obj - 1, tempFrom);
+        --obj;
+        int newWeakUntil = helperB(goodFrom, goodMidL, weakMidR, weakUntil, obj, tempFrom);
+        newWeakUntil = helperB(goodMidL, goodMidR, weakMidR, newWeakUntil, obj, tempFrom);
 
-        int newWeakMidR = helperB(goodFrom, goodMidL, weakMidL, weakMidR, obj - 1, tempFrom);
-        newWeakMidR = helperB(goodMidL, goodMidR, weakMidL, newWeakMidR, obj - 1, tempFrom);
+        int newWeakMidR = helperB(goodFrom, goodMidL, weakMidL, weakMidR, obj, tempFrom);
+        newWeakMidR = helperB(goodMidL, goodMidR, weakMidL, newWeakMidR, obj, tempFrom);
+        ++obj;
 
         ForkJoinTask<Integer> newWeakMidLTask = null;
         if (pool != null && goodMidL - goodFrom + weakMidL - weakFrom > FORK_JOIN_THRESHOLD) {

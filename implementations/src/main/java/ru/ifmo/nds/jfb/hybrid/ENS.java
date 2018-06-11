@@ -48,7 +48,6 @@ public final class ENS extends HybridAlgorithmWrapper {
             this.thresholdAll = thresholdAll;
         }
 
-
         @Override
         public boolean helperAHookCondition(int size, int obj) {
             switch (obj) {
@@ -174,9 +173,9 @@ public final class ENS extends HybridAlgorithmWrapper {
 
         private boolean checkWhetherDominates(int[] array, int goodFrom, int goodUntil, int weakIndex, int obj) {
             double[] wp = points[weakIndex];
-            for (int good = goodUntil - 1; good >= goodFrom; --good) {
-                int goodIndex = array[good];
-                if (DominanceHelper.strictlyDominatesAssumingNotSame(points[goodIndex], wp, obj)) {
+            while (goodUntil > goodFrom) {
+                --goodUntil;
+                if (DominanceHelper.strictlyDominatesAssumingNotSame(points[array[goodUntil]], wp, obj)) {
                     return true;
                 }
             }
@@ -208,9 +207,6 @@ public final class ENS extends HybridAlgorithmWrapper {
 
         @Override
         public int helperBHook(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj, int tempFrom, int maximalMeaningfulRank) {
-            if (goodFrom == goodUntil || weakFrom == weakUntil) {
-                return weakUntil;
-            }
             int goodSize = goodUntil - goodFrom;
 
             int sortedIndicesOffset = tempFrom * STORAGE_MULTIPLE;
@@ -290,7 +286,7 @@ public final class ENS extends HybridAlgorithmWrapper {
                         currSlice += 2;
                     }
                     ranks[wi] = weakRank;
-                    if (minOverflowed > weak && weakRank > maximalMeaningfulRank) {
+                    if (weakRank > maximalMeaningfulRank && minOverflowed > weak) {
                         minOverflowed = weak;
                     }
                 }

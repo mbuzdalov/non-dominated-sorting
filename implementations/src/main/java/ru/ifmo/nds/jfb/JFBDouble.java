@@ -51,13 +51,14 @@ public class JFBDouble extends JFBBase {
         for (int weakI = weakFrom; weakI < weakUntil; ++weakI) {
             int weakCurr = indices[weakI];
             while (goodI < goodUntil && indices[goodI] < weakCurr) {
-                int goodCurr = indices[goodI++];
+                int goodCurr = indices[goodI];
                 rankQuery = rankQuery.put(local[goodCurr], ranks[goodCurr]);
+                ++goodI;
             }
             int result = Math.max(ranks[weakCurr],
                     rankQuery.getMaximumWithKeyAtMost(local[weakCurr], ranks[weakCurr]) + 1);
             ranks[weakCurr] = result;
-            if (minOverflow > weakI && result > maximalMeaningfulRank) {
+            if (result > maximalMeaningfulRank && minOverflow > weakI) {
                 minOverflow = weakI;
             }
         }
