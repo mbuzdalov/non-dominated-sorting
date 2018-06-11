@@ -154,8 +154,8 @@ public final class ENS extends HybridAlgorithmWrapper {
             int pivot = (space[space[from]] + space[space[to]]) / 2;
             int sl, sr;
             while (left <= right) {
-                while (space[sl = space[left]] < pivot) ++left;
-                while (space[sr = space[right]] > pivot) --right;
+                while (space[sl = space[left]] > pivot) ++left;
+                while (space[sr = space[right]] < pivot) --right;
                 if (left <= right) {
                     space[left] = sr;
                     space[right] = sl;
@@ -249,10 +249,10 @@ public final class ENS extends HybridAlgorithmWrapper {
         }
 
         private int findRankInSlices(int sliceOffset, int sliceLast, int wi, int obj) {
-            int currSlice = sliceOffset;
+            int currSlice = sliceLast;
             int weakRank = ranks[wi];
             double[] wp = points[wi];
-            while (currSlice <= sliceLast) {
+            while (currSlice >= sliceOffset) {
                 int from = space[currSlice];
                 int until = space[currSlice + 1];
                 if (from < until) {
@@ -265,7 +265,7 @@ public final class ENS extends HybridAlgorithmWrapper {
                         }
                     }
                 }
-                currSlice += 2;
+                currSlice -= 2;
             }
             return ranks[wi] = weakRank;
         }
