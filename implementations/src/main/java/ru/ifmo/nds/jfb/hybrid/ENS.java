@@ -152,8 +152,8 @@ public final class ENS extends HybridAlgorithmWrapper {
         private void sortIndicesByRanks(int from, int to) {
             int left = from, right = to;
             int pivot = (space[space[from]] + space[space[to]]) / 2;
+            int sl, sr;
             while (left <= right) {
-                int sl, sr;
                 while (space[sl = space[left]] < pivot) ++left;
                 while (space[sr = space[right]] > pivot) --right;
                 if (left <= right) {
@@ -171,8 +171,7 @@ public final class ENS extends HybridAlgorithmWrapper {
             }
         }
 
-        private boolean checkWhetherDominates(int[] array, int goodFrom, int goodUntil, int weakIndex, int obj) {
-            double[] wp = points[weakIndex];
+        private boolean checkWhetherDominates(int[] array, int goodFrom, int goodUntil, double[] wp, int obj) {
             while (goodUntil > goodFrom) {
                 --goodUntil;
                 if (DominanceHelper.strictlyDominatesAssumingNotSame(points[array[goodUntil]], wp, obj)) {
@@ -193,7 +192,7 @@ public final class ENS extends HybridAlgorithmWrapper {
                 while (good < goodUntil && indices[good] < wi) {
                     ++good;
                 }
-                if (checkWhetherDominates(indices, goodFrom, good, wi, obj)) {
+                if (checkWhetherDominates(indices, goodFrom, good, points[wi], obj)) {
                     ranks[wi] = rank + 1;
                     if (minUpdated > weak) {
                         minUpdated = weak;
@@ -205,6 +204,72 @@ public final class ENS extends HybridAlgorithmWrapper {
                     : weakUntil;
         }
 
+        private int transplantRanksAndCheckWhetherAllAreSame(int goodFrom, int goodUntil, int ranksAndSlicesOffset, int sortedIndicesOffset) {
+            int firstRank = ranks[indices[goodFrom]];
+            boolean allSame = true;
+            space[ranksAndSlicesOffset] = firstRank;
+            space[sortedIndicesOffset] = ranksAndSlicesOffset;
+            for (int i = goodFrom + 1, ri = ranksAndSlicesOffset, si = sortedIndicesOffset; i < goodUntil; ++i) {
+                ++ri;
+                ++si;
+                int rank = ranks[indices[i]];
+                allSame &= firstRank == rank;
+                space[ri] = rank;
+                space[si] = ri;
+            }
+            return allSame ? firstRank : -1;
+        }
+
+        private int distributePointsBetweenSlices(int from, int until, int sliceOffset, int pointsBySlicesOffset) {
+            int sliceLast = sliceOffset - 2;
+            int atSliceLast = 0;
+            int prevRank = -1;
+            for (int i = from; i < until; ++i) {
+                int currIndex = space[i];
+                int currRank = space[currIndex];
+                if (prevRank != currRank) {
+                    prevRank = currRank;
+                    if (sliceLast >= sliceOffset) {
+                        space[sliceLast] = atSliceLast;
+                        atSliceLast = 0;
+                    }
+                    sliceLast += 2;
+                }
+                ++atSliceLast;
+                space[currIndex] = sliceLast;
+            }
+            space[sliceLast] = atSliceLast;
+            for (int i = sliceOffset, collected = pointsBySlicesOffset; i <= sliceLast; i += 2) {
+                int current = space[i];
+                space[i] = collected;
+                space[i + 1] = collected;
+                collected += current;
+            }
+            return sliceLast;
+        }
+
+        private int findRankInSlices(int sliceOffset, int sliceLast, int wi, int obj) {
+            int currSlice = sliceOffset;
+            int weakRank = ranks[wi];
+            double[] wp = points[wi];
+            while (currSlice <= sliceLast) {
+                int from = space[currSlice];
+                int until = space[currSlice + 1];
+                if (from < until) {
+                    int currRank = ranks[space[until - 1]];
+                    if (currRank >= weakRank) {
+                        if (checkWhetherDominates(space, from, until, wp, obj)) {
+                            weakRank = currRank + 1;
+                        } else {
+                            break;
+                        }
+                    }
+                }
+                currSlice += 2;
+            }
+            return ranks[wi] = weakRank;
+        }
+
         @Override
         public int helperBHook(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj, int tempFrom, int maximalMeaningfulRank) {
             int goodSize = goodUntil - goodFrom;
@@ -214,78 +279,27 @@ public final class ENS extends HybridAlgorithmWrapper {
             int sliceOffset = ranksAndSlicesOffset + goodSize;
             int pointsBySlicesOffset = sliceOffset + 2 * goodSize;
 
-            int minRank = ranks[indices[goodFrom]];
-            int maxRank = minRank;
-            space[ranksAndSlicesOffset] = minRank;
-            space[sortedIndicesOffset] = ranksAndSlicesOffset;
-            for (int i = goodFrom + 1, ri = ranksAndSlicesOffset, si = sortedIndicesOffset; i < goodUntil; ++i) {
-                ++ri;
-                ++si;
-                int rank = ranks[indices[i]];
-                if (minRank > rank) {
-                    minRank = rank;
-                }
-                if (maxRank < rank) {
-                    maxRank = rank;
-                }
-                space[ri] = rank;
-                space[si] = ri;
-            }
-
-            if (minRank == maxRank) {
-                // single front, let's do the simple stuff
+            int minRank = transplantRanksAndCheckWhetherAllAreSame(goodFrom, goodUntil, ranksAndSlicesOffset, sortedIndicesOffset);
+            if (minRank != -1) {
+                // "good" has a single front, let's do the simple stuff
                 return helperBSingleRank(minRank, goodFrom, goodUntil, weakFrom, weakUntil, obj, maximalMeaningfulRank);
             } else {
+                // "good" has multiple fronts (called "slices" here), need to go a more complicated way.
                 sortIndicesByRanks(sortedIndicesOffset, sortedIndicesOffset + goodSize - 1);
-                int sliceLast = sliceOffset - 2;
-                int prevRank = -1;
-                for (int i = 0; i < goodSize; ++i) {
-                    int currIndex = space[sortedIndicesOffset + i];
-                    int currRank = space[currIndex];
-                    if (prevRank != currRank) {
-                        prevRank = currRank;
-                        sliceLast += 2;
-                        space[sliceLast] = 0;
-                    }
-                    ++space[sliceLast];
-                    space[currIndex] = sliceLast;
-                }
-                for (int i = sliceOffset, collected = pointsBySlicesOffset; i <= sliceLast; i += 2) {
-                    int current = space[i];
-                    space[i] = collected;
-                    space[i + 1] = collected;
-                    collected += current;
-                }
-
+                int sliceLast = distributePointsBetweenSlices(sortedIndicesOffset, sortedIndicesOffset + goodSize, sliceOffset, pointsBySlicesOffset);
                 int minOverflowed = weakUntil;
-                for (int weak = weakFrom, good = goodFrom; weak < weakUntil; ++weak) {
+                for (int weak = weakFrom, good = goodFrom, sliceOfGood = ranksAndSlicesOffset; weak < weakUntil; ++weak) {
                     int wi = indices[weak];
                     int gi;
                     while (good < goodUntil && (gi = indices[good]) < wi) {
-                        int sliceTailIndex = space[ranksAndSlicesOffset + good - goodFrom] + 1;
+                        int sliceTailIndex = space[sliceOfGood] + 1;
                         int spaceAtTail = space[sliceTailIndex];
                         space[spaceAtTail] = gi;
                         space[sliceTailIndex] = spaceAtTail + 1;
                         ++good;
+                        ++sliceOfGood;
                     }
-                    int currSlice = sliceOffset;
-                    int weakRank = ranks[wi];
-                    while (currSlice <= sliceLast) {
-                        int from = space[currSlice];
-                        int until = space[currSlice + 1];
-                        if (from < until) {
-                            int currRank = ranks[space[until - 1]];
-                            if (currRank >= weakRank) {
-                                if (checkWhetherDominates(space, from, until, wi, obj)) {
-                                    weakRank = currRank + 1;
-                                } else {
-                                    break;
-                                }
-                            }
-                        }
-                        currSlice += 2;
-                    }
-                    ranks[wi] = weakRank;
+                    int weakRank = findRankInSlices(sliceOffset, sliceLast, wi, obj);
                     if (weakRank > maximalMeaningfulRank && minOverflowed > weak) {
                         minOverflowed = weak;
                     }
