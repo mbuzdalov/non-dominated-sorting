@@ -21,7 +21,9 @@ public class ENS_HS extends ENSBase {
         int remainingN = weightSum;
         int remainingRanks = maxRank + 1;
         int logRemainingRanks = 31 - Integer.numberOfLeadingZeros(remainingRanks);
-        for (int rank = 0; rank <= maxRank; ++rank) {
+        int powLogRemainingRanks = 1 << logRemainingRanks;
+        int rank = 0;
+        while (true) {
             int query = frontDominatesWithWork(rank, points, point);
             if (query < 0) {
                 return rank;
@@ -30,15 +32,18 @@ public class ENS_HS extends ENSBase {
                 totalWork += query;
                 remainingN -= weights[rank];
                 --remainingRanks;
-                if (remainingRanks < (1 << logRemainingRanks)) {
+                if (remainingRanks < powLogRemainingRanks) {
                     --logRemainingRanks;
+                    powLogRemainingRanks >>>= 1;
                 }
                 if ((long) (totalWork) * remainingRanks > (long) (remainingN) * logRemainingRanks) {
                     return findRankByBinarySearch(points, point, rank, maxRank);
                 }
+                ++rank;
+            } else {
+                return maxRank + 1;
             }
         }
-        return maxRank + 1;
     }
 
     @Override
