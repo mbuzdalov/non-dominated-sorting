@@ -205,39 +205,44 @@ public final class RedBlackRankQueryStructure extends RankQueryStructureDouble {
         }
 
         private void fixAfterInsert(Node node) {
-            Node z = node;
-            while (isRed(z.parent)) {
-                if (z.parent == z.parent.parent.left) {
-                    Node t = z.parent.parent.right;
+            Node z = node, zp;
+            while (isRed(zp = z.parent)) {
+                Node zpp = zp.parent;
+                if (zp == zpp.left) {
+                    Node t = zpp.right;
                     if (isRed(t)) {
-                        z.parent.red = false;
+                        zp.red = false;
                         t.red = false;
-                        z.parent.parent.red = true;
-                        z = z.parent.parent;
+                        zpp.red = true;
+                        z = zpp;
                     } else {
-                        if (z == z.parent.right) {
-                            z = z.parent;
+                        if (z == zp.right) {
+                            z = zp;
                             rotateLeft(z);
+                            zp = z.parent;
+                            zpp = zp.parent;
                         }
-                        z.parent.red = false;
-                        z.parent.parent.red = true;
-                        rotateRight(z.parent.parent);
+                        zp.red = false;
+                        zpp.red = true;
+                        rotateRight(zpp);
                     }
                 } else { // symmetric cases
-                    Node t = z.parent.parent.left;
+                    Node t = zpp.left;
                     if (isRed(t)) {
-                        z.parent.red = false;
+                        zp.red = false;
                         t.red = false;
-                        z.parent.parent.red = true;
-                        z = z.parent.parent;
+                        zpp.red = true;
+                        z = zpp;
                     } else {
-                        if (z == z.parent.left) {
-                            z = z.parent;
+                        if (z == zp.left) {
+                            z = zp;
                             rotateRight(z);
+                            zp = z.parent;
+                            zpp = zp.parent;
                         }
-                        z.parent.red = false;
-                        z.parent.parent.red = true;
-                        rotateLeft(z.parent.parent);
+                        zp.red = false;
+                        zpp.red = true;
+                        rotateLeft(zpp);
                     }
                 }
             }
