@@ -2,6 +2,7 @@ package ru.ifmo.nds.fnds;
 
 import ru.ifmo.nds.NonDominatedSorting;
 import ru.ifmo.nds.util.ArrayHelper;
+import ru.ifmo.nds.util.DominanceHelper;
 import ru.ifmo.nds.util.DoubleArraySorter;
 
 public class LinearMemory extends NonDominatedSorting {
@@ -25,26 +26,19 @@ public class LinearMemory extends NonDominatedSorting {
         points = null;
     }
 
-    private boolean strictlyDominatesAssumingNotSame(int goodIndex, int weakIndex, int dim) {
-        double[] goodPoint = points[goodIndex];
-        double[] weakPoint = points[weakIndex];
-        // Comparison in 0 makes no sense, as due to goodIndex < weakIndex the points are <= in this coordinate.
-        for (int i = dim - 1; i > 0; --i) {
-            if (goodPoint[i] > weakPoint[i]) {
-                return false;
-            }
-        }
-        return true;
-    }
-
     private void doSorting(int n, int dim, int maximalMeaningfulRank) {
         ranks[0] = 0;
+        int maxObj = dim - 1;
         for (int i = 1; i < n; ++i) {
             int myRank = 0;
-            for (int j = i - 1; myRank <= maximalMeaningfulRank && j >= 0; --j) {
+            double[] pi = points[i];
+            for (int j = i - 1; j >= 0; --j) {
                 int thatRank = ranks[j];
-                if (myRank <= thatRank && strictlyDominatesAssumingNotSame(j, i, dim)) {
+                if (myRank <= thatRank && DominanceHelper.strictlyDominatesAssumingNotSame(points[j], pi, maxObj)) {
                     myRank = thatRank + 1;
+                    if (myRank > maximalMeaningfulRank) {
+                        break;
+                    }
                 }
             }
             ranks[i] = myRank;
