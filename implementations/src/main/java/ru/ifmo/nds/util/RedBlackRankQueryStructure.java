@@ -181,25 +181,22 @@ public final class RedBlackRankQueryStructure extends RankQueryStructureDouble {
             }
         }
 
+        // from the usage of insert, we can prove that value does not exist in the tree.
         private void insert(double key, int value) {
             if (root == null) {
                 root = newNode(key, value, null);
                 root.red = false;
             } else {
                 Node parent, child = root;
-                double childKey;
+                boolean lastSmaller;
                 do {
-                    childKey = child.key;
-                    if (key == childKey) {
-                        child.value = value;
-                        return;
-                    }
                     parent = child;
-                    child = key < childKey ? child.left : child.right;
+                    lastSmaller = value < child.value;
+                    child = lastSmaller ? child.left : child.right;
                 } while (child != null);
 
                 Node z = newNode(key, value, parent);
-                if (key < childKey) {
+                if (lastSmaller) {
                     parent.left = z;
                 } else {
                     parent.right = z;
