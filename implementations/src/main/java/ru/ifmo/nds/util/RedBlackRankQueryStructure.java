@@ -35,7 +35,7 @@ public final class RedBlackRankQueryStructure extends RankQueryStructureDouble {
 
     @Override
     public RangeHandle createHandle(int storageStart, int from, int until, int[] indices, double[] values) {
-        return new RangeHandleImpl(storageStart);
+        return new RangeHandleImpl(allNodes, storageStart);
     }
 
     private static class Node {
@@ -46,12 +46,14 @@ public final class RedBlackRankQueryStructure extends RankQueryStructureDouble {
         Node left, right, parent;
     }
 
-    private final class RangeHandleImpl extends RankQueryStructureDouble.RangeHandle {
+    private static final class RangeHandleImpl extends RankQueryStructureDouble.RangeHandle {
+        private final Node[] allNodes;
         private Node root = null;
         private int size = 0;
         private final int offset;
 
-        private RangeHandleImpl(int storageStart) {
+        private RangeHandleImpl(Node[] allNodes, int storageStart) {
+            this.allNodes = allNodes;
             this.offset = storageStart;
         }
 
@@ -90,25 +92,22 @@ public final class RedBlackRankQueryStructure extends RankQueryStructureDouble {
             return q == null ? -1 : q.value;
         }
 
-        private void setValue(Node node, int value) {
-            node.value = value;
-        }
-
         private Node newNode(double key, int value, Node parent) {
             int idx = offset + size;
             Node rv = allNodes[idx];
             rv.key = key;
-            setValue(rv, value);
+            rv.value = value;
             rv.red = true;
             rv.left = null;
             rv.right = null;
             rv.parent = parent;
+            ++size;
             return rv;
         }
 
         private void deleteNode(Node node) {
-            setValue(node, -1);
-            int lastIndex = offset + size - 1;
+            --size;
+            int lastIndex = offset + size;
             if (node.index != lastIndex) {
                 Node other = allNodes[lastIndex];
                 allNodes[node.index] = other;
@@ -118,93 +117,98 @@ public final class RedBlackRankQueryStructure extends RankQueryStructureDouble {
             }
         }
 
-        private boolean isRed(Node node) {
+        private static boolean isRed(Node node) {
             return node != null && node.red;
         }
 
-        private boolean isBlack(Node node) {
+        private static boolean isBlack(Node node) {
             return node == null || !node.red;
         }
 
-        private Node minNodeNonNull(Node node) {
+        private static Node minNodeNonNull(Node node) {
             while (true) {
-                if (node.left == null) {
+                Node left = node.left;
+                if (left == null) {
                     return node;
                 }
-                node = node.left;
+                node = left;
             }
         }
 
-        private Node maxNodeNonNull(Node node) {
+        private static Node maxNodeNonNull(Node node) {
             while (true) {
-                if (node.right == null) {
+                Node right = node.right;
+                if (right == null) {
                     return node;
                 }
-                node = node.right;
+                node = right;
             }
         }
 
-        private Node maxNodeBeforeExact(Node node, double key) {
+        private static Node maxNodeBeforeExact(Node node, double key) {
             if (node == null) {
                 return null;
             } else {
-                Node parent = null;
-                Node child = node;
-                int cmp = 1;
-                while (child != null && cmp != 0) {
+                Node parent, child = node;
+                double childKey;
+                do {
+                    childKey = child.key;
+                    if (key == childKey) {
+                        return child;
+                    }
                     parent = child;
-                    cmp = Double.compare(key, child.key);
-                    child = cmp < 0 ? child.left : child.right;
-                }
-                return cmp >= 0 ? parent : predecessor(parent);
+                    child = key < childKey ? child.left : child.right;
+                } while (child != null);
+                return key > childKey ? parent : predecessor(parent);
             }
         }
 
-        private Node minNodeAfterExactByValue(Node node, int value) {
+        private static Node minNodeAfterExactByValue(Node node, int value) {
             if (node == null) {
                 return null;
             } else {
-                Node parent = null;
-                Node child = node;
-                int cmp = -1;
-                while (child != null && cmp != 0) {
+                Node parent, child = node;
+                int childValue;
+                do {
+                    childValue = child.value;
+                    if (value == childValue) {
+                        return child;
+                    }
                     parent = child;
-                    cmp = Integer.compare(value, child.value);
-                    child = cmp < 0 ? child.left : child.right;
-                }
-                return cmp <= 0 ? parent : successor(parent);
+                    child = value < childValue ? child.left : child.right;
+                } while (child != null);
+                return value < childValue ? parent : successor(parent);
             }
         }
 
         private void insert(double key, int value) {
-            Node parent = null;
-            Node child = root;
-            int cmp = 1;
-            while (child != null && cmp != 0) {
-                parent = child;
-                cmp = Double.compare(key, child.key);
-                child = cmp < 0 ? child.left : child.right;
-            }
-
-            if (cmp == 0) {
-                setValue(parent, value);
+            if (root == null) {
+                root = newNode(key, value, null);
+                root.red = false;
             } else {
-                Node z = newNode(key, value, parent);
+                Node parent, child = root;
+                double childKey;
+                do {
+                    childKey = child.key;
+                    if (key == childKey) {
+                        child.value = value;
+                        return;
+                    }
+                    parent = child;
+                    child = key < childKey ? child.left : child.right;
+                } while (child != null);
 
-                if (parent == null) {
-                    root = z;
-                } else if (cmp < 0) {
+                Node z = newNode(key, value, parent);
+                if (key < childKey) {
                     parent.left = z;
                 } else {
                     parent.right = z;
                 }
-
-                fixAfterInsert(z);
-                size += 1;
+                root = fixAfterInsert(root, z);
             }
         }
 
-        private void fixAfterInsert(Node node) {
+        private static Node fixAfterInsert(Node root, Node node) {
             Node z = node, zp;
             while (isRed(zp = z.parent)) {
                 Node zpp = zp.parent;
@@ -218,13 +222,13 @@ public final class RedBlackRankQueryStructure extends RankQueryStructureDouble {
                     } else {
                         if (z == zp.right) {
                             z = zp;
-                            rotateLeft(z);
+                            root = rotateLeft(root, z);
                             zp = z.parent;
                             zpp = zp.parent;
                         }
                         zp.red = false;
                         zpp.red = true;
-                        rotateRight(zpp);
+                        root = rotateRight(root, zpp);
                     }
                 } else { // symmetric cases
                     Node t = zpp.left;
@@ -236,17 +240,18 @@ public final class RedBlackRankQueryStructure extends RankQueryStructureDouble {
                     } else {
                         if (z == zp.left) {
                             z = zp;
-                            rotateRight(z);
+                            root = rotateRight(root, z);
                             zp = z.parent;
                             zpp = zp.parent;
                         }
                         zp.red = false;
                         zpp.red = true;
-                        rotateLeft(zpp);
+                        root = rotateLeft(root, zpp);
                     }
                 }
             }
             root.red = false;
+            return root;
         }
 
         private void delete(Node z) {
@@ -257,11 +262,11 @@ public final class RedBlackRankQueryStructure extends RankQueryStructureDouble {
 
                 if (z.left == null) {
                     t = z.right;
-                    transplant(z, z.right);
+                    root = transplant(root, z, z.right);
                     tParent = z.parent;
                 } else if (z.right == null) {
                     t = z.left;
-                    transplant(z, z.left);
+                    root = transplantNonNull(root, z, z.left);
                     tParent = z.parent;
                 } else {
                     y = minNodeNonNull(z.right);
@@ -272,25 +277,24 @@ public final class RedBlackRankQueryStructure extends RankQueryStructureDouble {
                         tParent = y;
                     } else {
                         tParent = y.parent;
-                        transplant(y, y.right);
+                        root = transplant(root, y, t);
                         y.right = z.right;
                         y.right.parent = y;
                     }
-                    transplant(z, y);
+                    root = transplantNonNull(root, z, y);
                     y.left = z.left;
                     y.left.parent = y;
                     y.red = z.red;
                 }
 
-                deleteNode(z);
                 if (!yIsRed) {
-                    fixAfterDelete(t, tParent);
+                    root = fixAfterDelete(root, t, tParent);
                 }
-                size -= 1;
+                deleteNode(z);
             }
         }
 
-        private void fixAfterDelete(Node node, Node parent) {
+        private static Node fixAfterDelete(Node root, Node node, Node parent) {
             Node x = node;
             Node xParent = parent;
             while ((x != root) && isBlack(x)) {
@@ -300,7 +304,7 @@ public final class RedBlackRankQueryStructure extends RankQueryStructureDouble {
                     if (w.red) {
                         w.red = false;
                         xParent.red = true;
-                        rotateLeft(xParent);
+                        root = rotateLeft(root, xParent);
                         w = xParent.right;
                     }
                     if (isBlack(w.left) && isBlack(w.right)) {
@@ -310,13 +314,13 @@ public final class RedBlackRankQueryStructure extends RankQueryStructureDouble {
                         if (isBlack(w.right)) {
                             w.left.red = false;
                             w.red = true;
-                            rotateRight(w);
+                            root = rotateRight(root, w);
                             w = xParent.right;
                         }
                         w.red = xParent.red;
                         xParent.red = false;
                         w.right.red = false;
-                        rotateLeft(xParent);
+                        root = rotateLeft(root, xParent);
                         x = root;
                     }
                 } else { // symmetric cases
@@ -325,23 +329,23 @@ public final class RedBlackRankQueryStructure extends RankQueryStructureDouble {
                     if (w.red) {
                         w.red = false;
                         xParent.red = true;
-                        rotateRight(xParent);
+                        root = rotateRight(root, xParent);
                         w = xParent.left;
                     }
-                    if (isBlack(w.right) && isBlack(w.left)) {
+                    if (isBlack(w.left) && isBlack(w.right)) {
                         w.red = true;
                         x = xParent;
                     } else {
                         if (isBlack(w.left)) {
                             w.right.red = false;
                             w.red = true;
-                            rotateLeft(w);
+                            root = rotateLeft(root, w);
                             w = xParent.left;
                         }
                         w.red = xParent.red;
                         xParent.red = false;
                         w.left.red = false;
-                        rotateRight(xParent);
+                        root = rotateRight(root, xParent);
                         x = root;
                     }
                 }
@@ -350,15 +354,16 @@ public final class RedBlackRankQueryStructure extends RankQueryStructureDouble {
             if (x != null) {
                 x.red = false;
             }
+            return root;
         }
 
-        private Node successor(Node node) {
+        private static Node successor(Node node) {
             if (node.right != null) {
                 return minNodeNonNull(node.right);
             } else {
                 Node curr = node;
                 Node next = curr.parent;
-                while ((next != null) && (curr == next.right)) {
+                while (next != null && curr == next.right) {
                     curr = next;
                     next = next.parent;
                 }
@@ -366,13 +371,13 @@ public final class RedBlackRankQueryStructure extends RankQueryStructureDouble {
             }
         }
 
-        private Node predecessor(Node node) {
+        private static Node predecessor(Node node) {
             if (node.left != null) {
                 return maxNodeNonNull(node.left);
             } else {
                 Node curr = node;
                 Node next = curr.parent;
-                while ((next != null) && (curr == next.left)) {
+                while (next != null && curr == next.left) {
                     curr = next;
                     next = next.parent;
                 }
@@ -380,64 +385,71 @@ public final class RedBlackRankQueryStructure extends RankQueryStructureDouble {
             }
         }
 
-        private void rotateLeft(Node x) {
+        private static Node rotateLeft(Node root, Node x) {
             if (x != null) {
                 Node newParent = x.right;
-                x.right = newParent.left;
+                Node newParentLeft = newParent.left;
+                x.right = newParentLeft;
 
-                if (newParent.left != null) {
-                    newParent.left.parent = x;
+                if (newParentLeft != null) {
+                    newParentLeft.parent = x;
                 }
-                newParent.parent = x.parent;
 
-                if (x.parent == null) {
-                    root = newParent;
-                } else if (x == x.parent.left) {
-                    x.parent.left = newParent;
-                } else {
-                    x.parent.right = newParent;
-                }
+                root = transplantNonNull(root, x, newParent);
 
                 newParent.left = x;
                 x.parent = newParent;
             }
+            return root;
         }
 
-        private void rotateRight(Node x) {
+        private static Node rotateRight(Node root, Node x) {
             if (x != null) {
                 Node newParent = x.left;
-                x.left = newParent.right;
+                Node newParentRight = newParent.right;
+                x.left = newParentRight;
 
-                if (newParent.right != null) {
-                    newParent.right.parent = x;
+                if (newParentRight != null) {
+                    newParentRight.parent = x;
                 }
-                newParent.parent = x.parent;
 
-                if (x.parent == null) {
-                    root = newParent;
-                } else if (x == x.parent.right) {
-                    x.parent.right = newParent;
-                } else {
-                    x.parent.left = newParent;
-                }
+                root = transplantNonNull(root, x, newParent);
 
                 newParent.right = x;
                 x.parent = newParent;
             }
+            return root;
         }
 
-        private void transplant(Node to, Node from) {
-            if (to.parent == null) {
-                root = from;
-            } else if (to == to.parent.left) {
-                to.parent.left = from;
-            } else {
-                to.parent.right = from;
-            }
+        private static Node transplant(Node root, Node source, Node target) {
+            return target == null ? transplantNull(root, source) : transplantNonNull(root, source, target);
+        }
 
-            if (from != null) {
-                from.parent = to.parent;
+        private static Node transplantNull(Node root, Node source) {
+            Node sourceParent = source.parent;
+            if (sourceParent == null) {
+                return null;
             }
+            if (source == sourceParent.left) {
+                sourceParent.left = null;
+            } else {
+                sourceParent.right = null;
+            }
+            return root;
+        }
+
+        private static Node transplantNonNull(Node root, Node source, Node target) {
+            Node sourceParent = source.parent;
+            target.parent = sourceParent;
+            if (sourceParent == null) {
+                return target;
+            }
+            if (source == sourceParent.left) {
+                sourceParent.left = target;
+            } else {
+                sourceParent.right = target;
+            }
+            return root;
         }
     }
 }
