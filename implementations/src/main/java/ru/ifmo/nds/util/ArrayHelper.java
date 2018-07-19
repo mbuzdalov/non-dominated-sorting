@@ -113,7 +113,8 @@ public final class ArrayHelper {
         while (from + 1 < until) {
             double pivot = array[(from + until) >>> 1];
             if (from + 5 < until) {
-                pivot = (pivot + array[from] + array[until - 1]) / 3;
+                double mid = (array[from] + array[until - 1]) / 2;
+                pivot = (pivot + mid) / 2;
             }
             double vl, vr;
             int l = from, r = until - 1;
