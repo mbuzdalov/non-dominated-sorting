@@ -12,8 +12,8 @@ import ru.ifmo.nds.util.DominanceHelper;
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
 @Timeout(time = 10)
-@Warmup(iterations = 4)
-@Measurement(iterations = 3)
+@Warmup(time = 1, iterations = 4)
+@Measurement(time = 1, iterations = 3)
 @Fork(value = 3)
 public class DominanceHelperBenchmark {
     @Param(value = {"2", "5", "10", "20"})
