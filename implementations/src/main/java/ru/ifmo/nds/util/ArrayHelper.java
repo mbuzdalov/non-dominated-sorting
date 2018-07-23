@@ -1,7 +1,5 @@
 package ru.ifmo.nds.util;
 
-import java.util.concurrent.ThreadLocalRandom;
-
 public final class ArrayHelper {
     private ArrayHelper() {}
 
@@ -38,87 +36,17 @@ public final class ArrayHelper {
     }
 
     public static double destructiveMedian(double[] array, int from, int until) {
-        return destructiveMedian3(array, from, until);
-    }
-
-    public static double destructiveMedianThreeWay(double[] array, int from, int until) {
-        ThreadLocalRandom random = ThreadLocalRandom.current();
-        int count = 0;
         int index = (from + until) >>> 1;
-        while (from + 1 < until) {
-            double pivot = array[++count > 20 ? random.nextInt(from, until) : (from + until) >>> 1];
-            int pivotFirst = from, greaterFirst = until - 1;
-            for (int i = from; i <= greaterFirst; ++i) {
-                double value = array[i];
-                if (value == pivot) {
-                    continue;
-                }
-                if (value < pivot) {
-                    array[i] = array[pivotFirst];
-                    array[pivotFirst++] = value;
-                } else {
-                    double notGreater = array[greaterFirst];
-                    while (notGreater > pivot) {
-                        notGreater = array[--greaterFirst];
-                    }
-                    if (notGreater == pivot) {
-                        array[i] = notGreater;
-                    } else {
-                        array[i] = array[pivotFirst];
-                        array[pivotFirst++] = notGreater;
-                    }
-                    array[greaterFirst--] = value;
-                }
-            }
-            --pivotFirst;
-            ++greaterFirst;
-            if (index <= pivotFirst) {
-                until = pivotFirst + 1;
-            } else if (index >= greaterFirst) {
-                from = greaterFirst;
-            } else {
-                break;
-            }
-        }
-        return array[index];
-    }
-
-    public static double destructiveMedianSimple(double[] array, int from, int until) {
-        ThreadLocalRandom random = ThreadLocalRandom.current();
-        int count = 0;
-        int index = (from + until) >>> 1;
-        while (from + 1 < until) {
-            double pivot = array[++count > 30 ? random.nextInt(from, until) : (from + until) >>> 1];
-            int l = from, r = until - 1;
-            while (l <= r) {
-                while (array[l] < pivot) ++l;
-                while (array[r] > pivot) --r;
-                if (l <= r) {
-                    swap(array, l++, r--);
-                }
-            }
-            if (index <= r) {
-                until = r + 1;
-            } else if (l <= index) {
-                from = l;
-            } else {
-                break;
-            }
-        }
-        return array[index];
-    }
-
-    public static double destructiveMedian3(double[] array, int from, int until) {
-        int index = (from + until) >>> 1;
-        while (from + 1 < until) {
-            double pivot = array[(from + until) >>> 1];
-            if (from + 5 < until) {
-                double mid = (array[from] + array[until - 1]) / 2;
+        int to = until - 1;
+        while (from < to) {
+            double pivot = array[(from + to) >>> 1];
+            if (from + 4 < to) {
+                double mid = (array[from] + array[to]) / 2;
                 pivot = (pivot + mid) / 2;
             }
             double vl, vr;
-            int l = from, r = until - 1;
-            while (l <= r) {
+            int l = from, r = to;
+            do {
                 while ((vl = array[l]) < pivot) ++l;
                 while ((vr = array[r]) > pivot) --r;
                 if (l <= r) {
@@ -127,15 +55,15 @@ public final class ArrayHelper {
                     ++l;
                     --r;
                 }
-            }
+            } while (l <= r);
             if (index < r) {
-                until = r + 1;
+                to = r;
             } else if (l < index) {
                 from = l;
             } else if (r == index) {
                 return max(array, from, r + 1);
             } else if (l == index) {
-                return min(array, l, until);
+                return min(array, l, to + 1);
             } else {
                 return array[index];
             }
@@ -145,8 +73,8 @@ public final class ArrayHelper {
     }
 
     public static int transplant(double[] source, int[] indices, int fromIndex, int untilIndex, double[] target, int targetFrom) {
-        for (int i = fromIndex; i < untilIndex; ++i) {
-            target[targetFrom++] = source[indices[i]];
+        for (int i = fromIndex; i < untilIndex; ++i, ++targetFrom) {
+            target[targetFrom] = source[indices[i]];
         }
         return targetFrom;
     }

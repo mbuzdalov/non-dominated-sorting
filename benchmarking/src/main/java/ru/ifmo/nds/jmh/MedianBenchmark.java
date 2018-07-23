@@ -64,26 +64,10 @@ public class MedianBenchmark {
     }
 
     @Benchmark
-    public void simpleQuickSort(Blackhole bh) {
+    public void quickSelect(Blackhole bh) {
         for (double[] test : data) {
             System.arraycopy(test, 0, temp, 0, test.length);
-            bh.consume(ArrayHelper.destructiveMedianSimple(temp, 0, temp.length));
-        }
-    }
-
-    @Benchmark
-    public void simpleQuickSort3(Blackhole bh) {
-        for (double[] test : data) {
-            System.arraycopy(test, 0, temp, 0, test.length);
-            bh.consume(ArrayHelper.destructiveMedian3(temp, 0, temp.length));
-        }
-    }
-
-    @Benchmark
-    public void threeWayQuickSort(Blackhole bh) {
-        for (double[] test : data) {
-            System.arraycopy(test, 0, temp, 0, test.length);
-            bh.consume(ArrayHelper.destructiveMedianThreeWay(temp, 0, temp.length));
+            bh.consume(ArrayHelper.destructiveMedian(temp, 0, temp.length));
         }
     }
 }
