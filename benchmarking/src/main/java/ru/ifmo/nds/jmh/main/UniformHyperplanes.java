@@ -27,13 +27,13 @@ public class UniformHyperplanes {
     private double[][][] dataset;
     private int[] ranks;
 
-    @Param("10, 100, 1000, 10000")
+    @Param({"10", "100", "1000", "10000"})
     private int n;
 
-    @Param("2, 3, 5, 10")
+    @Param({"2", "3", "5", "10"})
     private int d;
 
-    @Param("1, 2, 3")
+    @Param({"1", "2", "3"})
     private int f;
 
     @Setup

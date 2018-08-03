@@ -26,10 +26,10 @@ public class UniformHypercube {
     private double[][][] dataset;
     private int[] ranks;
 
-    @Param("10, 100, 1000, 10000")
+    @Param({"10", "100", "1000", "10000"})
     private int n;
 
-    @Param("2, 3, 5, 10")
+    @Param({"2", "3", "5", "10"})
     private int d;
 
     @Setup
