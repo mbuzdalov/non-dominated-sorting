@@ -8,6 +8,6 @@ import ru.ifmo.nds.IdCollection;
 public class IdCollectionTests {
     @Test
     public void idCollectionConstructs() {
-        Assert.assertTrue(IdCollection.getAllDatasetIds().size() > 0);
+        Assert.assertTrue(IdCollection.getAllNonDominatedSortingIDs().size() > 0);
     }
 }
