@@ -1,4 +1,4 @@
-package ru.ifmo.nds.jmh;
+package ru.ifmo.nds.jmh.internal;
 
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
