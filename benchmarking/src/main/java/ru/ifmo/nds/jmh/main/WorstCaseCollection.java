@@ -18,8 +18,8 @@ import ru.ifmo.nds.NonDominatedSorting;
 @Warmup(time = 6, iterations = 1)
 @Measurement(time = 1, iterations = 1)
 @Fork(11)
-public class UniformCorrelated {
-    private static final int INSTANCES = 10;
+public class WorstCaseCollection {
+    private static final int INSTANCES = 4;
 
     @Param("The algorithm should be set explicitly")
     private String algorithmId;
@@ -33,22 +33,33 @@ public class UniformCorrelated {
     @Param({"2", "3", "5", "10"})
     private int d;
 
-    @Param({"-1", "0", "1"})
-    private int diff;
-
     @Setup
     public void initializeSorterAndData() {
         sorting = IdCollection.getNonDominatedSortingFactory(algorithmId).getInstance(n, d);
         ranks = new int[n];
         dataset = new double[INSTANCES][n][d];
         Random random = new Random(Arrays.hashCode(new int[] {n, d}));
-        for (int i = 0; i < INSTANCES; ++i) {
-            fill(random, dataset[i]);
+
+        fillCorrelated(random, dataset[0], 0);
+        fillCorrelated(random, dataset[1], 1);
+        fillCorrelated(random, dataset[2], d - 1);
+        fillMultipleLayers(random, dataset[3]);
+    }
+
+    private void fillMultipleLayers(Random random, double[][] instance) {
+        int points = n;
+        int fronts = n / 3;
+        int pointsInLayer = (points + fronts - 1) / fronts;
+        for (int i = 0; i < pointsInLayer; ++i) {
+            for (int j = 1; j < d; ++j) {
+                instance[i][j] = random.nextDouble();
+                instance[i][0] -= instance[i][j];
+            }
+            instance[i][0] += 0.5 * d;
         }
     }
 
-    private void fill(Random random, double[][] instance) {
-        int x = diff > 0 ? diff : d - diff;
+    private void fillCorrelated(Random random, double[][] instance, int x) {
         for (int i = 0; i < n; ++i) {
             double first = random.nextDouble();
             for (int k = 0; k < d; ++k) {
