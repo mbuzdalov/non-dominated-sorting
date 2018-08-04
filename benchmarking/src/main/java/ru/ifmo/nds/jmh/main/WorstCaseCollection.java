@@ -19,7 +19,7 @@ import ru.ifmo.nds.NonDominatedSorting;
 @Measurement(time = 1, iterations = 1)
 @Fork(11)
 public class WorstCaseCollection {
-    private static final int INSTANCES = 4;
+    private static final int INSTANCES = 9;
 
     @Param("The algorithm should be set explicitly")
     private String algorithmId;
@@ -27,7 +27,7 @@ public class WorstCaseCollection {
     private double[][][] dataset;
     private int[] ranks;
 
-    @Param({"10", "100", "1000", "10000"})
+    @Param({"10", "100", "1000"})
     private int n;
 
     @Param({"2", "3", "5", "10"})
@@ -44,6 +44,19 @@ public class WorstCaseCollection {
         fillCorrelated(random, dataset[1], 1);
         fillCorrelated(random, dataset[2], d - 1);
         fillMultipleLayers(random, dataset[3]);
+        fillMultipleLayers(random, dataset[4]);
+        fillMultipleLayers(random, dataset[5]);
+        fillUniform(random, dataset[6]);
+        fillUniform(random, dataset[7]);
+        fillUniform(random, dataset[8]);
+    }
+
+    private void fillUniform(Random random, double[][] instance) {
+        for (int i = 0; i < n; ++i) {
+            for (int j = 0; j < d; ++j) {
+                instance[i][j] = random.nextDouble();
+            }
+        }
     }
 
     private void fillMultipleLayers(Random random, double[][] instance) {
@@ -57,6 +70,13 @@ public class WorstCaseCollection {
             }
             instance[i][0] += 0.5 * d;
         }
+        for (int i = pointsInLayer; i < points; ++i) {
+            System.arraycopy(instance[i - pointsInLayer], 0, instance[i], 0, d);
+            for (int j = 0; j < d; ++j) {
+                instance[i][j] += 1e-8;
+            }
+        }
+        Collections.shuffle(Arrays.asList(instance), random);
     }
 
     private void fillCorrelated(Random random, double[][] instance, int x) {
