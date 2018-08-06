@@ -1,6 +1,7 @@
-package ru.ifmo.nds.jmh.main;
+package ru.ifmo.nds.jmh;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
@@ -12,12 +13,12 @@ import ru.ifmo.nds.NonDominatedSorting;
 
 @State(Scope.Benchmark)
 @BenchmarkMode(Mode.AverageTime)
-@OutputTimeUnit(TimeUnit.MICROSECONDS)
+@OutputTimeUnit(TimeUnit.SECONDS)
 @Timeout(time = 1, timeUnit = TimeUnit.HOURS)
 @Warmup(time = 6, iterations = 1)
 @Measurement(time = 1, iterations = 1)
-@Fork(11)
-public class UniformHypercube {
+@Fork(5)
+public class UniformHyperplanes {
     private static final int INSTANCES = 10;
 
     @Param("The algorithm should be set explicitly")
@@ -32,23 +33,48 @@ public class UniformHypercube {
     @Param({"2", "3", "5", "10"})
     private int d;
 
+    @Param({"1", "2", "n/2", "n"})
+    private String f;
+
     @Setup
     public void initializeSorterAndData() {
         sorting = IdCollection.getNonDominatedSortingFactory(algorithmId).getInstance(n, d);
         ranks = new int[n];
         dataset = new double[INSTANCES][n][d];
-        Random random = new Random(Arrays.hashCode(new int[] {n, d}));
+        Random random = new Random(Arrays.hashCode(new Object[] {n, d, f}));
         for (int i = 0; i < INSTANCES; ++i) {
             fill(random, dataset[i]);
         }
     }
 
     private void fill(Random random, double[][] instance) {
-        for (int i = 0; i < n; ++i) {
+        int realF;
+        if (f.equals("n")) {
+            realF = n;
+        } else if (f.startsWith("n/")) {
+            realF = n / Integer.parseInt(f.substring(2));
+        } else {
+            realF = Integer.parseInt(f);
+        }
+
+        int frontSize = n / realF;
+        int firstFrontSize = n - (realF - 1) * frontSize;
+
+        for (int i = 0; i < firstFrontSize; ++i) {
+            double sum = 1.0;
+            for (int j = d - 1; j > 0; --j) {
+                instance[i][j] = sum * (1 - Math.pow(1 - random.nextDouble(), 1.0 / j));
+                sum -= instance[i][j];
+            }
+            instance[i][0] = sum;
+        }
+        for (int i = firstFrontSize; i < n; ++i) {
+            instance[i] = instance[i - frontSize].clone();
             for (int j = 0; j < d; ++j) {
-                instance[i][j] = random.nextDouble();
+                instance[i][j] += 1e-9;
             }
         }
+        Collections.shuffle(Arrays.asList(instance), random);
     }
 
     @OperationsPerInvocation(INSTANCES)
