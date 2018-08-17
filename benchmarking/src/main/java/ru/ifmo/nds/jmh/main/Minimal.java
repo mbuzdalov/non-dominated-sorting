@@ -1,5 +1,7 @@
 package ru.ifmo.nds.jmh.main;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
 
 import org.openjdk.jmh.results.format.ResultFormatType;
@@ -21,7 +23,7 @@ public class Minimal {
     private static final List<String> moreMinimalN = Arrays.asList("3", "31", "316", "3162", "10000");
     private static final List<String> moreMinimalD = Arrays.asList("4", "6", "7", "8", "9", "11", "12", "13", "14", "15");
 
-    public static void main(String[] args) throws RunnerException {
+    public static void main(String[] args) throws RunnerException, IOException {
         Set<String> allSortings = IdCollection.getAllNonDominatedSortingIDs();
 
         final String[] stub = new String[0];
@@ -77,6 +79,8 @@ public class Minimal {
             System.exit(1);
         }
 
+        String tmpFile = outputFile + ".tmp";
+
         Options options = new OptionsBuilder()
                 .include(UniformHypercube.class.getName())
                 .include(UniformHyperplanes.class.getName())
@@ -86,8 +90,14 @@ public class Minimal {
                 .param("d", d.toArray(stub))
                 .param("f", f.toArray(stub))
                 .resultFormat(ResultFormatType.JSON)
-                .result(outputFile)
+                .result(tmpFile)
                 .build();
         new Runner(options).run();
+
+        File tmp = new File(tmpFile);
+        PatchWithOSHI.patch(tmp, new File(outputFile));
+        if (!tmp.delete()) {
+            System.err.println("Could not delete the temporary file: \"" + tmpFile + "\"");
+        }
     }
 }
