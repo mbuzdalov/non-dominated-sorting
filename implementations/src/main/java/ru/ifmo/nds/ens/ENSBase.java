@@ -2,9 +2,10 @@ package ru.ifmo.nds.ens;
 
 import java.util.Arrays;
 
+import static ru.ifmo.nds.util.DominanceHelper.strictlyDominatesAssumingNotSame;
+
 import ru.ifmo.nds.NonDominatedSorting;
 import ru.ifmo.nds.util.ArrayHelper;
-import ru.ifmo.nds.util.DoubleArraySorter;
 
 public abstract class ENSBase extends NonDominatedSorting {
     private int[] prevIndex;
@@ -39,26 +40,17 @@ public abstract class ENSBase extends NonDominatedSorting {
         return rightRank;
     }
 
-    private boolean strictlyDominatesAssumingNotSame(double[] good, double[] weak, int dim) {
-        for (int i = dim - 1; i > 0; --i) {
-            if (good[i] > weak[i]) {
-                return false;
-            }
-        }
-        return true;
-    }
-
     int frontDominatesWithWork(int frontIndex, double[][] points, double[] point) {
         int index = lastRankIndex[frontIndex];
-        int dim = point.length;
-        if (dim == 2) {
+        int maxObj = point.length - 1;
+        if (maxObj == 1) {
             // This is essentially how the 2D case of JFB works.
-            return strictlyDominatesAssumingNotSame(points[index], point, dim) ? 1 : -1;
+            return strictlyDominatesAssumingNotSame(points[index], point, maxObj) ? 1 : -1;
         } else {
             int count = 0;
             while (index >= 0) {
                 ++count;
-                if (strictlyDominatesAssumingNotSame(points[index], point, dim)) {
+                if (strictlyDominatesAssumingNotSame(points[index], point, maxObj)) {
                     return count;
                 }
                 index = prevIndex[index];
