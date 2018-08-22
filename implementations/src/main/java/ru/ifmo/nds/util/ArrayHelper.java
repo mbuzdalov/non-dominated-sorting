@@ -9,12 +9,6 @@ public final class ArrayHelper {
         array[b] = tmp;
     }
 
-    public static void swap(double[] array, int a, int b) {
-        double tmp = array[a];
-        array[a] = array[b];
-        array[b] = tmp;
-    }
-
     public static boolean equal(double[] a, double[] b) {
         int al = a.length;
         return al == b.length && equal(a, b, al);
@@ -32,6 +26,12 @@ public final class ArrayHelper {
     public static void fillIdentity(int[] array, int n) {
         for (int i = 0; i < n; ++i) {
             array[i] = i;
+        }
+    }
+
+    public static void fillIdentity(int[] array, int n, int offset) {
+        for (int i = 0, v = offset; i < n; ++i, ++v) {
+            array[i] = v;
         }
     }
 

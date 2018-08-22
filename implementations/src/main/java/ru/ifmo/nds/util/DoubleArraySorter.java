@@ -20,11 +20,15 @@ public final class DoubleArraySorter {
         double pivot = scratch[random.nextInt(from, until)];
         int l = from, r = until - 1;
         while (l <= r) {
-            while (scratch[l] < pivot) ++l;
-            while (scratch[r] > pivot) --r;
+            double lv, rv;
+            while ((lv = scratch[l]) < pivot) ++l;
+            while ((rv = scratch[r]) > pivot) --r;
             if (l <= r) {
                 ArrayHelper.swap(indices, l, r);
-                ArrayHelper.swap(scratch, l++, r--);
+                scratch[l] = rv;
+                scratch[r] = lv;
+                ++l;
+                --r;
             }
         }
         if (from + 1 <= r) sortImplInside(from, r + 1);
@@ -122,10 +126,14 @@ public final class DoubleArraySorter {
         int pivot = resolver[indices[random.nextInt(from, until)]];
         int l = from, r = until - 1;
         while (l <= r) {
-            while (resolver[indices[l]] < pivot) ++l;
-            while (resolver[indices[r]] > pivot) --r;
+            int li, ri;
+            while (resolver[li = indices[l]] < pivot) ++l;
+            while (resolver[ri = indices[r]] > pivot) --r;
             if (l <= r) {
-                ArrayHelper.swap(indices, l++, r--);
+                indices[l] = ri;
+                indices[r] = li;
+                ++l;
+                --r;
             }
         }
         if (from + 1 <= r) sortByResolver(from, r + 1);
