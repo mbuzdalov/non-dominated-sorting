@@ -1,5 +1,6 @@
 package ru.ifmo.nds.domtree;
 
+import ru.ifmo.nds.util.ArrayHelper;
 import ru.ifmo.nds.util.DoubleArraySorter;
 
 import static ru.ifmo.nds.DominanceTree.InsertionOption;
@@ -195,9 +196,7 @@ public class Presort extends AbstractDominanceTree {
     protected void sortChecked(double[][] points, int[] ranks, int maximalMeaningfulRank) {
         int n = points.length;
         // this.ranks are temporarily abused to mean indices
-        for (int i = 0; i < n; ++i) {
-            this.ranks[i] = i;
-        }
+        ArrayHelper.fillIdentity(this.ranks, n);
         sorter.lexicographicalSort(points, this.ranks, 0, n, points[0].length);
         int realN = DoubleArraySorter.retainUniquePoints(points, this.ranks, this.points, ranks);
         // from this point on, this.ranks stop being abused, but arg ranks stores reindexing.

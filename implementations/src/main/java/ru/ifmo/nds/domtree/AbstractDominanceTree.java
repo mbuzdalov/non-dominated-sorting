@@ -34,7 +34,8 @@ public abstract class AbstractDominanceTree extends NonDominatedSorting {
             while (tree != null) {
                 ranks[tree.index] = rank;
                 if (tree.child != null) {
-                    rankMergeArray[rankMergeCount++] = tree.child;
+                    rankMergeArray[rankMergeCount] = tree.child;
+                    ++rankMergeCount;
                 }
                 tree = tree.next;
             }
@@ -86,14 +87,7 @@ public abstract class AbstractDominanceTree extends NonDominatedSorting {
         }
 
         boolean dominatesAssumingThisIsNotWorse(Node that) {
-            int dim = point.length;
-            for (int i = 0; i < dim; ++i) {
-                double a = point[i], b = that.point[i];
-                if (a > b) {
-                    return false;
-                }
-            }
-            return true;
+            return DominanceHelper.strictlyDominatesAssumingNotSame(point, that.point, point.length - 1);
         }
 
         int dominationCompare(Node that) {

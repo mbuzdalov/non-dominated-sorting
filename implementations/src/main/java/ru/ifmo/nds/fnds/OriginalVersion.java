@@ -62,7 +62,9 @@ public class OriginalVersion extends NonDominatedSorting {
 
     private void pushToDominateList(int good, int bad) {
         ++howManyDominateMe[bad];
-        whoIDominate[good][howManyIDominate[good]++] = bad;
+        int howMany = howManyIDominate[good];
+        whoIDominate[good][howMany] = bad;
+        howManyIDominate[good] = ++howMany;
     }
 
     private void comparePointWithOthers(int index, double[][] points, int from, int until) {
@@ -92,7 +94,8 @@ public class OriginalVersion extends NonDominatedSorting {
         for (int i = 0; i < n; ++i) {
             if (howManyDominateMe[i] == 0) {
                 ranks[i] = 0;
-                queue[qHead++] = i;
+                queue[qHead] = i;
+                ++qHead;
             }
         }
         return qHead;
@@ -106,7 +109,8 @@ public class OriginalVersion extends NonDominatedSorting {
             if (--howManyDominateMe[next] == 0) {
                 ranks[next] = nextRank;
                 if (nextRank < maximalMeaningfulRank) {
-                    queue[qHead++] = next;
+                    queue[qHead] = next;
+                    ++qHead;
                 }
             }
         }
@@ -125,7 +129,8 @@ public class OriginalVersion extends NonDominatedSorting {
         int qHead = enqueueZeroRanks(n, ranks);
         int qTail = 0;
         while (qHead > qTail) {
-            int curr = queue[qTail++];
+            int curr = queue[qTail];
+            ++qTail;
             qHead = decreaseWhomIDominate(curr, ranks, qHead, maximalMeaningfulRank);
         }
         markNotRankedAsMeaningless(n, ranks, maximalMeaningfulRank);

@@ -24,7 +24,7 @@ public class Improved extends NonDominatedSorting {
         objectiveIndices = new int[maximumDimension][maximumPoints];
         lastFrontIndex = new int[maximumDimension][maximumPoints];
         prevFrontIndex = new int[maximumDimension][maximumPoints];
-        checkIndices = new int[maximumPoints][maximumDimension];
+        checkIndices = new int[maximumPoints][Math.max(0, maximumDimension - 1)];
         checkIndicesCount = new int[maximumPoints];
         indexNeededCount = new int[maximumPoints];
         indexNeeded = new boolean[maximumPoints][maximumDimension];
@@ -56,11 +56,11 @@ public class Improved extends NonDominatedSorting {
         }
         double[] p1 = points[i1];
         double[] p2 = points[i2];
-        int dim = p1.length;
+        int maxObj = p1.length - 1;
 
         // I have not yet validated this empirically,
         // but when needed count is high, the simple loop is preferable.
-        if (indexNeededCount[i1] * 3 < p1.length) {
+        if (indexNeededCount[i1] * 3 <= maxObj) {
             int[] checkIdx = checkIndices[i1];
             boolean[] idxNeeded = indexNeeded[i1];
 
@@ -75,13 +75,14 @@ public class Improved extends NonDominatedSorting {
                     }
                     ++index;
                 } else {
-                    checkIdx[index] = checkIdx[--count];
+                    --count;
+                    checkIdx[index] = checkIdx[count];
                 }
             }
             checkIndicesCount[i1] = count;
             return true;
         } else {
-            return DominanceHelper.strictlyDominates(p1, p2, dim);
+            return DominanceHelper.strictlyDominatesAssumingNotSame(p1, p2, maxObj);
         }
     }
 
@@ -129,11 +130,11 @@ public class Improved extends NonDominatedSorting {
         maximalMeaningfulRank = Math.min(maximalMeaningfulRank, newN - 1);
 
         Arrays.fill(this.ranks, 0, newN, -1);
-        Arrays.fill(checkIndicesCount, 0, newN, dim);
+        Arrays.fill(checkIndicesCount, 0, newN, dim - 1);
         Arrays.fill(indexNeededCount, 0, newN, dim);
 
         for (int i = 0; i < newN; ++i) {
-            ArrayHelper.fillIdentity(checkIndices[i], dim);
+            ArrayHelper.fillIdentity(checkIndices[i], dim - 1, 1);
             Arrays.fill(indexNeeded[i], 0, dim, true);
         }
 
@@ -162,7 +163,7 @@ public class Improved extends NonDominatedSorting {
                     lastFI[myRank] = currIndex;
                 }
                 if (--indexNeededCount[currIndex] == 0) {
-                    if (smallestRank < myRank + 1) {
+                    if (smallestRank <= myRank) {
                         smallestRank = myRank + 1;
                         if (smallestRank > maximalMeaningfulRank) {
                             break;
