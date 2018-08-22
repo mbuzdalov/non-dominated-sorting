@@ -22,7 +22,8 @@ public class Minimal {
     private static final List<String> moreMinimalD = Arrays.asList("4", "6", "7", "8", "9", "11", "12", "13", "14", "15");
 
     public static void main(String[] args) throws RunnerException {
-        Set<String> allSortings = IdCollection.getAllNonDominatedSortingIDs();
+        Set<String> allAlgorithms = IdCollection.getAllNonDominatedSortingIDs();
+        Set<String> algorithms = new TreeSet<>(allAlgorithms);
 
         final String[] stub = new String[0];
 
@@ -64,6 +65,19 @@ public class Minimal {
                             System.err.println("Error: unknown option to --use: '" + cmd + "'");
                     }
                 }
+            } else if (s.startsWith("--algo=")) {
+                StringTokenizer st = new StringTokenizer(s.substring("--algo=".length()), ",");
+                algorithms.clear();
+                while (st.hasMoreTokens()) {
+                    String token = st.nextToken();
+                    if (!allAlgorithms.contains(token)) {
+                        failed = true;
+                        System.err.println("Error: unknown algorithm '" + token + "' passed to --algo");
+                        break;
+                    } else {
+                        algorithms.add(token);
+                    }
+                }
             } else {
                 failed = true;
                 System.err.println("Error: unknown command '" + s + "'");
@@ -73,7 +87,7 @@ public class Minimal {
         failed |= n.isEmpty();
 
         if (failed) {
-            System.err.println("Usage: Minimal --use=<min|more-d|more-n> [--out=<file>]");
+            System.err.println("Usage: Minimal --use=<min|more-d|more-n> [--algo=<algo1>,<algo2>,...] [--out=<file>]");
             System.exit(1);
         }
 
@@ -81,7 +95,7 @@ public class Minimal {
                 .include(UniformHypercube.class.getName())
                 .include(UniformHyperplanes.class.getName())
                 .include(UniformCorrelated.class.getName())
-                .param("algorithmId", allSortings.toArray(stub))
+                .param("algorithmId", algorithms.toArray(stub))
                 .param("n", n.toArray(stub))
                 .param("d", d.toArray(stub))
                 .param("f", f.toArray(stub))
