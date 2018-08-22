@@ -56,11 +56,11 @@ public class Improved extends NonDominatedSorting {
         }
         double[] p1 = points[i1];
         double[] p2 = points[i2];
-        int dim = p1.length;
+        int maxObj = p1.length - 1;
 
         // I have not yet validated this empirically,
         // but when needed count is high, the simple loop is preferable.
-        if (indexNeededCount[i1] * 3 < p1.length) {
+        if (indexNeededCount[i1] * 3 <= maxObj) {
             int[] checkIdx = checkIndices[i1];
             boolean[] idxNeeded = indexNeeded[i1];
 
@@ -75,13 +75,14 @@ public class Improved extends NonDominatedSorting {
                     }
                     ++index;
                 } else {
-                    checkIdx[index] = checkIdx[--count];
+                    --count;
+                    checkIdx[index] = checkIdx[count];
                 }
             }
             checkIndicesCount[i1] = count;
             return true;
         } else {
-            return DominanceHelper.strictlyDominates(p1, p2, dim);
+            return DominanceHelper.strictlyDominatesAssumingNotSame(p1, p2, maxObj);
         }
     }
 
