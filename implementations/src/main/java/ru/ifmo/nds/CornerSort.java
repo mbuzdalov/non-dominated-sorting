@@ -25,8 +25,8 @@ public class CornerSort {
             double[] bestPoint = points[indices[best]];
             for (int i = from + 1; i < until; ++i) {
                 double[] currPoint = points[indices[i]];
-                if (bestPoint[objective] > currPoint[objective] ||
-                        bestPoint[objective] == currPoint[objective] && strictlyDominates(currPoint, bestPoint, dim)) {
+                double bv = bestPoint[objective], cv = currPoint[objective];
+                if (bv > cv || bv == cv && strictlyDominates(currPoint, bestPoint, dim)) {
                     bestPoint = currPoint;
                     best = i;
                 }
@@ -38,8 +38,11 @@ public class CornerSort {
             double[] bestPoint = points[indices[index]];
             ++index;
             while (index < until) {
-                if (strictlyDominates(bestPoint, points[indices[index]], dim)) {
-                    ArrayHelper.swap(indices, --until, index);
+                int ii = indices[index];
+                if (strictlyDominates(bestPoint, points[ii], dim)) {
+                    int last = indices[--until];
+                    indices[until] = ii;
+                    indices[index] = last;
                 } else {
                     ++index;
                 }
@@ -55,24 +58,27 @@ public class CornerSort {
             int curr = from;
             int last = until;
             int objective = 0;
-            int d = points[0].length;
 
             while (curr < last) {
                 int best = findBestPoint(points, dim, curr, last, objective);
-                ArrayHelper.swap(indices, best, curr);
-                ranks[indices[curr]] = rank;
+                int bestIdx = indices[best];
+                int currIdx = indices[curr];
+                indices[best] = currIdx;
+                indices[curr] = bestIdx;
+                ranks[bestIdx] = rank;
 
                 last = moveDominatedToTail(points, dim, curr, last);
                 curr = ++from;
-                objective = (objective + 1) % d;
+                objective = (objective + 1) % dim;
             }
 
             return last;
         }
 
         private void fillNonMeaningfulRanks(int[] ranks, int from, int until, int maximalMeaningfulRank) {
+            int nextRank = maximalMeaningfulRank + 1;
             for (int i = from; i < until; ++i) {
-                ranks[indices[i]] = maximalMeaningfulRank + 1;
+                ranks[indices[i]] = nextRank;
             }
         }
 
