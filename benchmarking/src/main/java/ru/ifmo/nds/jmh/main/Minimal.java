@@ -80,6 +80,18 @@ public class Minimal {
                         algorithms.add(token);
                     }
                 }
+            } else if (s.startsWith("--n=")) {
+                StringTokenizer st = new StringTokenizer(s.substring("--n=".length()), ",");
+                n.clear();
+                while (st.hasMoreTokens()) {
+                    n.add(st.nextToken());
+                }
+            } else if (s.startsWith("--d=")) {
+                StringTokenizer st = new StringTokenizer(s.substring("--d=".length()), ",");
+                d.clear();
+                while (st.hasMoreTokens()) {
+                    d.add(st.nextToken());
+                }
             } else {
                 failed = true;
                 System.err.println("Error: unknown command '" + s + "'");
@@ -87,6 +99,7 @@ public class Minimal {
         }
 
         failed |= n.isEmpty();
+        failed |= d.isEmpty();
 
         if (failed) {
             System.err.println("Usage: Minimal --use=<min|more-d|more-n> [--algo=<algo1>,<algo2>,...] [--out=<file>]");
