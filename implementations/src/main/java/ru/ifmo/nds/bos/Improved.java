@@ -14,9 +14,6 @@ public class Improved extends NonDominatedSorting {
     private int[][] lastFrontIndex;
     private int[][] prevFrontIndex;
 
-    private int[][] checkIndices;
-    private int[] checkIndicesCount;
-    private boolean[][] indexNeeded;
     private int[] indexNeededCount;
 
     public Improved(int maximumPoints, int maximumDimension) {
@@ -24,10 +21,7 @@ public class Improved extends NonDominatedSorting {
         objectiveIndices = new int[maximumDimension][maximumPoints];
         lastFrontIndex = new int[maximumDimension][maximumPoints];
         prevFrontIndex = new int[maximumDimension][maximumPoints];
-        checkIndices = new int[maximumPoints][Math.max(0, maximumDimension - 1)];
-        checkIndicesCount = new int[maximumPoints];
         indexNeededCount = new int[maximumPoints];
-        indexNeeded = new boolean[maximumPoints][maximumDimension];
         points = new double[maximumPoints][];
         ranks = new int[maximumPoints];
     }
@@ -42,9 +36,6 @@ public class Improved extends NonDominatedSorting {
         objectiveIndices = null;
         lastFrontIndex = null;
         prevFrontIndex = null;
-        checkIndices = null;
-        checkIndicesCount = null;
-        indexNeeded = null;
         indexNeededCount = null;
         points = null;
         ranks = null;
@@ -57,33 +48,7 @@ public class Improved extends NonDominatedSorting {
         double[] p1 = points[i1];
         double[] p2 = points[i2];
         int maxObj = p1.length - 1;
-
-        // I have not yet validated this empirically,
-        // but when needed count is high, the simple loop is preferable.
-        if (indexNeededCount[i1] * 3 <= maxObj) {
-            int[] checkIdx = checkIndices[i1];
-            boolean[] idxNeeded = indexNeeded[i1];
-
-            int count = checkIndicesCount[i1];
-            int index = 0;
-            while (index < count) {
-                int currIndex = checkIdx[index];
-                if (idxNeeded[currIndex]) {
-                    if (p1[currIndex] > p2[currIndex]) {
-                        checkIndicesCount[i1] = count;
-                        return false;
-                    }
-                    ++index;
-                } else {
-                    --count;
-                    checkIdx[index] = checkIdx[count];
-                }
-            }
-            checkIndicesCount[i1] = count;
-            return true;
-        } else {
-            return DominanceHelper.strictlyDominatesAssumingNotSame(p1, p2, maxObj);
-        }
+        return DominanceHelper.strictlyDominatesAssumingNotSame(p1, p2, maxObj);
     }
 
     private void initializeObjectiveIndices(int newN, int dim) {
@@ -130,13 +95,7 @@ public class Improved extends NonDominatedSorting {
         maximalMeaningfulRank = Math.min(maximalMeaningfulRank, newN - 1);
 
         Arrays.fill(this.ranks, 0, newN, -1);
-        Arrays.fill(checkIndicesCount, 0, newN, dim - 1);
         Arrays.fill(indexNeededCount, 0, newN, dim);
-
-        for (int i = 0; i < newN; ++i) {
-            ArrayHelper.fillIdentity(checkIndices[i], dim - 1, 1);
-            Arrays.fill(indexNeeded[i], 0, dim, true);
-        }
 
         for (int d = 0; d < dim; ++d) {
             Arrays.fill(lastFrontIndex[d], 0, newN, -1);
@@ -156,7 +115,6 @@ public class Improved extends NonDominatedSorting {
                     rankPoint(currIndex, prevFI, lastFI, smallestRank, maximalMeaningfulRank);
                     ++ranked;
                 }
-                indexNeeded[currIndex][oIndex] = false;
                 int myRank = this.ranks[currIndex];
                 if (myRank <= maximalMeaningfulRank) {
                     prevFI[currIndex] = lastFI[myRank];
