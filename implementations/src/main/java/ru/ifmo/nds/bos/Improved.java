@@ -41,16 +41,6 @@ public class Improved extends NonDominatedSorting {
         ranks = null;
     }
 
-    private boolean dominates(int i1, int i2) {
-        if (i1 > i2) {
-            return false;
-        }
-        double[] p1 = points[i1];
-        double[] p2 = points[i2];
-        int maxObj = p1.length - 1;
-        return DominanceHelper.strictlyDominatesAssumingNotSame(p1, p2, maxObj);
-    }
-
     private void initializeObjectiveIndices(int newN, int dim) {
         for (int d = 0; d < dim; ++d) {
             int[] currentObjectiveIndex = objectiveIndices[d];
@@ -62,6 +52,8 @@ public class Improved extends NonDominatedSorting {
     }
 
     private void rankPoint(int currIndex, int[] prevFI, int[] lastFI, int smallestRank, int maximalMeaningfulRank) {
+        double[] p2 = points[currIndex];
+        int maxObj = p2.length - 1;
         int currRank = smallestRank;
         // This is currently implemented as sequential search.
         // A binary search implementation is expected as well.
@@ -69,12 +61,12 @@ public class Improved extends NonDominatedSorting {
             int prevIndex = lastFI[currRank];
             boolean someoneDominatesMe = false;
             while (prevIndex != -1) {
-                if (dominates(prevIndex, currIndex)) {
+                if (prevIndex < currIndex && // For now, we totally ignore that some coordinates are unneeded.
+                        DominanceHelper.strictlyDominatesAssumingNotSame(points[prevIndex], p2, maxObj)) {
                     someoneDominatesMe = true;
                     break;
-                } else {
-                    prevIndex = prevFI[prevIndex];
                 }
+                prevIndex = prevFI[prevIndex];
             }
             if (!someoneDominatesMe) {
                 break;
