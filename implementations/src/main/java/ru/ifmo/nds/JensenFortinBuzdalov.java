@@ -28,6 +28,10 @@ public class JensenFortinBuzdalov {
         return (p, d) -> new JFBInt(new VanEmdeBoasRankQueryStructureInt(p), d, 1, new ENS(100, 200));
     }
 
+    public static NonDominatedSortingFactory getVanEmdeBoasHybridNDTImplementation(int threshold) {
+        return (p, d) -> new JFBInt(new VanEmdeBoasRankQueryStructureInt(p), d, 1, new NDT(100, 20000, threshold));
+    }
+
     public static NonDominatedSortingFactory getRedBlackTreeSweepHybridFNDSImplementation(int allowedThreads) {
         return (p, d) -> new JFBDouble(new RedBlackRankQueryStructure(p), d, allowedThreads, LinearNDS.getWrapperInstance());
     }
