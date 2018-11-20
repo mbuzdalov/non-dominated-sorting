@@ -167,8 +167,9 @@ final class AnyAnyBitSet extends VanEmdeBoasSet {
     private boolean cleanupMidMax(int from, int offset, int value, int[] values) {
         if (!summary.isEmpty()) {
             for (int i = from == -1 ? summary.min() : summary.next(from); i < clusters.length; i = summary.next(i)) {
-                clusters[i].cleanupUpwards(offset + (i << loBits), value, values);
-                if (clusters[i].isEmpty()) {
+                VanEmdeBoasSet ci = clusters[i];
+                ci.cleanupUpwards(offset + (i << loBits), value, values);
+                if (ci.isEmpty()) {
                     summary.remove(i);
                 } else {
                     return false;
@@ -306,12 +307,13 @@ final class AnyAnyBitSet extends VanEmdeBoasSet {
             if (!summary.isEmpty()) {
                 // need to cleanup at least something
                 for (int i = summary.min(); i < clusters.length; i = summary.next(i)) {
-                    clusters[i].cleanupUpwards(offset + (i << loBits), value, values);
-                    if (!clusters[i].isEmpty()) {
-                        int min = clusters[i].min();
+                    VanEmdeBoasSet ci = clusters[i];
+                    ci.cleanupUpwards(offset + (i << loBits), value, values);
+                    if (!ci.isEmpty()) {
+                        int min = ci.min();
                         this.min = min + (i << loBits);
-                        clusters[i].remove(min);
-                        if (clusters[i].isEmpty()) {
+                        ci.remove(min);
+                        if (ci.isEmpty()) {
                             summary.remove(i);
                         }
                         return;

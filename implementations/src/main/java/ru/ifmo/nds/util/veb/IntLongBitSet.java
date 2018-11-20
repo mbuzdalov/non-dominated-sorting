@@ -244,8 +244,9 @@ final class IntLongBitSet extends VanEmdeBoasSet {
                 }
             } else {
                 int h = hi(index);
+                int ch = clusters[h];
                 int greaterThanCurrentMask = (-1 << index) << 1;
-                int upTo = clusters[h] & ~greaterThanCurrentMask;
+                int upTo = ch & ~greaterThanCurrentMask;
                 if (upTo == 0) {
                     int hPrev = VanEmdeBoasSet.prev(summary, h);
                     int iPrev = hPrev == -1 ? min : join(hPrev, VanEmdeBoasSet.max(clusters[hPrev]));
@@ -259,17 +260,18 @@ final class IntLongBitSet extends VanEmdeBoasSet {
                     }
                 }
                 summary |= 1L << h;
-                clusters[h] = VanEmdeBoasSet.setEnsuringMonotonicity(clusters[h], index & 31, offset + (h << 5), value, values);
+                ch = VanEmdeBoasSet.setEnsuringMonotonicity(ch, index & 31, offset + (h << 5), value, values);
                 values[offset + index] = value;
-                if ((clusters[h] & greaterThanCurrentMask) == 0) {
+                if ((ch & greaterThanCurrentMask) == 0) {
                     if (cleanupMidMax(h, offset, value, values)) {
                         max = index;
-                        clusters[h] ^= 1 << index;
-                        if (clusters[h] == 0) {
+                        ch ^= 1 << index;
+                        if (ch == 0) {
                             summary ^= 1L << h;
                         }
                     }
                 }
+                clusters[h] = ch;
             }
         }
     }
@@ -282,16 +284,18 @@ final class IntLongBitSet extends VanEmdeBoasSet {
             if (summary != 0) {
                 // need to cleanup at least something
                 for (int i = VanEmdeBoasSet.min(summary); i < clusters.length; i = VanEmdeBoasSet.next(summary, i)) {
-                    clusters[i] = VanEmdeBoasSet.cleanupUpwards(clusters[i], offset + (i << 5), value, values);
-                    if (clusters[i] != 0) {
-                        int min = VanEmdeBoasSet.min(clusters[i]);
+                    int ci = clusters[i];
+                    ci = VanEmdeBoasSet.cleanupUpwards(ci, offset + (i << 5), value, values);
+                    if (ci != 0) {
+                        int min = VanEmdeBoasSet.min(ci);
                         this.min = min + (i << 5);
-                        clusters[i] ^= 1 << min;
-                        if (clusters[i] == 0) {
+                        ci ^= 1 << min;
+                        if (ci == 0) {
                             summary ^= 1L << i;
                         }
                         return;
                     }
+                    clusters[i] = ci;
                     summary ^= 1L << i;
                 }
             }
