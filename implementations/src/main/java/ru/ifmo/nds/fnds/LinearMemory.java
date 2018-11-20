@@ -3,16 +3,15 @@ package ru.ifmo.nds.fnds;
 import ru.ifmo.nds.NonDominatedSorting;
 import ru.ifmo.nds.util.ArrayHelper;
 import ru.ifmo.nds.util.DominanceHelper;
-import ru.ifmo.nds.util.DoubleArraySorter;
 
 public class LinearMemory extends NonDominatedSorting {
-    private int[] ranks;
-    private double[][] points;
+    private double[][] testedPoints;
+    private int[] testedPointRanks;
 
     public LinearMemory(int maximumPoints, int maximumDimension) {
         super(maximumPoints, maximumDimension);
-        ranks = new int[maximumPoints];
-        points = new double[maximumPoints][];
+        testedPoints = new double[maximumPoints][];
+        testedPointRanks = new int[maximumPoints];
     }
 
     @Override
@@ -22,40 +21,57 @@ public class LinearMemory extends NonDominatedSorting {
 
     @Override
     protected void closeImpl() {
-        ranks = null;
-        points = null;
-    }
-
-    private void doSorting(int n, int dim, int maximalMeaningfulRank) {
-        ranks[0] = 0;
-        int maxObj = dim - 1;
-        for (int i = 1; i < n; ++i) {
-            int myRank = 0;
-            double[] pi = points[i];
-            for (int j = i - 1; j >= 0; --j) {
-                int thatRank = ranks[j];
-                if (myRank <= thatRank && DominanceHelper.strictlyDominatesAssumingNotSame(points[j], pi, maxObj)) {
-                    myRank = thatRank + 1;
-                    if (myRank > maximalMeaningfulRank) {
-                        break;
-                    }
-                }
-            }
-            ranks[i] = myRank;
-        }
+        testedPoints = null;
+        testedPointRanks = null;
     }
 
     @Override
     protected void sortChecked(double[][] points, int[] ranks, int maximalMeaningfulRank) {
-        int n = points.length;
-        int dim = points[0].length;
+        // 1. Getting the points sorted.
+        final int n = points.length;
+        final int dim = points[0].length;
+        final int maxObj = dim - 1;
         ArrayHelper.fillIdentity(indices, n);
         sorter.lexicographicalSort(points, indices, 0, n, dim);
-        int newN = DoubleArraySorter.retainUniquePoints(points, indices, this.points, ranks);
-        doSorting(newN, dim, maximalMeaningfulRank);
-        for (int i = 0; i < n; ++i) {
-            ranks[i] = this.ranks[ranks[i]];
-            this.points[i] = null;
+
+        // 2. The first point always has a rank 0
+        int i0 = indices[0];
+        ranks[i0] = 0;
+        double[] lastPoint = points[i0];
+        int lastRank = 0;
+        testedPoints[0] = lastPoint;
+        testedPointRanks[0] = 0; // only to enhance readability, holds by default
+        int nTestedPoints = 1;
+
+        // 3. Scanning the rest of the points against the previously tested points.
+        for (int i = 1; i < n; ++i) {
+            int index = indices[i];
+            double[] currPoint = points[index];
+            if (ArrayHelper.equal(lastPoint, currPoint)) {
+                ranks[index] = lastRank;
+            } else {
+                int currRank = 0;
+                // The entire machinery with the testing points is only to ensure more-or-less sequential memory access.
+                for (int j = nTestedPoints - 1; j >= 0; --j) {
+                    int jRank = testedPointRanks[j];
+                    if (currRank <= jRank && DominanceHelper.strictlyDominatesAssumingNotSame(testedPoints[j], currPoint, maxObj)) {
+                        currRank = jRank + 1;
+                        if (currRank > maximalMeaningfulRank) {
+                            break;
+                        }
+                    }
+                }
+                ranks[index] = currRank;
+                if (currRank <= maximalMeaningfulRank) {
+                    // Maybe run insertion sort to ensure the ranks are sorted
+                    // (and that it is valid to fall off, in the loop above, once dominated)?
+                    testedPointRanks[nTestedPoints] = currRank;
+                    testedPoints[nTestedPoints] = currPoint;
+                    ++nTestedPoints;
+                }
+                lastPoint = currPoint;
+                lastRank = currRank;
+            }
         }
     }
 }
