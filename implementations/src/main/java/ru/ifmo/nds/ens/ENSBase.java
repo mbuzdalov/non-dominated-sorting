@@ -23,11 +23,11 @@ public abstract class ENSBase extends NonDominatedSorting {
         lastRankIndex = null;
     }
 
-    boolean frontDominates(int frontIndex, double[][] points, double[] point) {
+    final boolean frontDominates(int frontIndex, double[][] points, double[] point) {
         return frontDominatesWithWork(frontIndex, points, point) >= 0;
     }
 
-    int findRankByBinarySearch(double[][] points, double[] point, int minRank, int maxRank) {
+    final int findRankByBinarySearch(double[][] points, double[] point, int minRank, int maxRank) {
         int leftRank = minRank, rightRank = maxRank + 1;
         while (rightRank - leftRank > 1) {
             int currRank = (leftRank + rightRank) >>> 1;
@@ -40,7 +40,7 @@ public abstract class ENSBase extends NonDominatedSorting {
         return rightRank;
     }
 
-    int frontDominatesWithWork(int frontIndex, double[][] points, double[] point) {
+    final int frontDominatesWithWork(int frontIndex, double[][] points, double[] point) {
         int index = lastRankIndex[frontIndex];
         int maxObj = point.length - 1;
         if (maxObj == 1) {
@@ -59,7 +59,7 @@ public abstract class ENSBase extends NonDominatedSorting {
         }
     }
 
-    int setRank(int pointIndex, int[] ranks, int rank, int maxRank, int maximumMeaningfulRank) {
+    final int setRank(int pointIndex, int[] ranks, int rank, int maxRank, int maximumMeaningfulRank) {
         if (rank > maximumMeaningfulRank) {
             ranks[pointIndex] = maximumMeaningfulRank + 1;
         } else {
@@ -80,7 +80,7 @@ public abstract class ENSBase extends NonDominatedSorting {
     protected void sortChecked(double[][] points, int[] ranks, int maximalMeaningfulRank) {
         int n = ranks.length;
         ArrayHelper.fillIdentity(indices, n);
-        Arrays.fill(prevIndex, -1);
+        Arrays.fill(prevIndex, 0, n, -1);
         sorter.lexicographicalSort(points, indices, 0, n, points[0].length);
         sortCheckedImpl(points, ranks, maximalMeaningfulRank);
     }
