@@ -7,22 +7,19 @@ public class DeductiveSort {
 
     private static final NonDominatedSortingFactory INSTANCE = (maximumPoints, maximumDimension) ->
             new NonDominatedSorting(maximumPoints, maximumDimension) {
-        private int[] indices = new int[maximumPoints];
-
         @Override
         public String getName() {
             return "Deductive Sort";
         }
 
         @Override
-        protected void closeImpl() {
-            indices = null;
-        }
+        protected void closeImpl() {}
 
         @Override
         protected void sortChecked(double[][] points, int[] ranks, int maximalMeaningfulRank) {
-            int n = points.length;
-            int dim = points[0].length;
+            final int[] indices = this.indices;
+            final int n = points.length;
+            final int dim = points[0].length;
             for (int i = 0; i < n; ++i) {
                 indices[i] = i;
             }
@@ -31,23 +28,20 @@ public class DeductiveSort {
                 int curr = from;
                 int last = n;
                 while (curr < last) {
-                    int currI = indices[curr];
-                    double[] currP = points[currI];
+                    final int currI = indices[curr];
+                    final double[] currP = points[currI];
                     int next = curr + 1;
                     boolean currentDominated = false;
                     while (next < last) {
-                        int nextI = indices[next];
-                        double[] nextP = points[nextI];
-                        int comparison = DominanceHelper.dominanceComparison(currP, nextP, dim);
+                        final int nextI = indices[next];
+                        int comparison = DominanceHelper.dominanceComparison(currP, points[nextI], dim);
                         if (comparison < 0) {
-                            int tmp = indices[--last];
-                            indices[last] = indices[next];
-                            indices[next] = tmp;
+                            indices[next] = indices[--last];
+                            indices[last] = nextI;
                         } else if (comparison > 0) {
                             currentDominated = true;
-                            int tmp = indices[--last];
-                            indices[last] = indices[curr];
-                            indices[curr] = tmp;
+                            indices[curr] = indices[--last];
+                            indices[last] = currI;
                             break;
                         } else {
                             ++next;
