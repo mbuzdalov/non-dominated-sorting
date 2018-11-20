@@ -8,17 +8,13 @@ public class CornerSort {
 
     private static final NonDominatedSortingFactory INSTANCE = (maximumPoints, maximumDimension) ->
             new NonDominatedSorting(maximumPoints, maximumDimension) {
-        private int[] indices = new int[maximumPoints];
-
         @Override
         public String getName() {
             return "Corner Sort";
         }
 
         @Override
-        protected void closeImpl() {
-            indices = null;
-        }
+        protected void closeImpl() {}
 
         private int findBestPoint(double[][] points, int dim, int from, int until, int objective) {
             int best = from;
@@ -40,9 +36,8 @@ public class CornerSort {
             while (index < until) {
                 int ii = indices[index];
                 if (strictlyDominates(bestPoint, points[ii], dim)) {
-                    int last = indices[--until];
+                    indices[index] = indices[--until];
                     indices[until] = ii;
-                    indices[index] = last;
                 } else {
                     ++index;
                 }
@@ -62,8 +57,7 @@ public class CornerSort {
             while (curr < last) {
                 int best = findBestPoint(points, dim, curr, last, objective);
                 int bestIdx = indices[best];
-                int currIdx = indices[curr];
-                indices[best] = currIdx;
+                indices[best] = indices[curr];
                 indices[curr] = bestIdx;
                 ranks[bestIdx] = rank;
 
