@@ -65,7 +65,7 @@ def readListOfAlgorithms(file: Path): Set[String] = {
 }
 
 class ComputeMinimal(useKey: String) extends Phase(s"phase.minimal-$useKey.compute") {
-  override def execute(curr: Path, prev: Option[Path]): Unit = {
+  override def execute(projectRoot: Path, curr: Path, prev: Option[Path]): Unit = {
     val currentPhaseOut = s"minimal-$useKey.json"
     val rawDir = curr.resolve(DataSubdirectoryRaw)
     Files.createDirectories(rawDir)
@@ -83,7 +83,7 @@ class ComputeMinimal(useKey: String) extends Phase(s"phase.minimal-$useKey.compu
       pb.command("sbt",
         "project benchmarking",
         s"jmh:runMain ru.ifmo.nds.jmh.main.Minimal $algorithms --use=$useKey --out=${outputFile.toAbsolutePath}")
-      pb.inheritIO().directory(curr.toFile)
+      pb.inheritIO().directory(projectRoot.toFile)
       val exitCode = pb.start().waitFor()
       if (exitCode != 0) {
         throw new IOException("Exit code " + exitCode)
@@ -94,7 +94,7 @@ class ComputeMinimal(useKey: String) extends Phase(s"phase.minimal-$useKey.compu
 }
 
 object CompareMinimal extends Phase("phase.minimal-min.compare") {
-  override def execute(curr: Path, prevOption: Option[Path]): Unit = {
+  override def execute(projectRoot: Path, curr: Path, prevOption: Option[Path]): Unit = {
     val currentPhaseIn = "minimal-min.json.gz"
     val listOfAlgorithms = curr.resolve(ListOfAlgorithms)
     prevOption match {
@@ -115,7 +115,7 @@ object CompareMinimal extends Phase("phase.minimal-min.compare") {
 }
 
 class Consolidate(key: String) extends Phase(s"phase.$key.consolidate") {
-  override def execute(curr: Path, prevOption: Option[Path]): Unit = {
+  override def execute(projectRoot: Path, curr: Path, prevOption: Option[Path]): Unit = {
     val target = curr.resolve(DataSubdirectoryConsolidated)
     val currentPhaseOut = key + ".json.gz"
     Files.createDirectories(target)
