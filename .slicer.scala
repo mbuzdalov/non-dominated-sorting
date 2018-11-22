@@ -89,7 +89,7 @@ class ComputeMinimal(useKey: String) extends Phase(s"phase.minimal-$useKey.compu
         throw new IOException("Exit code " + exitCode)
       }
     }
-    gzipJson(outputFile)
+    Utils.gzipJson(outputFile)
   }
 }
 
@@ -136,19 +136,6 @@ class Consolidate(key: String) extends Phase(s"phase.$key.consolidate") {
         val merged = Database.merge(oldDBFiltered, newDB)
         Json.writeToFile(merged, trg.toFile)
     }
-  }
-}
-
-def gzipJson(root: Path): Unit = {
-  val target = root.resolveSibling(root.getFileName.toString + ".gz")
-  if (!Files.exists(target)) {
-    println(s"Compressing $root to $target")
-    val db = Json.fromFile(root.toFile)
-    Json.writeToFile(db, target.toFile)
-    println(s"Deleting $root")
-    Files.delete(root)
-  } else {
-    println(s"Warning: both $root and $target exist, will not do anything")
   }
 }
 
