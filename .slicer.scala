@@ -1,9 +1,6 @@
 import java.io.IOException
-import java.nio.charset.Charset
-import java.nio.file.{Files, Path, Paths}
+import java.nio.file.{Files, Path}
 import java.util.Collections
-
-import scala.collection.JavaConverters._
 
 import ru.ifmo.ds.Database
 import ru.ifmo.ds.io.Json
@@ -23,47 +20,6 @@ val KeyValue = "primaryMetric.rawData"
 val KeyCats = Seq("benchmark", "params.d", "params.f", "params.n")
 val KeyAlgorithm = "params.algorithmId"
 
-class CompareListener(p: Double) extends DifferenceListener {
-  private val differingAlgorithms, nonDifferingAlgorithms = IndexedSeq.newBuilder[String]
-  def result(): IndexedSeq[String] = differingAlgorithms.result() ++ nonDifferingAlgorithms.result()
-  override def keyValuesDoNotMatch(slice: Map[String, Option[String]], key: String,
-                                   onlyLeft: Set[Option[String]],
-                                   onlyRight: Set[Option[String]]): Unit = {
-    // It can be that the new commit features new algorithms which did not exist yet. These need to be added.
-    // It can be that the new commit deletes some of the old algorithms. These need not to be added.
-    if (key == KeyAlgorithm) {
-      onlyRight.foreach(differingAlgorithms ++= _)
-    }
-  }
-  override def kolmogorovSmirnovFailure(slice: Map[String, Option[String]],
-                                        key: String, leftValues: Seq[String], rightValues: Seq[String],
-                                        exception: Throwable): Unit = throw exception
-  override def kolmogorovSmirnovResult(slice: Map[String, Option[String]],
-                                       key: String, leftValues: Seq[Double], rightValues: Seq[Double],
-                                       result: KolmogorovSmirnov.Result): Unit = {}
-  override def sliceStatistics(slice: Map[String, Option[String]],
-                               key: String, statistics: Seq[KolmogorovSmirnov.Result]): Unit = {
-    if (slice.keySet == Set(KeyAlgorithm)) {
-      slice(KeyAlgorithm) match {
-        case None =>
-        case Some(algorithm) =>
-          val stat = KolmogorovSmirnov.rankSumOnMultipleOutcomes(statistics)
-          if (stat < p) {
-            differingAlgorithms += s"$algorithm $stat"
-          } else {
-            nonDifferingAlgorithms += s"#$algorithm $stat"
-          }
-      }
-    }
-  }
-}
-
-def readListOfAlgorithms(file: Path): Set[String] = {
-  def indexOrEnd(i: Int, s: String): Int = if (i < 0) s.length else i
-  def firstToken(s: String): String = s.substring(0, indexOrEnd(s.indexOf(' '), s))
-  Files.readAllLines(file).asScala.filterNot(_.startsWith("#")).map(firstToken).toSet
-}
-
 class ComputeMinimal(useKey: String) extends Phase(s"phase.minimal-$useKey.compute") {
   override def execute(projectRoot: Path, curr: Path, prev: Option[Path]): Unit = {
     val currentPhaseOut = s"minimal-$useKey.json"
@@ -72,7 +28,7 @@ class ComputeMinimal(useKey: String) extends Phase(s"phase.minimal-$useKey.compu
     val outputFile = rawDir.resolve(currentPhaseOut)
     val listOfAlgorithms = curr.resolve(ListOfAlgorithms)
     val algorithms = if (Files.exists(listOfAlgorithms)) {
-      readListOfAlgorithms(listOfAlgorithms).mkString("--algo=", ",", "")
+      Utils.firstTokensOfUncommentedLines(listOfAlgorithms).mkString("--algo=", ",", "")
     } else ""
     if (algorithms == "--algo=") {
       // When an empty parameter list is given, JMH thinks one shall use the compiled-in parameters, which fails.
@@ -102,14 +58,14 @@ object CompareMinimal extends Phase("phase.minimal-min.compare") {
         val oldDB = Json.fromFile(prev.resolve(DataSubdirectoryConsolidated).resolve(currentPhaseIn).toFile)
         val newDB = Json.fromFile(curr.resolve(DataSubdirectoryRaw).resolve(currentPhaseIn).toFile)
         val commonAlgorithms = oldDB.valuesUnderKey(KeyAlgorithm).intersect(newDB.valuesUnderKey(KeyAlgorithm))
-        val listener = new CompareListener(BasicPValue / commonAlgorithms.size)
+        val listener = new CompareListener(BasicPValue / commonAlgorithms.size, KeyAlgorithm)
         FindDifferences.traverse(oldDB, newDB, KeyAlgorithm +: KeyCats, KeyValue, listener)
-        Files.write(listOfAlgorithms, listener.result().asJava, Charset.defaultCharset())
+        Utils.writeLines(listOfAlgorithms, listener.result())
       case None =>
         // No previous runs detected. Need to write all algorithms to the file
         val file = curr.resolve(DataSubdirectoryRaw).resolve(currentPhaseIn)
         val allAlgorithms = Json.fromFile(file.toFile).valuesUnderKey(KeyAlgorithm).flatMap(_.iterator).toIndexedSeq.sorted
-        Files.write(listOfAlgorithms, allAlgorithms.asJava, Charset.defaultCharset())
+        Utils.writeLines(listOfAlgorithms, allAlgorithms)
     }
   }
 }
@@ -131,7 +87,7 @@ class Consolidate(key: String) extends Phase(s"phase.$key.consolidate") {
       case Some(prev) =>
         val oldDB = Json.fromFile(prev.resolve(DataSubdirectoryConsolidated).resolve(currentPhaseOut).toFile)
         val newDB = Json.fromFile(curr.resolve(DataSubdirectoryRaw).resolve(currentPhaseOut).toFile)
-        val differingAlgorithms = readListOfAlgorithms(curr.resolve(ListOfAlgorithms))
+        val differingAlgorithms = Utils.firstTokensOfUncommentedLines(curr.resolve(ListOfAlgorithms))
         val oldDBFiltered = oldDB.filter(e => e.contains(KeyAlgorithm) && !differingAlgorithms.contains(e(KeyAlgorithm)))
         val merged = Database.merge(oldDBFiltered, newDB)
         Json.writeToFile(merged, trg.toFile)
