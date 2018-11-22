@@ -1,12 +1,8 @@
-import java.io.IOException
 import java.nio.file.{Files, Path}
-import java.util.Collections
 
 import ru.ifmo.ds.Database
 import ru.ifmo.ds.io.Json
 import ru.ifmo.ds.ops.FindDifferences
-import ru.ifmo.ds.ops.FindDifferences.DifferenceListener
-import ru.ifmo.ds.stat.KolmogorovSmirnov
 
 vars.stateFileName = "state.properties"
 vars.singleStep = false
@@ -33,17 +29,12 @@ class ComputeMinimal(useKey: String) extends Phase(s"phase.minimal-$useKey.compu
     if (algorithms == "--algo=") {
       // When an empty parameter list is given, JMH thinks one shall use the compiled-in parameters, which fails.
       // Write an empty JSON file instead.
-      Files.write(outputFile, Collections.singletonList("[]"))
+      Utils.writeLines(outputFile, Seq("[]"))
     } else {
-      val pb = new ProcessBuilder()
-      pb.command("sbt",
+      Utils.runProcess(projectRoot,
+        "sbt",
         "project benchmarking",
         s"jmh:runMain ru.ifmo.nds.jmh.main.Minimal $algorithms --use=$useKey --out=${outputFile.toAbsolutePath}")
-      pb.inheritIO().directory(projectRoot.toFile)
-      val exitCode = pb.start().waitFor()
-      if (exitCode != 0) {
-        throw new IOException("Exit code " + exitCode)
-      }
     }
     Utils.gzipJson(outputFile)
   }
@@ -64,7 +55,7 @@ object CompareMinimal extends Phase("phase.minimal-min.compare") {
       case None =>
         // No previous runs detected. Need to write all algorithms to the file
         val file = curr.resolve(DataSubdirectoryRaw).resolve(currentPhaseIn)
-        val allAlgorithms = Json.fromFile(file.toFile).valuesUnderKey(KeyAlgorithm).flatMap(_.iterator).toIndexedSeq.sorted
+        val allAlgorithms = Json.fromFile(file.toFile).valuesUnderKey(KeyAlgorithm).flatten.toIndexedSeq.sorted
         Utils.writeLines(listOfAlgorithms, allAlgorithms)
     }
   }
