@@ -3,7 +3,7 @@ package ru.ifmo.nds;
 import ru.ifmo.nds.domtree.NoPresort;
 import ru.ifmo.nds.domtree.Presort;
 
-public class DominanceTree {
+public final class DominanceTree {
     public enum InsertionOption {
         NO_DELAYED_INSERTION("no delayed insertion"),
         DELAYED_INSERTION_SEQUENTIAL_CONCATENATION("delayed insertion with sequential concatenation"),

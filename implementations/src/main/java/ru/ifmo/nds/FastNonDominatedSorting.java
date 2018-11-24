@@ -3,7 +3,7 @@ package ru.ifmo.nds;
 import ru.ifmo.nds.fnds.LinearMemory;
 import ru.ifmo.nds.fnds.OriginalVersion;
 
-public class FastNonDominatedSorting {
+public final class FastNonDominatedSorting {
     private FastNonDominatedSorting() {}
 
     private static final NonDominatedSortingFactory ORIGINAL_FACTORY = OriginalVersion::new;

@@ -7,7 +7,7 @@ import ru.ifmo.nds.ndt.ENS_NDT;
 import ru.ifmo.nds.ndt.ENS_NDT_Arrays;
 import ru.ifmo.nds.ndt.ENS_NDT_OneTree;
 
-public class ENS {
+public final class ENS {
     private ENS() {}
 
     private static final NonDominatedSortingFactory ENS_SS_INSTANCE = ENS_SS::new;

@@ -3,7 +3,7 @@ package ru.ifmo.nds;
 import ru.ifmo.nds.bos.Improved;
 import ru.ifmo.nds.bos.Proteek;
 
-public class BestOrderSort {
+public final class BestOrderSort {
     private BestOrderSort() {}
 
     private static final NonDominatedSortingFactory PROTEEK = Proteek::new;

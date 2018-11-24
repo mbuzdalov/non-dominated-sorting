@@ -3,7 +3,7 @@ package ru.ifmo.nds;
 import ru.ifmo.nds.util.ArrayHelper;
 import static ru.ifmo.nds.util.DominanceHelper.*;
 
-public class CornerSort {
+public final class CornerSort {
     private CornerSort() {}
 
     private static final NonDominatedSortingFactory INSTANCE = (maximumPoints, maximumDimension) ->

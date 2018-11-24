@@ -9,7 +9,7 @@ import ru.ifmo.nds.util.FenwickRankQueryStructureDouble;
 import ru.ifmo.nds.util.RedBlackRankQueryStructure;
 import ru.ifmo.nds.util.VanEmdeBoasRankQueryStructureInt;
 
-public class JensenFortinBuzdalov {
+public final class JensenFortinBuzdalov {
     private JensenFortinBuzdalov() {}
 
     public static NonDominatedSortingFactory getRedBlackTreeSweepImplementation(int allowedThreads) {

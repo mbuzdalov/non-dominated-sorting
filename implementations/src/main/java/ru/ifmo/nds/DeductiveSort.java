@@ -2,7 +2,7 @@ package ru.ifmo.nds;
 
 import ru.ifmo.nds.util.DominanceHelper;
 
-public class DeductiveSort {
+public final class DeductiveSort {
     private DeductiveSort() {}
 
     private static final NonDominatedSortingFactory INSTANCE = (maximumPoints, maximumDimension) ->

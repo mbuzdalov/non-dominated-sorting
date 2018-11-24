@@ -2,7 +2,7 @@ package ru.ifmo.nds;
 
 import ru.ifmo.nds.dcns.SumitImplementation2016;
 
-public class SumitMishraDivideConquer {
+public final class SumitMishraDivideConquer {
     private SumitMishraDivideConquer() {}
 
     public static NonDominatedSortingFactory getSumitImplementation2016(boolean useBinarySearch, boolean useGammaHeuristic) {
