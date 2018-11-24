@@ -19,12 +19,14 @@ public final class CornerSort {
         private int findBestPoint(double[][] points, int dim, int from, int until, int objective) {
             int best = from;
             double[] bestPoint = points[indices[best]];
+            double bv = bestPoint[objective];
             for (int i = from + 1; i < until; ++i) {
                 double[] currPoint = points[indices[i]];
-                double bv = bestPoint[objective], cv = currPoint[objective];
+                double cv = currPoint[objective];
                 if (bv > cv || bv == cv && strictlyDominates(currPoint, bestPoint, dim)) {
                     bestPoint = currPoint;
                     best = i;
+                    bv = cv;
                 }
             }
             return best;
