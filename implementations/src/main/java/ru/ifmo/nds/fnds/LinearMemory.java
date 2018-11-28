@@ -47,7 +47,7 @@ public class LinearMemory extends NonDominatedSorting {
         for (int i = 1; i < n; ++i) {
             int index = indices[i];
             double[] currPoint = points[index];
-            if (ArrayHelper.equal(lastPoint, currPoint)) {
+            if (ArrayHelper.equal(lastPoint, currPoint, dim)) {
                 ranks[index] = lastRank;
             } else {
                 int currRank = 0;

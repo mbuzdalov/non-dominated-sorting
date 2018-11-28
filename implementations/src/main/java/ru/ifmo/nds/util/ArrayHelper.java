@@ -9,12 +9,7 @@ public final class ArrayHelper {
         array[b] = tmp;
     }
 
-    public static boolean equal(double[] a, double[] b) {
-        int al = a.length;
-        return al == b.length && equal(a, b, al);
-    }
-
-    private static boolean equal(double[] a, double[] b, int prefixLength) {
+    public static boolean equal(final double[] a, final double[] b, final int prefixLength) {
         for (int i = 0; i < prefixLength; ++i) {
             if (a[i] != b[i]) {
                 return false;
