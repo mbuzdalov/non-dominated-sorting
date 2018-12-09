@@ -13,7 +13,7 @@ import ru.ifmo.nds.NonDominatedSorting;
  */
 public class SumitImplementation2016 extends NonDominatedSorting {
     private List<ArrayList<Integer>>[] arrSetNonDominatedFront;
-    private Gamma gamma;
+    private int gammaFrontIndex, gammaNoSolution;
     private final boolean useBinarySearch;
     private final boolean useGammaHeuristic;
 
@@ -31,7 +31,6 @@ public class SumitImplementation2016 extends NonDominatedSorting {
     @Override
     protected void closeImpl() {
         arrSetNonDominatedFront = null;
-        gamma = null;
     }
 
     @Override
@@ -63,47 +62,50 @@ public class SumitImplementation2016 extends NonDominatedSorting {
             arrSetNonDominatedFront[i].add(ndf);
         }
         
-        int treeLevel = (int) Math.ceil(Math.log10(n) / Math.log10(2));
+        int treeLevel = 31 - Integer.numberOfLeadingZeros(n);
+        if ((n & (n - 1)) != 0) {
+            ++treeLevel;
+        }
         
         if (searchType == 0 && spaceReq == 0) { // DCNS-SS
-            for (int i = 0; i < treeLevel; i++) {
-                int x = (int) Math.ceil(n / (Math.pow(2, i + 1)));
+            for (int i = 0, mask = 1; i < treeLevel; i++, mask = mask + mask + 1) {
+                int x = (n >>> i + 1) + ((n & mask) == 0 ? 0 : 1);
                 for (int j = 0; j < x; j++) {
-                    int a = (int) Math.pow(2, i + 1) * j;
-                    int b = a + (int) Math.pow(2, i);
+                    int a = j << (i + 1);
+                    int b = a + (1 << i);
                     if (b < n) {
                         Merge_SS(a, b, population);
                     }
                 }
             }
         } else if (searchType == 1 && spaceReq == 0) { // DCNS-BS
-            for (int i = 0; i < treeLevel; i++) {
-                int x = (int) Math.ceil(n / (Math.pow(2, i + 1)));
+            for (int i = 0, mask = 1; i < treeLevel; i++, mask = mask + mask + 1) {
+                int x = (n >>> i + 1) + ((n & mask) == 0 ? 0 : 1);
                 for (int j = 0; j < x; j++) {
-                    int a = (int) Math.pow(2, i + 1) * j;
-                    int b = a + (int) Math.pow(2, i);
+                    int a = j << (i + 1);
+                    int b = a + (1 << i);
                     if (b < n) {
                         Merge_BS(a, b, population);
                     }
                 }
             }
         } else if (searchType == 0 && spaceReq == 1) { // DCNS-SSS
-            for (int i = 0; i < treeLevel; i++) {
-                int x = (int) Math.ceil(n / (Math.pow(2, i + 1)));
+            for (int i = 0, mask = 1; i < treeLevel; i++, mask = mask + mask + 1) {
+                int x = (n >>> i + 1) + ((n & mask) == 0 ? 0 : 1);
                 for (int j = 0; j < x; j++) {
-                    int a = (int) Math.pow(2, i + 1) * j;
-                    int b = a + (int) Math.pow(2, i);
+                    int a = j << (i + 1);
+                    int b = a + (1 << i);
                     if (b < n) {
                         Merge_SSS(a, b, population);
                     }
                 }
             }
         } else {  // searchType == 1 && spaceReq == 1, // DCNS-SSS
-            for (int i = 0; i < treeLevel; i++) {
-                int x = (int) Math.ceil(n / (Math.pow(2, i + 1)));
+            for (int i = 0, mask = 1; i < treeLevel; i++, mask = mask + mask + 1) {
+                int x = (n >>> i + 1) + ((n & mask) == 0 ? 0 : 1);
                 for (int j = 0; j < x; j++) {
-                    int a = (int) Math.pow(2, i + 1) * j;
-                    int b = a + (int) Math.pow(2, i);
+                    int a = j << (i + 1);
+                    int b = a + (1 << i);
                     if (b < n) {
                         Merge_BSS(a, b, population);
                     }
@@ -135,7 +137,7 @@ public class SumitImplementation2016 extends NonDominatedSorting {
         } 
         /* Add remaining fronts without comparisons */
         while (q < arrSetNonDominatedFront[j].size()) {
-            arrSetNonDominatedFront[i].add(new ArrayList<>(arrSetNonDominatedFront[j].get(q)));
+            arrSetNonDominatedFront[i].add(arrSetNonDominatedFront[j].get(q));
             q++;
         }
     }
@@ -153,7 +155,7 @@ public class SumitImplementation2016 extends NonDominatedSorting {
         } 
         /* Add remaining fronts without comparisons */
         while (q < arrSetNonDominatedFront[j].size()) {
-            arrSetNonDominatedFront[i].add(new ArrayList<>(arrSetNonDominatedFront[j].get(q)));
+            arrSetNonDominatedFront[i].add(arrSetNonDominatedFront[j].get(q));
             q++;
         }
     }
@@ -171,7 +173,7 @@ public class SumitImplementation2016 extends NonDominatedSorting {
         } 
         /* Add remaining fronts without comparisons */
         while (q < arrSetNonDominatedFront[j].size()) {
-            arrSetNonDominatedFront[i].add(new ArrayList<>(arrSetNonDominatedFront[j].get(q)));
+            arrSetNonDominatedFront[i].add(arrSetNonDominatedFront[j].get(q));
             q++;
         }
     }
@@ -189,7 +191,7 @@ public class SumitImplementation2016 extends NonDominatedSorting {
         } 
         /* Add remaining fronts without comparisons */
         while (q < arrSetNonDominatedFront[j].size()) {
-            arrSetNonDominatedFront[i].add(new ArrayList<>(arrSetNonDominatedFront[j].get(q)));
+            arrSetNonDominatedFront[i].add(arrSetNonDominatedFront[j].get(q));
             q++;
         }
     }
@@ -218,7 +220,8 @@ public class SumitImplementation2016 extends NonDominatedSorting {
     private int Insert_Front_SSS(int i, int j, int q, int alpha, Solution[] population) {
         int P = arrSetNonDominatedFront[i].size();
         int hfi = P;  //Because indexing starts from 0 in Java
-        gamma = new Gamma(-1,-1);
+        gammaFrontIndex = -1;
+        gammaNoSolution = -1;
         for (int u = 0; u < arrSetNonDominatedFront[j].get(q).size(); u++) {
             int sol = arrSetNonDominatedFront[j].get(q).get(u);
             hfi = Insert_SSS(population, i, sol, P, alpha, hfi);
@@ -229,7 +232,8 @@ public class SumitImplementation2016 extends NonDominatedSorting {
     private int Insert_Front_BSS(int i, int j, int q, int alpha, Solution[] population) {
         int P = arrSetNonDominatedFront[i].size();
         int hfi = P;  //Because indexing starts from 0 in Java
-        gamma = new Gamma(-1,-1);
+        gammaFrontIndex = -1;
+        gammaNoSolution = -1;
         for (int u = 0; u < arrSetNonDominatedFront[j].get(q).size(); u++) {
             int sol = arrSetNonDominatedFront[j].get(q).get(u);
             hfi = Insert_BSS(population, i, sol, P, alpha, hfi);
@@ -324,10 +328,10 @@ public class SumitImplementation2016 extends NonDominatedSorting {
         for (int p = alpha; p < P ; p++) {
             int count = 0;
             int sizeOfFront = arrSetNonDominatedFront[i].get(p).size();
-            if (p == gamma.getFrontIndex()) {
-                sizeOfFront = gamma.getNoSolution();
+            if (p == gammaFrontIndex) {
+                sizeOfFront = gammaNoSolution;
             }
-            for (int u = sizeOfFront-1; u >= 0; u--) {
+            for (int u = sizeOfFront - 1; u >= 0; u--) {
                 int isdom = population[arrSetNonDominatedFront[i].get(p).get(u)].dominates(population[sol]);
                 if (isdom == 0) { //solution sol is non-dominated with the solution in the existing front
                     count++;
@@ -339,9 +343,9 @@ public class SumitImplementation2016 extends NonDominatedSorting {
             }
             if (count == sizeOfFront) {
                 arrSetNonDominatedFront[i].get(p).add(sol);
-                if (p != gamma.getFrontIndex()) {
-                    gamma.setFrontIndex(p);
-                    gamma.setNoSolution(count);
+                if (p != gammaFrontIndex) {
+                    gammaFrontIndex = p;
+                    gammaNoSolution = count;
                 }
                 isInserted = true;
                 if (p < hfi) {
@@ -370,8 +374,8 @@ public class SumitImplementation2016 extends NonDominatedSorting {
         while (true) {
             count = 0;
             int sizeOfFront = arrSetNonDominatedFront[i].get(mid).size();
-            if (mid == gamma.getFrontIndex()) {
-                sizeOfFront = gamma.getNoSolution();
+            if (mid == gammaFrontIndex) {
+                sizeOfFront = gammaNoSolution;
             }
             for (int u = sizeOfFront-1; u >= 0; u--) {
                 int isdom = population[arrSetNonDominatedFront[i].get(mid).get(u)].dominates(population[sol]);
@@ -386,9 +390,9 @@ public class SumitImplementation2016 extends NonDominatedSorting {
             if (count == sizeOfFront) {
                 if (mid == min) {
                     arrSetNonDominatedFront[i].get(mid).add(sol);
-                    if (mid != gamma.getFrontIndex()) {
-                        gamma.setFrontIndex(mid);
-                        gamma.setNoSolution(count);
+                    if (mid != gammaFrontIndex) {
+                        gammaFrontIndex = mid;
+                        gammaNoSolution = count;
                     }
                     if (mid < hfi) {
                         hfi = mid;
@@ -429,11 +433,14 @@ public class SumitImplementation2016 extends NonDominatedSorting {
         int dominates(Solution sol) {
             boolean flag1 = false;
             boolean flag2 = false;
-            int noObjectives = sol.objectives.length;
+            double[] thisObj = this.objectives;
+            double[] thatObj = sol.objectives;
+            int noObjectives = thisObj.length;
             for (int i = 0; i < noObjectives; i++) {
-                if (this.objectives[i] < sol.objectives[i]) {
+                double l = thisObj[i], r = thatObj[i];
+                if (l < r) {
                     flag1 = true;
-                } else if (this.objectives[i] > sol.objectives[i]) {
+                } else if (l > r) {
                     flag2 = true;
                 }
             }
@@ -448,11 +455,14 @@ public class SumitImplementation2016 extends NonDominatedSorting {
 
         // MB: this is an inverse lexicographical comparator: 1 if this < sol, -1 if this > sol.
         int isSmall(Solution sol) {
-            int noObjectives = objectives.length;
+            double[] thisObj = this.objectives;
+            double[] thatObj = sol.objectives;
+            int noObjectives = thisObj.length;
             for (int i = 0; i < noObjectives; i++) {
-                if(this.objectives[i] < sol.objectives[i]) {
+                double l = thisObj[i], r = thatObj[i];
+                if (l < r) {
                     return 1;
-                } else if (this.objectives[i] > sol.objectives[i]) {
+                } else if (l > r) {
                     return -1;
                 }
             }
@@ -462,21 +472,17 @@ public class SumitImplementation2016 extends NonDominatedSorting {
 
     // To heapify a subtree rooted with node i which is
     // an index in arr[]. n is size of heap
-    private void heapifyFirstObjective(int arr[], int heapSize, int i, Solution population[])
+    private void heapifyFirstObjective(int[] arr, int heapSize, int i, Solution[] population)
     {
         int largest = i;  // Initialize largest as root
         int l = 2 * i + 1;  // left = 2*i + 1
         int r = 2 * i + 2;  // right = 2*i + 2
 
         // If left child is larger than root
-        /*if (l < heapSize && population[arr[l]].isBig(population[arr[largest]]) == 1)
-            largest = l;*/
         if (l < heapSize && population[arr[l]].isSmall(population[arr[largest]]) == -1)
             largest = l;
 
         // If right child is larger than largest so far
-        /*if (r < heapSize && population[arr[r]].isBig(population[arr[largest]]) == 1)
-            largest = r;*/
         if (r < heapSize && population[arr[r]].isSmall(population[arr[largest]]) == -1)
             largest = r;
 
@@ -491,7 +497,7 @@ public class SumitImplementation2016 extends NonDominatedSorting {
         }
     }
 
-    private int[] preSortDCNS(Solution population[]) {
+    private int[] preSortDCNS(Solution[] population) {
         int n = population.length;
         int[] Q0 = new int[n];
         for(int i = 0; i < n; i++) {
@@ -515,31 +521,5 @@ public class SumitImplementation2016 extends NonDominatedSorting {
         }
         /*-- Sort based on first objective --*/
         return Q0;
-    }
-
-    private static class Gamma { // Used to reduce the number of dominance comparisons by taking constant space
-        private int frontIndex;
-        private int noSolution;
-
-        Gamma(int frontIndex, int noSolution) {
-            this.frontIndex = frontIndex;
-            this.noSolution = noSolution;
-        }
-
-        int getFrontIndex() {
-            return frontIndex;
-        }
-
-        int getNoSolution() {
-            return noSolution;
-        }
-
-        void setFrontIndex(int frontIndex) {
-            this.frontIndex = frontIndex;
-        }
-
-        void setNoSolution(int noSolution) {
-            this.noSolution = noSolution;
-        }
     }
 }
