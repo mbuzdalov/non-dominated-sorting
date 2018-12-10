@@ -124,17 +124,15 @@ public class SumitImplementation2016 extends NonDominatedSorting {
     
     private static void Merge_SS(List<List<Solution>> targetFronts, List<List<Solution>> sourceFronts) {
         int alpha = -1;
-        int q = 0;
-        while (q < sourceFronts.size()) {
+        int q = 0, qMax = sourceFronts.size();
+        while (q < qMax) {
             alpha = Insert_Front_SS(targetFronts, sourceFronts.get(q), alpha + 1);
+            q++;
             if (alpha == targetFronts.size() - 1) {
-                q++;
                 break;
             }
-            q++;
         }
-        /* Add remaining fronts without comparisons */
-        while (q < sourceFronts.size()) {
+        while (q < qMax) {
             targetFronts.add(sourceFronts.get(q));
             q++;
         }
@@ -142,17 +140,15 @@ public class SumitImplementation2016 extends NonDominatedSorting {
     
     private static void Merge_BS(List<List<Solution>> targetFronts, List<List<Solution>> sourceFronts) {
         int alpha = -1;
-        int q = 0;
-        while (q < sourceFronts.size()) {
+        int q = 0, qMax = sourceFronts.size();
+        while (q < qMax) {
             alpha = Insert_Front_BS(targetFronts, sourceFronts.get(q), alpha + 1);
+            q++;
             if (alpha == targetFronts.size() - 1) {
-                q++;
                 break;
             }
-            q++;
         }
-        /* Add remaining fronts without comparisons */
-        while (q < sourceFronts.size()) {
+        while (q < qMax) {
             targetFronts.add(sourceFronts.get(q));
             q++;
         }
@@ -160,17 +156,15 @@ public class SumitImplementation2016 extends NonDominatedSorting {
     
     private void Merge_SSS(List<List<Solution>> targetFronts, List<List<Solution>> sourceFronts) {
         int alpha = -1;
-        int q = 0;
-        while (q < sourceFronts.size()) {
+        int q = 0, qMax = sourceFronts.size();
+        while (q < qMax) {
             alpha = Insert_Front_SSS(targetFronts, sourceFronts.get(q), alpha + 1);
+            q++;
             if (alpha == targetFronts.size() - 1) {
-                q++;
                 break;
             }
-            q++;
         }
-        /* Add remaining fronts without comparisons */
-        while (q < sourceFronts.size()) {
+        while (q < qMax) {
             targetFronts.add(sourceFronts.get(q));
             q++;
         }
@@ -178,17 +172,15 @@ public class SumitImplementation2016 extends NonDominatedSorting {
     
     private void Merge_BSS(List<List<Solution>> targetFronts, List<List<Solution>> sourceFronts) {
         int alpha = -1;
-        int q = 0;
-        while (q < sourceFronts.size()) {
+        int q = 0, qMax = sourceFronts.size();
+        while (q < qMax) {
             alpha = Insert_Front_BSS(targetFronts, sourceFronts.get(q), alpha + 1);
+            q++;
             if (alpha == targetFronts.size() - 1) {
-                q++;
                 break;
             }
-            q++;
-        } 
-        /* Add remaining fronts without comparisons */
-        while (q < sourceFronts.size()) {
+        }
+        while (q < qMax) {
             targetFronts.add(sourceFronts.get(q));
             q++;
         }
@@ -239,92 +231,60 @@ public class SumitImplementation2016 extends NonDominatedSorting {
         for (int p = alpha; p < P; p++) {
             List<Solution> front = fronts.get(p);
             if (frontDoesNotDominate(front, sol, front.size() - 1)) {
-                front.add(sol);
-                return p;
+                return insertInExistingFront(front, sol, p);
             }
         }
-        insertAtIndex(fronts, sol, P);
-        return P;
+        return insertMaybeInNewFront(fronts, sol, P);
     }
      
     private static int Insert_BS(List<List<Solution>> fronts, Solution sol, int P, int alpha) {
-        int min = alpha;
-        int max = P - 1;
-        int mid = (min + max) / 2;
-        while (true) {
+        List<Solution> first = fronts.get(alpha);
+        if (frontDoesNotDominate(first, sol, first.size() - 1)) {
+            return insertInExistingFront(first, sol, alpha);
+        }
+        int min = alpha, max = P;
+        while (max - min > 1) {
+            int mid = (min + max) >>> 1;
             List<Solution> front = fronts.get(mid);
             if (frontDoesNotDominate(front, sol, front.size() - 1)) {
-                if (mid == min) {
-                    front.add(sol);
-                    return mid;
-                } else {
-                    max = mid;
-                    mid = (min + max) / 2;
-                }  
+                max = mid;
             } else {
-                if (min == P - 1) {
-                    insertAtIndex(fronts, sol, P);
-                    return P;
-                } else {
-                    min = mid + 1;
-                    mid = (min + max) / 2;
-                }
+                min = mid;
             }
         }
+        return insertMaybeInNewFront(fronts, sol, max);
     }
-    
+
     private int Insert_SSS(List<List<Solution>> fronts, Solution sol, int P, int alpha) {
         for (int p = alpha; p < P ; p++) {
             List<Solution> front = fronts.get(p);
-            int sizeOfFront = front.size();
-            if (p == gammaFrontIndex) {
-                sizeOfFront = gammaNoSolution;
-            }
+            int sizeOfFront = getFrontSizeSS(front, p);
             if (frontDoesNotDominate(front, sol, sizeOfFront - 1)) {
-                front.add(sol);
-                if (p != gammaFrontIndex) {
-                    gammaFrontIndex = p;
-                    gammaNoSolution = sizeOfFront;
-                }
-                return p;
+                return insertInExistingFrontSS(front, sol, p);
             }
         }
-        insertAtIndex(fronts, sol, P);
-        return P;
+        return insertMaybeInNewFrontSS(fronts, sol, P);
     }
 
     private int Insert_BSS(List<List<Solution>> fronts, Solution sol, int P, int alpha) {
-        int min = alpha;
-        int max = P - 1;
-        int mid = (min + max) / 2;
-        while (true) {
+        List<Solution> first = fronts.get(alpha);
+        int firstSize = getFrontSizeSS(first, alpha);
+        if (frontDoesNotDominate(first, sol, firstSize - 1)) {
+            return insertInExistingFrontSS(first, sol, alpha);
+        }
+
+        int min = alpha, max = P;
+        while (max - min > 1) {
+            int mid = (min + max) >>> 1;
             List<Solution> front = fronts.get(mid);
-            int sizeOfFront = front.size();
-            if (mid == gammaFrontIndex) {
-                sizeOfFront = gammaNoSolution;
-            }
-            if (frontDoesNotDominate(front, sol, sizeOfFront - 1)) {
-                if (mid == min) {
-                    front.add(sol);
-                    if (mid != gammaFrontIndex) {
-                        gammaFrontIndex = mid;
-                        gammaNoSolution = sizeOfFront;
-                    }
-                    return mid;
-                } else {
-                    max = mid;
-                    mid = (min + max) / 2;
-                }  
+            int frontSize = getFrontSizeSS(front, mid);
+            if (frontDoesNotDominate(front, sol, frontSize - 1)) {
+                max = mid;
             } else {
-                if (min == P - 1) {
-                    insertAtIndex(fronts, sol, P);
-                    return P;
-                } else {
-                    min = mid + 1;
-                    mid = (min + max) / 2;
-                }
+                min = mid;
             }
         }
+        return insertMaybeInNewFrontSS(fronts, sol, max);
     }
 
     private static boolean frontDoesNotDominate(List<Solution> front, Solution sol, int startFrom) {
@@ -338,14 +298,42 @@ public class SumitImplementation2016 extends NonDominatedSorting {
         return true;
     }
 
-    private static void insertAtIndex(List<List<Solution>> fronts, Solution sol, int index) {
-        if (index == fronts.size()) {
+    private int getFrontSizeSS(List<Solution> front, int rank) {
+        return rank == gammaFrontIndex ? gammaNoSolution : front.size();
+    }
+
+    private static int insertMaybeInNewFront(List<List<Solution>> fronts, Solution sol, int rank) {
+        if (rank == fronts.size()) {
             List<Solution> newFront = new ArrayList<>(1);
             newFront.add(sol);
             fronts.add(newFront);
         } else {
-            fronts.get(index).add(sol);
+            fronts.get(rank).add(sol);
         }
+        return rank;
+    }
+
+    private int insertMaybeInNewFrontSS(List<List<Solution>> fronts, Solution sol, int rank) {
+        insertMaybeInNewFront(fronts, sol, rank);
+        if (rank != gammaFrontIndex) {
+            gammaFrontIndex = rank;
+            gammaNoSolution = fronts.get(rank).size();
+        }
+        return rank;
+    }
+
+    private static int insertInExistingFront(List<Solution> front, Solution sol, int rank) {
+        front.add(sol);
+        return rank;
+    }
+
+    private int insertInExistingFrontSS(List<Solution> front, Solution sol, int rank) {
+        front.add(sol);
+        if (rank != gammaFrontIndex) {
+            gammaFrontIndex = rank;
+            gammaNoSolution = front.size();
+        }
+        return rank;
     }
 
     static class Solution {
