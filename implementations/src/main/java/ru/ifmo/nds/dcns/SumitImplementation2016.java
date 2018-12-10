@@ -13,7 +13,7 @@ import ru.ifmo.nds.util.MathEx;
  * @author Maxim Buzdalov (minor cleanup and adaptation to framework interfaces)
  */
 public class SumitImplementation2016 extends NonDominatedSorting {
-    private List<List<Integer>>[] arrSetNonDominatedFront;
+    private List<List<Solution>>[] arrSetNonDominatedFront;
     private int gammaFrontIndex, gammaNoSolution;
     private final boolean useBinarySearch;
     private final boolean useGammaHeuristic;
@@ -58,8 +58,8 @@ public class SumitImplementation2016 extends NonDominatedSorting {
         int[] Q0 = preSortDCNS(population);
 
         for(int i = 0; i < n; i++) {
-            ArrayList<Integer> ndf = new ArrayList<>();
-            ndf.add(Q0[i]);
+            List<Solution> ndf = new ArrayList<>();
+            ndf.add(population[Q0[i]]);
             arrSetNonDominatedFront[i].add(ndf);
         }
         
@@ -72,7 +72,7 @@ public class SumitImplementation2016 extends NonDominatedSorting {
                     int a = j << (i + 1);
                     int b = a + (1 << i);
                     if (b < n) {
-                        Merge_SS(arrSetNonDominatedFront[a], arrSetNonDominatedFront[b], population);
+                        Merge_SS(arrSetNonDominatedFront[a], arrSetNonDominatedFront[b]);
                     }
                 }
             }
@@ -83,7 +83,7 @@ public class SumitImplementation2016 extends NonDominatedSorting {
                     int a = j << (i + 1);
                     int b = a + (1 << i);
                     if (b < n) {
-                        Merge_BS(arrSetNonDominatedFront[a], arrSetNonDominatedFront[b], population);
+                        Merge_BS(arrSetNonDominatedFront[a], arrSetNonDominatedFront[b]);
                     }
                 }
             }
@@ -94,7 +94,7 @@ public class SumitImplementation2016 extends NonDominatedSorting {
                     int a = j << (i + 1);
                     int b = a + (1 << i);
                     if (b < n) {
-                        Merge_SSS(arrSetNonDominatedFront[a], arrSetNonDominatedFront[b], population);
+                        Merge_SSS(arrSetNonDominatedFront[a], arrSetNonDominatedFront[b]);
                     }
                 }
             }
@@ -105,27 +105,27 @@ public class SumitImplementation2016 extends NonDominatedSorting {
                     int a = j << (i + 1);
                     int b = a + (1 << i);
                     if (b < n) {
-                        Merge_BSS(arrSetNonDominatedFront[a], arrSetNonDominatedFront[b], population);
+                        Merge_BSS(arrSetNonDominatedFront[a], arrSetNonDominatedFront[b]);
                     }
                 }
             }
         }   
 
-        List<List<Integer>> ranks = arrSetNonDominatedFront[0];
+        List<List<Solution>> ranks = arrSetNonDominatedFront[0];
         for (int i = 0, num = ranks.size(); i < num; ++i) {
-            for (int x : ranks.get(i)) {
-                outputRanks[x] = i;
+            for (Solution x : ranks.get(i)) {
+                outputRanks[x.id] = i;
             }
             ranks.get(i).clear();
         }
         arrSetNonDominatedFront = null;
     }
     
-    private static void Merge_SS(List<List<Integer>> targetFronts, List<List<Integer>> sourceFronts, Solution[] population) {
+    private static void Merge_SS(List<List<Solution>> targetFronts, List<List<Solution>> sourceFronts) {
         int alpha = -1;
         int q = 0;
         while (q < sourceFronts.size()) {
-            alpha = Insert_Front_SS(targetFronts, sourceFronts.get(q), alpha + 1, population);
+            alpha = Insert_Front_SS(targetFronts, sourceFronts.get(q), alpha + 1);
             if (alpha == targetFronts.size() - 1) {
                 q++;
                 break;
@@ -139,11 +139,11 @@ public class SumitImplementation2016 extends NonDominatedSorting {
         }
     }
     
-    private static void Merge_BS(List<List<Integer>> targetFronts, List<List<Integer>> sourceFronts, Solution[] population) {
+    private static void Merge_BS(List<List<Solution>> targetFronts, List<List<Solution>> sourceFronts) {
         int alpha = -1;
         int q = 0;
         while (q < sourceFronts.size()) {
-            alpha = Insert_Front_BS(targetFronts, sourceFronts.get(q), alpha + 1, population);
+            alpha = Insert_Front_BS(targetFronts, sourceFronts.get(q), alpha + 1);
             if (alpha == targetFronts.size() - 1) {
                 q++;
                 break;
@@ -157,11 +157,11 @@ public class SumitImplementation2016 extends NonDominatedSorting {
         }
     }
     
-    private void Merge_SSS(List<List<Integer>> targetFronts, List<List<Integer>> sourceFronts, Solution[] population) {
+    private void Merge_SSS(List<List<Solution>> targetFronts, List<List<Solution>> sourceFronts) {
         int alpha = -1;
         int q = 0;
         while (q < sourceFronts.size()) {
-            alpha = Insert_Front_SSS(targetFronts, sourceFronts.get(q), alpha + 1, population);
+            alpha = Insert_Front_SSS(targetFronts, sourceFronts.get(q), alpha + 1);
             if (alpha == targetFronts.size() - 1) {
                 q++;
                 break;
@@ -175,11 +175,11 @@ public class SumitImplementation2016 extends NonDominatedSorting {
         }
     }
     
-    private void Merge_BSS(List<List<Integer>> targetFronts, List<List<Integer>> sourceFronts, Solution[] population) {
+    private void Merge_BSS(List<List<Solution>> targetFronts, List<List<Solution>> sourceFronts) {
         int alpha = -1;
         int q = 0;
         while (q < sourceFronts.size()) {
-            alpha = Insert_Front_BSS(targetFronts, sourceFronts.get(q), alpha + 1, population);
+            alpha = Insert_Front_BSS(targetFronts, sourceFronts.get(q), alpha + 1);
             if (alpha == targetFronts.size() - 1) {
                 q++;
                 break;
@@ -194,52 +194,52 @@ public class SumitImplementation2016 extends NonDominatedSorting {
     }
     
     
-    private static int Insert_Front_SS(List<List<Integer>> targetFronts, List<Integer> theFront, int alpha, Solution[] population) {
+    private static int Insert_Front_SS(List<List<Solution>> targetFronts, List<Solution> theFront, int alpha) {
         int P = targetFronts.size();
         int hfi = P;
-        for (int sol : theFront) {
-            hfi = Insert_SS(population, targetFronts, sol, P, alpha, hfi);
+        for (Solution sol : theFront) {
+            hfi = Insert_SS(targetFronts, sol, P, alpha, hfi);
         }
         return hfi;
     }
     
-    private static int Insert_Front_BS(List<List<Integer>> targetFronts, List<Integer> theFront, int alpha, Solution[] population) {
+    private static int Insert_Front_BS(List<List<Solution>> targetFronts, List<Solution> theFront, int alpha) {
         int P = targetFronts.size();
         int hfi = P;
-        for (int sol : theFront) {
-            hfi = Insert_BS(population, targetFronts, sol, P, alpha, hfi);
+        for (Solution sol : theFront) {
+            hfi = Insert_BS(targetFronts, sol, P, alpha, hfi);
         }
         return hfi;
     }
     
-    private int Insert_Front_SSS(List<List<Integer>> targetFronts, List<Integer> theFront, int alpha, Solution[] population) {
+    private int Insert_Front_SSS(List<List<Solution>> targetFronts, List<Solution> theFront, int alpha) {
         int P = targetFronts.size();
         int hfi = P;
         gammaFrontIndex = -1;
         gammaNoSolution = -1;
-        for (int sol : theFront) {
-            hfi = Insert_SSS(population, targetFronts, sol, P, alpha, hfi);
+        for (Solution sol : theFront) {
+            hfi = Insert_SSS(targetFronts, sol, P, alpha, hfi);
         }
         return hfi;
     }
 
-    private int Insert_Front_BSS(List<List<Integer>> targetFronts, List<Integer> theFront, int alpha, Solution[] population) {
+    private int Insert_Front_BSS(List<List<Solution>> targetFronts, List<Solution> theFront, int alpha) {
         int P = targetFronts.size();
         int hfi = P;
         gammaFrontIndex = -1;
         gammaNoSolution = -1;
-        for (int sol : theFront) {
-            hfi = Insert_BSS(population, targetFronts, sol, P, alpha, hfi);
+        for (Solution sol : theFront) {
+            hfi = Insert_BSS(targetFronts, sol, P, alpha, hfi);
         }
         return hfi;
     }
     
-    private static int Insert_SS(Solution[] population, List<List<Integer>> fronts, int sol, int P, int alpha, int hfi) {
+    private static int Insert_SS(List<List<Solution>> fronts, Solution sol, int P, int alpha, int hfi) {
         boolean isInserted = false;
         for (int p = alpha; p < P ; p++) {
             int count = 0;
             for (int u = fronts.get(p).size() - 1; u >= 0; u--) {
-                int isdom = population[fronts.get(p).get(u)].dominates(population[sol]);
+                int isdom = fronts.get(p).get(u).dominates(sol);
                 if (isdom == 0) { //solution sol is non-dominated with the solution in the existing front
                     count++;
                 } else if (isdom == 1) { //solution sol is dominated by the solution in the existing front
@@ -259,7 +259,7 @@ public class SumitImplementation2016 extends NonDominatedSorting {
         }
         if (!isInserted) {
             if (fronts.size() == P) {
-                ArrayList<Integer> ndf = new ArrayList<>();
+                List<Solution> ndf = new ArrayList<>();
                 ndf.add(sol);
                 fronts.add(ndf);
             } else {
@@ -269,7 +269,7 @@ public class SumitImplementation2016 extends NonDominatedSorting {
         return hfi;
     }
      
-    private static int Insert_BS(Solution[] population, List<List<Integer>> fronts, int sol, int P, int alpha, int hfi) {
+    private static int Insert_BS(List<List<Solution>> fronts, Solution sol, int P, int alpha, int hfi) {
         int min = alpha;
         int max = P - 1;
         int mid = (min + max) / 2;
@@ -277,7 +277,7 @@ public class SumitImplementation2016 extends NonDominatedSorting {
         while (true) {
             count = 0;
             for (int u = fronts.get(mid).size() - 1; u >= 0; u--) {
-                int isdom = population[fronts.get(mid).get(u)].dominates(population[sol]);
+                int isdom = fronts.get(mid).get(u).dominates(sol);
                 if (isdom == 0) { //solution sol is non-dominated with the solution in the existing front
                     count++;
                 } else if (isdom == 1) { //solution sol is dominated by the solution in the existing front
@@ -300,7 +300,7 @@ public class SumitImplementation2016 extends NonDominatedSorting {
             } else {
                 if (min == P - 1) {
                     if (fronts.size() == P) {
-                        ArrayList<Integer> ndf = new ArrayList<>();
+                        List<Solution> ndf = new ArrayList<>();
                         ndf.add(sol);
                         fronts.add(ndf);
                     } else {
@@ -316,7 +316,7 @@ public class SumitImplementation2016 extends NonDominatedSorting {
         return hfi;
     } 
     
-    private int Insert_SSS(Solution[] population, List<List<Integer>> fronts, int sol, int P, int alpha, int hfi) {
+    private int Insert_SSS(List<List<Solution>> fronts, Solution sol, int P, int alpha, int hfi) {
         boolean isInserted = false;
         for (int p = alpha; p < P ; p++) {
             int count = 0;
@@ -325,7 +325,7 @@ public class SumitImplementation2016 extends NonDominatedSorting {
                 sizeOfFront = gammaNoSolution;
             }
             for (int u = sizeOfFront - 1; u >= 0; u--) {
-                int isdom = population[fronts.get(p).get(u)].dominates(population[sol]);
+                int isdom = fronts.get(p).get(u).dominates(sol);
                 if (isdom == 0) { //solution sol is non-dominated with the solution in the existing front
                     count++;
                 } else if (isdom == 1) { //solution sol is dominated by the solution in the existing front
@@ -349,7 +349,7 @@ public class SumitImplementation2016 extends NonDominatedSorting {
         }
         if (!isInserted) {
             if (fronts.size() == P) {
-                ArrayList<Integer> ndf = new ArrayList<>();
+                List<Solution> ndf = new ArrayList<>();
                 ndf.add(sol);
                 fronts.add(ndf);
             } else {
@@ -359,7 +359,7 @@ public class SumitImplementation2016 extends NonDominatedSorting {
         return hfi;
     }
 
-    private int Insert_BSS(Solution[] population, List<List<Integer>> fronts, int sol, int P, int alpha, int hfi) {
+    private int Insert_BSS(List<List<Solution>> fronts, Solution sol, int P, int alpha, int hfi) {
         int min = alpha;
         int max = P - 1;
         int mid = (min + max) / 2;
@@ -371,7 +371,7 @@ public class SumitImplementation2016 extends NonDominatedSorting {
                 sizeOfFront = gammaNoSolution;
             }
             for (int u = sizeOfFront - 1; u >= 0; u--) {
-                int isdom = population[fronts.get(mid).get(u)].dominates(population[sol]);
+                int isdom = fronts.get(mid).get(u).dominates(sol);
                 if (isdom == 0) { //solution sol is non-dominated with the solution in the existing front
                     count++;
                 } else if (isdom == 1) { //solution sol is dominated by the solution in the existing front
@@ -398,7 +398,7 @@ public class SumitImplementation2016 extends NonDominatedSorting {
             } else {
                 if (min == P - 1) {
                     if (fronts.size() == P) {
-                        ArrayList<Integer> ndf = new ArrayList<>();
+                        List<Solution> ndf = new ArrayList<>();
                         ndf.add(sol);
                         fronts.add(ndf);
                     } else {
