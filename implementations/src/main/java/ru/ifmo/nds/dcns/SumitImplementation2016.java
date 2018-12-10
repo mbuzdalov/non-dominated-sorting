@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ru.ifmo.nds.NonDominatedSorting;
+import ru.ifmo.nds.util.DominanceHelper;
 import ru.ifmo.nds.util.MathEx;
 
 /**
@@ -58,7 +59,7 @@ public class SumitImplementation2016 extends NonDominatedSorting {
         int[] Q0 = preSortDCNS(population);
 
         for(int i = 0; i < n; i++) {
-            List<Solution> ndf = new ArrayList<>();
+            List<Solution> ndf = new ArrayList<>(1);
             ndf.add(population[Q0[i]]);
             arrSetNonDominatedFront[i].add(ndf);
         }
@@ -131,7 +132,7 @@ public class SumitImplementation2016 extends NonDominatedSorting {
                 break;
             }
             q++;
-        } 
+        }
         /* Add remaining fronts without comparisons */
         while (q < sourceFronts.size()) {
             targetFronts.add(sourceFronts.get(q));
@@ -149,7 +150,7 @@ public class SumitImplementation2016 extends NonDominatedSorting {
                 break;
             }
             q++;
-        } 
+        }
         /* Add remaining fronts without comparisons */
         while (q < sourceFronts.size()) {
             targetFronts.add(sourceFronts.get(q));
@@ -167,7 +168,7 @@ public class SumitImplementation2016 extends NonDominatedSorting {
                 break;
             }
             q++;
-        } 
+        }
         /* Add remaining fronts without comparisons */
         while (q < sourceFronts.size()) {
             targetFronts.add(sourceFronts.get(q));
@@ -198,7 +199,7 @@ public class SumitImplementation2016 extends NonDominatedSorting {
         int P = targetFronts.size();
         int hfi = P;
         for (Solution sol : theFront) {
-            hfi = Insert_SS(targetFronts, sol, P, alpha, hfi);
+            hfi = Math.min(hfi, Insert_SS(targetFronts, sol, P, alpha));
         }
         return hfi;
     }
@@ -207,7 +208,7 @@ public class SumitImplementation2016 extends NonDominatedSorting {
         int P = targetFronts.size();
         int hfi = P;
         for (Solution sol : theFront) {
-            hfi = Insert_BS(targetFronts, sol, P, alpha, hfi);
+            hfi = Math.min(hfi, Insert_BS(targetFronts, sol, P, alpha));
         }
         return hfi;
     }
@@ -218,7 +219,7 @@ public class SumitImplementation2016 extends NonDominatedSorting {
         gammaFrontIndex = -1;
         gammaNoSolution = -1;
         for (Solution sol : theFront) {
-            hfi = Insert_SSS(targetFronts, sol, P, alpha, hfi);
+            hfi = Math.min(hfi, Insert_SSS(targetFronts, sol, P, alpha));
         }
         return hfi;
     }
@@ -229,189 +230,122 @@ public class SumitImplementation2016 extends NonDominatedSorting {
         gammaFrontIndex = -1;
         gammaNoSolution = -1;
         for (Solution sol : theFront) {
-            hfi = Insert_BSS(targetFronts, sol, P, alpha, hfi);
+            hfi = Math.min(hfi, Insert_BSS(targetFronts, sol, P, alpha));
         }
         return hfi;
     }
     
-    private static int Insert_SS(List<List<Solution>> fronts, Solution sol, int P, int alpha, int hfi) {
-        boolean isInserted = false;
-        for (int p = alpha; p < P ; p++) {
-            int count = 0;
-            for (int u = fronts.get(p).size() - 1; u >= 0; u--) {
-                int isdom = fronts.get(p).get(u).dominates(sol);
-                if (isdom == 0) { //solution sol is non-dominated with the solution in the existing front
-                    count++;
-                } else if (isdom == 1) { //solution sol is dominated by the solution in the existing front
-                    break;
-                } else {
-                    throw new AssertionError();
-                }
+    private static int Insert_SS(List<List<Solution>> fronts, Solution sol, int P, int alpha) {
+        for (int p = alpha; p < P; p++) {
+            List<Solution> front = fronts.get(p);
+            if (frontDoesNotDominate(front, sol, front.size() - 1)) {
+                front.add(sol);
+                return p;
             }
-            if (count == fronts.get(p).size()) {
-                fronts.get(p).add(sol);
-                isInserted = true;
-                if (p < hfi) {
-                    hfi = p;
-                }
-                break;
-            }  
         }
-        if (!isInserted) {
-            if (fronts.size() == P) {
-                List<Solution> ndf = new ArrayList<>();
-                ndf.add(sol);
-                fronts.add(ndf);
-            } else {
-                fronts.get(P).add(sol);
-            }  
-        }
-        return hfi;
+        insertAtIndex(fronts, sol, P);
+        return P;
     }
      
-    private static int Insert_BS(List<List<Solution>> fronts, Solution sol, int P, int alpha, int hfi) {
+    private static int Insert_BS(List<List<Solution>> fronts, Solution sol, int P, int alpha) {
         int min = alpha;
         int max = P - 1;
         int mid = (min + max) / 2;
-        int count;
         while (true) {
-            count = 0;
-            for (int u = fronts.get(mid).size() - 1; u >= 0; u--) {
-                int isdom = fronts.get(mid).get(u).dominates(sol);
-                if (isdom == 0) { //solution sol is non-dominated with the solution in the existing front
-                    count++;
-                } else if (isdom == 1) { //solution sol is dominated by the solution in the existing front
-                    break;
-                } else {
-                    throw new AssertionError();
-                }
-            }
-            if (count == fronts.get(mid).size()) {
+            List<Solution> front = fronts.get(mid);
+            if (frontDoesNotDominate(front, sol, front.size() - 1)) {
                 if (mid == min) {
-                    fronts.get(mid).add(sol);
-                    if(mid < hfi) {
-                        hfi = mid;
-                    }
-                    break;
+                    front.add(sol);
+                    return mid;
                 } else {
                     max = mid;
                     mid = (min + max) / 2;
                 }  
             } else {
                 if (min == P - 1) {
-                    if (fronts.size() == P) {
-                        List<Solution> ndf = new ArrayList<>();
-                        ndf.add(sol);
-                        fronts.add(ndf);
-                    } else {
-                        fronts.get(P).add(sol);
-                    }  
-                    break;
+                    insertAtIndex(fronts, sol, P);
+                    return P;
                 } else {
                     min = mid + 1;
                     mid = (min + max) / 2;
                 }
             }
         }
-        return hfi;
-    } 
+    }
     
-    private int Insert_SSS(List<List<Solution>> fronts, Solution sol, int P, int alpha, int hfi) {
-        boolean isInserted = false;
+    private int Insert_SSS(List<List<Solution>> fronts, Solution sol, int P, int alpha) {
         for (int p = alpha; p < P ; p++) {
-            int count = 0;
-            int sizeOfFront = fronts.get(p).size();
+            List<Solution> front = fronts.get(p);
+            int sizeOfFront = front.size();
             if (p == gammaFrontIndex) {
                 sizeOfFront = gammaNoSolution;
             }
-            for (int u = sizeOfFront - 1; u >= 0; u--) {
-                int isdom = fronts.get(p).get(u).dominates(sol);
-                if (isdom == 0) { //solution sol is non-dominated with the solution in the existing front
-                    count++;
-                } else if (isdom == 1) { //solution sol is dominated by the solution in the existing front
-                    break;
-                } else {
-                    throw new AssertionError();
-                }
-            }
-            if (count == sizeOfFront) {
-                fronts.get(p).add(sol);
+            if (frontDoesNotDominate(front, sol, sizeOfFront - 1)) {
+                front.add(sol);
                 if (p != gammaFrontIndex) {
                     gammaFrontIndex = p;
-                    gammaNoSolution = count;
+                    gammaNoSolution = sizeOfFront;
                 }
-                isInserted = true;
-                if (p < hfi) {
-                    hfi = p;
-                }
-                break;
-            }  
+                return p;
+            }
         }
-        if (!isInserted) {
-            if (fronts.size() == P) {
-                List<Solution> ndf = new ArrayList<>();
-                ndf.add(sol);
-                fronts.add(ndf);
-            } else {
-                fronts.get(P).add(sol);
-            }  
-        }
-        return hfi;
+        insertAtIndex(fronts, sol, P);
+        return P;
     }
 
-    private int Insert_BSS(List<List<Solution>> fronts, Solution sol, int P, int alpha, int hfi) {
+    private int Insert_BSS(List<List<Solution>> fronts, Solution sol, int P, int alpha) {
         int min = alpha;
         int max = P - 1;
         int mid = (min + max) / 2;
-        int count;
         while (true) {
-            count = 0;
-            int sizeOfFront = fronts.get(mid).size();
+            List<Solution> front = fronts.get(mid);
+            int sizeOfFront = front.size();
             if (mid == gammaFrontIndex) {
                 sizeOfFront = gammaNoSolution;
             }
-            for (int u = sizeOfFront - 1; u >= 0; u--) {
-                int isdom = fronts.get(mid).get(u).dominates(sol);
-                if (isdom == 0) { //solution sol is non-dominated with the solution in the existing front
-                    count++;
-                } else if (isdom == 1) { //solution sol is dominated by the solution in the existing front
-                    break;
-                } else {
-                    throw new AssertionError();
-                }
-            }
-            if (count == sizeOfFront) {
+            if (frontDoesNotDominate(front, sol, sizeOfFront - 1)) {
                 if (mid == min) {
-                    fronts.get(mid).add(sol);
+                    front.add(sol);
                     if (mid != gammaFrontIndex) {
                         gammaFrontIndex = mid;
-                        gammaNoSolution = count;
+                        gammaNoSolution = sizeOfFront;
                     }
-                    if (mid < hfi) {
-                        hfi = mid;
-                    }
-                    break;
+                    return mid;
                 } else {
                     max = mid;
                     mid = (min + max) / 2;
                 }  
             } else {
                 if (min == P - 1) {
-                    if (fronts.size() == P) {
-                        List<Solution> ndf = new ArrayList<>();
-                        ndf.add(sol);
-                        fronts.add(ndf);
-                    } else {
-                        fronts.get(P).add(sol);
-                    }  
-                    break;
+                    insertAtIndex(fronts, sol, P);
+                    return P;
                 } else {
                     min = mid + 1;
                     mid = (min + max) / 2;
                 }
             }
         }
-        return hfi;
+    }
+
+    private static boolean frontDoesNotDominate(List<Solution> front, Solution sol, int startFrom) {
+        double[] solArray = sol.objectives;
+        int dim = solArray.length;
+        for (int i = startFrom; i >= 0; --i) {
+            if (DominanceHelper.strictlyDominates(front.get(i).objectives, solArray, dim)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static void insertAtIndex(List<List<Solution>> fronts, Solution sol, int index) {
+        if (index == fronts.size()) {
+            List<Solution> newFront = new ArrayList<>(1);
+            newFront.add(sol);
+            fronts.add(newFront);
+        } else {
+            fronts.get(index).add(sol);
+        }
     }
 
     static class Solution {
@@ -420,30 +354,6 @@ public class SumitImplementation2016 extends NonDominatedSorting {
 
         Solution(int id) {
             this.id = id;
-        }
-
-        // MB: this is an inverse domination comparator: 1 if this < sol, -1 if this > sol.
-        int dominates(Solution sol) {
-            boolean flag1 = false;
-            boolean flag2 = false;
-            double[] thisObj = this.objectives;
-            double[] thatObj = sol.objectives;
-            int noObjectives = thisObj.length;
-            for (int i = 0; i < noObjectives; i++) {
-                double l = thisObj[i], r = thatObj[i];
-                if (l < r) {
-                    flag1 = true;
-                } else if (l > r) {
-                    flag2 = true;
-                }
-            }
-            if (flag1 && !flag2) {
-                return 1;
-            } else if (!flag1 && flag2) {
-                return -1;
-            } else {
-                return 0;
-            }
         }
 
         // MB: this is an inverse lexicographical comparator: 1 if this < sol, -1 if this > sol.
