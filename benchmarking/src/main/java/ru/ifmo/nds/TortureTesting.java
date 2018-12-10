@@ -78,7 +78,11 @@ public class TortureTesting {
                 ENS.getENS_NDT(8),
                 ENS.getENS_NDT_Arrays(),
                 ENS.getENS_NDT_OneTree(8),
-                ENS.getENS_NDT_OneTree(1)
+                ENS.getENS_NDT_OneTree(1),
+                SumitMishraDivideConquer.getSumitImplementation2016(true, false),
+                SumitMishraDivideConquer.getSumitImplementation2016(false, false),
+                SumitMishraDivideConquer.getSumitImplementation2016(true, true),
+                SumitMishraDivideConquer.getSumitImplementation2016(false, true)
         );
         List<NonDominatedSorting> sortings = sortingFactories
                 .stream()
