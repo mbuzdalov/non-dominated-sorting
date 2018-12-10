@@ -1,6 +1,7 @@
 package ru.ifmo.nds.dcns;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import ru.ifmo.nds.NonDominatedSorting;
@@ -55,12 +56,12 @@ public class SumitImplementation2016 extends NonDominatedSorting {
 
     private void sortDCNS(Solution[] population, int searchType, int spaceReq, int[] outputRanks) {
         int n = population.length;
+        Arrays.sort(population);
         arrSetNonDominatedFront = createArrayOfArrayLists(n);
-        int[] Q0 = preSortDCNS(population);
 
         for(int i = 0; i < n; i++) {
             List<Solution> ndf = new ArrayList<>(1);
-            ndf.add(population[Q0[i]]);
+            ndf.add(population[i]);
             arrSetNonDominatedFront[i].add(ndf);
         }
         
@@ -315,7 +316,7 @@ public class SumitImplementation2016 extends NonDominatedSorting {
         return rank;
     }
 
-    static class Solution {
+    static class Solution implements Comparable<Solution> {
         private final int id;
         private double[] objectives;
 
@@ -323,73 +324,19 @@ public class SumitImplementation2016 extends NonDominatedSorting {
             this.id = id;
         }
 
-        // MB: this is an inverse lexicographical comparator: 1 if this < sol, -1 if this > sol.
-        int isSmall(Solution sol) {
-            double[] thisObj = this.objectives;
-            double[] thatObj = sol.objectives;
-            int noObjectives = thisObj.length;
+        public int compareTo(Solution that) {
+            double[] thatObjectives = that.objectives;
+            int noObjectives = objectives.length;
             for (int i = 0; i < noObjectives; i++) {
-                double l = thisObj[i], r = thatObj[i];
+                double l = objectives[i], r = thatObjectives[i];
                 if (l < r) {
-                    return 1;
-                } else if (l > r) {
                     return -1;
+                }
+                if (l > r) {
+                    return 1;
                 }
             }
             return 0;
         }
-    }
-
-    // To heapify a subtree rooted with node i which is
-    // an index in arr[]. n is size of heap
-    private static void heapifyFirstObjective(int[] arr, int heapSize, int i, Solution[] population)
-    {
-        int largest = i;  // Initialize largest as root
-        int l = 2 * i + 1;  // left = 2*i + 1
-        int r = 2 * i + 2;  // right = 2*i + 2
-
-        // If left child is larger than root
-        if (l < heapSize && population[arr[l]].isSmall(population[arr[largest]]) == -1)
-            largest = l;
-
-        // If right child is larger than largest so far
-        if (r < heapSize && population[arr[r]].isSmall(population[arr[largest]]) == -1)
-            largest = r;
-
-        // If largest is not root
-        if (largest != i) {
-            int swap = arr[i];
-            arr[i] = arr[largest];
-            arr[largest] = swap;
-
-            // Recursively heapify the affected sub-tree
-            heapifyFirstObjective(arr, heapSize, largest, population);
-        }
-    }
-
-    private static int[] preSortDCNS(Solution[] population) {
-        int n = population.length;
-        int[] Q0 = new int[n];
-        for(int i = 0; i < n; i++) {
-            Q0[i] = population[i].id;
-        }
-
-        /*-- Sort based on first objective --*/
-        // Build heap (rearrange array)
-        for (int i = n / 2 - 1; i >= 0; i--)
-            heapifyFirstObjective(Q0, n, i, population);
-
-        // One by one extract an element from heap
-        for (int i = n - 1; i >= 0; i--) {
-            // Move current root to end
-            int temp = Q0[0];
-            Q0[0] = Q0[i];
-            Q0[i] = temp;
-
-            // call max heapify on the reduced heap
-            heapifyFirstObjective(Q0, i, 0, population);
-        }
-        /*-- Sort based on first objective --*/
-        return Q0;
     }
 }
