@@ -124,69 +124,48 @@ public class SumitImplementation2016 extends NonDominatedSorting {
     
     private static void Merge_SS(List<List<Solution>> targetFronts, List<List<Solution>> sourceFronts) {
         int alpha = -1;
-        int q = 0, qMax = sourceFronts.size();
-        while (q < qMax) {
-            alpha = Insert_Front_SS(targetFronts, sourceFronts.get(q), alpha + 1);
-            q++;
-            if (alpha == targetFronts.size() - 1) {
-                break;
+        for (List<Solution> front : sourceFronts) {
+            if (++alpha == targetFronts.size()) {
+                targetFronts.add(front);
+            } else {
+                alpha = Insert_Front_SS(targetFronts, front, alpha);
             }
-        }
-        while (q < qMax) {
-            targetFronts.add(sourceFronts.get(q));
-            q++;
         }
     }
     
     private static void Merge_BS(List<List<Solution>> targetFronts, List<List<Solution>> sourceFronts) {
         int alpha = -1;
-        int q = 0, qMax = sourceFronts.size();
-        while (q < qMax) {
-            alpha = Insert_Front_BS(targetFronts, sourceFronts.get(q), alpha + 1);
-            q++;
-            if (alpha == targetFronts.size() - 1) {
-                break;
+        for (List<Solution> front : sourceFronts) {
+            if (++alpha == targetFronts.size()) {
+                targetFronts.add(front);
+            } else {
+                alpha = Insert_Front_BS(targetFronts, front, alpha);
             }
-        }
-        while (q < qMax) {
-            targetFronts.add(sourceFronts.get(q));
-            q++;
         }
     }
     
     private void Merge_SSS(List<List<Solution>> targetFronts, List<List<Solution>> sourceFronts) {
         int alpha = -1;
-        int q = 0, qMax = sourceFronts.size();
-        while (q < qMax) {
-            alpha = Insert_Front_SSS(targetFronts, sourceFronts.get(q), alpha + 1);
-            q++;
-            if (alpha == targetFronts.size() - 1) {
-                break;
+        for (List<Solution> front : sourceFronts) {
+            if (++alpha == targetFronts.size()) {
+                targetFronts.add(front);
+            } else {
+                alpha = Insert_Front_SSS(targetFronts, front, alpha);
             }
-        }
-        while (q < qMax) {
-            targetFronts.add(sourceFronts.get(q));
-            q++;
         }
     }
     
     private void Merge_BSS(List<List<Solution>> targetFronts, List<List<Solution>> sourceFronts) {
         int alpha = -1;
-        int q = 0, qMax = sourceFronts.size();
-        while (q < qMax) {
-            alpha = Insert_Front_BSS(targetFronts, sourceFronts.get(q), alpha + 1);
-            q++;
-            if (alpha == targetFronts.size() - 1) {
-                break;
+        for (List<Solution> front : sourceFronts) {
+            if (++alpha == targetFronts.size()) {
+                targetFronts.add(front);
+            } else {
+                alpha = Insert_Front_BSS(targetFronts, front, alpha);
             }
         }
-        while (q < qMax) {
-            targetFronts.add(sourceFronts.get(q));
-            q++;
-        }
     }
-    
-    
+
     private static int Insert_Front_SS(List<List<Solution>> targetFronts, List<Solution> theFront, int alpha) {
         int P = targetFronts.size();
         int hfi = P;
