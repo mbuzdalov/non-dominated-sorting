@@ -122,7 +122,9 @@ public class SumitImplementation2016 extends NonDominatedSorting {
         }
         arrSetNonDominatedFront = null;
     }
-    
+
+    // Implementation of the SS version
+
     private static void Merge_SS(List<List<Solution>> targetFronts, List<List<Solution>> sourceFronts) {
         int alpha = -1;
         for (List<Solution> front : sourceFronts) {
@@ -130,39 +132,6 @@ public class SumitImplementation2016 extends NonDominatedSorting {
                 targetFronts.add(front);
             } else {
                 alpha = Insert_Front_SS(targetFronts, front, alpha);
-            }
-        }
-    }
-    
-    private static void Merge_BS(List<List<Solution>> targetFronts, List<List<Solution>> sourceFronts) {
-        int alpha = -1;
-        for (List<Solution> front : sourceFronts) {
-            if (++alpha == targetFronts.size()) {
-                targetFronts.add(front);
-            } else {
-                alpha = Insert_Front_BS(targetFronts, front, alpha);
-            }
-        }
-    }
-    
-    private void Merge_SSS(List<List<Solution>> targetFronts, List<List<Solution>> sourceFronts) {
-        int alpha = -1;
-        for (List<Solution> front : sourceFronts) {
-            if (++alpha == targetFronts.size()) {
-                targetFronts.add(front);
-            } else {
-                alpha = Insert_Front_SSS(targetFronts, front, alpha);
-            }
-        }
-    }
-    
-    private void Merge_BSS(List<List<Solution>> targetFronts, List<List<Solution>> sourceFronts) {
-        int alpha = -1;
-        for (List<Solution> front : sourceFronts) {
-            if (++alpha == targetFronts.size()) {
-                targetFronts.add(front);
-            } else {
-                alpha = Insert_Front_BSS(targetFronts, front, alpha);
             }
         }
     }
@@ -175,38 +144,7 @@ public class SumitImplementation2016 extends NonDominatedSorting {
         }
         return hfi;
     }
-    
-    private static int Insert_Front_BS(List<List<Solution>> targetFronts, List<Solution> theFront, int alpha) {
-        int P = targetFronts.size();
-        int hfi = P;
-        for (Solution sol : theFront) {
-            hfi = Math.min(hfi, Insert_BS(targetFronts, sol, P, alpha));
-        }
-        return hfi;
-    }
-    
-    private int Insert_Front_SSS(List<List<Solution>> targetFronts, List<Solution> theFront, int alpha) {
-        int P = targetFronts.size();
-        int hfi = P;
-        gammaFrontIndex = -1;
-        gammaNoSolution = -1;
-        for (Solution sol : theFront) {
-            hfi = Math.min(hfi, Insert_SSS(targetFronts, sol, P, alpha));
-        }
-        return hfi;
-    }
 
-    private int Insert_Front_BSS(List<List<Solution>> targetFronts, List<Solution> theFront, int alpha) {
-        int P = targetFronts.size();
-        int hfi = P;
-        gammaFrontIndex = -1;
-        gammaNoSolution = -1;
-        for (Solution sol : theFront) {
-            hfi = Math.min(hfi, Insert_BSS(targetFronts, sol, P, alpha));
-        }
-        return hfi;
-    }
-    
     private static int Insert_SS(List<List<Solution>> fronts, Solution sol, int P, int alpha) {
         for (int p = alpha; p < P; p++) {
             List<Solution> front = fronts.get(p);
@@ -216,7 +154,29 @@ public class SumitImplementation2016 extends NonDominatedSorting {
         }
         return insertMaybeInNewFront(fronts, sol, P);
     }
-     
+
+    // Implementation of the BS version
+
+    private static void Merge_BS(List<List<Solution>> targetFronts, List<List<Solution>> sourceFronts) {
+        int alpha = -1;
+        for (List<Solution> front : sourceFronts) {
+            if (++alpha == targetFronts.size()) {
+                targetFronts.add(front);
+            } else {
+                alpha = Insert_Front_BS(targetFronts, front, alpha);
+            }
+        }
+    }
+
+    private static int Insert_Front_BS(List<List<Solution>> targetFronts, List<Solution> theFront, int alpha) {
+        int P = targetFronts.size();
+        int hfi = P;
+        for (Solution sol : theFront) {
+            hfi = Math.min(hfi, Insert_BS(targetFronts, sol, P, alpha));
+        }
+        return hfi;
+    }
+
     private static int Insert_BS(List<List<Solution>> fronts, Solution sol, int P, int alpha) {
         List<Solution> first = fronts.get(alpha);
         if (frontDoesNotDominate(first, sol, first.size() - 1)) {
@@ -235,6 +195,30 @@ public class SumitImplementation2016 extends NonDominatedSorting {
         return insertMaybeInNewFront(fronts, sol, max);
     }
 
+    // Implementation of the SSS version
+
+    private void Merge_SSS(List<List<Solution>> targetFronts, List<List<Solution>> sourceFronts) {
+        int alpha = -1;
+        for (List<Solution> front : sourceFronts) {
+            if (++alpha == targetFronts.size()) {
+                targetFronts.add(front);
+            } else {
+                alpha = Insert_Front_SSS(targetFronts, front, alpha);
+            }
+        }
+    }
+
+    private int Insert_Front_SSS(List<List<Solution>> targetFronts, List<Solution> theFront, int alpha) {
+        int P = targetFronts.size();
+        int hfi = P;
+        gammaFrontIndex = -1;
+        gammaNoSolution = -1;
+        for (Solution sol : theFront) {
+            hfi = Math.min(hfi, Insert_SSS(targetFronts, sol, P, alpha));
+        }
+        return hfi;
+    }
+
     private int Insert_SSS(List<List<Solution>> fronts, Solution sol, int P, int alpha) {
         for (int p = alpha; p < P ; p++) {
             List<Solution> front = fronts.get(p);
@@ -246,6 +230,30 @@ public class SumitImplementation2016 extends NonDominatedSorting {
         return insertMaybeInNewFrontSS(fronts, sol, P);
     }
 
+    // Implementation of the BSS version
+
+    private void Merge_BSS(List<List<Solution>> targetFronts, List<List<Solution>> sourceFronts) {
+        int alpha = -1;
+        for (List<Solution> front : sourceFronts) {
+            if (++alpha == targetFronts.size()) {
+                targetFronts.add(front);
+            } else {
+                alpha = Insert_Front_BSS(targetFronts, front, alpha);
+            }
+        }
+    }
+
+    private int Insert_Front_BSS(List<List<Solution>> targetFronts, List<Solution> theFront, int alpha) {
+        int P = targetFronts.size();
+        int hfi = P;
+        gammaFrontIndex = -1;
+        gammaNoSolution = -1;
+        for (Solution sol : theFront) {
+            hfi = Math.min(hfi, Insert_BSS(targetFronts, sol, P, alpha));
+        }
+        return hfi;
+    }
+    
     private int Insert_BSS(List<List<Solution>> fronts, Solution sol, int P, int alpha) {
         List<Solution> first = fronts.get(alpha);
         int firstSize = getFrontSizeSS(first, alpha);
@@ -266,6 +274,8 @@ public class SumitImplementation2016 extends NonDominatedSorting {
         }
         return insertMaybeInNewFrontSS(fronts, sol, max);
     }
+
+    // Various helper functions
 
     private static boolean frontDoesNotDominate(List<Solution> front, Solution sol, int startFrom) {
         double[] solArray = sol.objectives;
