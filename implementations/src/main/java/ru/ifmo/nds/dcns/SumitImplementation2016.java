@@ -43,7 +43,7 @@ public class SumitImplementation2016 extends NonDominatedSorting {
             solutions[i] = new Solution(i);
             solutions[i].objectives = points[i];
         }
-        sortDCNS(solutions, useBinarySearch ? 1 : 0, useGammaHeuristic ? 1 : 0, ranks);
+        sortDCNS(solutions, ranks);
     }
 
     private static <T> List<T>[] createArrayOfArrayLists(int arraySize) {
@@ -54,7 +54,7 @@ public class SumitImplementation2016 extends NonDominatedSorting {
         return rv;
     }
 
-    private void sortDCNS(Solution[] population, int searchType, int spaceReq, int[] outputRanks) {
+    private void sortDCNS(Solution[] population, int[] outputRanks) {
         int n = population.length;
         Arrays.sort(population);
         arrSetNonDominatedFront = createArrayOfArrayLists(n);
@@ -66,52 +66,56 @@ public class SumitImplementation2016 extends NonDominatedSorting {
         }
         
         int treeLevel = MathEx.log2up(n);
-        
-        if (searchType == 0 && spaceReq == 0) { // DCNS-SS
-            for (int i = 0; i < treeLevel; i++) {
-                int x = ((n - 1) >>> (i + 1)) + 1;
-                for (int j = 0; j < x; j++) {
-                    int a = j << (i + 1);
-                    int b = a + (1 << i);
-                    if (b < n) {
-                        Merge_SS(arrSetNonDominatedFront[a], arrSetNonDominatedFront[b]);
+
+        if (useGammaHeuristic) {
+            if (useBinarySearch) {
+                for (int i = 0; i < treeLevel; i++) {
+                    int x = ((n - 1) >>> (i + 1)) + 1;
+                    for (int j = 0; j < x; j++) {
+                        int a = j << (i + 1);
+                        int b = a + (1 << i);
+                        if (b < n) {
+                            Merge_BSS(arrSetNonDominatedFront[a], arrSetNonDominatedFront[b]);
+                        }
+                    }
+                }
+            } else {
+                for (int i = 0; i < treeLevel; i++) {
+                    int x = ((n - 1) >>> (i + 1)) + 1;
+                    for (int j = 0; j < x; j++) {
+                        int a = j << (i + 1);
+                        int b = a + (1 << i);
+                        if (b < n) {
+                            Merge_SSS(arrSetNonDominatedFront[a], arrSetNonDominatedFront[b]);
+                        }
                     }
                 }
             }
-        } else if (searchType == 1 && spaceReq == 0) { // DCNS-BS
-            for (int i = 0; i < treeLevel; i++) {
-                int x = ((n - 1) >>> (i + 1)) + 1;
-                for (int j = 0; j < x; j++) {
-                    int a = j << (i + 1);
-                    int b = a + (1 << i);
-                    if (b < n) {
-                        Merge_BS(arrSetNonDominatedFront[a], arrSetNonDominatedFront[b]);
+        } else {
+            if (useBinarySearch) {
+                for (int i = 0; i < treeLevel; i++) {
+                    int x = ((n - 1) >>> (i + 1)) + 1;
+                    for (int j = 0; j < x; j++) {
+                        int a = j << (i + 1);
+                        int b = a + (1 << i);
+                        if (b < n) {
+                            Merge_BS(arrSetNonDominatedFront[a], arrSetNonDominatedFront[b]);
+                        }
+                    }
+                }
+            } else {
+                for (int i = 0; i < treeLevel; i++) {
+                    int x = ((n - 1) >>> (i + 1)) + 1;
+                    for (int j = 0; j < x; j++) {
+                        int a = j << (i + 1);
+                        int b = a + (1 << i);
+                        if (b < n) {
+                            Merge_SS(arrSetNonDominatedFront[a], arrSetNonDominatedFront[b]);
+                        }
                     }
                 }
             }
-        } else if (searchType == 0 && spaceReq == 1) { // DCNS-SSS
-            for (int i = 0; i < treeLevel; i++) {
-                int x = ((n - 1) >>> (i + 1)) + 1;
-                for (int j = 0; j < x; j++) {
-                    int a = j << (i + 1);
-                    int b = a + (1 << i);
-                    if (b < n) {
-                        Merge_SSS(arrSetNonDominatedFront[a], arrSetNonDominatedFront[b]);
-                    }
-                }
-            }
-        } else {  // searchType == 1 && spaceReq == 1, // DCNS-SSS
-            for (int i = 0; i < treeLevel; i++) {
-                int x = ((n - 1) >>> (i + 1)) + 1;
-                for (int j = 0; j < x; j++) {
-                    int a = j << (i + 1);
-                    int b = a + (1 << i);
-                    if (b < n) {
-                        Merge_BSS(arrSetNonDominatedFront[a], arrSetNonDominatedFront[b]);
-                    }
-                }
-            }
-        }   
+        }
 
         List<List<Solution>> ranks = arrSetNonDominatedFront[0];
         for (int i = 0, num = ranks.size(); i < num; ++i) {
