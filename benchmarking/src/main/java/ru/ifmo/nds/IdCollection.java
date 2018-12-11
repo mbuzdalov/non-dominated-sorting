@@ -98,9 +98,9 @@ public final class IdCollection {
         addNonDominatedSortingFactory("jfb.veb", JensenFortinBuzdalov.getVanEmdeBoasImplementation());
         addNonDominatedSortingFactory("jfb.veb.hybrid.ens", JensenFortinBuzdalov.getVanEmdeBoasHybridENSImplementation());
 
-        addNonDominatedSortingFactory("dcns.bs", SumitMishraDivideConquer.getSumitImplementation2016(true, false));
-        addNonDominatedSortingFactory("dcns.bss", SumitMishraDivideConquer.getSumitImplementation2016(true, true));
-        addNonDominatedSortingFactory("dcns.ss", SumitMishraDivideConquer.getSumitImplementation2016(false, false));
-        addNonDominatedSortingFactory("dcns.sss", SumitMishraDivideConquer.getSumitImplementation2016(false, true));
+        addNonDominatedSortingFactory("dcns.bs", SumitMishraDivideConquer.getSumitImplementation(true, false));
+        addNonDominatedSortingFactory("dcns.bss", SumitMishraDivideConquer.getSumitImplementation(true, true));
+        addNonDominatedSortingFactory("dcns.ss", SumitMishraDivideConquer.getSumitImplementation(false, false));
+        addNonDominatedSortingFactory("dcns.sss", SumitMishraDivideConquer.getSumitImplementation(false, true));
     }
 }

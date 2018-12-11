@@ -6,6 +6,6 @@ import ru.ifmo.nds.SumitMishraDivideConquer;
 public class SumitMishraDivideConquer_SSS_Test extends CorrectnessTestsBase {
     @Override
     protected NonDominatedSortingFactory getFactory() {
-        return SumitMishraDivideConquer.getSumitImplementation2016(false, true);
+        return SumitMishraDivideConquer.getSumitImplementation(false, true);
     }
 }

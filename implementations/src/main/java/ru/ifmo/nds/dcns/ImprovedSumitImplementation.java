@@ -12,15 +12,15 @@ import ru.ifmo.nds.util.MathEx;
  * This is an implementation of DCNS algorithms by Sumit Mishra.
  *
  * @author Sumit Mishra (idea and initial implementation)
- * @author Maxim Buzdalov (minor cleanup and adaptation to framework interfaces)
+ * @author Maxim Buzdalov (improvements and adaptation to framework interfaces)
  */
-public class SumitImplementation2016 extends NonDominatedSorting {
+public class ImprovedSumitImplementation extends NonDominatedSorting {
     private List<List<Solution>>[] arrSetNonDominatedFront;
     private int gammaFrontIndex, gammaNoSolution;
     private final boolean useBinarySearch;
     private final boolean useGammaHeuristic;
 
-    public SumitImplementation2016(int maximumPoints, int maximumDimension, boolean useBinarySearch, boolean useGammaHeuristic) {
+    public ImprovedSumitImplementation(int maximumPoints, int maximumDimension, boolean useBinarySearch, boolean useGammaHeuristic) {
         super(maximumPoints, maximumDimension);
         this.useBinarySearch = useBinarySearch;
         this.useGammaHeuristic = useGammaHeuristic;
