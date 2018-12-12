@@ -14,7 +14,7 @@ import ru.ifmo.nds.util.MathEx;
  * @author Sumit Mishra (idea and initial implementation)
  * @author Maxim Buzdalov (improvements and adaptation to framework interfaces)
  */
-public class ImprovedSumitImplementation extends NonDominatedSorting {
+public final class ImprovedSumitImplementation extends NonDominatedSorting {
     private List<List<Solution>>[] arrSetNonDominatedFront;
     private int gammaFrontIndex, gammaNoSolution;
     private final boolean useBinarySearch;
