@@ -6,12 +6,10 @@ import ru.ifmo.nds.util.DominanceHelper;
 import ru.ifmo.nds.util.DoubleArraySorter;
 import ru.ifmo.nds.util.MathEx;
 
-import java.util.Arrays;
-
 public final class AlternativeImplementation extends NonDominatedSorting {
     private final boolean useBinarySearch;
     private double[][] points;
-    private int[] nextAndValue;
+    private int[] next;
     private int[] firstIndex;
     private int[] ranks;
 
@@ -19,7 +17,7 @@ public final class AlternativeImplementation extends NonDominatedSorting {
         super(maximumPoints, maximumDimension);
         this.useBinarySearch = useBinarySearch;
         this.points = new double[maximumPoints][];
-        this.nextAndValue = new int[maximumPoints * 2];
+        this.next = new int[maximumPoints];
         this.firstIndex = new int[maximumPoints];
         this.ranks = new int[maximumPoints];
     }
@@ -32,22 +30,22 @@ public final class AlternativeImplementation extends NonDominatedSorting {
     @Override
     protected void closeImpl() {
         this.points = null;
-        this.nextAndValue = null;
+        this.next = null;
         this.firstIndex = null;
         this.ranks = null;
     }
 
     private boolean checkIfDoesNotDominate(int targetFront, double[] point, int maxObj) {
         int index = firstIndex[targetFront];
-//        if (maxObj == 1) {
-//            // 2D case, enough to check the dominance with the first entry
-//            return !DominanceHelper.strictlyDominatesAssumingNotSame(points[nextAndValue[index + 1]], point, maxObj);
-//        }
+        if (maxObj == 1) {
+            // 2D case, enough to check the dominance with the first entry
+            return !DominanceHelper.strictlyDominatesAssumingNotSame(points[index], point, maxObj);
+        }
         while (index != -1) {
-            if (DominanceHelper.strictlyDominatesAssumingNotSame(points[nextAndValue[index + 1]], point, maxObj)) {
+            if (DominanceHelper.strictlyDominatesAssumingNotSame(points[index], point, maxObj)) {
                 return false;
             }
-            index = nextAndValue[index];
+            index = next[index];
         }
         return true;
     }
@@ -79,9 +77,9 @@ public final class AlternativeImplementation extends NonDominatedSorting {
     private void merge(int l, int m, int n, int maxObj) {
         int r = Math.min(n, m + m - l);
         int minTargetFrontToCompare = l - 1;
-        int targetFrontUntil = m;
-        while (l < m && firstIndex[targetFrontUntil - 1] == -1) {
-            --targetFrontUntil;
+        int targetFrontUntil = l;
+        while (targetFrontUntil < m && firstIndex[targetFrontUntil] != -1) {
+            ++targetFrontUntil;
         }
 
         for (int insertedFront = m; insertedFront < r; ++insertedFront) {
@@ -89,39 +87,32 @@ public final class AlternativeImplementation extends NonDominatedSorting {
             if (insertedFrontStart == -1) {
                 break;
             }
+            firstIndex[insertedFront] = -1;
             if (++minTargetFrontToCompare == targetFrontUntil) {
-                firstIndex[minTargetFrontToCompare] = insertedFrontStart;
+                firstIndex[targetFrontUntil] = insertedFrontStart;
                 ++targetFrontUntil;
             } else {
+                int rankIdx = l;
                 // Find ranks, put them into the `ranks` array, do not integrate the points into the target fronts.
-                for (int rankIdx = l, index = insertedFrontStart; index != -1; index = nextAndValue[index], ++rankIdx) {
-                    double[] point = points[nextAndValue[index + 1]];
+                for (int index = insertedFrontStart; index != -1; index = next[index], ++rankIdx) {
+                    double[] point = points[index];
                     int rankPtr = useBinarySearch
                             ? findRankBS(minTargetFrontToCompare, targetFrontUntil, point, maxObj)
                             : findRankSS(minTargetFrontToCompare, targetFrontUntil, point, maxObj);
                     ranks[rankIdx] = rankPtr;
+                    indices[rankIdx] = index;
                 }
-                // Integrate the solutions into the target fronts.
-                for (int rankIdx = l, index = insertedFrontStart; index != -1; ++rankIdx) {
-                    int next = nextAndValue[index];
+                // Integrate the solutions into the target fronts, starting from the last tested one.
+                minTargetFrontToCompare = targetFrontUntil;
+                while (--rankIdx >= l) {
+                    int index = indices[rankIdx];
                     int rankPtr = ranks[rankIdx];
-                    if (targetFrontUntil < rankPtr) {
-                        throw new AssertionError();
-                    }
                     if (targetFrontUntil == rankPtr) {
-                        // need to make the new front
                         ++targetFrontUntil;
-                        nextAndValue[index] = -1;
-                    } else {
-                        nextAndValue[index] = firstIndex[rankPtr];
                     }
+                    next[index] = firstIndex[rankPtr];
                     firstIndex[rankPtr] = index;
-                    index = next;
-                    if (rankIdx == l) {
-                        minTargetFrontToCompare = rankPtr;
-                    } else {
-                        minTargetFrontToCompare = Math.min(minTargetFrontToCompare, rankPtr);
-                    }
+                    minTargetFrontToCompare = Math.min(minTargetFrontToCompare, rankPtr);
                 }
             }
         }
@@ -138,22 +129,16 @@ public final class AlternativeImplementation extends NonDominatedSorting {
         sorter.lexicographicalSort(points, indices, 0, oldN, maxObj + 1);
 
         int n = DoubleArraySorter.retainUniquePoints(points, indices, this.points, ranks);
-        Arrays.fill(this.ranks, 0, n, -42);
         for (int i = 0; i < n; ++i) {
-            firstIndex[i] = i * 2;
-            nextAndValue[i * 2] = -1;
-            nextAndValue[i * 2 + 1] = i;
+            firstIndex[i] = i;
+            next[i] = -1;
         }
 
         int treeLevel = MathEx.log2up(n);
         for (int i = 0; i < treeLevel; i++) {
-            int x = ((n - 1) >>> (i + 1)) + 1;
-            for (int j = 0; j < x; j++) {
-                int a = j << (i + 1);
-                int b = a + (1 << i);
-                if (b < n) {
-                    merge(a, b, n, maxObj);
-                }
+            int delta = 1 << i;
+            for (int l = 0, r = delta; r < n; l = r + delta, r = l + delta) {
+                merge(l, r, n, maxObj);
             }
         }
 
@@ -163,8 +148,8 @@ public final class AlternativeImplementation extends NonDominatedSorting {
                 break;
             }
             while (idx != -1) {
-                this.ranks[nextAndValue[idx + 1]] = r;
-                idx = nextAndValue[idx];
+                this.ranks[idx] = r;
+                idx = next[idx];
             }
         }
 
