@@ -37,12 +37,6 @@ public final class AlternativeImplementation extends NonDominatedSorting {
 
     private boolean checkIfDoesNotDominate(int targetFront, double[] point, int maxObj) {
         int index = firstIndex[targetFront];
-        if (maxObj == 1) {
-            // 2D case, enough to check the dominance with the first entry
-            // cannot assume `points[index]` is lexicographically smaller than `point`
-            // because the right part is processed front-first.
-            return !DominanceHelper.strictlyDominatesAssumingNotEqual(points[index], point, maxObj);
-        }
         while (index != -1) {
             // cannot assume `points[index]` is lexicographically smaller than `point`
             // because the right part is processed front-first.
