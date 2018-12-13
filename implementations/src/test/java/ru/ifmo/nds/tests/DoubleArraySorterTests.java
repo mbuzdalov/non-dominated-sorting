@@ -54,25 +54,24 @@ public class DoubleArraySorterTests {
     }
 
     @Test
-    public void checkSortWithResolver() {
+    public void checkSortComparingByIndicesIfEqual() {
         Random random = new Random();
         DoubleArraySorter sorter = new DoubleArraySorter(100);
         for (int times = 0; times < 1000; ++times) {
             int size = 1 + random.nextInt(100);
+            boolean isDiscrete = random.nextBoolean();
             double[][] array = new double[size][1];
-            int[] resolver = new int[size];
             int[] indices = new int[size];
             Integer[] expectedIndices = new Integer[size];
             for (int i = 0; i < size; ++i) {
                 indices[i] = i;
                 expectedIndices[i] = i;
-                array[i][0] = random.nextDouble();
-                resolver[i] = random.nextInt();
+                array[i][0] = isDiscrete ? random.nextInt(5) : random.nextDouble();
             }
-            Arrays.sort(expectedIndices, Comparator.comparingDouble((Integer o) -> array[o][0]).thenComparingInt(o -> resolver[o]));
-            sorter.sortWhileResolvingEqual(array, indices, 0, size, 0, resolver);
+            Arrays.sort(expectedIndices, Comparator.comparingDouble((Integer o) -> array[o][0]));
+            sorter.sortComparingByIndicesIfEqual(array, indices, 0, size, 0);
             for (int i = 0; i < size; ++i) {
-                Assert.assertEquals(array[expectedIndices[i]][0], array[indices[i]][0], 1e-16);
+                Assert.assertEquals(expectedIndices[i].intValue(), indices[i]);
             }
         }
     }

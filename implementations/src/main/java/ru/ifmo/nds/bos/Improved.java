@@ -46,7 +46,7 @@ public class Improved extends NonDominatedSorting {
             int[] currentObjectiveIndex = objectiveIndices[d];
             ArrayHelper.fillIdentity(currentObjectiveIndex, newN);
             if (d > 0) {
-                sorter.sortWhileResolvingEqual(this.points, currentObjectiveIndex, 0, newN, d, objectiveIndices[0]);
+                sorter.sortComparingByIndicesIfEqual(this.points, currentObjectiveIndex, 0, newN, d);
             }
         }
     }

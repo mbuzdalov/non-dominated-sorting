@@ -1,5 +1,6 @@
 package ru.ifmo.nds.util;
 
+import java.util.Arrays;
 import java.util.concurrent.ThreadLocalRandom;
 
 public final class DoubleArraySorter {
@@ -10,7 +11,6 @@ public final class DoubleArraySorter {
     private int[] indices = null;
     private int coordinate = -1;
     private int maxCoordinate = -1;
-    private int[] resolver = null;
 
     public DoubleArraySorter(int maximumPoints) {
         this.scratch = new double[maximumPoints];
@@ -67,7 +67,7 @@ public final class DoubleArraySorter {
 
     public void compressCoordinates(double[] original, int[] indices, int[] target, int from, int until) {
         if (until > scratch.length) {
-            throw new IllegalArgumentException("The internal thread-shareable array length is " + scratch.length
+            throw new IllegalArgumentException("The internal scratch array length is " + scratch.length
                     + ", but you requested from = " + from + " until = " + until + " which is " + (until - from));
         }
         System.arraycopy(original, from, scratch, from, until - from);
@@ -92,7 +92,7 @@ public final class DoubleArraySorter {
 
     public void sort(double[][] points, int[] indices, int from, int until, int whichCoordinate) {
         if (until > scratch.length) {
-            throw new IllegalArgumentException("The internal thread-shareable array length is " + scratch.length
+            throw new IllegalArgumentException("The internal scratch length is " + scratch.length
                     + ", but you requested from = " + from + " until = " + until + " which is " + (until - from));
         }
         this.points = points;
@@ -108,7 +108,7 @@ public final class DoubleArraySorter {
 
     public void lexicographicalSort(double[][] points, int[] indices, int from, int until, int maxCoordinate) {
         if (until > scratch.length) {
-            throw new IllegalArgumentException("The internal thread-shareable array length is " + scratch.length
+            throw new IllegalArgumentException("The internal scratch array length is " + scratch.length
                     + ", but you requested from = " + from + " until = " + until + " which is " + (until - from));
         }
         this.points = points;
@@ -122,29 +122,10 @@ public final class DoubleArraySorter {
         this.maxCoordinate = -1;
     }
 
-    private void sortByResolver(int from, int until) {
-        int pivot = resolver[indices[random.nextInt(from, until)]];
-        int l = from, r = until - 1;
-        while (l <= r) {
-            int li, ri;
-            while (resolver[li = indices[l]] < pivot) ++l;
-            while (resolver[ri = indices[r]] > pivot) --r;
-            if (l <= r) {
-                indices[l] = ri;
-                indices[r] = li;
-                ++l;
-                --r;
-            }
-        }
-        if (from + 1 <= r) sortByResolver(from, r + 1);
-        if (l + 1 < until) sortByResolver(l, until);
-    }
-
-    private void sortWhileResolvingEqualImpl(int from, int until) {
+    private void sortComparingByIndicesIfEqualImpl(int from, int until) {
         sortImpl(from, until);
 
         // after sortImpl, scratch[i] == points[indices[i]][coordinate]
-        // sortByResolver does not alter scratch.
 
         int last = from;
         double lastX = scratch[from];
@@ -152,33 +133,31 @@ public final class DoubleArraySorter {
             double currX = scratch[i];
             if (currX != lastX) {
                 if (last + 1 < i) {
-                    sortByResolver(last, i);
+                    Arrays.sort(indices, last, i);
                 }
                 last = i;
                 lastX = currX;
             }
         }
         if (last + 1 < until) {
-            sortByResolver(last, until);
+            Arrays.sort(indices, last, until);
         }
     }
 
-    public void sortWhileResolvingEqual(double[][] points, int[] indices, int from, int until, int coordinate, int[] resolver) {
+    public void sortComparingByIndicesIfEqual(double[][] points, int[] indices, int from, int until, int coordinate) {
         if (until > scratch.length) {
-            throw new IllegalArgumentException("The internal thread-shareable array length is " + scratch.length
+            throw new IllegalArgumentException("The internal scratch array length is " + scratch.length
                     + ", but you requested from = " + from + " until = " + until + " which is " + (until - from));
         }
         this.points = points;
         this.indices = indices;
         this.coordinate = coordinate;
-        this.resolver = resolver;
 
-        sortWhileResolvingEqualImpl(from, until);
+        sortComparingByIndicesIfEqualImpl(from, until);
 
         this.points = null;
         this.indices = null;
         this.coordinate = -1;
-        this.resolver = null;
     }
 
     public static int retainUniquePoints(double[][] sourcePoints, int[] sortedIndices, double[][] targetPoints, int[] reindex) {
