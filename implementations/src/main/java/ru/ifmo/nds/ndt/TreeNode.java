@@ -62,7 +62,7 @@ public abstract class TreeNode {
             int maxObj = point.length - 1;
             for (int i = 0; i < size; ++i) {
                 double[] current = points[i];
-                if (DominanceHelper.strictlyDominatesAssumingNotSame(current, point, maxObj)) {
+                if (DominanceHelper.strictlyDominatesAssumingLexicographicallySmaller(current, point, maxObj)) {
                     return true;
                 }
             }

@@ -69,7 +69,7 @@ public final class ENS extends HybridAlgorithmWrapper {
             double[] wp = points[weakIndex];
             while (virtualGoodIndex != -1) {
                 int realGoodIndex = space[virtualGoodIndex];
-                if (DominanceHelper.strictlyDominatesAssumingNotSame(points[realGoodIndex], wp, obj)) {
+                if (DominanceHelper.strictlyDominatesAssumingLexicographicallySmaller(points[realGoodIndex], wp, obj)) {
                     ranks[weakIndex] = 1 + sliceRank;
                     return true;
                 }
@@ -174,7 +174,7 @@ public final class ENS extends HybridAlgorithmWrapper {
         private boolean checkWhetherDominates(int[] array, int goodFrom, int goodUntil, double[] wp, int obj) {
             while (goodUntil > goodFrom) {
                 --goodUntil;
-                if (DominanceHelper.strictlyDominatesAssumingNotSame(points[array[goodUntil]], wp, obj)) {
+                if (DominanceHelper.strictlyDominatesAssumingLexicographicallySmaller(points[array[goodUntil]], wp, obj)) {
                     return true;
                 }
             }

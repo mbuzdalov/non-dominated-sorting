@@ -62,7 +62,7 @@ public class Improved extends NonDominatedSorting {
             boolean someoneDominatesMe = false;
             while (prevIndex != -1) {
                 if (prevIndex < currIndex && // For now, we totally ignore that some coordinates are unneeded.
-                        DominanceHelper.strictlyDominatesAssumingNotSame(points[prevIndex], p2, maxObj)) {
+                        DominanceHelper.strictlyDominatesAssumingLexicographicallySmaller(points[prevIndex], p2, maxObj)) {
                     someoneDominatesMe = true;
                     break;
                 }

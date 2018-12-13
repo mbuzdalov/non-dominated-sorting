@@ -54,7 +54,7 @@ public class LinearMemory extends NonDominatedSorting {
                 // The entire machinery with the testing points is only to ensure more-or-less sequential memory access.
                 for (int j = nTestedPoints - 1; j >= 0; --j) {
                     int jRank = testedPointRanks[j];
-                    if (currRank <= jRank && DominanceHelper.strictlyDominatesAssumingNotSame(testedPoints[j], currPoint, maxObj)) {
+                    if (currRank <= jRank && DominanceHelper.strictlyDominatesAssumingLexicographicallySmaller(testedPoints[j], currPoint, maxObj)) {
                         currRank = jRank + 1;
                         if (currRank > maximalMeaningfulRank) {
                             break;

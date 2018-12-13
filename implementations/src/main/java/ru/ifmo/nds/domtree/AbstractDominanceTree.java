@@ -87,7 +87,7 @@ public abstract class AbstractDominanceTree extends NonDominatedSorting {
         }
 
         boolean dominatesAssumingThisIsNotWorse(Node that) {
-            return DominanceHelper.strictlyDominatesAssumingNotSame(point, that.point, point.length - 1);
+            return DominanceHelper.strictlyDominatesAssumingLexicographicallySmaller(point, that.point, point.length - 1);
         }
 
         int dominationCompare(Node that) {

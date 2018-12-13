@@ -2,7 +2,7 @@ package ru.ifmo.nds.ens;
 
 import java.util.Arrays;
 
-import static ru.ifmo.nds.util.DominanceHelper.strictlyDominatesAssumingNotSame;
+import static ru.ifmo.nds.util.DominanceHelper.strictlyDominatesAssumingLexicographicallySmaller;
 
 import ru.ifmo.nds.NonDominatedSorting;
 import ru.ifmo.nds.util.ArrayHelper;
@@ -45,12 +45,12 @@ public abstract class ENSBase extends NonDominatedSorting {
         int maxObj = point.length - 1;
         if (maxObj == 1) {
             // This is essentially how the 2D case of JFB works.
-            return strictlyDominatesAssumingNotSame(points[index], point, maxObj) ? 1 : -1;
+            return strictlyDominatesAssumingLexicographicallySmaller(points[index], point, maxObj) ? 1 : -1;
         } else {
             int count = 0;
             while (index >= 0) {
                 ++count;
-                if (strictlyDominatesAssumingNotSame(points[index], point, maxObj)) {
+                if (strictlyDominatesAssumingLexicographicallySmaller(points[index], point, maxObj)) {
                     return count;
                 }
                 index = prevIndex[index];

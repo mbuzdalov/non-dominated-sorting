@@ -188,7 +188,7 @@ public abstract class JFBBase extends NonDominatedSorting {
                 int goodIndex = indices[from];
                 int weakIndex = indices[from + 1];
                 int goodRank = ranks[goodIndex];
-                if (ranks[weakIndex] <= goodRank && DominanceHelper.strictlyDominatesAssumingNotSame(points[goodIndex], points[weakIndex], obj)) {
+                if (ranks[weakIndex] <= goodRank && DominanceHelper.strictlyDominatesAssumingLexicographicallySmaller(points[goodIndex], points[weakIndex], obj)) {
                     ranks[weakIndex] = 1 + goodRank;
                     if (goodRank >= maximalMeaningfulRank) {
                         return from + 1;
@@ -219,7 +219,7 @@ public abstract class JFBBase extends NonDominatedSorting {
         double[] pt = points[pointIndex];
         for (int i = from; i < until; ++i) {
             int ii = indices[i];
-            if (ranks[ii] <= pointRank && DominanceHelper.strictlyDominatesAssumingNotSame(pt, points[ii], obj)) {
+            if (ranks[ii] <= pointRank && DominanceHelper.strictlyDominatesAssumingLexicographicallySmaller(pt, points[ii], obj)) {
                 ranks[ii] = pointRank + 1;
             }
         }
@@ -230,7 +230,7 @@ public abstract class JFBBase extends NonDominatedSorting {
         double[] pt = points[pointIndex];
         for (int i = from; i < until; ++i) {
             int ii = indices[i];
-            if (DominanceHelper.strictlyDominatesAssumingNotSame(pt, points[ii], obj)) {
+            if (DominanceHelper.strictlyDominatesAssumingLexicographicallySmaller(pt, points[ii], obj)) {
                 ranks[ii] = maximalMeaningfulRank + 1;
                 if (minOverflow > i) {
                     minOverflow = i;
@@ -244,7 +244,7 @@ public abstract class JFBBase extends NonDominatedSorting {
         for (int i = goodMax; i >= goodMin; --i) {
             int gi = indices[i];
             int gr = ranks[gi];
-            if (rw <= gr && DominanceHelper.strictlyDominatesAssumingNotSame(points[gi], wp, obj)) {
+            if (rw <= gr && DominanceHelper.strictlyDominatesAssumingLexicographicallySmaller(points[gi], wp, obj)) {
                 rw = gr + 1;
                 if (rw > maximalMeaningfulRank) {
                     ranks[wi] = rw;
@@ -261,7 +261,7 @@ public abstract class JFBBase extends NonDominatedSorting {
     private int helperBWeak1Rank0(int weak, int wi, int obj, double[] wp, int goodMin, int goodMax) {
         for (int i = goodMax; i >= goodMin; --i) {
             int gi = indices[i];
-            if (DominanceHelper.strictlyDominatesAssumingNotSame(points[gi], wp, obj)) {
+            if (DominanceHelper.strictlyDominatesAssumingLexicographicallySmaller(points[gi], wp, obj)) {
                 int newRank = ranks[gi] + 1;
                 if (newRank > maximalMeaningfulRank) {
                     ranks[wi] = newRank;
