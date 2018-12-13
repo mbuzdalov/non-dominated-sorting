@@ -82,7 +82,9 @@ public class TortureTesting {
                 SumitMishraDivideConquer.getSumitImplementation(true, false),
                 SumitMishraDivideConquer.getSumitImplementation(false, false),
                 SumitMishraDivideConquer.getSumitImplementation(true, true),
-                SumitMishraDivideConquer.getSumitImplementation(false, true)
+                SumitMishraDivideConquer.getSumitImplementation(false, true),
+                SumitMishraDivideConquer.getAlternativeImplementation(true),
+                SumitMishraDivideConquer.getAlternativeImplementation(false)
         );
         List<NonDominatedSorting> sortings = sortingFactories
                 .stream()
@@ -112,7 +114,6 @@ public class TortureTesting {
                     } else {
                         for (int i = 0; i < points; ++i) {
                             if (reference[i] != ranks[i]) {
-                                printTest(points, dimension, instance, reference);
                                 throw new AssertionError("Ranks do not match: index " + i
                                         + " expected " + reference[i]
                                         + " found " + ranks[i]);

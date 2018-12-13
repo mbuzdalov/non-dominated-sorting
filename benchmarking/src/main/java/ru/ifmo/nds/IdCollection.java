@@ -102,5 +102,7 @@ public final class IdCollection {
         addNonDominatedSortingFactory("dcns.bss", SumitMishraDivideConquer.getSumitImplementation(true, true));
         addNonDominatedSortingFactory("dcns.ss", SumitMishraDivideConquer.getSumitImplementation(false, false));
         addNonDominatedSortingFactory("dcns.sss", SumitMishraDivideConquer.getSumitImplementation(false, true));
+        addNonDominatedSortingFactory("dcns.alt.bs", SumitMishraDivideConquer.getAlternativeImplementation(true));
+        addNonDominatedSortingFactory("dcns.alt.ss", SumitMishraDivideConquer.getAlternativeImplementation(false));
     }
 }
