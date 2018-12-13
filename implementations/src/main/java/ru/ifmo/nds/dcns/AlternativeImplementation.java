@@ -126,7 +126,7 @@ public final class AlternativeImplementation extends NonDominatedSorting {
     private void merge0(int n, int maxObj) {
         for (int r = 1; r < n; r += 2) {
             int l = r - 1;
-            // can assume that `l` is lexicographically smaller than `r`, here and only here.
+            // We can assume, here and only here, that `l` is lexicographically smaller than `r`.
             if (!DominanceHelper.strictlyDominatesAssumingLexicographicallySmaller(points[l], points[r], maxObj)) {
                 next[r] = l;
                 firstIndex[l] = r;
@@ -149,7 +149,7 @@ public final class AlternativeImplementation extends NonDominatedSorting {
         }
 
         int treeLevel = MathEx.log2up(n);
-        // The first run of merging can be written with much smaller leading constant.
+        // The first run of merging can be written with a much smaller leading constant.
         merge0(n, maxObj);
         // The rest of the runs use the generic implementation.
         for (int i = 1; i < treeLevel; i++) {
