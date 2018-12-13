@@ -24,6 +24,42 @@ public abstract class CorrectnessTestsBase {
         groupCheck(doubleInput, expectedOutput);
     }
 
+    private void assertArrayEquals(int[] expected, int[] found) {
+        int minExpectedDiffering = -1;
+        int maxDistanceDiffering = -1;
+        boolean isAlwaysNonGreater = true;
+        boolean isAlwaysNonSmaller = true;
+        boolean failed = false;
+
+        // Shall not happen anyway
+        Assert.assertEquals(expected.length, found.length);
+
+        for (int i = 0; i < expected.length; ++i) {
+            int ev = expected[i], av = found[i];
+            if (ev != av) {
+                failed = true;
+                isAlwaysNonGreater &= av <= ev;
+                isAlwaysNonSmaller &= av >= ev;
+                if (minExpectedDiffering == -1 || expected[i] < expected[minExpectedDiffering]) {
+                    minExpectedDiffering = i;
+                }
+                if (maxDistanceDiffering == -1 || Math.abs(found[i] - expected[i]) > Math.abs(found[maxDistanceDiffering] - expected[maxDistanceDiffering])) {
+                    maxDistanceDiffering = i;
+                }
+            }
+        }
+
+        if (failed) {
+            throw new AssertionError("Arrays differ"
+                    + "\nSmallest expected: index " + minExpectedDiffering + " expected "
+                    + expected[minExpectedDiffering] + " found " + found[minExpectedDiffering]
+                    + "\nLargest difference: index " + maxDistanceDiffering + " expected "
+                    + expected[maxDistanceDiffering] + " found " + found[maxDistanceDiffering]
+                    + "\nAlways not greater: " + isAlwaysNonGreater
+                    + "\nAlways not smaller: " + isAlwaysNonSmaller);
+        }
+    }
+
     private void groupCheck(double[][] input, int[] expectedOutput) {
         expectedOutput = expectedOutput.clone();
         NonDominatedSortingFactory factory = getFactory();
@@ -43,10 +79,10 @@ public abstract class CorrectnessTestsBase {
         try (NonDominatedSorting sorting = factory.getInstance(input.length, input[0].length)) {
             int[] actualOutput = new int[expectedOutput.length];
             sorting.sort(input, actualOutput);
-            Assert.assertArrayEquals(expectedOutput, actualOutput);
+            assertArrayEquals(expectedOutput, actualOutput);
             Arrays.fill(actualOutput, 2347);
             sorting.sort(input, actualOutput);
-            Assert.assertArrayEquals(expectedOutput, actualOutput);
+            assertArrayEquals(expectedOutput, actualOutput);
 
             for (int maxRankG = maxExpectedOutput; maxRankG >= -maxExpectedOutput; --maxRankG) {
                 int maxRank = Math.abs(maxRankG);
@@ -58,27 +94,27 @@ public abstract class CorrectnessTestsBase {
                 }
                 Arrays.fill(actualOutput, 0);
                 sorting.sort(input, actualOutput, maxRank);
-                Assert.assertArrayEquals(localExpectedOutput, actualOutput);
+                assertArrayEquals(localExpectedOutput, actualOutput);
                 Arrays.fill(actualOutput, 2347);
                 sorting.sort(input, actualOutput, maxRank);
-                Assert.assertArrayEquals(localExpectedOutput, actualOutput);
+                assertArrayEquals(localExpectedOutput, actualOutput);
             }
 
             Arrays.fill(actualOutput, 0);
             sorting.sort(input, actualOutput);
-            Assert.assertArrayEquals(expectedOutput, actualOutput);
+            assertArrayEquals(expectedOutput, actualOutput);
             Arrays.fill(actualOutput, 2347);
             sorting.sort(input, actualOutput);
-            Assert.assertArrayEquals(expectedOutput, actualOutput);
+            assertArrayEquals(expectedOutput, actualOutput);
         }
 
         try (NonDominatedSorting sorting = factory.getInstance(dupInput.length, dupInput[0].length)) {
             int[] actualOutput = new int[dupOutput.length];
             sorting.sort(dupInput, actualOutput);
-            Assert.assertArrayEquals(dupOutput, actualOutput);
+            assertArrayEquals(dupOutput, actualOutput);
             Arrays.fill(actualOutput, 2347);
             sorting.sort(dupInput, actualOutput);
-            Assert.assertArrayEquals(dupOutput, actualOutput);
+            assertArrayEquals(dupOutput, actualOutput);
         }
     }
 
