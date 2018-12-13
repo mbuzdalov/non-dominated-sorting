@@ -84,7 +84,8 @@ public class TortureTesting {
                 SumitMishraDivideConquer.getSumitImplementation(true, true),
                 SumitMishraDivideConquer.getSumitImplementation(false, true),
                 SumitMishraDivideConquer.getAlternativeImplementation(true),
-                SumitMishraDivideConquer.getAlternativeImplementation(false)
+                SumitMishraDivideConquer.getAlternativeImplementation(false),
+                FilterSort.getInstance()
         );
         List<NonDominatedSorting> sortings = sortingFactories
                 .stream()
