@@ -119,7 +119,7 @@ public final class SplitMergeHelper {
             // copy the merged part
             System.arraycopy(scratchM, tempFrom, indices, fromLeft, target - tempFrom);
         }
-        return fromLeft + (target - tempFrom) + untilLeft - l + untilRight - r;
+        return newR + untilRight - r;
     }
 
     private static long pack(int mid, int right) {
