@@ -72,6 +72,12 @@ public final class AlternativeImplementation extends NonDominatedSorting {
         return targetUntil;
     }
 
+    private int findRank(int minTargetFrontToCompare, int targetFrontUntil, double[] point, int maxObj) {
+        return useBinarySearch
+                ? findRankBS(minTargetFrontToCompare, targetFrontUntil, point, maxObj)
+                : findRankSS(minTargetFrontToCompare, targetFrontUntil, point, maxObj);
+    }
+
     private void merge(int l, int m, int n, int maxObj) {
         int r = Math.min(n, m + m - l);
         int minTargetFrontToCompare = l - 1;
@@ -96,10 +102,7 @@ public final class AlternativeImplementation extends NonDominatedSorting {
                 // (why we can) because the right part is not larger than the left part.
                 for (int index = insertedFrontStart; index != -1; index = next[index], ++rankIdx) {
                     double[] point = points[index];
-                    int rankPtr = useBinarySearch
-                            ? findRankBS(minTargetFrontToCompare, targetFrontUntil, point, maxObj)
-                            : findRankSS(minTargetFrontToCompare, targetFrontUntil, point, maxObj);
-                    ranks[rankIdx] = rankPtr;
+                    ranks[rankIdx] = findRank(minTargetFrontToCompare, targetFrontUntil, point, maxObj);
                     ranks[++rankIdx] = index;
                 }
                 // Integrate the solutions into the target fronts, starting from the last tested one.
