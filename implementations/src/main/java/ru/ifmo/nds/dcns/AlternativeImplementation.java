@@ -114,10 +114,12 @@ public final class AlternativeImplementation extends NonDominatedSorting {
                         ++targetFrontUntil;
                         next[index] = -1;
                     } else {
+                        if (minTargetFrontToCompare > rankPtr) {
+                            minTargetFrontToCompare = rankPtr;
+                        }
                         next[index] = firstIndex[rankPtr];
                     }
                     firstIndex[rankPtr] = index;
-                    minTargetFrontToCompare = Math.min(minTargetFrontToCompare, rankPtr);
                 }
             }
         }
