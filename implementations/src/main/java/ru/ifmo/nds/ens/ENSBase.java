@@ -57,34 +57,28 @@ public abstract class ENSBase extends NonDominatedSorting {
 
     abstract int findRank(double[][] points, double[] curr, int maxRank);
 
-    private void sortCheckedImpl(double[][] points, int[] ranks, int maximalMeaningfulRank) {
-        final int n = ranks.length;
-        int i0 = indices[0];
-        double[] prev = points[i0];
-        setRank(i0, ranks, 0, -1, maximalMeaningfulRank);
-        int prevRank = 0;
-        int maxRank = 0;
-        final int len = prev.length;
-        for (int i = 1; i < n; ++i) {
-            int index = indices[i];
-            double[] curr = points[index];
-            int currRank;
-            if (ArrayHelper.equal(prev, curr, len)) {
-                currRank = prevRank;
-            } else {
-                prevRank = currRank = findRank(points, curr, maxRank);
-                prev = curr;
-            }
-            maxRank = setRank(index, ranks, currRank, maxRank, maximalMeaningfulRank);
-        }
-    }
-
     @Override
     protected void sortChecked(double[][] points, int[] ranks, int maximalMeaningfulRank) {
         int n = ranks.length;
+        final int len = points[0].length;
         ArrayHelper.fillIdentity(indices, n);
         Arrays.fill(prevIndex, 0, n, -1);
-        sorter.lexicographicalSort(points, indices, 0, n, points[0].length);
-        sortCheckedImpl(points, ranks, maximalMeaningfulRank);
+        sorter.lexicographicalSort(points, indices, 0, n, len);
+        int i0 = indices[0];
+        setRank(i0, ranks, 0, -1, maximalMeaningfulRank);
+        int lastRank = 0;
+        int maxRank = 0;
+        double[] last = points[i0];
+        for (int i = 1; i < n; ++i) {
+            int index = indices[i];
+            double[] curr = points[index];
+            if (ArrayHelper.equal(last, curr, len)) {
+                ranks[index] = lastRank;
+            } else {
+                lastRank = findRank(points, curr, maxRank);
+                last = curr;
+                maxRank = setRank(index, ranks, lastRank, maxRank, maximalMeaningfulRank);
+            }
+        }
     }
 }
