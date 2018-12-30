@@ -6,25 +6,18 @@ import ru.ifmo.nds.util.DominanceHelper;
 import ru.ifmo.nds.util.DoubleArraySorter;
 import ru.ifmo.nds.util.MathEx;
 
-public final class AlternativeImplementation extends NonDominatedSorting {
-    private final boolean useBinarySearch;
+public abstract class DCNSBase extends NonDominatedSorting {
     private double[][] points;
     private int[] next;
     private int[] firstIndex;
     private int[] ranks;
 
-    public AlternativeImplementation(int maximumPoints, int maximumDimension, boolean useBinarySearch) {
+    DCNSBase(int maximumPoints, int maximumDimension) {
         super(maximumPoints, maximumDimension);
-        this.useBinarySearch = useBinarySearch;
         this.points = new double[maximumPoints][];
         this.next = new int[maximumPoints];
         this.firstIndex = new int[maximumPoints];
         this.ranks = new int[maximumPoints];
-    }
-
-    @Override
-    public String getName() {
-        return useBinarySearch ? "DCNS-BS-alt" : "DCNS-SS-alt";
     }
 
     @Override
@@ -35,8 +28,9 @@ public final class AlternativeImplementation extends NonDominatedSorting {
         this.ranks = null;
     }
 
-    private boolean checkIfDoesNotDominate(int targetFront, double[] point, int maxObj) {
+    final boolean checkIfDoesNotDominate(int targetFront, double[] point) {
         int index = firstIndex[targetFront];
+        final int maxObj = point.length - 1;
         while (index != -1) {
             // cannot assume `points[index]` is lexicographically smaller than `point`
             // because the right part is processed front-first.
@@ -48,37 +42,9 @@ public final class AlternativeImplementation extends NonDominatedSorting {
         return true;
     }
 
-    private int findRankSS(int targetFrom, int targetUntil, double[] point, int maxObj) {
-        for (int target = targetFrom; target < targetUntil; ++target) {
-            if (checkIfDoesNotDominate(target, point, maxObj)) {
-                return target;
-            }
-        }
-        return targetUntil;
-    }
+    abstract int findRank(int targetFrom, int targetUntil, double[] point);
 
-    private int findRankBS(int targetFrom, int targetUntil, double[] point, int maxObj) {
-        if (checkIfDoesNotDominate(targetFrom, point, maxObj)) {
-            return targetFrom;
-        }
-        while (targetUntil - targetFrom > 1) {
-            int mid = (targetFrom + targetUntil) >>> 1;
-            if (checkIfDoesNotDominate(mid, point, maxObj)) {
-                targetUntil = mid;
-            } else {
-                targetFrom = mid;
-            }
-        }
-        return targetUntil;
-    }
-
-    private int findRank(int minTargetFrontToCompare, int targetFrontUntil, double[] point, int maxObj) {
-        return useBinarySearch
-                ? findRankBS(minTargetFrontToCompare, targetFrontUntil, point, maxObj)
-                : findRankSS(minTargetFrontToCompare, targetFrontUntil, point, maxObj);
-    }
-
-    private void merge(int l, int m, int n, int maxObj) {
+    private void merge(int l, int m, int n) {
         int r = Math.min(n, m + m - l);
         int minTargetFrontToCompare = l - 1;
         int targetFrontUntil = l;
@@ -102,7 +68,7 @@ public final class AlternativeImplementation extends NonDominatedSorting {
                 // (why we can) because the right part is not larger than the left part.
                 for (int index = insertedFrontStart; index != -1; index = next[index], ++rankIdx) {
                     double[] point = points[index];
-                    ranks[rankIdx] = findRank(minTargetFrontToCompare, targetFrontUntil, point, maxObj);
+                    ranks[rankIdx] = findRank(minTargetFrontToCompare, targetFrontUntil, point);
                     ranks[++rankIdx] = index;
                 }
                 // Integrate the solutions into the target fronts, starting from the last tested one.
@@ -160,7 +126,7 @@ public final class AlternativeImplementation extends NonDominatedSorting {
         for (int i = 1; i < treeLevel; i++) {
             int delta = 1 << i, delta2 = delta + delta;
             for (int r = delta; r < n; r += delta2) {
-                merge(r - delta, r, n, maxObj);
+                merge(r - delta, r, n);
             }
         }
 
