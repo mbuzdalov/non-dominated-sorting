@@ -24,42 +24,23 @@ public abstract class ENSBase extends NonDominatedSorting {
     }
 
     final boolean frontDominates(int frontIndex, double[][] points, double[] point) {
-        return frontDominatesWithWork(frontIndex, points, point) >= 0;
-    }
-
-    final int findRankByBinarySearch(double[][] points, double[] point, int minRank, int maxRank) {
-        int leftRank = minRank, rightRank = maxRank + 1;
-        while (rightRank - leftRank > 1) {
-            int currRank = (leftRank + rightRank) >>> 1;
-            if (frontDominates(currRank, points, point)) {
-                leftRank = currRank;
-            } else {
-                rightRank = currRank;
-            }
-        }
-        return rightRank;
-    }
-
-    final int frontDominatesWithWork(int frontIndex, double[][] points, double[] point) {
         int index = lastRankIndex[frontIndex];
         int maxObj = point.length - 1;
         if (maxObj == 1) {
             // This is essentially how the 2D case of JFB works.
-            return strictlyDominatesAssumingLexicographicallySmaller(points[index], point, maxObj) ? 1 : -1;
+            return strictlyDominatesAssumingLexicographicallySmaller(points[index], point, maxObj);
         } else {
-            int count = 0;
             while (index >= 0) {
-                ++count;
                 if (strictlyDominatesAssumingLexicographicallySmaller(points[index], point, maxObj)) {
-                    return count;
+                    return true;
                 }
                 index = prevIndex[index];
             }
-            return -count;
+            return false;
         }
     }
 
-    final int setRank(int pointIndex, int[] ranks, int rank, int maxRank, int maximumMeaningfulRank) {
+    private int setRank(int pointIndex, int[] ranks, int rank, int maxRank, int maximumMeaningfulRank) {
         if (rank > maximumMeaningfulRank) {
             ranks[pointIndex] = maximumMeaningfulRank + 1;
         } else {
@@ -74,7 +55,29 @@ public abstract class ENSBase extends NonDominatedSorting {
         return maxRank;
     }
 
-    abstract void sortCheckedImpl(double[][] points, int[] ranks, int maximalMeaningfulRank);
+    abstract int findRank(double[][] points, double[] curr, int maxRank);
+
+    private void sortCheckedImpl(double[][] points, int[] ranks, int maximalMeaningfulRank) {
+        final int n = ranks.length;
+        int i0 = indices[0];
+        double[] prev = points[i0];
+        setRank(i0, ranks, 0, -1, maximalMeaningfulRank);
+        int prevRank = 0;
+        int maxRank = 0;
+        final int len = prev.length;
+        for (int i = 1; i < n; ++i) {
+            int index = indices[i];
+            double[] curr = points[index];
+            int currRank;
+            if (ArrayHelper.equal(prev, curr, len)) {
+                currRank = prevRank;
+            } else {
+                prevRank = currRank = findRank(points, curr, maxRank);
+                prev = curr;
+            }
+            maxRank = setRank(index, ranks, currRank, maxRank, maximalMeaningfulRank);
+        }
+    }
 
     @Override
     protected void sortChecked(double[][] points, int[] ranks, int maximalMeaningfulRank) {

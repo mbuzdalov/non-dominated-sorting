@@ -69,7 +69,6 @@ public final class IdCollection {
         }
 
         addNonDominatedSortingFactory("ens.bs", ENS.getENS_BS());
-        addNonDominatedSortingFactory("ens.hs", ENS.getENS_HS());
         addNonDominatedSortingFactory("ens.ss", ENS.getENS_SS());
 
         StringTokenizer ndtThresholdsTok = new StringTokenizer(ndtThresholds, ",");
