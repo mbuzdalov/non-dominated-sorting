@@ -79,10 +79,6 @@ public class TortureTesting {
                 ENS.getENS_NDT_Arrays(),
                 ENS.getENS_NDT_OneTree(8),
                 ENS.getENS_NDT_OneTree(1),
-                SumitMishraDivideConquer.getSumitImplementation(true, false),
-                SumitMishraDivideConquer.getSumitImplementation(false, false),
-                SumitMishraDivideConquer.getSumitImplementation(true, true),
-                SumitMishraDivideConquer.getSumitImplementation(false, true),
                 SumitMishraDivideConquer.getAlternativeImplementation(true),
                 SumitMishraDivideConquer.getAlternativeImplementation(false),
                 FilterSort.getInstance()
