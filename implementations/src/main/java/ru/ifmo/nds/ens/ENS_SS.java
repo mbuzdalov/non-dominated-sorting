@@ -6,7 +6,7 @@ public final class ENS_SS extends ENSBase {
     }
 
     @Override
-    int findRank(double[][] points, double[] point, int maxRank) {
+    final int findRank(double[][] points, double[] point, int maxRank) {
         int currRank = 0;
         while (currRank <= maxRank) {
             if (frontDominates(currRank, points, point)) {
