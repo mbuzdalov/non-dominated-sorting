@@ -1,23 +1,22 @@
 package ru.ifmo.nds.util;
 
 import java.util.Arrays;
-import java.util.concurrent.ThreadLocalRandom;
 
 public final class DoubleArraySorter {
     private final double[] scratch;
-    private final ThreadLocalRandom random = ThreadLocalRandom.current();
-
     private double[][] points = null;
     private int[] indices = null;
     private int coordinate = -1;
     private int maxCoordinate = -1;
 
+    private static final int INSERTION_SORT_THRESHOLD = 20;
+
     public DoubleArraySorter(int maximumPoints) {
         this.scratch = new double[maximumPoints];
     }
 
-    private void sortImplInside(int from, int until) {
-        double pivot = scratch[random.nextInt(from, until)];
+    private static int split(double[] scratch, int[] indices, int from, int until) {
+        double pivot = scratch[(from + until) >>> 1];
         int l = from, r = until - 1;
         while (l <= r) {
             double lv, rv;
@@ -31,8 +30,44 @@ public final class DoubleArraySorter {
                 --r;
             }
         }
-        if (from + 1 <= r) sortImplInside(from, r + 1);
-        if (l + 1 < until) sortImplInside(l, until);
+        if (r + 1 == l) {
+            return l;
+        } else {
+            return -l - 1;
+        }
+    }
+
+    private static void insertionSort(double[] scratch, int[] indices, int from, int until) {
+        int to = until - 1;
+        for (int i = from, j = i; i < to; j = ++i) {
+            double ai = scratch[i + 1];
+            int ii = indices[i + 1];
+            while (ai < scratch[j]) {
+                scratch[j + 1] = scratch[j];
+                indices[j + 1] = indices[j];
+                if (j-- == from) {
+                    break;
+                }
+            }
+            scratch[j + 1] = ai;
+            indices[j + 1] = ii;
+        }
+
+    }
+
+    private void sortImplInside(int from, int until) {
+        if (from + INSERTION_SORT_THRESHOLD >= until) {
+            insertionSort(scratch, indices, from, until);
+        } else {
+            int l = split(scratch, indices, from, until);
+            int r = l;
+            if (l < 0) {
+                l = -l - 1;
+                r = l - 1;
+            }
+            if (from + 1 < r) sortImplInside(from, r);
+            if (l + 1 < until) sortImplInside(l, until);
+        }
     }
 
     private void sortImpl(int from, int until) {
