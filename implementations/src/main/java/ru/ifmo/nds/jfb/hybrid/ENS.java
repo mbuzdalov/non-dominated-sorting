@@ -149,7 +149,7 @@ public final class ENS extends HybridAlgorithmWrapper {
             }
         }
 
-        private void sortIndicesByRanks(int from, int to) {
+        private static int splitIndicesByRanks(int[] space, int from, int to) {
             int left = from, right = to;
             int pivot = (space[space[from]] + space[space[to]]) / 2;
             int sl, sr;
@@ -163,11 +163,41 @@ public final class ENS extends HybridAlgorithmWrapper {
                     --right;
                 }
             }
-            if (from < right) {
-                sortIndicesByRanks(from, right);
+            return left - 1 == right ? left : -left - 1;
+        }
+
+        private static final int INSERTION_THRESHOLD = 20;
+
+        private static void insertionSortIndicesByRank(int[] space, int from, int to) {
+            for (int i = from, j = i; i < to; j = ++i) {
+                int ii = space[i + 1];
+                int ai = space[ii];
+                while (ai > space[space[j]]) {
+                    space[j + 1] = space[j];
+                    if (j-- == from) {
+                        break;
+                    }
+                }
+                space[j + 1] = ii;
             }
-            if (left < to) {
-                sortIndicesByRanks(left, to);
+        }
+
+        private static void sortIndicesByRanks(int[] space, int from, int to) {
+            if (from + INSERTION_THRESHOLD > to) {
+                insertionSortIndicesByRank(space, from, to);
+            } else {
+                int left = splitIndicesByRanks(space, from, to);
+                int right = left - 1;
+                if (left < 0) {
+                    left = -left - 1;
+                    right = left - 2;
+                }
+                if (from < right) {
+                    sortIndicesByRanks(space, from, right);
+                }
+                if (left < to) {
+                    sortIndicesByRanks(space, left, to);
+                }
             }
         }
 
@@ -220,7 +250,7 @@ public final class ENS extends HybridAlgorithmWrapper {
             return allSame ? firstRank : -1;
         }
 
-        private int distributePointsBetweenSlices(int from, int until, int sliceOffset, int pointsBySlicesOffset) {
+        private static int distributePointsBetweenSlices(int[] space, int from, int until, int sliceOffset, int pointsBySlicesOffset) {
             int sliceLast = sliceOffset - 2;
             int atSliceLast = 0;
             int prevRank = -1;
@@ -285,8 +315,8 @@ public final class ENS extends HybridAlgorithmWrapper {
                 return helperBSingleRank(minRank, goodFrom, goodUntil, weakFrom, weakUntil, obj, maximalMeaningfulRank);
             } else {
                 // "good" has multiple fronts (called "slices" here), need to go a more complicated way.
-                sortIndicesByRanks(sortedIndicesOffset, sortedIndicesOffset + goodSize - 1);
-                int sliceLast = distributePointsBetweenSlices(sortedIndicesOffset, sortedIndicesOffset + goodSize, sliceOffset, pointsBySlicesOffset);
+                sortIndicesByRanks(space, sortedIndicesOffset, sortedIndicesOffset + goodSize - 1);
+                int sliceLast = distributePointsBetweenSlices(space, sortedIndicesOffset, sortedIndicesOffset + goodSize, sliceOffset, pointsBySlicesOffset);
                 int minOverflowed = weakUntil;
                 for (int weak = weakFrom, good = goodFrom, sliceOfGood = ranksAndSlicesOffset; weak < weakUntil; ++weak) {
                     int wi = indices[weak];
