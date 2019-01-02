@@ -156,15 +156,11 @@ public abstract class JFBBase extends NonDominatedSorting {
     protected abstract int sweepB(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int tempFrom);
 
     private int helperAMain(int from, int until, int obj) {
-        ArrayHelper.transplant(transposedPoints[obj], indices, from, until, medianSwap, from);
-        double objMin = ArrayHelper.min(medianSwap, from, until);
-        double objMax = ArrayHelper.max(medianSwap, from, until);
-        if (objMin == objMax) {
+        if (ArrayHelper.transplantAndCheckIfSame(transposedPoints[obj], indices, from, until, medianSwap, from)) {
             return helperA(from, until, obj - 1);
         } else {
             double median = ArrayHelper.destructiveMedian(medianSwap, from, until);
-            long split = splitMerge.splitInThree(transposedPoints[obj], indices,
-                    from, from, until, median, objMin, objMax);
+            long split = splitMerge.splitInThree(transposedPoints[obj], indices, from, from, until, median);
             int startMid = SplitMergeHelper.extractMid(split);
             int startRight = SplitMergeHelper.extractRight(split);
 
@@ -205,7 +201,8 @@ public abstract class JFBBase extends NonDominatedSorting {
         }
     }
 
-    public static int updateByPoint(int[] ranks, int[] indices, double[][] points, int maximalMeaningfulRank, int pointIndex, int from, int until, int obj) {
+    public static int updateByPoint(int[] ranks, int[] indices, double[][] points, int maximalMeaningfulRank,
+                                    int pointIndex, int from, int until, int obj) {
         int ri = ranks[pointIndex];
         if (ri == maximalMeaningfulRank) {
             return updateByPointCritical(ranks, indices, points, maximalMeaningfulRank, pointIndex, from, until, obj);
@@ -215,7 +212,8 @@ public abstract class JFBBase extends NonDominatedSorting {
         }
     }
 
-    private static void updateByPointNormal(int[] ranks, int[] indices, double[][] points, int pointIndex, int pointRank, int from, int until, int obj) {
+    private static void updateByPointNormal(int[] ranks, int[] indices, double[][] points, int pointIndex,
+                                            int pointRank, int from, int until, int obj) {
         double[] pt = points[pointIndex];
         for (int i = from; i < until; ++i) {
             int ii = indices[i];
@@ -225,7 +223,8 @@ public abstract class JFBBase extends NonDominatedSorting {
         }
     }
 
-    private static int updateByPointCritical(int[] ranks, int[] indices, double[][] points, int maximalMeaningfulRank, int pointIndex, int from, int until, int obj) {
+    private static int updateByPointCritical(int[] ranks, int[] indices, double[][] points, int maximalMeaningfulRank,
+                                             int pointIndex, int from, int until, int obj) {
         int minOverflow = until;
         double[] pt = points[pointIndex];
         for (int i = from; i < until; ++i) {
@@ -285,24 +284,11 @@ public abstract class JFBBase extends NonDominatedSorting {
     }
 
     private int helperBMain(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj, int tempFrom) {
-        double[] currentTransposed = transposedPoints[obj];
-        int medianGood = ArrayHelper.transplant(currentTransposed, indices, goodFrom, goodUntil, medianSwap, tempFrom);
-        double goodMinObj = ArrayHelper.min(medianSwap, tempFrom, medianGood);
-        int medianWeak = ArrayHelper.transplant(currentTransposed, indices, weakFrom, weakUntil, medianSwap, medianGood);
-        double weakMaxObj = ArrayHelper.max(medianSwap, medianGood, medianWeak);
-        if (weakMaxObj < goodMinObj) {
-            return weakUntil;
-        }
-        double goodMaxObj = ArrayHelper.max(medianSwap, tempFrom, medianGood);
-        double weakMinObj = ArrayHelper.min(medianSwap, medianGood, medianWeak);
-        if (goodMaxObj <= weakMinObj) {
-            return helperB(goodFrom, goodUntil, weakFrom, weakUntil, obj - 1, tempFrom);
-        }
-        double median = ArrayHelper.destructiveMedian(medianSwap, tempFrom, medianWeak);
-        long goodSplit = splitMerge.splitInThree(currentTransposed, indices, tempFrom, goodFrom, goodUntil, median, goodMinObj, goodMaxObj);
+        double median = ArrayHelper.destructiveMedian(medianSwap, tempFrom, tempFrom + goodUntil - goodFrom + weakUntil - weakFrom);
+        long goodSplit = splitMerge.splitInThree(transposedPoints[obj], indices, tempFrom, goodFrom, goodUntil, median);
         int goodMidL = SplitMergeHelper.extractMid(goodSplit);
         int goodMidR = SplitMergeHelper.extractRight(goodSplit);
-        long weakSplit = splitMerge.splitInThree(currentTransposed, indices, tempFrom, weakFrom, weakUntil, median, weakMinObj, weakMaxObj);
+        long weakSplit = splitMerge.splitInThree(transposedPoints[obj], indices, tempFrom, weakFrom, weakUntil, median);
         int weakMidL = SplitMergeHelper.extractMid(weakSplit);
         int weakMidR = SplitMergeHelper.extractRight(weakSplit);
         int tempMid = tempFrom + ((goodUntil - goodFrom + weakUntil - weakFrom) >>> 1);
@@ -364,11 +350,18 @@ public abstract class JFBBase extends NonDominatedSorting {
             } else if (hybrid.helperBHookCondition(goodFrom, goodUntil, weakFrom, weakUntil, obj)) {
                 return hybrid.helperBHook(goodFrom, goodUntil, weakFrom, weakUntil, obj, tempFrom, maximalMeaningfulRank);
             } else {
-                return helperBMain(goodFrom, goodUntil, weakFrom, weakUntil, obj, tempFrom);
+                switch (ArrayHelper.transplantAndDecide(transposedPoints[obj], indices,
+                        goodFrom, goodUntil, weakFrom, weakUntil, medianSwap, tempFrom)) {
+                    case ArrayHelper.TRANSPLANT_LEFT_NOT_GREATER:
+                        return helperB(goodFrom, goodUntil, weakFrom, weakUntil, obj - 1, tempFrom);
+                    case ArrayHelper.TRANSPLANT_RIGHT_SMALLER:
+                        return weakUntil;
+                    case ArrayHelper.TRANSPLANT_GENERAL_CASE:
+                        return helperBMain(goodFrom, goodUntil, weakFrom, weakUntil, obj, tempFrom);
+                }
             }
-        } else {
-            return weakUntil;
         }
+        return weakUntil;
     }
 
     private void twoDimensionalCase(double[][] points, int[] ranks) {

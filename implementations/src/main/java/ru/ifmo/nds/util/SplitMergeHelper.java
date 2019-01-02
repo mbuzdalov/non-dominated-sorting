@@ -12,60 +12,43 @@ public final class SplitMergeHelper {
 
     public final int splitInTwo(double[] points, int[] indices,
                                 int tempFrom, int from, int until, double median,
-                                boolean equalToLeft, double minVal, double maxVal) {
-        if (minVal == median && maxVal == median) {
-            return equalToLeft ? until : from;
-        } else if (minVal > median || !equalToLeft && minVal == median) {
-            return from;
-        } else if (maxVal < median || equalToLeft && maxVal == median) {
-            return until;
-        } else {
-            int left = from, right = tempFrom;
-            for (int i = from; i < until; ++i) {
-                int ii = indices[i];
-                double v = points[ii];
-                if (v < median || (equalToLeft && v == median)) {
-                    indices[left] = ii;
-                    ++left;
-                } else {
-                    scratchR[right] = ii;
-                    ++right;
-                }
+                                boolean equalToLeft) {
+        int left = from, right = tempFrom;
+        for (int i = from; i < until; ++i) {
+            int ii = indices[i];
+            double v = points[ii];
+            if (v < median || (equalToLeft && v == median)) {
+                indices[left] = ii;
+                ++left;
+            } else {
+                scratchR[right] = ii;
+                ++right;
             }
-            System.arraycopy(scratchR, tempFrom, indices, left, right - tempFrom);
-            return left;
         }
+        System.arraycopy(scratchR, tempFrom, indices, left, right - tempFrom);
+        return left;
     }
 
     public final long splitInThree(double[] points, int[] indices,
-                                   int tempFrom, int from, int until, double median,
-                                   double minVal, double maxVal) {
-        if (minVal == median && maxVal == median) {
-            return pack(from, until);
-        } else if (minVal > median) {
-            return pack(from, from);
-        } else if (maxVal < median) {
-            return pack(until, until);
-        } else {
-            int l = from, m = tempFrom, r = tempFrom;
-            for (int i = from; i < until; ++i) {
-                int ii = indices[i];
-                double v = points[ii];
-                if (v < median) {
-                    indices[l] = ii;
-                    ++l;
-                } else if (v == median) {
-                    scratchM[m] = ii;
-                    ++m;
-                } else {
-                    scratchR[r] = ii;
-                    ++r;
-                }
+                                   int tempFrom, int from, int until, double median) {
+       int l = from, m = tempFrom, r = tempFrom;
+        for (int i = from; i < until; ++i) {
+            int ii = indices[i];
+            double v = points[ii];
+            if (v < median) {
+                indices[l] = ii;
+                ++l;
+            } else if (v == median) {
+                scratchM[m] = ii;
+                ++m;
+            } else {
+                scratchR[r] = ii;
+                ++r;
             }
-            System.arraycopy(scratchM, tempFrom, indices, l, m - tempFrom);
-            System.arraycopy(scratchR, tempFrom, indices, l + m - tempFrom, r - tempFrom);
-            return pack(l, m - tempFrom + l);
         }
+        System.arraycopy(scratchM, tempFrom, indices, l, m - tempFrom);
+        System.arraycopy(scratchR, tempFrom, indices, l + m - tempFrom, r - tempFrom);
+        return pack(l, m - tempFrom + l);
     }
 
     public final int mergeThree(int[] indices, int tempFrom,

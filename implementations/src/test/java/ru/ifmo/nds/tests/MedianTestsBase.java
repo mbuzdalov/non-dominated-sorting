@@ -27,8 +27,9 @@ public abstract class MedianTestsBase {
                 for (int i = 0; i < size; ++i) {
                     ArrayHelper.swap(indices, i, random.nextInt(i + 1));
                 }
-                int mc = ArrayHelper.transplant(points, indices, 0, size, medianSwap, 0);
-                double median = destructiveMedian(medianSwap, mc);
+
+                ArrayHelper.transplant(points, indices, 0, size, medianSwap, 0);
+                double median = destructiveMedian(medianSwap, size);
                 double[] originalPoints = points.clone();
                 Arrays.sort(points);
                 Assert.assertEquals(Arrays.toString(originalPoints), points[size / 2], median, 1e-16);
