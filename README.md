@@ -17,6 +17,7 @@ The following algorithms are currently implemented:
 * [Sumit Mishra divide-and-conquer method](https://github.com/mbuzdalov/non-dominated-sorting/wiki/Algorithms:-Sumit-Mishra's-divide%E2%80%90and%E2%80%90conquer)
 * [ENS-NDT, aka Non-Dominated Tree by Gustavsson and Syberfeldt](https://github.com/mbuzdalov/non-dominated-sorting/wiki/Algorithms:-Non%E2%80%90Dominated-Tree)
 * [Filter Sort](https://github.com/mbuzdalov/non-dominated-sorting/wiki/Algorithms:-Filter-Sort)
+* [Set Intersection Sort](https://github.com/mbuzdalov/non-dominated-sorting/wiki/Set-Intersection-Sort)
 
 ## Acknowledgments
 
