@@ -111,7 +111,7 @@ public final class SplitMergeHelper {
             // copy the remainder of right to its place
             System.arraycopy(indices, r, indices, newR, untilRight - r);
         }
-        if (l != fromLeft + (target - tempFrom) && untilLeft > l) {
+        if (newR != untilLeft && untilLeft > l) {
             // copy the remainder of left to its place
             System.arraycopy(indices, l, indices, fromLeft + (target - tempFrom), untilLeft - l);
         }
