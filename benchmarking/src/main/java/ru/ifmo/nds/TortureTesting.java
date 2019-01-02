@@ -81,7 +81,8 @@ public class TortureTesting {
                 ENS.getENS_NDT_OneTree(1),
                 SumitMishraDivideConquer.getDCNS_BS(),
                 SumitMishraDivideConquer.getDCNS_SS(),
-                FilterSort.getInstance()
+                FilterSort.getInstance(),
+                SetIntersectionSort.getBitSetInstance()
         );
         List<NonDominatedSorting> sortings = sortingFactories
                 .stream()

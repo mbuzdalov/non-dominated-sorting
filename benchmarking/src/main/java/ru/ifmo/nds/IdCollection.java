@@ -101,5 +101,6 @@ public final class IdCollection {
         addNonDominatedSortingFactory("dcns.ss", SumitMishraDivideConquer.getDCNS_SS());
 
         addNonDominatedSortingFactory("filter", FilterSort.getInstance());
+        addNonDominatedSortingFactory("mnds.bitsets", SetIntersectionSort.getBitSetInstance());
     }
 }
