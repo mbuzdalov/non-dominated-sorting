@@ -216,7 +216,8 @@ public final class ArrayHelper {
         }
     }
 
-    public static boolean transplantAndCheckIfSame(double[] source, int[] indices, int fromIndex, int untilIndex, double[] target, int targetFrom) {
+    public static boolean transplantAndCheckIfSame(double[] source, int[] indices,
+                                                   int fromIndex, int untilIndex, double[] target, int targetFrom) {
         double leftFirst = source[indices[fromIndex]];
         target[targetFrom] = leftFirst;
         ++targetFrom;
@@ -232,7 +233,8 @@ public final class ArrayHelper {
         return true;
     }
 
-    private static double transplantMin(double[] source, int[] indices, int fromIndex, int untilIndex, double[] target, int targetFrom, double rv) {
+    private static double transplantMin(double[] source, int[] indices,
+                                        int fromIndex, int untilIndex, double[] target, int targetFrom, double rv) {
         for (int i = fromIndex; i < untilIndex; ++i, ++targetFrom) {
             double v = source[indices[i]];
             if (rv > v) {
@@ -243,7 +245,9 @@ public final class ArrayHelper {
         return rv;
     }
 
-    public static double transplantAndReturnMinIfNotSameElseNaN(double[] source, int[] indices, int fromIndex, int untilIndex, double[] target, int targetFrom) {
+    public static double transplantAndReturnMinIfNotSameElseNaN(double[] source, int[] indices,
+                                                                int fromIndex, int untilIndex,
+                                                                double[] target, int targetFrom) {
         double min = source[indices[fromIndex]];
         target[targetFrom] = min;
         ++targetFrom;
@@ -252,7 +256,8 @@ public final class ArrayHelper {
             target[targetFrom] = value;
             ++targetFrom;
             if (value != min) {
-                return transplantMin(source, indices, fromIndex + 1, untilIndex, target, targetFrom, Math.min(value, min));
+                return transplantMin(source, indices, fromIndex + 1, untilIndex,
+                        target, targetFrom, Math.min(value, min));
             }
         }
         return Double.NaN;
