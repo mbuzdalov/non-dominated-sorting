@@ -145,28 +145,6 @@ public abstract class JFBBase extends NonDominatedSorting {
     protected abstract int sweepA(int from, int until);
     protected abstract int sweepB(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int tempFrom);
 
-    private int helperAMain(int from, int until, int obj) {
-        if (ArrayHelper.transplantAndCheckIfSame(transposedPoints[obj], indices, from, until, temporary, from)) {
-            return helperA(from, until, obj - 1);
-        } else {
-            double median = ArrayHelper.destructiveMedian(temporary, from, until);
-            long split = splitMerge.splitInThree(transposedPoints[obj], indices, from, from, until, median);
-            int startMid = SplitMergeHelper.extractMid(split);
-            int startRight = SplitMergeHelper.extractRight(split);
-
-            int newStartMid = helperA(from, startMid, obj);
-            --obj;
-            int newStartRight = helperB(from, newStartMid, startMid, startRight, obj, from);
-            newStartRight = helperA(startMid, newStartRight, obj);
-            int newUntil = helperB(from, newStartMid, startRight, until, obj, from);
-            newUntil = helperB(startMid, newStartRight, startRight, newUntil, obj, from);
-            ++obj;
-            newUntil = helperA(startRight, newUntil, obj);
-
-            return splitMerge.mergeThree(indices, from, from, newStartMid, startMid, newStartRight, startRight, newUntil);
-        }
-    }
-
     private int helperA(int from, int until, int obj) {
         int n = until - from;
         if (n <= 2) {
@@ -182,12 +160,31 @@ public abstract class JFBBase extends NonDominatedSorting {
                 }
             }
             return until;
-        } else if (obj == 1) {
-            return sweepA(from, until);
-        } else if (hybrid.helperAHookCondition(until - from, obj)) {
-            return hybrid.helperAHook(from, until, obj, maximalMeaningfulRank);
         } else {
-            return helperAMain(from, until, obj);
+            while (obj > 1) {
+                if (hybrid.helperAHookCondition(until - from, obj)) {
+                    return hybrid.helperAHook(from, until, obj, maximalMeaningfulRank);
+                } else if (ArrayHelper.transplantAndCheckIfSame(transposedPoints[obj], indices, from, until, temporary, from)) {
+                    --obj;
+                } else {
+                    double median = ArrayHelper.destructiveMedian(temporary, from, until);
+                    long split = splitMerge.splitInThree(transposedPoints[obj], indices, from, from, until, median);
+                    int startMid = SplitMergeHelper.extractMid(split);
+                    int startRight = SplitMergeHelper.extractRight(split);
+
+                    int newStartMid = helperA(from, startMid, obj);
+                    --obj;
+                    int newStartRight = helperB(from, newStartMid, startMid, startRight, obj, from);
+                    newStartRight = helperA(startMid, newStartRight, obj);
+                    int newUntil = helperB(from, newStartMid, startRight, until, obj, from);
+                    newUntil = helperB(startMid, newStartRight, startRight, newUntil, obj, from);
+                    ++obj;
+                    newUntil = helperA(startRight, newUntil, obj);
+
+                    return splitMerge.mergeThree(indices, from, from, newStartMid, startMid, newStartRight, startRight, newUntil);
+                }
+            }
+            return sweepA(from, until);
         }
     }
 
@@ -273,38 +270,6 @@ public abstract class JFBBase extends NonDominatedSorting {
         }
     }
 
-    private int helperBMain(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj, int tempFrom) {
-        double median = ArrayHelper.destructiveMedian(temporary, tempFrom, tempFrom + goodUntil - goodFrom + weakUntil - weakFrom);
-        long goodSplit = splitMerge.splitInThree(transposedPoints[obj], indices, tempFrom, goodFrom, goodUntil, median);
-        int goodMidL = SplitMergeHelper.extractMid(goodSplit);
-        int goodMidR = SplitMergeHelper.extractRight(goodSplit);
-        long weakSplit = splitMerge.splitInThree(transposedPoints[obj], indices, tempFrom, weakFrom, weakUntil, median);
-        int weakMidL = SplitMergeHelper.extractMid(weakSplit);
-        int weakMidR = SplitMergeHelper.extractRight(weakSplit);
-        int tempMid = tempFrom + ((goodUntil - goodFrom + weakUntil - weakFrom) >>> 1);
-
-        --obj;
-        int newWeakUntil = helperB(goodFrom, goodMidL, weakMidR, weakUntil, obj, tempFrom);
-        newWeakUntil = helperB(goodMidL, goodMidR, weakMidR, newWeakUntil, obj, tempFrom);
-
-        int newWeakMidR = helperB(goodFrom, goodMidL, weakMidL, weakMidR, obj, tempFrom);
-        newWeakMidR = helperB(goodMidL, goodMidR, weakMidL, newWeakMidR, obj, tempFrom);
-        ++obj;
-
-        ForkJoinTask<Integer> newWeakMidLTask = null;
-        if (pool != null && goodMidL - goodFrom + weakMidL - weakFrom > FORK_JOIN_THRESHOLD) {
-            newWeakMidLTask = helperBAsync(goodFrom, goodMidL, weakFrom, weakMidL, obj, tempFrom).fork();
-        }
-        newWeakUntil = helperB(goodMidR, goodUntil, weakMidR, newWeakUntil, obj, tempMid);
-        int newWeakMidL = newWeakMidLTask != null
-                ? newWeakMidLTask.join()
-                : helperB(goodFrom, goodMidL, weakFrom, weakMidL, obj, tempFrom);
-
-        splitMerge.mergeThree(indices, tempFrom, goodFrom, goodMidL, goodMidL, goodMidR, goodMidR, goodUntil);
-        return splitMerge.mergeThree(indices, tempFrom,
-                weakFrom, newWeakMidL, weakMidL, newWeakMidR, weakMidR, newWeakUntil);
-    }
-
     private RecursiveTask<Integer> helperBAsync(final int goodFrom, final int goodUntil,
                                                 final int weakFrom, final int weakUntil,
                                                 final int obj,
@@ -335,20 +300,53 @@ public abstract class JFBBase extends NonDominatedSorting {
                 return updateByPoint(ranks, indices, points, maximalMeaningfulRank, indices[goodFrom], weakFrom, weakUntil, obj);
             } else if (weakN == 1) {
                 return helperBWeak1(goodFrom, goodUntil, weakFrom, obj);
-            } else if (obj == 1) {
-                return sweepB(goodFrom, goodUntil, weakFrom, weakUntil, tempFrom);
-            } else if (hybrid.helperBHookCondition(goodFrom, goodUntil, weakFrom, weakUntil, obj)) {
-                return hybrid.helperBHook(goodFrom, goodUntil, weakFrom, weakUntil, obj, tempFrom, maximalMeaningfulRank);
             } else {
-                switch (ArrayHelper.transplantAndDecide(transposedPoints[obj], indices,
-                        goodFrom, goodUntil, weakFrom, weakUntil, temporary, tempFrom)) {
-                    case ArrayHelper.TRANSPLANT_LEFT_NOT_GREATER:
-                        return helperB(goodFrom, goodUntil, weakFrom, weakUntil, obj - 1, tempFrom);
-                    case ArrayHelper.TRANSPLANT_RIGHT_SMALLER:
-                        return weakUntil;
-                    case ArrayHelper.TRANSPLANT_GENERAL_CASE:
-                        return helperBMain(goodFrom, goodUntil, weakFrom, weakUntil, obj, tempFrom);
+                while (obj > 1) {
+                    if (hybrid.helperBHookCondition(goodFrom, goodUntil, weakFrom, weakUntil, obj)) {
+                        return hybrid.helperBHook(goodFrom, goodUntil, weakFrom, weakUntil, obj, tempFrom, maximalMeaningfulRank);
+                    } else {
+                        double[] currentPoints = transposedPoints[obj];
+                        switch (ArrayHelper.transplantAndDecide(currentPoints, indices,
+                                goodFrom, goodUntil, weakFrom, weakUntil, temporary, tempFrom)) {
+                            case ArrayHelper.TRANSPLANT_LEFT_NOT_GREATER:
+                                --obj;
+                                break;
+                            case ArrayHelper.TRANSPLANT_RIGHT_SMALLER:
+                                return weakUntil;
+                            case ArrayHelper.TRANSPLANT_GENERAL_CASE:
+                                double median = ArrayHelper.destructiveMedian(temporary, tempFrom, tempFrom + goodUntil - goodFrom + weakUntil - weakFrom);
+                                long goodSplit = splitMerge.splitInThree(currentPoints, indices, tempFrom, goodFrom, goodUntil, median);
+                                int goodMidL = SplitMergeHelper.extractMid(goodSplit);
+                                int goodMidR = SplitMergeHelper.extractRight(goodSplit);
+                                long weakSplit = splitMerge.splitInThree(currentPoints, indices, tempFrom, weakFrom, weakUntil, median);
+                                int weakMidL = SplitMergeHelper.extractMid(weakSplit);
+                                int weakMidR = SplitMergeHelper.extractRight(weakSplit);
+                                int tempMid = tempFrom + ((goodUntil - goodFrom + weakUntil - weakFrom) >>> 1);
+
+                                --obj;
+                                int newWeakUntil = helperB(goodFrom, goodMidL, weakMidR, weakUntil, obj, tempFrom);
+                                newWeakUntil = helperB(goodMidL, goodMidR, weakMidR, newWeakUntil, obj, tempFrom);
+
+                                int newWeakMidR = helperB(goodFrom, goodMidL, weakMidL, weakMidR, obj, tempFrom);
+                                newWeakMidR = helperB(goodMidL, goodMidR, weakMidL, newWeakMidR, obj, tempFrom);
+                                ++obj;
+
+                                ForkJoinTask<Integer> newWeakMidLTask = null;
+                                if (pool != null && goodMidL - goodFrom + weakMidL - weakFrom > FORK_JOIN_THRESHOLD) {
+                                    newWeakMidLTask = helperBAsync(goodFrom, goodMidL, weakFrom, weakMidL, obj, tempFrom).fork();
+                                }
+                                newWeakUntil = helperB(goodMidR, goodUntil, weakMidR, newWeakUntil, obj, tempMid);
+                                int newWeakMidL = newWeakMidLTask != null
+                                        ? newWeakMidLTask.join()
+                                        : helperB(goodFrom, goodMidL, weakFrom, weakMidL, obj, tempFrom);
+
+                                splitMerge.mergeThree(indices, tempFrom, goodFrom, goodMidL, goodMidL, goodMidR, goodMidR, goodUntil);
+                                return splitMerge.mergeThree(indices, tempFrom,
+                                        weakFrom, newWeakMidL, weakMidL, newWeakMidR, weakMidR, newWeakUntil);
+                        }
+                    }
                 }
+                return sweepB(goodFrom, goodUntil, weakFrom, weakUntil, tempFrom);
             }
         }
         return weakUntil;
