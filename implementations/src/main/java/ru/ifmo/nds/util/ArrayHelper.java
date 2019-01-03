@@ -263,6 +263,19 @@ public final class ArrayHelper {
         return Double.NaN;
     }
 
+    public static int findWhereNotSmaller(int[] indices, int from, int until, int threshold) {
+        while (from < until && indices[from] < threshold) {
+            ++from;
+        }
+        return from;
+    }
+
+    public static int findLastWhereNotGreater(int[] indices, int from, int until, int threshold) {
+        //noinspection StatementWithEmptyBody
+        while (from < until && indices[--until] > threshold);
+        return until + 1;
+    }
+
     public static double max(double[] array, int from, int until) {
         if (from >= until) {
             return Double.NEGATIVE_INFINITY;

@@ -284,14 +284,8 @@ public abstract class JFBBase extends NonDominatedSorting {
 
     private int helperB(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj, int tempFrom) {
         if (goodUntil - goodFrom > 0 && weakUntil - weakFrom > 0) {
-            int lastWeakIdx = indices[weakUntil - 1];
-            while (goodFrom < goodUntil && indices[goodUntil - 1] > lastWeakIdx) {
-                --goodUntil;
-            }
-            int firstGoodIdx = indices[goodFrom];
-            while (weakFrom < weakUntil && indices[weakFrom] < firstGoodIdx) {
-                ++weakFrom;
-            }
+            goodUntil = ArrayHelper.findLastWhereNotGreater(indices, goodFrom, goodUntil, indices[weakUntil - 1]);
+            weakFrom = ArrayHelper.findWhereNotSmaller(indices, weakFrom, weakUntil, indices[goodFrom]);
         }
         int goodN = goodUntil - goodFrom;
         int weakN = weakUntil - weakFrom;

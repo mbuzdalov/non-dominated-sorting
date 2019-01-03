@@ -2,6 +2,7 @@ package ru.ifmo.nds.jfb.hybrid;
 
 import ru.ifmo.nds.jfb.HybridAlgorithmWrapper;
 import ru.ifmo.nds.jfb.JFBBase;
+import ru.ifmo.nds.util.ArrayHelper;
 import ru.ifmo.nds.util.DominanceHelper;
 
 public final class ENS extends HybridAlgorithmWrapper {
@@ -219,9 +220,7 @@ public final class ENS extends HybridAlgorithmWrapper {
                 if (ranks[wi] > rank) {
                     continue;
                 }
-                while (good < goodUntil && indices[good] < wi) {
-                    ++good;
-                }
+                good = ArrayHelper.findWhereNotSmaller(indices, good, goodUntil, wi);
                 if (checkWhetherDominates(indices, goodFrom, good, points[wi], obj)) {
                     ranks[wi] = rank + 1;
                     if (minUpdated > weak) {
