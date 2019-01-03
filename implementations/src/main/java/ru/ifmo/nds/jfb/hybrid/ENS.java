@@ -260,7 +260,7 @@ public final class ENS extends HybridAlgorithmWrapper {
             int minRank = transplantRanksAndCheckWhetherAllAreSame(goodFrom, goodUntil, ranksAndSlicesOffset, sortedIndicesOffset);
             if (minRank != 1) {
                 // "good" has a single front, let's do the simple stuff
-                return helperBSingleRank(minRank, goodFrom, goodUntil, weakFrom, weakUntil, obj, maximalMeaningfulRank);
+                return helperBSingleRank(-minRank, goodFrom, goodUntil, weakFrom, weakUntil, obj, maximalMeaningfulRank);
             } else {
                 // "good" has multiple fronts (called "slices" here), need to go a more complicated way.
                 ArraySorter.sortIndicesByValues(space, space, sortedIndicesOffset, sortedIndicesOffset + goodSize);
