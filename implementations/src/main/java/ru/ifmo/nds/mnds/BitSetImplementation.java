@@ -5,7 +5,6 @@ import java.util.BitSet;
 
 import ru.ifmo.nds.NonDominatedSorting;
 import ru.ifmo.nds.util.ArrayHelper;
-import ru.ifmo.nds.util.DominanceHelper;
 import ru.ifmo.nds.util.ArraySorter;
 
 public final class BitSetImplementation extends NonDominatedSorting {
@@ -42,7 +41,6 @@ public final class BitSetImplementation extends NonDominatedSorting {
     protected void sortChecked(double[][] points, int[] ranks, int maximalMeaningfulRank) {
         int origN = ranks.length;
         int dim = points[0].length;
-        int maxObj = dim - 1;
         ArrayHelper.fillIdentity(indices, origN);
         sorter.lexicographicalSort(points, indices, 0, origN, dim);
         int newN = ArraySorter.retainUniquePoints(points, indices, this.points, ranks);
@@ -62,12 +60,11 @@ public final class BitSetImplementation extends NonDominatedSorting {
         }
         this.ranks[0] = 0;
         for (int i = 1; i < newN; ++i) {
-            double[] curr = this.points[i];
             BitSet my = pointBitSets[i];
             int myRank = 0;
             for (int index = my.nextSetBit(0); index >= 0; index = my.nextSetBit(index + 1)) {
                 int thatRank = this.ranks[index];
-                if (thatRank >= myRank && DominanceHelper.strictlyDominatesAssumingLexicographicallySmaller(this.points[index], curr, maxObj)) {
+                if (thatRank >= myRank) {
                     myRank = thatRank + 1;
                 }
             }
