@@ -82,7 +82,7 @@ public final class FilterSort {
                 }
             }
             ArrayHelper.fillIdentity(orderBySumOfIndices, size);
-            sortBy(orderBySumOfIndices, sumOfIndices, 0, size);
+            ArraySorter.sortIndicesByValues(orderBySumOfIndices, sumOfIndices, 0, size);
         }
 
         private int populateCandidates(int filterIndex, int obj, int nCandidates) {
@@ -192,22 +192,4 @@ public final class FilterSort {
             }
         }
     };
-
-    private static void sortBy(int[] array, int[] values, int from, int until) {
-        int pivot = values[array[(from + until) >>> 1]];
-        int l = from, r = until - 1;
-        while (l <= r) {
-            int li, ri;
-            while (values[li = array[l]] < pivot) ++l;
-            while (values[ri = array[r]] > pivot) --r;
-            if (l <= r) {
-                array[l] = ri;
-                array[r] = li;
-                ++l;
-                --r;
-            }
-        }
-        if (from + 1 <= r) sortBy(array, values, from, r + 1);
-        if (l + 1 < until) sortBy(array, values, l, until);
-    }
 }

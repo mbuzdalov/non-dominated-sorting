@@ -3,6 +3,7 @@ package ru.ifmo.nds.jfb.hybrid;
 import ru.ifmo.nds.jfb.HybridAlgorithmWrapper;
 import ru.ifmo.nds.jfb.JFBBase;
 import ru.ifmo.nds.util.ArrayHelper;
+import ru.ifmo.nds.util.ArraySorter;
 import ru.ifmo.nds.util.DominanceHelper;
 
 public final class ENS extends HybridAlgorithmWrapper {
@@ -150,58 +151,6 @@ public final class ENS extends HybridAlgorithmWrapper {
             }
         }
 
-        private static int splitIndicesByRanks(int[] space, int from, int to) {
-            int left = from, right = to;
-            int pivot = (space[space[from]] + space[space[to]]) / 2;
-            int sl, sr;
-            while (left <= right) {
-                while (space[sl = space[left]] > pivot) ++left;
-                while (space[sr = space[right]] < pivot) --right;
-                if (left <= right) {
-                    space[left] = sr;
-                    space[right] = sl;
-                    ++left;
-                    --right;
-                }
-            }
-            return left - 1 == right ? left : -left - 1;
-        }
-
-        private static final int INSERTION_THRESHOLD = 20;
-
-        private static void insertionSortIndicesByRank(int[] space, int from, int to) {
-            for (int i = from, j = i; i < to; j = ++i) {
-                int ii = space[i + 1];
-                int ai = space[ii];
-                while (ai > space[space[j]]) {
-                    space[j + 1] = space[j];
-                    if (j-- == from) {
-                        break;
-                    }
-                }
-                space[j + 1] = ii;
-            }
-        }
-
-        private static void sortIndicesByRanks(int[] space, int from, int to) {
-            if (from + INSERTION_THRESHOLD > to) {
-                insertionSortIndicesByRank(space, from, to);
-            } else {
-                int left = splitIndicesByRanks(space, from, to);
-                int right = left - 1;
-                if (left < 0) {
-                    left = -left - 1;
-                    right = left - 2;
-                }
-                if (from < right) {
-                    sortIndicesByRanks(space, from, right);
-                }
-                if (left < to) {
-                    sortIndicesByRanks(space, left, to);
-                }
-            }
-        }
-
         private boolean checkWhetherDominates(int[] array, int goodFrom, int goodUntil, double[] wp, int obj) {
             while (goodUntil > goodFrom) {
                 --goodUntil;
@@ -234,25 +183,25 @@ public final class ENS extends HybridAlgorithmWrapper {
         }
 
         private int transplantRanksAndCheckWhetherAllAreSame(int goodFrom, int goodUntil, int ranksAndSlicesOffset, int sortedIndicesOffset) {
-            int firstRank = ranks[indices[goodFrom]];
+            int firstRank = -ranks[indices[goodFrom]];
             boolean allSame = true;
             space[ranksAndSlicesOffset] = firstRank;
             space[sortedIndicesOffset] = ranksAndSlicesOffset;
             for (int i = goodFrom + 1, ri = ranksAndSlicesOffset, si = sortedIndicesOffset; i < goodUntil; ++i) {
                 ++ri;
                 ++si;
-                int rank = ranks[indices[i]];
+                int rank = -ranks[indices[i]];
                 allSame &= firstRank == rank;
                 space[ri] = rank;
                 space[si] = ri;
             }
-            return allSame ? firstRank : -1;
+            return allSame ? firstRank : 1;
         }
 
         private static int distributePointsBetweenSlices(int[] space, int from, int until, int sliceOffset, int pointsBySlicesOffset) {
             int sliceLast = sliceOffset - 2;
             int atSliceLast = 0;
-            int prevRank = -1;
+            int prevRank = 1;
             for (int i = from; i < until; ++i) {
                 int currIndex = space[i];
                 int currRank = space[currIndex];
@@ -309,12 +258,12 @@ public final class ENS extends HybridAlgorithmWrapper {
             int pointsBySlicesOffset = sliceOffset + 2 * goodSize;
 
             int minRank = transplantRanksAndCheckWhetherAllAreSame(goodFrom, goodUntil, ranksAndSlicesOffset, sortedIndicesOffset);
-            if (minRank != -1) {
+            if (minRank != 1) {
                 // "good" has a single front, let's do the simple stuff
                 return helperBSingleRank(minRank, goodFrom, goodUntil, weakFrom, weakUntil, obj, maximalMeaningfulRank);
             } else {
                 // "good" has multiple fronts (called "slices" here), need to go a more complicated way.
-                sortIndicesByRanks(space, sortedIndicesOffset, sortedIndicesOffset + goodSize - 1);
+                ArraySorter.sortIndicesByValues(space, space, sortedIndicesOffset, sortedIndicesOffset + goodSize);
                 int sliceLast = distributePointsBetweenSlices(space, sortedIndicesOffset, sortedIndicesOffset + goodSize, sliceOffset, pointsBySlicesOffset);
                 int minOverflowed = weakUntil;
                 for (int weak = weakFrom, good = goodFrom, sliceOfGood = ranksAndSlicesOffset; weak < weakUntil; ++weak) {

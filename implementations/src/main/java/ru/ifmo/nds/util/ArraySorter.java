@@ -216,4 +216,56 @@ public final class ArraySorter {
         }
         return newN;
     }
+
+    private static int splitIndicesByRanks(int[] indices, int[] values, int from, int until) {
+        int left = from, right = until - 1;
+        int lv = values[indices[left]];
+        int rv = values[indices[right]];
+        int pivot = lv + (rv - lv) / 2;
+        int sl, sr;
+        while (left <= right) {
+            while (values[sl = indices[left]] < pivot) ++left;
+            while (values[sr = indices[right]] > pivot) --right;
+            if (left <= right) {
+                indices[left] = sr;
+                indices[right] = sl;
+                ++left;
+                --right;
+            }
+        }
+        return left - 1 == right ? left : -left - 1;
+    }
+
+    private static void insertionSortIndicesByValues(int[] indices, int[] values, int from, int to) {
+        for (int i = from, j = i; i < to; j = ++i) {
+            int ii = indices[i + 1];
+            int ai = values[ii];
+            while (ai < values[indices[j]]) {
+                indices[j + 1] = indices[j];
+                if (j-- == from) {
+                    break;
+                }
+            }
+            indices[j + 1] = ii;
+        }
+    }
+
+    public static void sortIndicesByValues(int[] indices, int[] values, int from, int until) {
+        if (from + INSERTION_SORT_THRESHOLD > until) {
+            insertionSortIndicesByValues(indices, values, from, until - 1);
+        } else {
+            int left = splitIndicesByRanks(indices, values, from, until);
+            int right = left;
+            if (left < 0) {
+                left = -left - 1;
+                right = left - 1;
+            }
+            if (from + 1 < right) {
+                sortIndicesByValues(indices, values, from, right);
+            }
+            if (left + 1 < until) {
+                sortIndicesByValues(indices, values, left, until);
+            }
+        }
+    }
 }
