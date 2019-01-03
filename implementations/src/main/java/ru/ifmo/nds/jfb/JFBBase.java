@@ -20,9 +20,6 @@ public abstract class JFBBase extends NonDominatedSorting {
     double[][] transposedPoints;
     int maximalMeaningfulRank;
 
-    // This is used in preparation phase or in 2D-only sweep.
-    private int[] internalIndices;
-
     // Data which is interval-shared between threads.
     private double[] temporary; // also used in 2D-only sweep
     private SplitMergeHelper splitMerge;
@@ -55,8 +52,6 @@ public abstract class JFBBase extends NonDominatedSorting {
         ranks = new int[maximumPoints];
         points = new double[maximumPoints][];
         transposedPoints = new double[maximumDimension][maximumPoints];
-
-        internalIndices = new int[maximumPoints];
         splitMerge = new SplitMergeHelper(maximumPoints);
 
         hybrid = hybridWrapper.create(ranks, indices, points, transposedPoints);
@@ -68,8 +63,6 @@ public abstract class JFBBase extends NonDominatedSorting {
         ranks = null;
         points = null;
         transposedPoints = null;
-
-        internalIndices = null;
         splitMerge = null;
 
         if (pool != null) {
@@ -90,8 +83,8 @@ public abstract class JFBBase extends NonDominatedSorting {
         final int n = points.length;
         final int dim = points[0].length;
         Arrays.fill(ranks, 0);
-        ArrayHelper.fillIdentity(internalIndices, n);
-        sorter.lexicographicalSort(points, internalIndices, 0, n, dim);
+        ArrayHelper.fillIdentity(indices, n);
+        sorter.lexicographicalSort(points, indices, 0, n, dim);
 
         this.maximalMeaningfulRank = maximalMeaningfulRank;
 
@@ -101,7 +94,7 @@ public abstract class JFBBase extends NonDominatedSorting {
         } else {
             // 3: General case.
             // 3.1: Moving points in a sorted order to internal structures
-            final int newN = DoubleArraySorter.retainUniquePoints(points, internalIndices, this.points, ranks);
+            final int newN = DoubleArraySorter.retainUniquePoints(points, indices, this.points, ranks);
             Arrays.fill(this.ranks, 0, newN, 0);
 
             // 3.2: Transposing points. This should fit in cache for reasonable dimensions.
@@ -366,7 +359,7 @@ public abstract class JFBBase extends NonDominatedSorting {
         int maxRank = 1;
         int n = ranks.length;
 
-        double[] firstPoint = points[internalIndices[0]];
+        double[] firstPoint = points[indices[0]];
         double lastX = firstPoint[0];
         double lastY = firstPoint[1];
         int lastRank = 0;
@@ -375,7 +368,7 @@ public abstract class JFBBase extends NonDominatedSorting {
         double minY = lastY;
 
         for (int i = 1; i < n; ++i) {
-            int ii = internalIndices[i];
+            int ii = indices[i];
             double[] pp = points[ii];
             double currX = pp[0];
             double currY = pp[1];
