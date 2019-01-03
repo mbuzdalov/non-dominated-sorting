@@ -219,9 +219,7 @@ public final class ArraySorter {
 
     private static int splitIndicesByRanks(int[] indices, int[] values, int from, int until) {
         int left = from, right = until - 1;
-        int lv = values[indices[left]];
-        int rv = values[indices[right]];
-        int pivot = lv + (rv - lv) / 2;
+        int pivot = values[indices[(from + until) >>> 1]];
         int sl, sr;
         while (left <= right) {
             while (values[sl = indices[left]] < pivot) ++left;
