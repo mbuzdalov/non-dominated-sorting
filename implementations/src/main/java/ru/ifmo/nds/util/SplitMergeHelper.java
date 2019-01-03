@@ -31,7 +31,7 @@ public final class SplitMergeHelper {
 
     public final long splitInThree(double[] points, int[] indices,
                                    int tempFrom, int from, int until, double median) {
-       int l = from, m = tempFrom, r = tempFrom;
+        int l = from, m = tempFrom, r = tempFrom;
         for (int i = from; i < until; ++i) {
             int ii = indices[i];
             double v = points[ii];
