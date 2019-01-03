@@ -7,12 +7,12 @@ import java.util.function.Function;
 
 import org.junit.Assert;
 import org.junit.Test;
-import ru.ifmo.nds.util.DoubleArraySorter;
+import ru.ifmo.nds.util.ArraySorter;
 
-public class DoubleArraySorterTests {
+public class ArraySorterTests {
     private void checkSort(Function<Random, Double> generator) {
         Random random = new Random();
-        DoubleArraySorter sorter = new DoubleArraySorter(100);
+        ArraySorter sorter = new ArraySorter(100);
         for (int times = 0; times < 1000; ++times) {
             int size = 1 + random.nextInt(100);
             int dim = 1 + random.nextInt(10);
@@ -56,7 +56,7 @@ public class DoubleArraySorterTests {
     @Test
     public void checkSortComparingByIndicesIfEqual() {
         Random random = new Random();
-        DoubleArraySorter sorter = new DoubleArraySorter(100);
+        ArraySorter sorter = new ArraySorter(100);
         for (int times = 0; times < 1000; ++times) {
             int size = 1 + random.nextInt(100);
             boolean isDiscrete = random.nextBoolean();

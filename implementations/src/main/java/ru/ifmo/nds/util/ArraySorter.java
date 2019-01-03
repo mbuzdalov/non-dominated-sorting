@@ -2,7 +2,7 @@ package ru.ifmo.nds.util;
 
 import java.util.Arrays;
 
-public final class DoubleArraySorter {
+public final class ArraySorter {
     private final double[] scratch;
     private double[][] points = null;
     private int[] indices = null;
@@ -11,7 +11,7 @@ public final class DoubleArraySorter {
 
     private static final int INSERTION_SORT_THRESHOLD = 20;
 
-    public DoubleArraySorter(int maximumPoints) {
+    public ArraySorter(int maximumPoints) {
         this.scratch = new double[maximumPoints];
     }
 

@@ -2,7 +2,7 @@ package ru.ifmo.nds.ndt;
 
 import ru.ifmo.nds.NonDominatedSorting;
 import ru.ifmo.nds.util.ArrayHelper;
-import ru.ifmo.nds.util.DoubleArraySorter;
+import ru.ifmo.nds.util.ArraySorter;
 
 import java.util.Arrays;
 
@@ -45,7 +45,7 @@ public class ENS_NDT_OneTree extends NonDominatedSorting {
         ArrayHelper.fillIdentity(indices, n);
         sorter.lexicographicalSort(points, indices, 0, n, points[0].length);
 
-        int newN = DoubleArraySorter.retainUniquePoints(points, indices, this.points, ranks);
+        int newN = ArraySorter.retainUniquePoints(points, indices, this.points, ranks);
         Arrays.fill(this.ranks, 0, newN, 0);
 
         tree = TreeRankNode.EMPTY;

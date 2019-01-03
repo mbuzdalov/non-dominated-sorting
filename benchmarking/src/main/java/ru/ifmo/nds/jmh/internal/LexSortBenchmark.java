@@ -7,7 +7,7 @@ import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.infra.Blackhole;
 
 import ru.ifmo.nds.util.ArrayHelper;
-import ru.ifmo.nds.util.DoubleArraySorter;
+import ru.ifmo.nds.util.ArraySorter;
 
 @State(Scope.Benchmark)
 @BenchmarkMode(Mode.AverageTime)
@@ -25,7 +25,7 @@ public class LexSortBenchmark {
 
     private double[][][] data;
     private int[] indices;
-    private DoubleArraySorter sorter;
+    private ArraySorter sorter;
 
     @Setup
     public void initialize() {
@@ -40,7 +40,7 @@ public class LexSortBenchmark {
             }
         }
         indices = new int[size];
-        sorter = new DoubleArraySorter(size);
+        sorter = new ArraySorter(size);
     }
 
     @Benchmark

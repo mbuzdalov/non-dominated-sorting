@@ -4,7 +4,7 @@ import java.util.Arrays;
 import java.util.Objects;
 
 import ru.ifmo.nds.util.ArrayHelper;
-import ru.ifmo.nds.util.DoubleArraySorter;
+import ru.ifmo.nds.util.ArraySorter;
 
 /**
  * This is the base for classes which actually perform non-dominated sorting.
@@ -16,14 +16,14 @@ public abstract class NonDominatedSorting implements AutoCloseable {
     private final int maximumPoints;
     private final int maximumDimension;
 
-    protected DoubleArraySorter sorter;
+    protected ArraySorter sorter;
     protected int[] indices;
 
     protected NonDominatedSorting(int maximumPoints, int maximumDimension) {
         this.maximumPoints = maximumPoints;
         this.maximumDimension = maximumDimension;
 
-        sorter = new DoubleArraySorter(maximumPoints);
+        sorter = new ArraySorter(maximumPoints);
         indices = new int[maximumPoints];
     }
 

@@ -12,7 +12,7 @@ import org.junit.Test;
 
 import ru.ifmo.nds.ndt.SplitBuilder;
 import ru.ifmo.nds.util.ArrayHelper;
-import ru.ifmo.nds.util.DoubleArraySorter;
+import ru.ifmo.nds.util.ArraySorter;
 
 public class SplitBuilderTest {
     @SuppressWarnings("SameParameterValue")
@@ -52,12 +52,12 @@ public class SplitBuilderTest {
         double[][] newPoints = new double[n][];
         double[][] transposedPoints = new double[dim][n];
 
-        DoubleArraySorter sorter = new DoubleArraySorter(n);
+        ArraySorter sorter = new ArraySorter(n);
 
         int[] ranks = new int[n];
         ArrayHelper.fillIdentity(indices, n);
         sorter.lexicographicalSort(points, indices, 0, n, points[0].length);
-        int newN = DoubleArraySorter.retainUniquePoints(points, indices, newPoints, ranks);
+        int newN = ArraySorter.retainUniquePoints(points, indices, newPoints, ranks);
 
         for (int i = 0; i < newN; ++i) {
             for (int j = 0; j < dim; ++j) {

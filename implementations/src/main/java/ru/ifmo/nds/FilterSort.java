@@ -4,7 +4,7 @@ import java.util.Arrays;
 
 import ru.ifmo.nds.util.ArrayHelper;
 import ru.ifmo.nds.util.DominanceHelper;
-import ru.ifmo.nds.util.DoubleArraySorter;
+import ru.ifmo.nds.util.ArraySorter;
 
 public final class FilterSort {
     private FilterSort() {}
@@ -183,7 +183,7 @@ public final class FilterSort {
             int dim = points[0].length;
             ArrayHelper.fillIdentity(indices, oldN);
             sorter.lexicographicalSort(points, indices, 0, oldN, dim);
-            int n = DoubleArraySorter.retainUniquePoints(points, indices, this.points, ranks);
+            int n = ArraySorter.retainUniquePoints(points, indices, this.points, ranks);
             initializeObjectiveIndices(n, dim);
             runSorting(n, dim - 1, maximalMeaningfulRank);
             for (int i = 0; i < oldN; ++i) {

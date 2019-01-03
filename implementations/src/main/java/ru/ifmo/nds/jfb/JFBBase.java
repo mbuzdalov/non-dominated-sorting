@@ -94,7 +94,7 @@ public abstract class JFBBase extends NonDominatedSorting {
         } else {
             // 3: General case.
             // 3.1: Moving points in a sorted order to internal structures
-            final int newN = DoubleArraySorter.retainUniquePoints(points, indices, this.points, ranks);
+            final int newN = ArraySorter.retainUniquePoints(points, indices, this.points, ranks);
             Arrays.fill(this.ranks, 0, newN, 0);
 
             // 3.2: Transposing points. This should fit in cache for reasonable dimensions.

@@ -3,7 +3,7 @@ package ru.ifmo.nds.bos;
 import ru.ifmo.nds.NonDominatedSorting;
 import ru.ifmo.nds.util.ArrayHelper;
 import ru.ifmo.nds.util.DominanceHelper;
-import ru.ifmo.nds.util.DoubleArraySorter;
+import ru.ifmo.nds.util.ArraySorter;
 
 import java.util.Arrays;
 
@@ -82,7 +82,7 @@ public class Improved extends NonDominatedSorting {
         int dim = points[0].length;
         ArrayHelper.fillIdentity(indices, origN);
         sorter.lexicographicalSort(points, indices, 0, origN, dim);
-        int newN = DoubleArraySorter.retainUniquePoints(points, indices, this.points, ranks);
+        int newN = ArraySorter.retainUniquePoints(points, indices, this.points, ranks);
         initializeObjectiveIndices(newN, dim);
         maximalMeaningfulRank = Math.min(maximalMeaningfulRank, newN - 1);
 

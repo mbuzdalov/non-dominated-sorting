@@ -4,7 +4,7 @@ import java.util.Arrays;
 
 import ru.ifmo.nds.NonDominatedSorting;
 import ru.ifmo.nds.util.ArrayHelper;
-import ru.ifmo.nds.util.DoubleArraySorter;
+import ru.ifmo.nds.util.ArraySorter;
 
 public class ENS_NDT extends NonDominatedSorting {
     private SplitBuilder splitBuilder;
@@ -45,7 +45,7 @@ public class ENS_NDT extends NonDominatedSorting {
         ArrayHelper.fillIdentity(indices, n);
         sorter.lexicographicalSort(points, indices, 0, n, points[0].length);
 
-        int newN = DoubleArraySorter.retainUniquePoints(points, indices, this.points, ranks);
+        int newN = ArraySorter.retainUniquePoints(points, indices, this.points, ranks);
         Arrays.fill(this.ranks, 0, newN, 0);
 
         for (int i = 0; i < newN; ++i) {

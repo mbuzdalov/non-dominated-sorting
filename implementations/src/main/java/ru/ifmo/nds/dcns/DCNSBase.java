@@ -3,7 +3,7 @@ package ru.ifmo.nds.dcns;
 import ru.ifmo.nds.NonDominatedSorting;
 import ru.ifmo.nds.util.ArrayHelper;
 import ru.ifmo.nds.util.DominanceHelper;
-import ru.ifmo.nds.util.DoubleArraySorter;
+import ru.ifmo.nds.util.ArraySorter;
 import ru.ifmo.nds.util.MathEx;
 
 public abstract class DCNSBase extends NonDominatedSorting {
@@ -113,7 +113,7 @@ public abstract class DCNSBase extends NonDominatedSorting {
         ArrayHelper.fillIdentity(indices, oldN);
         sorter.lexicographicalSort(points, indices, 0, oldN, maxObj + 1);
 
-        int n = DoubleArraySorter.retainUniquePoints(points, indices, this.points, ranks);
+        int n = ArraySorter.retainUniquePoints(points, indices, this.points, ranks);
         for (int i = 0; i < n; ++i) {
             firstIndex[i] = i;
             next[i] = -1;
