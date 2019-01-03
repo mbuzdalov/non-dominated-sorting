@@ -22,10 +22,9 @@ public abstract class JFBBase extends NonDominatedSorting {
 
     // This is used in preparation phase or in 2D-only sweep.
     private int[] internalIndices;
-    private double[] lastFrontOrdinates;
 
     // Data which is interval-shared between threads.
-    private double[] medianSwap;
+    private double[] temporary; // also used in 2D-only sweep
     private SplitMergeHelper splitMerge;
     private HybridAlgorithmWrapper.Instance hybrid;
 
@@ -52,13 +51,12 @@ public abstract class JFBBase extends NonDominatedSorting {
         }
         this.allowedThreads = allowedThreads > 0 ? allowedThreads : -1;
 
-        medianSwap = new double[maximumPoints];
+        temporary = new double[maximumPoints];
         ranks = new int[maximumPoints];
         points = new double[maximumPoints][];
         transposedPoints = new double[maximumDimension][maximumPoints];
 
         internalIndices = new int[maximumPoints];
-        lastFrontOrdinates = new double[maximumPoints];
         splitMerge = new SplitMergeHelper(maximumPoints);
 
         hybrid = hybridWrapper.create(ranks, indices, points, transposedPoints);
@@ -66,13 +64,12 @@ public abstract class JFBBase extends NonDominatedSorting {
 
     @Override
     protected void closeImpl() {
-        medianSwap = null;
+        temporary = null;
         ranks = null;
         points = null;
         transposedPoints = null;
 
         internalIndices = null;
-        lastFrontOrdinates = null;
         splitMerge = null;
 
         if (pool != null) {
@@ -156,10 +153,10 @@ public abstract class JFBBase extends NonDominatedSorting {
     protected abstract int sweepB(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int tempFrom);
 
     private int helperAMain(int from, int until, int obj) {
-        if (ArrayHelper.transplantAndCheckIfSame(transposedPoints[obj], indices, from, until, medianSwap, from)) {
+        if (ArrayHelper.transplantAndCheckIfSame(transposedPoints[obj], indices, from, until, temporary, from)) {
             return helperA(from, until, obj - 1);
         } else {
-            double median = ArrayHelper.destructiveMedian(medianSwap, from, until);
+            double median = ArrayHelper.destructiveMedian(temporary, from, until);
             long split = splitMerge.splitInThree(transposedPoints[obj], indices, from, from, until, median);
             int startMid = SplitMergeHelper.extractMid(split);
             int startRight = SplitMergeHelper.extractRight(split);
@@ -284,7 +281,7 @@ public abstract class JFBBase extends NonDominatedSorting {
     }
 
     private int helperBMain(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj, int tempFrom) {
-        double median = ArrayHelper.destructiveMedian(medianSwap, tempFrom, tempFrom + goodUntil - goodFrom + weakUntil - weakFrom);
+        double median = ArrayHelper.destructiveMedian(temporary, tempFrom, tempFrom + goodUntil - goodFrom + weakUntil - weakFrom);
         long goodSplit = splitMerge.splitInThree(transposedPoints[obj], indices, tempFrom, goodFrom, goodUntil, median);
         int goodMidL = SplitMergeHelper.extractMid(goodSplit);
         int goodMidR = SplitMergeHelper.extractRight(goodSplit);
@@ -351,7 +348,7 @@ public abstract class JFBBase extends NonDominatedSorting {
                 return hybrid.helperBHook(goodFrom, goodUntil, weakFrom, weakUntil, obj, tempFrom, maximalMeaningfulRank);
             } else {
                 switch (ArrayHelper.transplantAndDecide(transposedPoints[obj], indices,
-                        goodFrom, goodUntil, weakFrom, weakUntil, medianSwap, tempFrom)) {
+                        goodFrom, goodUntil, weakFrom, weakUntil, temporary, tempFrom)) {
                     case ArrayHelper.TRANSPLANT_LEFT_NOT_GREATER:
                         return helperB(goodFrom, goodUntil, weakFrom, weakUntil, obj - 1, tempFrom);
                     case ArrayHelper.TRANSPLANT_RIGHT_SMALLER:
@@ -410,7 +407,7 @@ public abstract class JFBBase extends NonDominatedSorting {
                 // Running the binary search.
                 while (right - left > 1) {
                     int mid = (left + right) >>> 1;
-                    double midY = lastFrontOrdinates[mid];
+                    double midY = temporary[mid];
                     if (currY < midY) {
                         right = mid;
                     } else {
@@ -419,7 +416,7 @@ public abstract class JFBBase extends NonDominatedSorting {
                 }
                 // "right" is now our rank.
                 ranks[ii] = lastRank = right;
-                lastFrontOrdinates[right] = currY;
+                temporary[right] = currY;
                 if (right == maxRank && maxRank <= maximalMeaningfulRank) {
                     ++maxRank;
                 }
