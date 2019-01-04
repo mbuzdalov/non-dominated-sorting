@@ -50,11 +50,13 @@ public abstract class JFBBase extends NonDominatedSorting {
 
         temporary = new double[maximumPoints];
         ranks = new int[maximumPoints];
-        points = new double[maximumPoints][];
-        transposedPoints = new double[maximumDimension][maximumPoints];
-        splitMerge = new SplitMergeHelper(maximumPoints);
 
-        hybrid = hybridWrapper.create(ranks, indices, points, transposedPoints);
+        if (maximumDimension > 2) {
+            points = new double[maximumPoints][];
+            transposedPoints = new double[maximumDimension][maximumPoints];
+            splitMerge = new SplitMergeHelper(maximumPoints);
+            hybrid = hybridWrapper.create(ranks, indices, points, transposedPoints);
+        }
     }
 
     @Override
@@ -347,7 +349,6 @@ public abstract class JFBBase extends NonDominatedSorting {
     }
 
     private void twoDimensionalCase(double[][] points, int[] ranks) {
-        // Also uses internalIndices and lastFrontOrdinates
         int maxRank = 1;
         int n = ranks.length;
 
@@ -356,7 +357,7 @@ public abstract class JFBBase extends NonDominatedSorting {
         double lastY = firstPoint[1];
         int lastRank = 0;
 
-        // This is used here instead of lastFrontOrdinates[0] to make it slightly faster.
+        // This is used here instead of temporary[0] to make it slightly faster.
         double minY = lastY;
 
         for (int i = 1; i < n; ++i) {
