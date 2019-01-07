@@ -11,6 +11,8 @@ public abstract class DCNSBase extends NonDominatedSorting {
     private int[] next;
     private int[] firstIndex;
     private int[] ranks;
+    private int[] parents;
+    private int[] temp;
 
     DCNSBase(int maximumPoints, int maximumDimension) {
         super(maximumPoints, maximumDimension);
@@ -18,6 +20,8 @@ public abstract class DCNSBase extends NonDominatedSorting {
         this.next = new int[maximumPoints];
         this.firstIndex = new int[maximumPoints];
         this.ranks = new int[maximumPoints];
+        this.parents = new int[maximumPoints];
+        this.temp = new int[maximumPoints];
     }
 
     @Override
@@ -26,15 +30,19 @@ public abstract class DCNSBase extends NonDominatedSorting {
         this.next = null;
         this.firstIndex = null;
         this.ranks = null;
+        this.parents = null;
+        this.temp = null;
     }
 
-    final boolean checkIfDoesNotDominate(int targetFront, double[] point) {
+    final boolean checkIfDoesNotDominate(int targetFront, int pointIndex) {
         int index = firstIndex[targetFront];
+        final double[] point = points[pointIndex];
         final int maxObj = point.length - 1;
         while (index != -1) {
             // cannot assume `points[index]` is lexicographically smaller than `point`
             // because the right part is processed front-first.
             if (DominanceHelper.strictlyDominatesAssumingNotEqual(points[index], point, maxObj)) {
+                parents[pointIndex] = index;
                 return false;
             }
             index = next[index];
@@ -42,7 +50,7 @@ public abstract class DCNSBase extends NonDominatedSorting {
         return true;
     }
 
-    abstract int findRank(int targetFrom, int targetUntil, double[] point);
+    abstract int findRank(int targetFrom, int targetUntil, int pointIndex);
 
     private void merge(int l, int m, int n) {
         int r = Math.min(n, m + m - l);
@@ -53,29 +61,37 @@ public abstract class DCNSBase extends NonDominatedSorting {
         }
 
         for (int insertedFront = m; insertedFront < r; ++insertedFront) {
+            boolean isNotFirst = insertedFront != m;
             int insertedFrontStart = firstIndex[insertedFront];
             if (insertedFrontStart == -1) {
                 break;
             }
             if (++minTargetFrontToCompare == targetFrontUntil) {
-                firstIndex[targetFrontUntil] = insertedFrontStart;
+                if (insertedFront != targetFrontUntil) {
+                    firstIndex[targetFrontUntil] = insertedFrontStart;
+                    for (int i = insertedFrontStart; i != -1; i = next[i]) {
+                        ranks[i] = targetFrontUntil;
+                    }
+                }
                 ++targetFrontUntil;
             } else {
-                int rankIdx = l;
-                // Find ranks&indices, put them into the `ranks` array.
-                // We use `ranks` both for ranks and indices, and start `rankIdx` from `l`,
-                // (what for) to increase linearity here (e.g. only one array is written sequentially),
-                // (why we can) because the right part is not larger than the left part.
-                for (int index = insertedFrontStart; index != -1; index = next[index], ++rankIdx) {
-                    double[] point = points[index];
-                    ranks[rankIdx] = findRank(minTargetFrontToCompare, targetFrontUntil, point);
-                    ranks[++rankIdx] = index;
+                // Find the ranks of the points from the current front, and write out the points in the `temp` array.
+                int pointIdx = m;
+                for (int index = insertedFrontStart; index != -1; index = next[index], ++pointIdx) {
+                    if (index < m || index >= r) {
+                        throw new AssertionError(m + " " + index + " " + r);
+                    }
+                    int myMinTargetFront = isNotFirst ? ranks[parents[index]] + 1 : minTargetFrontToCompare;
+                    ranks[index] = myMinTargetFront == targetFrontUntil
+                            ? myMinTargetFront
+                            : findRank(myMinTargetFront, targetFrontUntil, index);
+                    temp[pointIdx] = index;
                 }
                 // Integrate the solutions into the target fronts, starting from the last tested one.
                 minTargetFrontToCompare = targetFrontUntil;
-                while (--rankIdx >= l) {
-                    int index = ranks[rankIdx];
-                    int rankPtr = ranks[--rankIdx];
+                while (--pointIdx >= m) {
+                    int index = temp[pointIdx];
+                    int rankPtr = ranks[index];
                     if (targetFrontUntil == rankPtr) {
                         ++targetFrontUntil;
                         next[index] = -1;
@@ -98,10 +114,13 @@ public abstract class DCNSBase extends NonDominatedSorting {
         for (int r = 1; r < n; r += 2) {
             int l = r - 1;
             // We can assume, here and only here, that `l` is lexicographically smaller than `r`.
-            if (!DominanceHelper.strictlyDominatesAssumingLexicographicallySmaller(points[l], points[r], maxObj)) {
+            if (DominanceHelper.strictlyDominatesAssumingLexicographicallySmaller(points[l], points[r], maxObj)) {
+                parents[r] = l;
+            } else {
                 next[r] = l;
                 firstIndex[l] = r;
                 firstIndex[r] = -1;
+                ranks[r] = l;
             }
         }
     }
@@ -115,8 +134,10 @@ public abstract class DCNSBase extends NonDominatedSorting {
 
         int n = ArraySorter.retainUniquePoints(points, indices, this.points, ranks);
         for (int i = 0; i < n; ++i) {
+            this.ranks[i] = i;
             firstIndex[i] = i;
             next[i] = -1;
+            parents[i] = -1;
         }
 
         int treeLevel = MathEx.log2up(n);
@@ -127,17 +148,6 @@ public abstract class DCNSBase extends NonDominatedSorting {
             int delta = 1 << i, delta2 = delta + delta;
             for (int r = delta; r < n; r += delta2) {
                 merge(r - delta, r, n);
-            }
-        }
-
-        for (int r = 0; r < n; ++r) {
-            int idx = firstIndex[r];
-            if (idx == -1) {
-                break;
-            }
-            while (idx != -1) {
-                this.ranks[idx] = r;
-                idx = next[idx];
             }
         }
 

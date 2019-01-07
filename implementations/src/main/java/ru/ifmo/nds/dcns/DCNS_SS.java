@@ -6,9 +6,9 @@ public final class DCNS_SS extends DCNSBase {
     }
 
     @Override
-    final int findRank(int targetFrom, int targetUntil, double[] point) {
+    final int findRank(int targetFrom, int targetUntil, int pointIndex) {
         for (int target = targetFrom; target < targetUntil; ++target) {
-            if (checkIfDoesNotDominate(target, point)) {
+            if (checkIfDoesNotDominate(target, pointIndex)) {
                 return target;
             }
         }
