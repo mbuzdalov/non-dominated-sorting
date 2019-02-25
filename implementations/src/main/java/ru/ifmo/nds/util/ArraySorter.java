@@ -9,6 +9,7 @@ public final class ArraySorter {
     private int coordinate = -1;
     private int maxCoordinate = -1;
 
+    private static final int INDICES_BY_VALUES_INSERTION_THRESHOLD = 15;
     private static final int INSERTION_SORT_THRESHOLD = 20;
 
     public ArraySorter(int maximumPoints) {
@@ -249,7 +250,7 @@ public final class ArraySorter {
     }
 
     public static void sortIndicesByValues(int[] indices, int[] values, int from, int until) {
-        if (from + INSERTION_SORT_THRESHOLD > until) {
+        if (from + INDICES_BY_VALUES_INSERTION_THRESHOLD > until) {
             insertionSortIndicesByValues(indices, values, from, until - 1);
         } else {
             int left = splitIndicesByRanks(indices, values, from, until);
