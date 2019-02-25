@@ -153,7 +153,7 @@ public final class FilterSort {
                     break;
                 }
 
-                // Collect the candidate points (those which precede the filter in at least one objective
+                // Collect the candidate points (those which precede the filter in at least one objective)
                 int nCandidates = 0;
                 for (int obj = 0; obj <= maxObj; ++obj) {
                     nCandidates = populateCandidates(filterIndex, obj, nCandidates);

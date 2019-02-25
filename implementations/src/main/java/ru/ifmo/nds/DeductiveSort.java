@@ -1,5 +1,8 @@
 package ru.ifmo.nds;
 
+import java.util.Arrays;
+
+import ru.ifmo.nds.util.ArrayHelper;
 import ru.ifmo.nds.util.DominanceHelper;
 
 public final class DeductiveSort {
@@ -20,11 +23,12 @@ public final class DeductiveSort {
             final int[] indices = this.indices;
             final int n = points.length;
             final int dim = points[0].length;
-            for (int i = 0; i < n; ++i) {
-                indices[i] = i;
-            }
+
+            ArrayHelper.fillIdentity(indices, n);
+            Arrays.fill(ranks, maximalMeaningfulRank + 1);
+
             int from = 0;
-            for (int rank = 0; from < n; ++rank) {
+            for (int rank = 0; from < n && rank <= maximalMeaningfulRank; ++rank) {
                 int curr = from;
                 int last = n;
                 while (curr < last) {
