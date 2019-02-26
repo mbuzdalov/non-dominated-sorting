@@ -65,8 +65,8 @@ public class SortIndicesByValuesBenchmark {
     }
 
     private static void insertionSortIndicesByValues(int[] indices, int[] values, int from, int to) {
-        for (int i = from, j = i; i < to; j = ++i) {
-            int ii = indices[i + 1];
+        for (int i = from, j = i; i < to; j = i) {
+            int ii = indices[++i];
             int ai = values[ii];
             while (ai < values[indices[j]]) {
                 indices[j + 1] = indices[j];

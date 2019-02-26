@@ -40,9 +40,9 @@ public final class ArraySorter {
 
     private static void insertionSort(double[] scratch, int[] indices, int from, int until) {
         int to = until - 1;
-        for (int i = from, j = i; i < to; j = ++i) {
-            double ai = scratch[i + 1];
-            int ii = indices[i + 1];
+        for (int i = from, j = i; i < to; j = i) {
+            double ai = scratch[++i];
+            int ii = indices[i];
             while (ai < scratch[j]) {
                 scratch[j + 1] = scratch[j];
                 indices[j + 1] = indices[j];
@@ -50,8 +50,8 @@ public final class ArraySorter {
                     break;
                 }
             }
-            scratch[j + 1] = ai;
-            indices[j + 1] = ii;
+            scratch[++j] = ai;
+            indices[j] = ii;
         }
 
     }
@@ -236,8 +236,8 @@ public final class ArraySorter {
     }
 
     private static void insertionSortIndicesByValues(int[] indices, int[] values, int from, int to) {
-        for (int i = from, j = i; i < to; j = ++i) {
-            int ii = indices[i + 1];
+        for (int i = from, j = i; i < to; j = i) {
+            int ii = indices[++i];
             int ai = values[ii];
             while (ai < values[indices[j]]) {
                 indices[j + 1] = indices[j];
