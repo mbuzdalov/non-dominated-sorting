@@ -101,11 +101,16 @@ public final class ArraySorter {
         }
     }
 
-    public void compressCoordinates(double[] original, int[] indices, int[] target, int from, int until) {
+    private void checkSize(int from, int until) {
         if (until > scratch.length) {
             throw new IllegalArgumentException("The internal scratch array length is " + scratch.length
                     + ", but you requested from = " + from + " until = " + until + " which is " + (until - from));
         }
+    }
+
+    public void compressCoordinates(double[] original, int[] indices, int[] target, int from, int until) {
+        checkSize(from, until);
+
         System.arraycopy(original, from, scratch, from, until - from);
         for (int i = from; i < until; ++i) {
             indices[i] = i;
@@ -127,10 +132,7 @@ public final class ArraySorter {
     }
 
     public void sort(double[][] points, int[] indices, int from, int until, int whichCoordinate) {
-        if (until > scratch.length) {
-            throw new IllegalArgumentException("The internal scratch length is " + scratch.length
-                    + ", but you requested from = " + from + " until = " + until + " which is " + (until - from));
-        }
+        checkSize(from, until);
         this.points = points;
         this.indices = indices;
         this.coordinate = whichCoordinate;
@@ -143,10 +145,7 @@ public final class ArraySorter {
     }
 
     public void lexicographicalSort(double[][] points, int[] indices, int from, int until, int maxCoordinate) {
-        if (until > scratch.length) {
-            throw new IllegalArgumentException("The internal scratch array length is " + scratch.length
-                    + ", but you requested from = " + from + " until = " + until + " which is " + (until - from));
-        }
+        checkSize(from, until);
         this.points = points;
         this.indices = indices;
         this.maxCoordinate = maxCoordinate;
@@ -181,10 +180,8 @@ public final class ArraySorter {
     }
 
     public void sortComparingByIndicesIfEqual(double[][] points, int[] indices, int from, int until, int coordinate) {
-        if (until > scratch.length) {
-            throw new IllegalArgumentException("The internal scratch array length is " + scratch.length
-                    + ", but you requested from = " + from + " until = " + until + " which is " + (until - from));
-        }
+        checkSize(from, until);
+
         this.points = points;
         this.indices = indices;
         this.coordinate = coordinate;
@@ -207,7 +204,6 @@ public final class ArraySorter {
             int currII = sortedIndices[i];
             double[] currPoint = sourcePoints[currII];
             if (!ArrayHelper.equal(lastPoint, currPoint, dim)) {
-                // Copying the point to the internal array.
                 targetPoints[newN] = currPoint;
                 lastPoint = currPoint;
                 lastP = newN;
