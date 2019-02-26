@@ -66,11 +66,11 @@ public class SortIndicesByValuesBenchmark {
 
     private static void insertionSortIndicesByValues(int[] indices, int[] values, int from, int to) {
         for (int i = from, j = i; i < to; j = i) {
-            int ii = indices[++i];
+            int ii = indices[++i], ij;
             int ai = values[ii];
-            while (ai < values[indices[j]]) {
-                indices[j + 1] = indices[j];
-                if (j-- == from) {
+            while (ai < values[ij = indices[j]]) {
+                indices[j + 1] = ij;
+                if (--j < from) {
                     break;
                 }
             }
