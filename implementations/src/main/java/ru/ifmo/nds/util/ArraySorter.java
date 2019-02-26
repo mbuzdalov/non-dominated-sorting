@@ -16,7 +16,7 @@ public final class ArraySorter {
         this.scratch = new double[maximumPoints];
     }
 
-    private static int split(double[] scratch, int[] indices, int from, int until) {
+    private static long split(double[] scratch, int[] indices, int from, int until) {
         double pivot = scratch[(from + until) >>> 1];
         int l = from, r = until - 1;
         while (l <= r) {
@@ -31,11 +31,7 @@ public final class ArraySorter {
                 --r;
             }
         }
-        if (r + 1 == l) {
-            return l;
-        } else {
-            return -l - 1;
-        }
+        return ((long) (r) << 32) ^ l; // l is non-negative
     }
 
     private static void insertionSort(double[] scratch, int[] indices, int from, int until) {
@@ -60,13 +56,10 @@ public final class ArraySorter {
         if (from + INSERTION_SORT_THRESHOLD >= until) {
             insertionSort(scratch, indices, from, until);
         } else {
-            int l = split(scratch, indices, from, until);
-            int r = l;
-            if (l < 0) {
-                l = -l - 1;
-                r = l - 1;
-            }
-            if (from + 1 < r) sortImplInside(from, r);
+            long pack = split(scratch, indices, from, until);
+            int l = (int) (pack);
+            int r = (int) (pack >> 32);
+            if (from < r) sortImplInside(from, r + 1);
             if (l + 1 < until) sortImplInside(l, until);
         }
     }
@@ -214,7 +207,7 @@ public final class ArraySorter {
         return newN;
     }
 
-    private static int splitIndicesByRanks(int[] indices, int[] values, int from, int until) {
+    private static long splitIndicesByRanks(int[] indices, int[] values, int from, int until) {
         int left = from, right = until - 1;
         int pivot = values[indices[(from + until) >>> 1]];
         int sl, sr;
@@ -228,7 +221,7 @@ public final class ArraySorter {
                 --right;
             }
         }
-        return left - 1 == right ? left : -left - 1;
+        return ((long) (right) << 32) ^ left; // left is non-negative
     }
 
     private static void insertionSortIndicesByValues(int[] indices, int[] values, int from, int to) {
@@ -249,14 +242,11 @@ public final class ArraySorter {
         if (from + INDICES_BY_VALUES_INSERTION_THRESHOLD > until) {
             insertionSortIndicesByValues(indices, values, from, until - 1);
         } else {
-            int left = splitIndicesByRanks(indices, values, from, until);
-            int right = left;
-            if (left < 0) {
-                left = -left - 1;
-                right = left - 1;
-            }
-            if (from + 1 < right) {
-                sortIndicesByValues(indices, values, from, right);
+            long pack = splitIndicesByRanks(indices, values, from, until);
+            int left = (int) pack;
+            int right = (int) (pack >> 32);
+            if (from < right) {
+                sortIndicesByValues(indices, values, from, right + 1);
             }
             if (left + 1 < until) {
                 sortIndicesByValues(indices, values, left, until);

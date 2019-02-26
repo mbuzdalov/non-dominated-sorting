@@ -47,7 +47,7 @@ public class SortIndicesByValuesBenchmark {
         }
     }
 
-    private static int splitIndicesByRanks(int[] indices, int[] values, int from, int until) {
+    private static long splitIndicesByRanks(int[] indices, int[] values, int from, int until) {
         int left = from, right = until - 1;
         int pivot = values[indices[(from + until) >>> 1]];
         int sl, sr;
@@ -61,7 +61,7 @@ public class SortIndicesByValuesBenchmark {
                 --right;
             }
         }
-        return left - 1 == right ? left : -left - 1;
+        return ((long) (right) << 32) ^ left; // left is non-negative
     }
 
     private static void insertionSortIndicesByValues(int[] indices, int[] values, int from, int to) {
@@ -82,14 +82,11 @@ public class SortIndicesByValuesBenchmark {
         if (from + threshold > until) {
             insertionSortIndicesByValues(indices, values, from, until - 1);
         } else {
-            int left = splitIndicesByRanks(indices, values, from, until);
-            int right = left;
-            if (left < 0) {
-                left = -left - 1;
-                right = left - 1;
-            }
-            if (from + 1 < right) {
-                sortIndicesByValues(indices, values, from, right);
+            long pack = splitIndicesByRanks(indices, values, from, until);
+            int left = (int) pack;
+            int right = (int) (pack >> 32);
+            if (from < right) {
+                sortIndicesByValues(indices, values, from, right + 1);
             }
             if (left + 1 < until) {
                 sortIndicesByValues(indices, values, left, until);
