@@ -13,15 +13,21 @@ import ru.ifmo.nds.util.ArraySorter;
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
 @Timeout(time = 10)
-@Warmup(time = 1, iterations = 10)
-@Measurement(time = 1, iterations = 3)
+@Warmup(time = 1, iterations = 6)
+@Measurement(time = 1, iterations = 2)
 @Fork(value = 3)
 public class LexSortBenchmark {
-    @Param({"3", "10", "31", "100", "316", "1000", "3162", "10000"})
+    @Param({"3", "10", "17", "31", "56", "100", "177", "316", "1000", "10000", "100000"})
     private int size;
 
-    @Param({"2", "3", "5", "20"})
+    @Param({"2", "5", "20"})
     private int dimension;
+
+    @Param({"20", "24", "30", "34", "38", "42", "46", "50",
+            "56", "62", "68", "74", "80", "86", "92", "98",
+            "106", "114", "122", "130", "138", "146", "154",
+            "162", "170", "178", "186"})
+    private int threshold;
 
     private double[][][] data;
     private int[] indices;
@@ -40,7 +46,7 @@ public class LexSortBenchmark {
             }
         }
         indices = new int[size];
-        sorter = new ArraySorter(size);
+        sorter = new ArraySorter(size, threshold);
     }
 
     @Benchmark
