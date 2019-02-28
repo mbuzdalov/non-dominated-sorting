@@ -23,12 +23,6 @@ public class LexSortBenchmark {
     @Param({"2", "5", "20"})
     private int dimension;
 
-    @Param({"20", "24", "30", "34", "38", "42", "46", "50",
-            "56", "62", "68", "74", "80", "86", "92", "98",
-            "106", "114", "122", "130", "138", "146", "154",
-            "162", "170", "178", "186"})
-    private int threshold;
-
     private double[][][] data;
     private int[] indices;
     private ArraySorter sorter;
@@ -46,7 +40,7 @@ public class LexSortBenchmark {
             }
         }
         indices = new int[size];
-        sorter = new ArraySorter(size, threshold);
+        sorter = new ArraySorter(size);
     }
 
     @Benchmark

@@ -12,15 +12,10 @@ public final class ArraySorter {
     private static final int INDICES_BY_VALUES_INSERTION_THRESHOLD = 47;
     private static final int INDICES_BY_VALUES_INSERTION_THRESHOLD_ENTRY = 160;
 
-    private final int insertionLexSortThreshold;
-
-    public ArraySorter(int maximumPoints, int insertionLexSortThreshold) {
-        this.scratch = new double[maximumPoints];
-        this.insertionLexSortThreshold = insertionLexSortThreshold;
-    }
+    private static final int INSERTION_LEX_SORT_THRESHOLD = 42;
 
     public ArraySorter(int maximumPoints) {
-        this(maximumPoints, 47);
+        this.scratch = new double[maximumPoints];
     }
 
     private static long split(double[] scratch, int[] indices, int from, int until) {
@@ -60,7 +55,7 @@ public final class ArraySorter {
     }
 
     private void sortImplInside(int from, int until) {
-        if (from + insertionLexSortThreshold >= until) {
+        if (from + INSERTION_LEX_SORT_THRESHOLD >= until) {
             insertionSort(scratch, indices, from, until);
         } else {
             long pack = split(scratch, indices, from, until);
