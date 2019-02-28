@@ -20,7 +20,7 @@ public class SortIndicesByValuesBenchmark {
     @Param({"1", "2", "3", "4", "5", "7", "10", "13", "17", "23", "31", "42", "56", "74", "100", "133", "177", "237", "316"})
     private int size;
 
-    @Param({"0",
+    @Param({"1",
             "10", "12", "14", "16", "18", "20", "22", "24", "26", "28", "30", "32", "34", "36", "38",
             "40", "42", "44", "46", "48", "50", "52", "54", "56", "58", "60", "62", "64", "66", "68",
             "70", "72", "74", "76", "78", "80", "82", "84", "86", "88", "90", "92", "94", "96", "98",
@@ -47,7 +47,7 @@ public class SortIndicesByValuesBenchmark {
     @OperationsPerInvocation(100)
     @Benchmark
     public void run(Blackhole bh) {
-        if (threshold == 0) {
+        if (threshold == 1) {
             for (int[] instance : data) {
                 ArrayHelper.fillIdentity(indices, size);
                 ArraySorter.sortIndicesByValues(indices, instance, 0, size);
