@@ -7,6 +7,7 @@ import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.infra.Blackhole;
 
 import ru.ifmo.nds.util.ArrayHelper;
+import ru.ifmo.nds.util.ArraySorter;
 
 @State(Scope.Benchmark)
 @BenchmarkMode(Mode.AverageTime)
@@ -19,9 +20,12 @@ public class SortIndicesByValuesBenchmark {
     @Param({"1", "2", "3", "4", "5", "7", "10", "13", "17", "23", "31", "42", "56", "74", "100", "133", "177", "237", "316"})
     private int size;
 
-    @Param({"10", "12", "14", "16", "18", "20", "22", "24", "26", "28", "30", "32", "34", "36", "38",
+    @Param({"0",
+            "10", "12", "14", "16", "18", "20", "22", "24", "26", "28", "30", "32", "34", "36", "38",
             "40", "42", "44", "46", "48", "50", "52", "54", "56", "58", "60", "62", "64", "66", "68",
-            "70", "72", "74", "76", "78", "80", "82", "84", "86", "88", "90", "92", "94", "96", "98", "100"})
+            "70", "72", "74", "76", "78", "80", "82", "84", "86", "88", "90", "92", "94", "96", "98",
+            "100", "102", "104", "108", "112", "116", "120", "124", "128", "132", "136", "140", "144",
+            "148", "152", "156", "160", "164", "168", "172", "176", "180", "184", "188", "196", "200"})
     private int threshold;
 
     private int[][] data;
@@ -43,9 +47,18 @@ public class SortIndicesByValuesBenchmark {
     @OperationsPerInvocation(100)
     @Benchmark
     public void run(Blackhole bh) {
-        for (int[] instance : data) {
-            ArrayHelper.fillIdentity(indices, size);
-            sortIndicesByValues(indices, instance, 0, size);
+        if (threshold == 0) {
+            for (int[] instance : data) {
+                ArrayHelper.fillIdentity(indices, size);
+                ArraySorter.sortIndicesByValues(indices, instance, 0, size);
+                bh.consume(indices);
+            }
+        } else {
+            for (int[] instance : data) {
+                ArrayHelper.fillIdentity(indices, size);
+                sortIndicesByValues(indices, instance, 0, size);
+                bh.consume(indices);
+            }
         }
     }
 

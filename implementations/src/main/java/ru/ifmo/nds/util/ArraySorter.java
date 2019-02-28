@@ -9,7 +9,9 @@ public final class ArraySorter {
     private int coordinate = -1;
     private int maxCoordinate = -1;
 
-    private static final int INDICES_BY_VALUES_INSERTION_THRESHOLD = 15;
+    private static final int INDICES_BY_VALUES_INSERTION_THRESHOLD = 47;
+    private static final int INDICES_BY_VALUES_INSERTION_THRESHOLD_ENTRY = 160;
+
     private static final int INSERTION_SORT_THRESHOLD = 20;
 
     public ArraySorter(int maximumPoints) {
@@ -238,7 +240,7 @@ public final class ArraySorter {
         }
     }
 
-    public static void sortIndicesByValues(int[] indices, int[] values, int from, int until) {
+    private static void sortIndicesByValuesImpl(int[] indices, int[] values, int from, int until) {
         if (from + INDICES_BY_VALUES_INSERTION_THRESHOLD > until) {
             insertionSortIndicesByValues(indices, values, from, until - 1);
         } else {
@@ -246,11 +248,19 @@ public final class ArraySorter {
             int left = (int) pack;
             int right = (int) (pack >> 32);
             if (from < right) {
-                sortIndicesByValues(indices, values, from, right + 1);
+                sortIndicesByValuesImpl(indices, values, from, right + 1);
             }
             if (left + 1 < until) {
-                sortIndicesByValues(indices, values, left, until);
+                sortIndicesByValuesImpl(indices, values, left, until);
             }
+        }
+    }
+
+    public static void sortIndicesByValues(int[] indices, int[] values, int from, int until) {
+        if (from + INDICES_BY_VALUES_INSERTION_THRESHOLD_ENTRY > until) {
+            insertionSortIndicesByValues(indices, values, from, until - 1);
+        } else {
+            sortIndicesByValuesImpl(indices, values, from, until);
         }
     }
 }
