@@ -51,13 +51,11 @@ public class SortIndicesByValuesBenchmark {
             for (int[] instance : data) {
                 ArrayHelper.fillIdentity(indices, size);
                 ArraySorter.sortIndicesByValues(indices, instance, 0, size);
-                bh.consume(indices);
             }
         } else {
             for (int[] instance : data) {
                 ArrayHelper.fillIdentity(indices, size);
                 sortIndicesByValues(indices, instance, 0, size);
-                bh.consume(indices);
             }
         }
     }
