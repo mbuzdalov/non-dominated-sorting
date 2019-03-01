@@ -124,7 +124,8 @@ public class Presort extends AbstractDominanceTree {
                 Node deleted = curr;
                 curr = curr.next;
                 deleted.next = null;
-                concatenationNodes[concatCount++] = deleted;
+                concatenationNodes[concatCount] = deleted;
+                ++concatCount;
                 if (prev != null) {
                     prev.next = curr;
                 }
@@ -195,11 +196,9 @@ public class Presort extends AbstractDominanceTree {
     @Override
     protected void sortChecked(double[][] points, int[] ranks, int maximalMeaningfulRank) {
         int n = points.length;
-        // this.ranks are temporarily abused to mean indices
-        ArrayHelper.fillIdentity(this.ranks, n);
-        sorter.lexicographicalSort(points, this.ranks, 0, n, points[0].length);
-        int realN = ArraySorter.retainUniquePoints(points, this.ranks, this.points, ranks);
-        // from this point on, this.ranks stop being abused, but arg ranks stores reindexing.
+        ArrayHelper.fillIdentity(indices, n);
+        sorter.lexicographicalSort(points, indices, 0, n, points[0].length);
+        int realN = ArraySorter.retainUniquePoints(points, indices, this.points, ranks);
         sortCheckedImpl(this.points, this.ranks, realN);
         for (int i = 0; i < n; ++i) {
             ranks[i] = this.ranks[ranks[i]];
