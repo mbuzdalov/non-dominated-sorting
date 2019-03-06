@@ -8,6 +8,7 @@ final class AnyAnyBitSet extends VanEmdeBoasSet {
     private final VanEmdeBoasSet[] clusters;
     private final VanEmdeBoasSet summary;
     private final int limit;
+    private final int clusterLimit;
 
     private int min, max;
 
@@ -16,6 +17,7 @@ final class AnyAnyBitSet extends VanEmdeBoasSet {
         min = limit;
         max = -1;
         loBits = scale / 2;
+        clusterLimit = 1 << loBits;
         loMask = (1 << loBits) - 1;
         clusters = new VanEmdeBoasSet[1 << (scale - loBits)];
         Arrays.fill(clusters, EmptyBitSet.INSTANCE);
@@ -39,19 +41,19 @@ final class AnyAnyBitSet extends VanEmdeBoasSet {
 
     @Override
     public int prev(int index) {
-        if (index > max) {
-            return max;
-        }
         if (index <= min) {
             return -1;
         }
+        if (index > max) {
+            return max;
+        }
         int h = hi(index), l = lo(index);
-        VanEmdeBoasSet ch = clusters[h];
-        if (l <= ch.min()) {
+        int q = clusters[h].prev(l);
+        if (q == -1) {
             h = summary.prev(h);
             return h < 0 ? min : join(h, clusters[h].max());
         } else {
-            return join(h, ch.prev(l));
+            return join(h, q);
         }
     }
 
@@ -65,30 +67,30 @@ final class AnyAnyBitSet extends VanEmdeBoasSet {
             return max;
         }
         int h = hi(index), l = lo(index);
-        VanEmdeBoasSet ch = clusters[h];
-        if (l < ch.min()) {
+        int q = clusters[h].prevInclusively(l);
+        if (q == -1) {
             h = summary.prev(h);
             return h < 0 ? min : join(h, clusters[h].max());
         } else {
-            return join(h, ch.prevInclusively(l));
+            return join(h, q);
         }
     }
 
     @Override
     public int next(int index) {
-        if (index < min) {
-            return min;
-        }
         if (index >= max) {
             return limit;
         }
+        if (index < min) {
+            return min;
+        }
         int h = hi(index), l = lo(index);
-        VanEmdeBoasSet ch = clusters[h];
-        if (l >= ch.max()) {
+        int q = clusters[h].next(l);
+        if (q >= clusterLimit) {
             h = summary.next(h);
             return h >= clusters.length ? max : join(h, clusters[h].min());
         } else {
-            return join(h, ch.next(l));
+            return join(h, q);
         }
     }
 

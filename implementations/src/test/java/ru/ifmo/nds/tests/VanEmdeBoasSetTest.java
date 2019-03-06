@@ -15,13 +15,8 @@ public class VanEmdeBoasSetTest {
         BitSet bit = new BitSet(1 << 7);
         int[] mod = { 100, 57, 125, 67 };
         for (int m : mod) {
-            if (m >= 0) {
-                veb.add(m);
-                bit.set(m);
-            } else {
-                veb.remove(-m - 1);
-                bit.clear(-m - 1);
-            }
+            veb.add(m);
+            bit.set(m);
         }
         Assert.assertEquals(bit.previousSetBit(66 - 1), veb.prev(66));
     }

@@ -31,11 +31,11 @@ final class LongLongBitSet extends VanEmdeBoasSet {
 
     @Override
     public int prev(int index) {
-        if (index > max) {
-            return max;
-        }
         if (index <= min) {
             return -1;
+        }
+        if (index > max) {
+            return max;
         }
         int h = hi(index);
         long chs = (clusters[h] << ~index) << 1;
@@ -69,11 +69,11 @@ final class LongLongBitSet extends VanEmdeBoasSet {
 
     @Override
     public int next(int index) {
-        if (index < min) {
-            return min;
-        }
         if (index >= max) {
             return limit;
+        }
+        if (index < min) {
+            return min;
         }
         int h = hi(index);
         long chs = (clusters[h] >>> index) >>> 1;

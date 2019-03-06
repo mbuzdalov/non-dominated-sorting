@@ -30,11 +30,11 @@ final class IntIntBitSet extends VanEmdeBoasSet {
 
     @Override
     public int prev(int index) {
-        if (index > max) {
-            return max;
-        }
         if (index <= min) {
             return -1;
+        }
+        if (index > max) {
+            return max;
         }
         int h = hi(index);
         int chs = (clusters[h] << ~index) << 1;
@@ -67,11 +67,11 @@ final class IntIntBitSet extends VanEmdeBoasSet {
 
     @Override
     public int next(int index) {
-        if (index < min) {
-            return min;
-        }
         if (index >= max) {
             return limit;
+        }
+        if (index < min) {
+            return min;
         }
         int h = hi(index);
         int chs = (clusters[h] >>> index) >>> 1;
