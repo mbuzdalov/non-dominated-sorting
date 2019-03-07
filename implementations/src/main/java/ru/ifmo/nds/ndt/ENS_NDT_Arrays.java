@@ -95,11 +95,10 @@ public class ENS_NDT_Arrays extends NonDominatedSorting {
         }
     }
 
-    private boolean dominates(int good, int weak) {
+    private boolean dominates(int good, double[] weakPoint) {
         double[] goodPoint = points[good];
-        double[] weakPoint = points[weak];
         // objective 0 is not compared since points are presorted.
-        for (int o = goodPoint.length - 1; o > 0; --o) {
+        for (int o = weakPoint.length - 1; o > 0; --o) {
             if (goodPoint[o] > weakPoint[o]) {
                 return false;
             }
@@ -107,16 +106,16 @@ public class ENS_NDT_Arrays extends NonDominatedSorting {
         return true;
     }
 
-    private boolean dominates(int node, int index, Split split) {
+    private boolean dominates(int node, double[] point, Split split) {
         int v1 = nodeArray[2 * node];
         int v2 = nodeArray[2 * node + 1];
         if (v1 < 0) {
             // Branching node
-            return dominates(-v1 - 1, index, split.good) ||
-                    points[index][split.coordinate] >= split.value && dominates(-v2 - 1, index, split.weak);
+            return dominates(-v1 - 1, point, split.good) ||
+                    point[split.coordinate] >= split.value && dominates(-v2 - 1, point, split.weak);
         } else {
             // Terminal node
-            return v1 > 0 && (dominates(v1 - 1, index) || v2 > 0 && dominates(v2 - 1, index));
+            return v1 > 0 && (dominates(v1 - 1, point) || v2 > 0 && dominates(v2 - 1, point));
         }
     }
 
@@ -143,11 +142,12 @@ public class ENS_NDT_Arrays extends NonDominatedSorting {
         nNodes = newN;
         add(0, 0, split);
         for (int i = 1; i < newN; ++i) {
-            if (dominates(0, i, split)) {
+            double[] pt = this.points[i];
+            if (dominates(0, pt, split)) {
                 int left = 0, right = maxRank;
                 while (right - left > 1) {
                     int mid = (left + right) >>> 1;
-                    if (dominates(mid, i, split)) {
+                    if (dominates(mid, pt, split)) {
                         left = mid;
                     } else {
                         right = mid;
