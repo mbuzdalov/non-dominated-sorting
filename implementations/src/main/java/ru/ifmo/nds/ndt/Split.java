@@ -12,6 +12,6 @@ public class Split {
         this.weak = weak;
     }
 
-    public static final Split NULL_MAX_DEPTH = new Split();
-    public static final Split NULL_POINTS = new Split();
+    static final Split NULL_MAX_DEPTH = new Split();
+    static final Split NULL_POINTS = new Split();
 }
