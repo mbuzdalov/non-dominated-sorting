@@ -53,7 +53,7 @@ public abstract class DCNSBase extends NonDominatedSorting {
     abstract int findRank(int targetFrom, int targetUntil, int pointIndex);
 
     private int writeOutAndFindRanksWithoutParentChecking(int insertedFrontStart, int tempStart,
-                                                           int minTargetFrontToCompare, int targetFrontUntil) {
+                                                          int minTargetFrontToCompare, int targetFrontUntil) {
         for (int index = insertedFrontStart; index != -1; index = next[index], ++tempStart) {
             ranks[index] = findRank(minTargetFrontToCompare, targetFrontUntil, index);
             temp[tempStart] = index;
@@ -119,7 +119,7 @@ public abstract class DCNSBase extends NonDominatedSorting {
             }
         }
 
-        // Degenerate case if some fronts needs to be simply appended
+        // Degenerate case if some fronts need to be simply appended
         if (insertedFront == targetFrontUntil) {
             // Case 1: ranks need not be rewritten
             while (insertedFront < r && firstIndex[insertedFront] != -1) {
