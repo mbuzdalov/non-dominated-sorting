@@ -2,6 +2,7 @@ package ru.ifmo.nds.domtree;
 
 import ru.ifmo.nds.util.ArrayHelper;
 import ru.ifmo.nds.util.ArraySorter;
+import ru.ifmo.nds.util.DominanceHelper;
 
 import static ru.ifmo.nds.DominanceTree.InsertionOption;
 
@@ -60,11 +61,7 @@ public class Presort extends AbstractDominanceTree {
                 b = b.next;
             }
         }
-        if (a != null) {
-            curr.next = a;
-        } else {
-            curr.next = b;
-        }
+        curr.next = a != null ? a : b;
         return rv;
     }
 
@@ -96,8 +93,10 @@ public class Presort extends AbstractDominanceTree {
 
     private Node mergeHelperNoDelayed(Node main, Node other) {
         Node rv = null;
+        double[] mainPoint = main.point;
+        int maxObj = mainPoint.length - 1;
         for (Node prev = null, curr = other; curr != null; ) {
-            if (main.dominatesAssumingThisIsNotWorse(curr)) {
+            if (DominanceHelper.strictlyDominatesAssumingLexicographicallySmaller(mainPoint, curr.point, maxObj)) {
                 Node deleted = curr;
                 curr = curr.next;
                 deleted.next = null;
@@ -119,8 +118,10 @@ public class Presort extends AbstractDominanceTree {
     private Node mergeHelperDelayed(Node main, Node other) {
         Node rv = null;
         int concatCount = 0;
+        double[] mainPoint = main.point;
+        int maxObj = mainPoint.length - 1;
         for (Node prev = null, curr = other; curr != null; ) {
-            if (main.dominatesAssumingThisIsNotWorse(curr)) {
+            if (DominanceHelper.strictlyDominatesAssumingLexicographicallySmaller(mainPoint, curr.point, maxObj)) {
                 Node deleted = curr;
                 curr = curr.next;
                 deleted.next = null;
@@ -185,11 +186,7 @@ public class Presort extends AbstractDominanceTree {
                 rv = curr;
             }
         }
-        if (a != null) {
-            curr.next = a;
-        } else {
-            curr.next = b;
-        }
+        curr.next = a != null ? a : b;
         return rv;
     }
 

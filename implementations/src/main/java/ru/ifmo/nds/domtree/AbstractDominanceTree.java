@@ -1,7 +1,6 @@
 package ru.ifmo.nds.domtree;
 
 import ru.ifmo.nds.NonDominatedSorting;
-import ru.ifmo.nds.util.DominanceHelper;
 
 public abstract class AbstractDominanceTree extends NonDominatedSorting {
     private Node[] nodes;
@@ -27,8 +26,9 @@ public abstract class AbstractDominanceTree extends NonDominatedSorting {
     void sortCheckedImpl(double[][] points, int[] ranks, int n) {
         for (int i = 0; i < n; ++i) {
             nodes[i].initialize(points[i]);
+            rankMergeArray[i] = nodes[i];
         }
-        Node tree = mergeAllRecursively(nodes, 0, n);
+        Node tree = mergeAllRecursively(0, n);
         for (int rank = 0; tree != null; ++rank) {
             int rankMergeCount = 0;
             while (tree != null) {
@@ -39,38 +39,38 @@ public abstract class AbstractDominanceTree extends NonDominatedSorting {
                 }
                 tree = tree.next;
             }
-            tree = mergeAll(rankMergeArray, rankMergeCount);
+            tree = mergeAll(rankMergeCount);
         }
     }
 
     protected abstract Node merge(Node a, Node b);
 
-    private Node mergeAll(Node[] array, int size) {
+    private Node mergeAll(int size) {
         if (size == 0) {
             return null;
         }
         if (useRecursiveMerge) {
-            return mergeAllRecursively(array, 0, size);
+            return mergeAllRecursively(0, size);
         } else {
-            Node rv = array[0];
+            Node rv = rankMergeArray[0];
             for (int i = 1; i < size; ++i) {
-                rv = merge(rv, array[i]);
+                rv = merge(rv, rankMergeArray[i]);
             }
             return rv;
         }
     }
 
-    private Node mergeAllRecursively(Node[] array, int from, int until) {
+    private Node mergeAllRecursively(int from, int until) {
         if (from + 1 == until) {
-            return array[from];
+            return rankMergeArray[from];
         } else {
             int mid = (from + until) >>> 1;
-            return merge(mergeAllRecursively(array, from, mid), mergeAllRecursively(array, mid, until));
+            return merge(mergeAllRecursively(from, mid), mergeAllRecursively(mid, until));
         }
     }
 
     static class Node {
-        private double[] point;
+        double[] point;
         Node next, child;
         final int index;
 
@@ -84,14 +84,6 @@ public abstract class AbstractDominanceTree extends NonDominatedSorting {
             this.point = point;
             this.next = null;
             this.child = null;
-        }
-
-        boolean dominatesAssumingThisIsNotWorse(Node that) {
-            return DominanceHelper.strictlyDominatesAssumingLexicographicallySmaller(point, that.point, point.length - 1);
-        }
-
-        int dominationCompare(Node that) {
-            return DominanceHelper.dominanceComparison(point, that.point, point.length);
         }
     }
 }

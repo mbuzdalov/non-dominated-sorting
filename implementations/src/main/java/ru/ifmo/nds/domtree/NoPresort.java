@@ -1,5 +1,7 @@
 package ru.ifmo.nds.domtree;
 
+import ru.ifmo.nds.util.DominanceHelper;
+
 public class NoPresort extends AbstractDominanceTree {
     public NoPresort(int maximumPoints, int maximumDimension, boolean useRecursiveMerge) {
         super(maximumPoints, maximumDimension, useRecursiveMerge);
@@ -20,9 +22,11 @@ public class NoPresort extends AbstractDominanceTree {
         }
         Node aPrev = null;
         for (Node aCurr = a; aCurr != null; ) {
+            double[] aPoint = aCurr.point;
+            int aLength = aPoint.length;
             boolean aRemoved = false;
             for (Node bPrev = null, bCurr = b; bCurr != null; ) {
-                int compare = aCurr.dominationCompare(bCurr);
+                int compare = DominanceHelper.dominanceComparison(aPoint, bCurr.point, aLength);
                 if (compare > 0) {
                     Node aDel = aCurr;
                     aCurr = aCurr.next;
@@ -54,9 +58,6 @@ public class NoPresort extends AbstractDominanceTree {
                 aPrev = aCurr;
                 aCurr = aCurr.next;
             }
-        }
-        if (aPrev != null && aPrev.next != null) {
-            throw new AssertionError();
         }
         if (a == null) {
             return b;
