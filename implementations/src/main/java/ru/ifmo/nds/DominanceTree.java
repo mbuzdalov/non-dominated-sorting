@@ -1,23 +1,12 @@
 package ru.ifmo.nds;
 
-import ru.ifmo.nds.domtree.NoPresort;
-import ru.ifmo.nds.domtree.Presort;
+import ru.ifmo.nds.domtree.*;
 
 public final class DominanceTree {
     public enum InsertionOption {
-        NO_DELAYED_INSERTION("no delayed insertion"),
-        DELAYED_INSERTION_SEQUENTIAL_CONCATENATION("delayed insertion with sequential concatenation"),
-        DELAYED_INSERTION_RECURSIVE_CONCATENATION("delayed insertion with recursive concatenation");
-
-        private final String humanReadableDescription;
-
-        InsertionOption(String humanReadableDescription) {
-            this.humanReadableDescription = humanReadableDescription;
-        }
-
-        public String humanReadableDescription() {
-            return humanReadableDescription;
-        }
+        NO_DELAYED_INSERTION(),
+        DELAYED_INSERTION_SEQUENTIAL_CONCATENATION(),
+        DELAYED_INSERTION_RECURSIVE_CONCATENATION()
     }
 
     private DominanceTree() {}
@@ -27,6 +16,15 @@ public final class DominanceTree {
     }
 
     public static NonDominatedSortingFactory getPresortInsertion(boolean useRecursiveMerge, InsertionOption insertionOption) {
-        return (maximumPoints, maximumDimension) -> new Presort(maximumPoints, maximumDimension, useRecursiveMerge, insertionOption);
+        switch (insertionOption) {
+            case NO_DELAYED_INSERTION:
+                return (maximumPoints, maximumDimension) -> new PresortNoDelayed(maximumPoints, maximumDimension, useRecursiveMerge);
+            case DELAYED_INSERTION_SEQUENTIAL_CONCATENATION:
+                return (maximumPoints, maximumDimension) -> new PresortDelayedNoRecursion(maximumPoints, maximumDimension, useRecursiveMerge);
+            case DELAYED_INSERTION_RECURSIVE_CONCATENATION:
+                return (maximumPoints, maximumDimension) -> new PresortDelayedRecursion(maximumPoints, maximumDimension, useRecursiveMerge);
+            default:
+                throw new IllegalArgumentException("Illegal insertion option: " + insertionOption);
+        }
     }
 }

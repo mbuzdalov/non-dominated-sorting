@@ -4,20 +4,14 @@ import ru.ifmo.nds.util.ArrayHelper;
 import ru.ifmo.nds.util.ArraySorter;
 import ru.ifmo.nds.util.DominanceHelper;
 
-import static ru.ifmo.nds.DominanceTree.InsertionOption;
-
-public class Presort extends AbstractDominanceTree {
-    private Node[] concatenationNodes;
+public class PresortDelayedNoRecursion extends AbstractDominanceTree {
     private double[][] points;
     private int[] ranks;
-    private final InsertionOption insertionOption;
 
-    public Presort(int maximumPoints, int maximumDimension, boolean useRecursiveMerge, InsertionOption insertionOption) {
+    public PresortDelayedNoRecursion(int maximumPoints, int maximumDimension, boolean useRecursiveMerge) {
         super(maximumPoints, maximumDimension, useRecursiveMerge);
-        this.insertionOption = insertionOption;
         points = new double[maximumPoints][];
         ranks = new int[maximumPoints];
-        concatenationNodes = new Node[maximumPoints];
     }
 
     @Override
@@ -25,17 +19,16 @@ public class Presort extends AbstractDominanceTree {
         super.closeImpl();
         points = null;
         ranks = null;
-        concatenationNodes = null;
     }
 
     @Override
     public String getName() {
         return "Dominance Tree (presort, "
                 + (useRecursiveMerge ? "recursive merge, " : "sequential merge, ")
-                + insertionOption.humanReadableDescription() + ")";
+                + "delayed insertion with sequential concatenation)";
     }
 
-    private Node concatenate(Node a, Node b) {
+    private static Node concatenate(Node a, Node b) {
         if (a == null) {
             return b;
         }
@@ -65,42 +58,17 @@ public class Presort extends AbstractDominanceTree {
         return rv;
     }
 
-    private Node concatenateRecursively(int from, int until) {
-        if (from + 1 == until) {
-            return concatenationNodes[from];
-        } else {
-            int mid = (from + until) >>> 1;
-            return concatenate(concatenateRecursively(from, mid), concatenateRecursively(mid, until));
-        }
-    }
-
-    private Node concatenateAll(int count) {
-        if (count == 0) {
-            return null;
-        }
-        if (insertionOption == InsertionOption.DELAYED_INSERTION_RECURSIVE_CONCATENATION) {
-            return concatenateRecursively(0, count);
-        } else if (insertionOption == InsertionOption.DELAYED_INSERTION_SEQUENTIAL_CONCATENATION) {
-            Node rv = concatenationNodes[0];
-            for (int i = 1; i < count; ++i) {
-                rv = concatenate(rv, concatenationNodes[i]);
-            }
-            return rv;
-        } else {
-            throw new AssertionError("concatenateAll called with insertion option " + insertionOption);
-        }
-    }
-
-    private Node mergeHelperNoDelayed(Node main, Node other) {
+    private static Node mergeHelperDelayed(Node main, Node other) {
         Node rv = null;
         double[] mainPoint = main.point;
         int maxObj = mainPoint.length - 1;
+        Node concat = null;
         for (Node prev = null, curr = other; curr != null; ) {
             if (DominanceHelper.strictlyDominatesAssumingLexicographicallySmaller(mainPoint, curr.point, maxObj)) {
                 Node deleted = curr;
                 curr = curr.next;
                 deleted.next = null;
-                main.child = merge(main.child, deleted);
+                concat = concatenate(concat, deleted);
                 if (prev != null) {
                     prev.next = curr;
                 }
@@ -112,48 +80,11 @@ public class Presort extends AbstractDominanceTree {
                 rv = prev;
             }
         }
+        main.child = mergeImpl(main.child, concat);
         return rv;
     }
 
-    private Node mergeHelperDelayed(Node main, Node other) {
-        Node rv = null;
-        int concatCount = 0;
-        double[] mainPoint = main.point;
-        int maxObj = mainPoint.length - 1;
-        for (Node prev = null, curr = other; curr != null; ) {
-            if (DominanceHelper.strictlyDominatesAssumingLexicographicallySmaller(mainPoint, curr.point, maxObj)) {
-                Node deleted = curr;
-                curr = curr.next;
-                deleted.next = null;
-                concatenationNodes[concatCount] = deleted;
-                ++concatCount;
-                if (prev != null) {
-                    prev.next = curr;
-                }
-            } else {
-                prev = curr;
-                curr = curr.next;
-            }
-            if (prev != null && rv == null) {
-                rv = prev;
-            }
-        }
-        if (concatCount > 0) {
-            main.child = merge(main.child, concatenateAll(concatCount));
-        }
-        return rv;
-    }
-
-    private Node mergeHelper(Node main, Node other) {
-        if (insertionOption == InsertionOption.NO_DELAYED_INSERTION) {
-            return mergeHelperNoDelayed(main, other);
-        } else {
-            return mergeHelperDelayed(main, other);
-        }
-    }
-
-    @Override
-    protected Node merge(Node a, Node b) {
+    private static Node mergeImpl(Node a, Node b) {
         if (a == null) {
             return b;
         }
@@ -164,7 +95,7 @@ public class Presort extends AbstractDominanceTree {
         Node rv = null, curr = null;
         while (a != null && b != null) {
             if (a.index < b.index) {
-                b = mergeHelper(a, b);
+                b = mergeHelperDelayed(a, b);
                 Node prevA = a;
                 a = a.next;
                 prevA.next = null;
@@ -173,7 +104,7 @@ public class Presort extends AbstractDominanceTree {
                 }
                 curr = prevA;
             } else if (a.index > b.index) {
-                a = mergeHelper(b, a);
+                a = mergeHelperDelayed(b, a);
                 Node prevB = b;
                 b = b.next;
                 prevB.next = null;
@@ -188,6 +119,11 @@ public class Presort extends AbstractDominanceTree {
         }
         curr.next = a != null ? a : b;
         return rv;
+    }
+
+    @Override
+    protected Node merge(Node a, Node b) {
+        return mergeImpl(a, b);
     }
 
     @Override

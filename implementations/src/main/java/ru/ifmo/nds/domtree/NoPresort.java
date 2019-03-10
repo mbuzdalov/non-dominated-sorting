@@ -12,8 +12,7 @@ public class NoPresort extends AbstractDominanceTree {
         return "Dominance Tree (no presort, " + (useRecursiveMerge ? "recursive merge" : "sequential merge") + ")";
     }
 
-    @Override
-    protected Node merge(Node a, Node b) {
+    private static Node mergeImpl(Node a, Node b) {
         if (a == null) {
             return b;
         }
@@ -36,7 +35,7 @@ public class NoPresort extends AbstractDominanceTree {
                         aPrev.next = aCurr;
                     }
                     aDel.next = null;
-                    bCurr.child = merge(bCurr.child, aDel);
+                    bCurr.child = mergeImpl(bCurr.child, aDel);
                     aRemoved = true;
                     break;
                 } else if (compare < 0) {
@@ -48,7 +47,7 @@ public class NoPresort extends AbstractDominanceTree {
                         bPrev.next = bCurr;
                     }
                     bDel.next = null;
-                    aCurr.child = merge(aCurr.child, bDel);
+                    aCurr.child = mergeImpl(aCurr.child, bDel);
                 } else {
                     bPrev = bCurr;
                     bCurr = bCurr.next;
@@ -65,6 +64,11 @@ public class NoPresort extends AbstractDominanceTree {
             aPrev.next = b;
             return a;
         }
+    }
+
+    @Override
+    protected Node merge(Node a, Node b) {
+        return mergeImpl(a, b);
     }
 
     @Override
