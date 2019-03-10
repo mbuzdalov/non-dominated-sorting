@@ -117,7 +117,7 @@ public final class ArraySorter {
         double prev = Double.NaN;
         for (int i = from, x = -1; i < until; ++i) {
             int ii = indices[i];
-            double curr = original[ii];
+            double curr = scratch[i];
             if (prev != curr) {
                 prev = curr;
                 ++x;
