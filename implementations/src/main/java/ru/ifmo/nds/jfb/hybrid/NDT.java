@@ -36,7 +36,6 @@ public final class NDT extends HybridAlgorithmWrapper {
         private SplitBuilder splitBuilder;
 
         private double[][] points;
-        private double[][] transposedPoints;
         private int[] indices;
         private int[] ranks;
 
@@ -50,7 +49,6 @@ public final class NDT extends HybridAlgorithmWrapper {
             this.ranks = ranks;
             this.indices = indices;
             this.points = points;
-            this.transposedPoints = transposedPoints;
 
             this.threshold3D = threshold3D;
             this.thresholdAll = thresholdAll;
@@ -58,7 +56,7 @@ public final class NDT extends HybridAlgorithmWrapper {
 
             int maximumPoints = indices.length;
             int maximumDimension = transposedPoints.length;
-            this.splitBuilder = new SplitBuilder(maximumPoints);
+            this.splitBuilder = new SplitBuilder(transposedPoints, maximumPoints);
             this.localPoints = new double[maximumPoints][maximumDimension];
         }
 
@@ -79,7 +77,7 @@ public final class NDT extends HybridAlgorithmWrapper {
         @Override
         public int helperAHook(int from, int until, int obj, int maximalMeaningfulRank) {
             int M = obj + 1;
-            Split split = splitBuilder.result(transposedPoints, from, until, indices, M, threshold);
+            Split split = splitBuilder.result(from, until, indices, M, threshold);
 
             for (int i = from; i < until; ++i) {
                 System.arraycopy(points[indices[i]], 0, localPoints[i], 0, M);
@@ -103,7 +101,7 @@ public final class NDT extends HybridAlgorithmWrapper {
         @Override
         public int helperBHook(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj, int tempFrom, int maximalMeaningfulRank) {
             int M = obj + 1;
-            Split split = splitBuilder.result(transposedPoints, goodFrom, goodUntil, indices, M, threshold);
+            Split split = splitBuilder.result(goodFrom, goodUntil, indices, M, threshold);
 
             for (int good = goodFrom; good < goodUntil; ++good) {
                 System.arraycopy(points[indices[good]], 0, localPoints[good], 0, M);

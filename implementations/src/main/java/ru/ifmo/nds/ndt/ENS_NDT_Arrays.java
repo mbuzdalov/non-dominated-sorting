@@ -17,13 +17,13 @@ public class ENS_NDT_Arrays extends NonDominatedSorting {
 
     public ENS_NDT_Arrays(int maximumPoints, int maximumDimension) {
         super(maximumPoints, maximumDimension);
-        this.splitBuilder = new SplitBuilder(maximumPoints);
-        this.ranks = new int[maximumPoints];
-        this.transposedPoints = new double[maximumDimension][];
+        ranks = new int[maximumPoints];
+        transposedPoints = new double[maximumDimension][];
         for (int d = 1; d < maximumDimension; ++d) {
-            this.transposedPoints[d] = new double[maximumPoints];
+            transposedPoints[d] = new double[maximumPoints];
         }
-        this.points = new double[maximumPoints][];
+        splitBuilder = new SplitBuilder(transposedPoints, maximumPoints);
+        points = new double[maximumPoints][];
 
         // We need to have:
         // - N nodes for roots of layers
@@ -31,7 +31,7 @@ public class ENS_NDT_Arrays extends NonDominatedSorting {
         // - N nodes for internal nodes
         // in total 3 * N nodes.
         // We have two cells per node, this is why 6.
-        this.nodeArray = new int[maximumPoints * 6];
+        nodeArray = new int[maximumPoints * 6];
     }
 
     @Override
@@ -143,7 +143,7 @@ public class ENS_NDT_Arrays extends NonDominatedSorting {
             }
         }
 
-        Split split = splitBuilder.result(transposedPoints, newN, dim, 2);
+        Split split = splitBuilder.result(newN, dim, 2);
 
         int maxRank = 1;
         nNodes = newN;

@@ -6,14 +6,15 @@ import ru.ifmo.nds.util.SplitMergeHelper;
 public class SplitBuilder {
     private final double[] medianSwap;
     private final int[] indices;
-    private double[][] transposedPoints;
+    private final double[][] transposedPoints;
     private int threshold;
     private int maxCoordinate;
     private final SplitMergeHelper splitMerge;
     private final Split[] splits;
     private int nSplits;
 
-    public SplitBuilder(int size) {
+    public SplitBuilder(double[][] transposedPoints, int size) {
+        this.transposedPoints = transposedPoints;
         this.medianSwap = new double[size];
         this.indices = new int[size];
         this.splitMerge = new SplitMergeHelper(size);
@@ -55,26 +56,22 @@ public class SplitBuilder {
         }
     }
 
-    public Split result(double[][] transposedPoints, int nPoints, int dimension, int threshold) {
-        this.transposedPoints = transposedPoints;
+    public Split result(int nPoints, int dimension, int threshold) {
         this.threshold = threshold;
         this.maxCoordinate = dimension;
         this.nSplits = 0;
         ArrayHelper.fillIdentity(indices, nPoints);
         Split result = construct(0, nPoints, 1, 0);
-        this.transposedPoints = null;
         this.threshold = -1;
         return result;
     }
 
-    public Split result(double[][] transposedPoints, int from, int until, int[] indices, int dimension, int threshold) {
-        this.transposedPoints = transposedPoints;
+    public Split result(int from, int until, int[] indices, int dimension, int threshold) {
         this.threshold = threshold;
         this.maxCoordinate = dimension;
         this.nSplits = 0;
         System.arraycopy(indices, from, this.indices, from, until - from);
         Split result = construct(from, until, 1, 0);
-        this.transposedPoints = null;
         this.threshold = -1;
         return result;
     }

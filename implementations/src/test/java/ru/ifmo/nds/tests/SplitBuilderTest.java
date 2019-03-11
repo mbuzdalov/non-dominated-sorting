@@ -65,7 +65,7 @@ public class SplitBuilderTest {
             }
         }
 
-        new SplitBuilder(n).result(transposedPoints, newN, dim, 50);
+        new SplitBuilder(transposedPoints, n).result(newN, dim, 50);
     }
 
     @Test

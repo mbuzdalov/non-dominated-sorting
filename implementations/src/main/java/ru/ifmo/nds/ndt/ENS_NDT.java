@@ -17,14 +17,14 @@ public class ENS_NDT extends NonDominatedSorting {
     public ENS_NDT(int maximumPoints, int maximumDimension, int threshold) {
         super(maximumPoints, maximumDimension);
         this.threshold = threshold;
-        this.splitBuilder = new SplitBuilder(maximumPoints);
-        this.levels = new TreeNode[maximumPoints];
-        this.ranks = new int[maximumPoints];
-        this.transposedPoints = new double[maximumDimension][];
+        levels = new TreeNode[maximumPoints];
+        ranks = new int[maximumPoints];
+        transposedPoints = new double[maximumDimension][];
         for (int d = 1; d < maximumDimension; ++d) {
-            this.transposedPoints[d] = new double[maximumPoints];
+            transposedPoints[d] = new double[maximumPoints];
         }
-        this.points = new double[maximumPoints][];
+        splitBuilder = new SplitBuilder(transposedPoints, maximumPoints);
+        points = new double[maximumPoints][];
     }
 
     @Override
@@ -58,7 +58,7 @@ public class ENS_NDT extends NonDominatedSorting {
             }
         }
 
-        Split split = splitBuilder.result(transposedPoints, newN, dim, threshold);
+        Split split = splitBuilder.result(newN, dim, threshold);
 
         int maxRank = 1;
         levels[0] = levels[0].add(this.points[0], split, threshold);
