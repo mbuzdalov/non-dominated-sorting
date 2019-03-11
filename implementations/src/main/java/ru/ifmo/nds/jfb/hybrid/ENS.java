@@ -166,10 +166,11 @@ public final class ENS extends HybridAlgorithmWrapper {
         }
 
         private int helperBSingleRank(int rank, int goodFrom, int goodUntil,
-                                      int weakFrom, int weakUntil, int obj, int maximalMeaningfulRank) {
+                                      int weakFrom, int weakUntil, int obj, int maximalMeaningfulRank, int tempFrom) {
             int minUpdated = weakUntil;
+            int offset = tempFrom - goodFrom;
             for (int good = goodFrom; good < goodUntil; ++good) {
-                exPoints[good] = points[indices[good]];
+                exPoints[offset + good] = points[indices[good]];
             }
             for (int weak = weakFrom, good = goodFrom; weak < weakUntil; ++weak) {
                 int wi = indices[weak];
@@ -177,14 +178,14 @@ public final class ENS extends HybridAlgorithmWrapper {
                     continue;
                 }
                 good = ArrayHelper.findWhereNotSmaller(indices, good, goodUntil, wi);
-                if (checkWhetherDominates(goodFrom, good, points[wi], obj)) {
+                if (checkWhetherDominates(tempFrom, good + offset, points[wi], obj)) {
                     ranks[wi] = rank + 1;
                     if (minUpdated > weak) {
                         minUpdated = weak;
                     }
                 }
             }
-            Arrays.fill(exPoints, goodFrom, goodUntil, null);
+            Arrays.fill(exPoints, tempFrom, tempFrom + goodUntil - goodFrom, null);
             return rank == maximalMeaningfulRank && minUpdated < weakUntil
                     ? JFBBase.kickOutOverflowedRanks(indices, ranks, maximalMeaningfulRank, minUpdated, weakUntil)
                     : weakUntil;
@@ -271,7 +272,7 @@ public final class ENS extends HybridAlgorithmWrapper {
             int minRank = transplantRanksAndCheckWhetherAllAreSame(goodFrom, goodUntil, ranksAndSlicesOffset, sortedIndicesOffset);
             if (minRank != 1) {
                 // "good" has a single front, let's do the simple stuff
-                return helperBSingleRank(-minRank, goodFrom, goodUntil, weakFrom, weakUntil, obj, maximalMeaningfulRank);
+                return helperBSingleRank(-minRank, goodFrom, goodUntil, weakFrom, weakUntil, obj, maximalMeaningfulRank, tempFrom);
             } else {
                 // "good" has multiple fronts (called "slices" here), need to go a more complicated way.
                 ArraySorter.sortIndicesByValues(space, space, sortedIndicesOffset, sortedIndicesOffset + goodSize);
@@ -293,7 +294,7 @@ public final class ENS extends HybridAlgorithmWrapper {
                         minOverflowed = weak;
                     }
                 }
-                Arrays.fill(exPoints, goodFrom, goodUntil, null);
+                Arrays.fill(exPoints, tempFrom, tempFrom + goodUntil - goodFrom, null);
                 return JFBBase.kickOutOverflowedRanks(indices, ranks, maximalMeaningfulRank, minOverflowed, weakUntil);
             }
         }
