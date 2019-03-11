@@ -23,7 +23,7 @@ public class ENS_NDT extends NonDominatedSorting {
         for (int d = 1; d < maximumDimension; ++d) {
             transposedPoints[d] = new double[maximumPoints];
         }
-        splitBuilder = new SplitBuilder(transposedPoints, maximumPoints);
+        splitBuilder = new SplitBuilder(transposedPoints, maximumPoints, threshold);
         points = new double[maximumPoints][];
     }
 
@@ -58,7 +58,7 @@ public class ENS_NDT extends NonDominatedSorting {
             }
         }
 
-        Split split = splitBuilder.result(newN, dim, threshold);
+        Split split = splitBuilder.result(newN, dim);
 
         int maxRank = 1;
         levels[0] = levels[0].add(this.points[0], split, threshold);

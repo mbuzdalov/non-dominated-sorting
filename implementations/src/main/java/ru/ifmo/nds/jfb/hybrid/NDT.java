@@ -19,7 +19,7 @@ public final class NDT extends HybridAlgorithmWrapper {
 
     @Override
     public boolean supportsMultipleThreads() {
-        return false;
+        return true;
     }
 
     @Override
@@ -56,7 +56,7 @@ public final class NDT extends HybridAlgorithmWrapper {
 
             int maximumPoints = indices.length;
             int maximumDimension = transposedPoints.length;
-            this.splitBuilder = new SplitBuilder(transposedPoints, maximumPoints);
+            this.splitBuilder = new SplitBuilder(transposedPoints, maximumPoints, threshold);
             this.localPoints = new double[maximumPoints][maximumDimension];
         }
 
@@ -77,7 +77,7 @@ public final class NDT extends HybridAlgorithmWrapper {
         @Override
         public int helperAHook(int from, int until, int obj, int maximalMeaningfulRank) {
             int M = obj + 1;
-            Split split = splitBuilder.result(from, until, indices, M, threshold);
+            Split split = splitBuilder.result(from, until, indices, M);
 
             for (int i = from; i < until; ++i) {
                 System.arraycopy(points[indices[i]], 0, localPoints[i], 0, M);
@@ -101,7 +101,7 @@ public final class NDT extends HybridAlgorithmWrapper {
         @Override
         public int helperBHook(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj, int tempFrom, int maximalMeaningfulRank) {
             int M = obj + 1;
-            Split split = splitBuilder.result(goodFrom, goodUntil, indices, M, threshold);
+            Split split = splitBuilder.result(goodFrom, goodUntil, indices, M);
 
             for (int good = goodFrom; good < goodUntil; ++good) {
                 System.arraycopy(points[indices[good]], 0, localPoints[good], 0, M);
