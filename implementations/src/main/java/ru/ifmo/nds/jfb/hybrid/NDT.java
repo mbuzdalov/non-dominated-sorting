@@ -34,7 +34,6 @@ public final class NDT extends HybridAlgorithmWrapper {
 
     private static final class Instance extends HybridAlgorithmWrapper.Instance {
         private SplitBuilder splitBuilder;
-        private TreeRankNode tree;
 
         private double[][] points;
         private double[][] transposedPoints;
@@ -60,7 +59,6 @@ public final class NDT extends HybridAlgorithmWrapper {
             int maximumPoints = indices.length;
             int maximumDimension = transposedPoints.length;
             this.splitBuilder = new SplitBuilder(maximumPoints);
-            this.tree = TreeRankNode.EMPTY;
             this.localPoints = new double[maximumPoints][maximumDimension];
         }
 
@@ -88,7 +86,7 @@ public final class NDT extends HybridAlgorithmWrapper {
             }
 
             int minOverflow = until;
-            tree = TreeRankNode.EMPTY;
+            TreeRankNode tree = TreeRankNode.EMPTY;
             for (int i = from; i < until; ++i) {
                 int idx = indices[i];
                 ranks[idx] = tree.evaluateRank(localPoints[i], ranks[idx], split, M);
@@ -99,7 +97,6 @@ public final class NDT extends HybridAlgorithmWrapper {
                     minOverflow = i;
                 }
             }
-            tree = null;
             return JFBBase.kickOutOverflowedRanks(indices, ranks, maximalMeaningfulRank, minOverflow, until);
         }
 
@@ -116,7 +113,7 @@ public final class NDT extends HybridAlgorithmWrapper {
             }
 
             int minOverflow = weakUntil;
-            tree = TreeRankNode.EMPTY;
+            TreeRankNode tree = TreeRankNode.EMPTY;
             for (int good = goodFrom, weak = weakFrom; weak < weakUntil; ++weak) {
                 int wi = indices[weak];
                 int gi;
@@ -129,7 +126,6 @@ public final class NDT extends HybridAlgorithmWrapper {
                     minOverflow = weak;
                 }
             }
-            tree = null;
             return JFBBase.kickOutOverflowedRanks(indices, ranks, maximalMeaningfulRank, minOverflow, weakUntil);
         }
     }

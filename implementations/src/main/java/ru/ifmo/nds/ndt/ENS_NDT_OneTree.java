@@ -20,7 +20,10 @@ public class ENS_NDT_OneTree extends NonDominatedSorting {
         this.splitBuilder = new SplitBuilder(maximumPoints);
         this.tree = TreeRankNode.EMPTY;
         this.ranks = new int[maximumPoints];
-        this.transposedPoints = new double[maximumDimension][maximumPoints];
+        this.transposedPoints = new double[maximumDimension][];
+        for (int d = 1; d < maximumDimension; ++d) {
+            this.transposedPoints[d] = new double[maximumPoints];
+        }
         this.points = new double[maximumPoints][];
     }
 
@@ -50,7 +53,7 @@ public class ENS_NDT_OneTree extends NonDominatedSorting {
 
         tree = TreeRankNode.EMPTY;
         for (int i = 0; i < newN; ++i) {
-            for (int j = 0; j < dim; ++j) {
+            for (int j = 1; j < dim; ++j) {
                 transposedPoints[j][i] = this.points[i][j];
             }
         }
