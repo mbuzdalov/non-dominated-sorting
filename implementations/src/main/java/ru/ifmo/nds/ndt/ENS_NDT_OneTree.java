@@ -8,7 +8,6 @@ import java.util.Arrays;
 
 public class ENS_NDT_OneTree extends NonDominatedSorting {
     private SplitBuilder splitBuilder;
-    private TreeRankNode tree;
     private int[] ranks;
     private double[][] transposedPoints;
     private double[][] points;
@@ -17,7 +16,6 @@ public class ENS_NDT_OneTree extends NonDominatedSorting {
     public ENS_NDT_OneTree(int maximumPoints, int maximumDimension, int threshold) {
         super(maximumPoints, maximumDimension);
         this.threshold = threshold;
-        tree = TreeRankNode.EMPTY;
         ranks = new int[maximumPoints];
         transposedPoints = new double[maximumDimension][];
         for (int d = 1; d < maximumDimension; ++d) {
@@ -35,7 +33,6 @@ public class ENS_NDT_OneTree extends NonDominatedSorting {
     @Override
     protected void closeImpl() {
         splitBuilder = null;
-        tree = null;
         ranks = null;
         transposedPoints = null;
         points = null;
@@ -51,7 +48,7 @@ public class ENS_NDT_OneTree extends NonDominatedSorting {
         int newN = ArraySorter.retainUniquePoints(points, indices, this.points, ranks);
         Arrays.fill(this.ranks, 0, newN, 0);
 
-        tree = TreeRankNode.EMPTY;
+        TreeRankNode tree = TreeRankNode.EMPTY;
         for (int i = 0; i < newN; ++i) {
             for (int j = 1; j < dim; ++j) {
                 transposedPoints[j][i] = this.points[i][j];

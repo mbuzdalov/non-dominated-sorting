@@ -46,11 +46,11 @@ public abstract class TreeRankNode {
                 if (points == null) {
                     points = new double[1][];
                     ranks = new int[1];
-                    size = 1;
                 }
                 points[0] = point;
                 maxRank = Math.max(maxRank, rank);
                 ranks[0] = maxRank;
+                size = 1;
                 return this;
             }
 
@@ -60,22 +60,29 @@ public abstract class TreeRankNode {
             }
 
             if (size == points.length) {
-                TerminalRankNode weak = new TerminalRankNode();
                 TerminalRankNode good = new TerminalRankNode();
-                // actually, nulls are perfect here,
-                // but we will not hurt the hearts of those who suffered from NPE
                 Split weakSplit = split.weak, goodSplit = split.good;
                 int obj = split.coordinate;
                 double median = split.value;
-                for (int i = 0; i < size; ++i) {
-                    if (points[i][obj] < median) {
-                        good.add(points[i], ranks[i], goodSplit, splitThreshold);
+                int oldSize = size;
+                maxRank = 0;
+                size = 0;
+                for (int i = 0; i < oldSize; ++i) {
+                    double[] pi = points[i];
+                    int ri = ranks[i];
+                    points[i] = null;
+                    if (pi[obj] < median) {
+                        good.add(pi, ri, goodSplit, splitThreshold);
                     } else {
-                        weak.add(points[i], ranks[i], weakSplit, splitThreshold);
+                        points[size] = pi;
+                        ranks[size] = ri;
+                        maxRank = Math.max(maxRank, ri);
+                        if (size == 0 || weakSplit != Split.NULL_MAX_DEPTH) {
+                            ++size;
+                        }
                     }
                 }
-                TreeRankNode rv = new BranchingRankNode(good, weak);
-                return rv.add(point, rank, split, splitThreshold);
+                return new BranchingRankNode(good, this).add(point, rank, split, splitThreshold);
             } else {
                 for (int i = size; i >= 0; --i) {
                     if (i == 0 || ranks[i - 1] <= rank) {

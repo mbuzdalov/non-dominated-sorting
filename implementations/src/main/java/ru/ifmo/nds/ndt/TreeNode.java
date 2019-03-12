@@ -35,22 +35,22 @@ public abstract class TreeNode {
                 points = new double[splitThreshold][];
             }
             if (size == points.length) {
-                TerminalNode weak = new TerminalNode();
                 TerminalNode good = new TerminalNode();
-                // actually, nulls are perfect here,
-                // but we will not hurt the hearts of those who suffered from NPE
-                Split weakSplit = split.weak, goodSplit = split.good;
+                Split goodSplit = split.good;
                 int obj = split.coordinate;
                 double median = split.value;
-                for (int i = 0; i < size; ++i) {
-                    if (points[i][obj] < median) {
-                        good.add(points[i], goodSplit, splitThreshold);
+                int oldSize = size;
+                size = 0;
+                for (int i = 0; i < oldSize; ++i) {
+                    double[] pi = points[i];
+                    if (pi[obj] < median) {
+                        good.add(pi, goodSplit, splitThreshold);
                     } else {
-                        weak.add(points[i], weakSplit, splitThreshold);
+                        points[size] = pi;
+                        ++size;
                     }
                 }
-                TreeNode rv = new BranchingNode(good, weak);
-                return rv.add(point, split, splitThreshold);
+                return new BranchingNode(good, this).add(point, split, splitThreshold);
             } else {
                 points[size++] = point;
                 return this;
