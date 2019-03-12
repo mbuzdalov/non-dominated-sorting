@@ -5,6 +5,7 @@ import java.util.Arrays;
 import ru.ifmo.nds.NonDominatedSorting;
 import ru.ifmo.nds.util.ArrayHelper;
 import ru.ifmo.nds.util.ArraySorter;
+import ru.ifmo.nds.util.DominanceHelper;
 
 public class ENS_NDT_Arrays extends NonDominatedSorting {
     private SplitBuilder splitBuilder;
@@ -102,17 +103,6 @@ public class ENS_NDT_Arrays extends NonDominatedSorting {
         }
     }
 
-    private boolean dominates(int good, double[] weakPoint) {
-        double[] goodPoint = points[good];
-        // objective 0 is not compared since points are presorted.
-        for (int o = weakPoint.length - 1; o > 0; --o) {
-            if (goodPoint[o] > weakPoint[o]) {
-                return false;
-            }
-        }
-        return true;
-    }
-
     private boolean dominates(int node, double[] point, Split split) {
         int v1 = nodeArray[node];
         int v2 = nodeArray[node + 1];
@@ -122,7 +112,10 @@ public class ENS_NDT_Arrays extends NonDominatedSorting {
                     point[split.coordinate] >= split.value && dominates(-v2 - 1, point, split.weak);
         } else {
             // Terminal node
-            return v1 > 0 && (dominates(v1 - 1, point) || v2 > 0 && dominates(v2 - 1, point));
+            if (v1 == 0) return false;
+            int maxObj = point.length - 1;
+            if (DominanceHelper.strictlyDominatesAssumingLexicographicallySmaller(points[v1 - 1], point, maxObj)) return true;
+            return v2 > 0 && DominanceHelper.strictlyDominatesAssumingLexicographicallySmaller(points[v2 - 1], point, maxObj);
         }
     }
 
