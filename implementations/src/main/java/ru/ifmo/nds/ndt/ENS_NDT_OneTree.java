@@ -48,7 +48,7 @@ public class ENS_NDT_OneTree extends NonDominatedSorting {
         int newN = ArraySorter.retainUniquePoints(points, indices, this.points, ranks);
         Arrays.fill(this.ranks, 0, newN, 0);
 
-        TreeRankNode tree = TreeRankNode.EMPTY;
+        TreeRankNode tree = threshold == 1 ? TreeRankNode.EMPTY_1 : TreeRankNode.EMPTY;
         for (int i = 0; i < newN; ++i) {
             for (int j = 1; j < dim; ++j) {
                 transposedPoints[j][i] = this.points[i][j];

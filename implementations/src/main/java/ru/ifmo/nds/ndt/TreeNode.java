@@ -7,11 +7,24 @@ public abstract class TreeNode {
     public abstract boolean dominates(double[] point, Split split);
 
     static final TreeNode EMPTY = new EmptyNode();
+    static final TreeNode EMPTY_1 = new EmptyNode1();
 
     private static class EmptyNode extends TreeNode {
         @Override
         public TreeNode add(double[] point, Split split, int splitThreshold) {
             return new TerminalNode().add(point, split, splitThreshold);
+        }
+
+        @Override
+        public boolean dominates(double[] point, Split split) {
+            return false;
+        }
+    }
+
+    private static class EmptyNode1 extends TreeNode {
+        @Override
+        public TreeNode add(double[] point, Split split, int splitThreshold) {
+            return new TerminalNode1().add(point, split, splitThreshold);
         }
 
         @Override
@@ -66,6 +79,38 @@ public abstract class TreeNode {
                 }
             }
             return false;
+        }
+    }
+
+    private static class TerminalNode1 extends TreeNode {
+        private double[] point;
+
+        private TerminalNode1() {
+            this.point = null;
+        }
+
+        @Override
+        public TreeNode add(double[] point, Split split, int splitThreshold) {
+            if (this.point != null) {
+                TerminalNode1 good = new TerminalNode1();
+                Split goodSplit = split.good;
+                int obj = split.coordinate;
+                double median = split.value;
+                if (this.point[obj] < median) {
+                    good.add(this.point, goodSplit, splitThreshold);
+                    this.point = null;
+                }
+                return new BranchingNode(good, this).add(point, split, splitThreshold);
+            } else {
+                this.point = point;
+                return this;
+            }
+        }
+
+        @Override
+        public boolean dominates(double[] point, Split split) {
+            return this.point != null &&
+                    DominanceHelper.strictlyDominatesAssumingLexicographicallySmaller(this.point, point, point.length - 1);
         }
     }
 

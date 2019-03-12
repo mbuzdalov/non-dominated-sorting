@@ -10,11 +10,29 @@ public abstract class TreeRankNode {
     protected abstract int getMaxRank();
 
     public static final TreeRankNode EMPTY = new EmptyRankNode();
+    public static final TreeRankNode EMPTY_1 = new EmptyRankNode1();
 
     private static class EmptyRankNode extends TreeRankNode {
         @Override
         public TreeRankNode add(double[] point, int rank, Split split, int splitThreshold) {
             return new TerminalRankNode().add(point, rank, split, splitThreshold);
+        }
+
+        @Override
+        public int evaluateRank(double[] point, int rank, Split split, int maxObj) {
+            return rank;
+        }
+
+        @Override
+        protected int getMaxRank() {
+            return -1;
+        }
+    }
+
+    private static class EmptyRankNode1 extends TreeRankNode {
+        @Override
+        public TreeRankNode add(double[] point, int rank, Split split, int splitThreshold) {
+            return new TerminalRankNode1().add(point, rank, split, splitThreshold);
         }
 
         @Override
@@ -120,6 +138,55 @@ public abstract class TreeRankNode {
         @Override
         protected int getMaxRank() {
             return maxRank;
+        }
+    }
+
+    private static class TerminalRankNode1 extends TreeRankNode {
+        private double[] point;
+        private int rank;
+
+        private TerminalRankNode1() {
+            this.point = null;
+            this.rank = -1;
+        }
+
+        @Override
+        public TreeRankNode add(double[] point, int rank, Split split, int splitThreshold) {
+            if (split == Split.NULL_MAX_DEPTH) {
+                this.point = point;
+                this.rank = Math.max(this.rank, rank);
+                return this;
+            }
+
+            if (this.point != null) {
+                TerminalRankNode1 good = new TerminalRankNode1();
+                Split goodSplit = split.good;
+                int obj = split.coordinate;
+                double median = split.value;
+                if (this.point[obj] < median) {
+                    good.add(this.point, this.rank, goodSplit, splitThreshold);
+                    this.point = null;
+                    this.rank = -1;
+                }
+                return new BranchingRankNode(good, this).add(point, rank, split, splitThreshold);
+            } else {
+                this.point = point;
+                this.rank = rank;
+                return this;
+            }
+        }
+
+        @Override
+        public int evaluateRank(double[] point, int rank, Split split, int maxObj) {
+            if (this.rank >= rank && DominanceHelper.strictlyDominatesAssumingLexicographicallySmaller(this.point, point, maxObj)) {
+                return this.rank + 1;
+            }
+            return rank;
+        }
+
+        @Override
+        protected int getMaxRank() {
+            return rank;
         }
     }
 

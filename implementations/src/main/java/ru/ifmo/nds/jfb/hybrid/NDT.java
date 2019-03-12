@@ -84,7 +84,7 @@ public final class NDT extends HybridAlgorithmWrapper {
             }
 
             int minOverflow = until;
-            TreeRankNode tree = TreeRankNode.EMPTY;
+            TreeRankNode tree = threshold == 1 ? TreeRankNode.EMPTY_1 : TreeRankNode.EMPTY;
             for (int i = from; i < until; ++i) {
                 int idx = indices[i];
                 ranks[idx] = tree.evaluateRank(localPoints[i], ranks[idx], split, obj);
@@ -111,7 +111,7 @@ public final class NDT extends HybridAlgorithmWrapper {
             }
 
             int minOverflow = weakUntil;
-            TreeRankNode tree = TreeRankNode.EMPTY;
+            TreeRankNode tree = threshold == 1 ? TreeRankNode.EMPTY_1 : TreeRankNode.EMPTY;
             for (int good = goodFrom, weak = weakFrom; weak < weakUntil; ++weak) {
                 int wi = indices[weak];
                 int gi;
