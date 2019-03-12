@@ -6,7 +6,7 @@ public abstract class TreeNode {
     public abstract TreeNode add(double[] point, Split split, int splitThreshold);
     public abstract boolean dominates(double[] point, Split split);
 
-    public static final TreeNode EMPTY = new EmptyNode();
+    static final TreeNode EMPTY = new EmptyNode();
 
     private static class EmptyNode extends TreeNode {
         @Override
@@ -61,8 +61,7 @@ public abstract class TreeNode {
         public boolean dominates(double[] point, Split split) {
             int maxObj = point.length - 1;
             for (int i = 0; i < size; ++i) {
-                double[] current = points[i];
-                if (DominanceHelper.strictlyDominatesAssumingLexicographicallySmaller(current, point, maxObj)) {
+                if (DominanceHelper.strictlyDominatesAssumingLexicographicallySmaller(points[i], point, maxObj)) {
                     return true;
                 }
             }

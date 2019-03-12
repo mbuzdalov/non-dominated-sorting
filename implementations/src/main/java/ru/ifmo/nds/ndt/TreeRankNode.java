@@ -1,9 +1,11 @@
 package ru.ifmo.nds.ndt;
 
+import ru.ifmo.nds.util.DominanceHelper;
+
 public abstract class TreeRankNode {
     public abstract TreeRankNode add(double[] point, int rank, Split split, int splitThreshold);
 
-    public abstract int evaluateRank(double[] point, int rank, Split split, int M);
+    public abstract int evaluateRank(double[] point, int rank, Split split, int maxObj);
 
     protected abstract int getMaxRank();
 
@@ -16,12 +18,12 @@ public abstract class TreeRankNode {
         }
 
         @Override
-        public int evaluateRank(double[] point, int rank, Split split, int M) {
+        public int evaluateRank(double[] point, int rank, Split split, int maxObj) {
             return rank;
         }
 
         @Override
-        public int getMaxRank() {
+        protected int getMaxRank() {
             return -1;
         }
     }
@@ -75,8 +77,7 @@ public abstract class TreeRankNode {
                 TreeRankNode rv = new BranchingRankNode(good, weak);
                 return rv.add(point, rank, split, splitThreshold);
             } else {
-                size++;
-                for (int i = size - 1; i >= 0; --i) {
+                for (int i = size; i >= 0; --i) {
                     if (i == 0 || ranks[i - 1] <= rank) {
                         points[i] = point;
                         ranks[i] = rank;
@@ -86,6 +87,7 @@ public abstract class TreeRankNode {
                         ranks[i] = ranks[i - 1];
                     }
                 }
+                ++size;
                 maxRank = Math.max(maxRank, rank);
 
                 return this;
@@ -93,25 +95,15 @@ public abstract class TreeRankNode {
         }
 
         @Override
-        public int evaluateRank(double[] point, int rank, Split split, int M) {
+        public int evaluateRank(double[] point, int rank, Split split, int maxObj) {
             if (maxRank < rank) {
                 return rank;
             }
-
             for (int i = size - 1; i >= 0; --i) {
-                double[] current = points[i];
                 if (ranks[i] < rank) {
                     return rank;
                 }
-                boolean dominates = true;
-                // objective 0 is not compared since points are presorted.
-                for (int o = M - 1; o > 0; --o) {
-                    if (current[o] > point[o]) {
-                        dominates = false;
-                        break;
-                    }
-                }
-                if (dominates) {
+                if (DominanceHelper.strictlyDominatesAssumingLexicographicallySmaller(points[i], point, maxObj)) {
                     return ranks[i] + 1;
                 }
             }
@@ -146,15 +138,15 @@ public abstract class TreeRankNode {
         }
 
         @Override
-        public int evaluateRank(double[] point, int rank, Split split, int M) {
+        public int evaluateRank(double[] point, int rank, Split split, int maxObj) {
             if (maxRank < rank) {
                 return rank;
             }
             if (weak != null && point[split.coordinate] >= split.value) {
-                rank = weak.evaluateRank(point, rank, split.weak, M);
+                rank = weak.evaluateRank(point, rank, split.weak, maxObj);
             }
             if (good != null) {
-                rank = good.evaluateRank(point, rank, split.good, M);
+                rank = good.evaluateRank(point, rank, split.good, maxObj);
             }
             return rank;
         }
