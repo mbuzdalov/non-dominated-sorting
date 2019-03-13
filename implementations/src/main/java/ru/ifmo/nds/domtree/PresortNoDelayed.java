@@ -64,9 +64,8 @@ public final class PresortNoDelayed extends NonDominatedSorting {
         if (a == null) {
             return b;
         }
-        if (b == null) {
-            return a;
-        }
+
+        assert b != null;
 
         Node rv = null, curr = null;
         while (a != null && b != null) {

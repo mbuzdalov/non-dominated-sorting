@@ -23,34 +23,27 @@ class Node implements Comparable<Node> {
         return DominanceHelper.strictlyDominatesAssumingLexicographicallySmaller(point, other.point, point.length - 1);
     }
 
+    // assumes b != null && b.next == null
     static Node concatenate(Node a, Node b) {
         if (a == null) {
             return b;
         }
-        if (b == null) {
-            return a;
+        int bIndex = b.index;
+        if (a.index > bIndex) {
+            b.next = a;
+            return b;
         }
-        if (a.index > b.index) {
-            Node tmp = a;
-            a = b;
-            b = tmp;
-        }
-        Node rv = a;
-        Node curr = rv;
-        a = a.next;
-        while (a != null && b != null) {
-            if (a.index < b.index) {
-                curr.next = a;
-                curr = a;
-                a = a.next;
-            } else {
-                curr.next = b;
-                curr = b;
-                b = b.next;
+        Node prev = a, next = a.next;
+        while (next != null) {
+            if (next.index > bIndex) {
+                b.next = next;
+                break;
             }
+            prev = next;
+            next = next.next;
         }
-        curr.next = a != null ? a : b;
-        return rv;
+        prev.next = b;
+        return a;
     }
 
     @Override

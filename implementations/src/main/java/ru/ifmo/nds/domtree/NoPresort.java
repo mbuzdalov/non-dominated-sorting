@@ -33,9 +33,9 @@ public final class NoPresort extends NonDominatedSorting {
         if (a == null) {
             return b;
         }
-        if (b == null) {
-            return a;
-        }
+
+        assert b != null;
+
         Node aPrev = null;
         for (Node aCurr = a; aCurr != null; ) {
             double[] aPoint = aCurr.point;
