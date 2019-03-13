@@ -1,0 +1,19 @@
+package ru.ifmo.nds.domtree;
+
+class Node {
+    double[] point;
+    Node next, child;
+    final int index;
+
+    Node(int index) {
+        this.index = index;
+        this.next = null;
+        this.child = null;
+    }
+
+    void initialize(double[] point) {
+        this.point = point;
+        this.next = null;
+        this.child = null;
+    }
+}
