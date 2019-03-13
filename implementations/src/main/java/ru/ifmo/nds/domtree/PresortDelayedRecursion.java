@@ -1,5 +1,7 @@
 package ru.ifmo.nds.domtree;
 
+import java.util.Arrays;
+
 import ru.ifmo.nds.NonDominatedSorting;
 import ru.ifmo.nds.util.ArrayHelper;
 import ru.ifmo.nds.util.ArraySorter;
@@ -42,43 +44,12 @@ public final class PresortDelayedRecursion extends NonDominatedSorting {
                 + "delayed insertion with recursive concatenation)";
     }
 
-    private static Node concatenate(Node a, Node b) {
-        if (a == null) {
-            return b;
+    private static Node concatenateRecursively(Node[] array, int until) {
+        Arrays.sort(array, 0, until);
+        for (int i = until - 2; i >= 0; --i) {
+            array[i].next = array[i + 1];
         }
-        if (b == null) {
-            return a;
-        }
-        if (a.index > b.index) {
-            Node tmp = a;
-            a = b;
-            b = tmp;
-        }
-        Node rv = a;
-        Node curr = rv;
-        a = a.next;
-        while (a != null && b != null) {
-            if (a.index < b.index) {
-                curr.next = a;
-                curr = a;
-                a = a.next;
-            } else {
-                curr.next = b;
-                curr = b;
-                b = b.next;
-            }
-        }
-        curr.next = a != null ? a : b;
-        return rv;
-    }
-
-    private static Node concatenateRecursively(Node[] array, int from, int until) {
-        if (from + 1 == until) {
-            return array[from];
-        } else {
-            int mid = (from + until) >>> 1;
-            return concatenate(concatenateRecursively(array, from, mid), concatenateRecursively(array, mid, until));
-        }
+        return array[0];
     }
 
     private static Node mergeHelperDelayed(Node main, Node other, Node[] tmp) {
@@ -86,26 +57,26 @@ public final class PresortDelayedRecursion extends NonDominatedSorting {
         int concatCount = 0;
         double[] mainPoint = main.point;
         int maxObj = mainPoint.length - 1;
-        for (Node prev = null, curr = other; curr != null; ) {
-            if (DominanceHelper.strictlyDominatesAssumingLexicographicallySmaller(mainPoint, curr.point, maxObj)) {
-                Node deleted = curr;
-                curr = curr.next;
+        for (Node prev = null; other != null; ) {
+            if (DominanceHelper.strictlyDominatesAssumingLexicographicallySmaller(mainPoint, other.point, maxObj)) {
+                Node deleted = other;
+                other = other.next;
                 deleted.next = null;
                 tmp[concatCount] = deleted;
                 ++concatCount;
                 if (prev != null) {
-                    prev.next = curr;
+                    prev.next = other;
                 }
             } else {
-                prev = curr;
-                curr = curr.next;
+                prev = other;
+                other = other.next;
             }
             if (prev != null && rv == null) {
                 rv = prev;
             }
         }
         if (concatCount > 0) {
-            main.child = merge(main.child, concatenateRecursively(tmp, 0, concatCount), tmp);
+            main.child = merge(main.child, concatenateRecursively(tmp, concatCount), tmp);
         }
         return rv;
     }

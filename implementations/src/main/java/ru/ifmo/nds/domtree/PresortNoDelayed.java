@@ -3,7 +3,6 @@ package ru.ifmo.nds.domtree;
 import ru.ifmo.nds.NonDominatedSorting;
 import ru.ifmo.nds.util.ArrayHelper;
 import ru.ifmo.nds.util.ArraySorter;
-import ru.ifmo.nds.util.DominanceHelper;
 
 public final class PresortNoDelayed extends NonDominatedSorting {
     private Node[] nodes;
@@ -41,20 +40,18 @@ public final class PresortNoDelayed extends NonDominatedSorting {
 
     private static Node mergeHelperNoDelayed(Node main, Node other) {
         Node rv = null;
-        double[] mainPoint = main.point;
-        int maxObj = mainPoint.length - 1;
-        for (Node prev = null, curr = other; curr != null; ) {
-            if (DominanceHelper.strictlyDominatesAssumingLexicographicallySmaller(mainPoint, curr.point, maxObj)) {
-                Node deleted = curr;
-                curr = curr.next;
+        for (Node prev = null; other != null; ) {
+            if (main.strictlyDominatesAssumingLexicographicallySmaller(other)) {
+                Node deleted = other;
+                other = other.next;
                 deleted.next = null;
                 main.child = merge(main.child, deleted);
                 if (prev != null) {
-                    prev.next = curr;
+                    prev.next = other;
                 }
             } else {
-                prev = curr;
-                curr = curr.next;
+                prev = other;
+                other = other.next;
             }
             if (prev != null && rv == null) {
                 rv = prev;

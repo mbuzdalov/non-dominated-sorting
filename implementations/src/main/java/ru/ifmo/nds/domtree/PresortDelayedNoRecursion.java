@@ -39,53 +39,23 @@ public final class PresortDelayedNoRecursion extends NonDominatedSorting {
                 + "delayed insertion with sequential concatenation)";
     }
 
-    private static Node concatenate(Node a, Node b) {
-        if (a == null) {
-            return b;
-        }
-        if (b == null) {
-            return a;
-        }
-        if (a.index > b.index) {
-            Node tmp = a;
-            a = b;
-            b = tmp;
-        }
-        Node rv = a;
-        Node curr = rv;
-        a = a.next;
-        while (a != null && b != null) {
-            if (a.index < b.index) {
-                curr.next = a;
-                curr = a;
-                a = a.next;
-            } else {
-                curr.next = b;
-                curr = b;
-                b = b.next;
-            }
-        }
-        curr.next = a != null ? a : b;
-        return rv;
-    }
-
     private static Node mergeHelperDelayed(Node main, Node other) {
         Node rv = null;
+        Node concat = null;
         double[] mainPoint = main.point;
         int maxObj = mainPoint.length - 1;
-        Node concat = null;
-        for (Node prev = null, curr = other; curr != null; ) {
-            if (DominanceHelper.strictlyDominatesAssumingLexicographicallySmaller(mainPoint, curr.point, maxObj)) {
-                Node deleted = curr;
-                curr = curr.next;
+        for (Node prev = null; other != null; ) {
+            if (DominanceHelper.strictlyDominatesAssumingLexicographicallySmaller(mainPoint, other.point, maxObj)) {
+                Node deleted = other;
+                other = other.next;
                 deleted.next = null;
-                concat = concatenate(concat, deleted);
+                concat = Node.concatenate(concat, deleted);
                 if (prev != null) {
-                    prev.next = curr;
+                    prev.next = other;
                 }
             } else {
-                prev = curr;
-                curr = curr.next;
+                prev = other;
+                other = other.next;
             }
             if (prev != null && rv == null) {
                 rv = prev;
