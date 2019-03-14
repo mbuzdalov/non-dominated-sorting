@@ -54,18 +54,13 @@ public final class IdCollection {
                     "dominance.tree.nopresort." + mergeString,
                     DominanceTree.getNoPresortInsertion(isMergeRecursive)
             );
-            addNonDominatedSortingFactory(
-                    "dominance.tree.presort." + mergeString + ".nodelayed",
-                    DominanceTree.getPresortInsertion(isMergeRecursive, DominanceTree.InsertionOption.NO_DELAYED_INSERTION)
-            );
-            addNonDominatedSortingFactory(
-                    "dominance.tree.presort." + mergeString + ".delayed.recconcat",
-                    DominanceTree.getPresortInsertion(isMergeRecursive, DominanceTree.InsertionOption.DELAYED_INSERTION_RECURSIVE_CONCATENATION)
-            );
-            addNonDominatedSortingFactory(
-                    "dominance.tree.presort." + mergeString + ".delayed.seqconcat",
-                    DominanceTree.getPresortInsertion(isMergeRecursive, DominanceTree.InsertionOption.DELAYED_INSERTION_SEQUENTIAL_CONCATENATION)
-            );
+            for (boolean useDelayedInsertion: new boolean[] { false, true }) {
+                String delayedString = isMergeRecursive ? ".nodelayed" : ".delayed";
+                addNonDominatedSortingFactory(
+                        "dominance.tree.presort." + mergeString + delayedString,
+                        DominanceTree.getPresortInsertion(isMergeRecursive, useDelayedInsertion)
+                );
+            }
         }
 
         addNonDominatedSortingFactory("ens.bs", ENS.getENS_BS());
