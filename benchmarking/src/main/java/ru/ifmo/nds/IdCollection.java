@@ -55,7 +55,7 @@ public final class IdCollection {
                     DominanceTree.getNoPresortInsertion(isMergeRecursive)
             );
             for (boolean useDelayedInsertion: new boolean[] { false, true }) {
-                String delayedString = isMergeRecursive ? ".nodelayed" : ".delayed";
+                String delayedString = useDelayedInsertion ? ".nodelayed" : ".delayed";
                 addNonDominatedSortingFactory(
                         "dominance.tree.presort." + mergeString + delayedString,
                         DominanceTree.getPresortInsertion(isMergeRecursive, useDelayedInsertion)

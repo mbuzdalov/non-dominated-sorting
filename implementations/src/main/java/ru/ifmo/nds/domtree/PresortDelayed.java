@@ -36,7 +36,7 @@ public final class PresortDelayed extends NonDominatedSorting {
     public String getName() {
         return "Dominance Tree (presort, "
                 + (useRecursiveMerge ? "recursive merge, " : "sequential merge, ")
-                + "delayed insertion with recursive concatenation)";
+                + "delayed insertion)";
     }
 
     private static Node mergeHelperDelayed(Node main, Node other) {
