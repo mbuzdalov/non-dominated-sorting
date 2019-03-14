@@ -1,7 +1,6 @@
 package ru.ifmo.nds.domtree;
 
 import ru.ifmo.nds.NonDominatedSorting;
-import ru.ifmo.nds.util.DominanceHelper;
 
 public final class NoPresort extends NonDominatedSorting {
     private Node[] nodes;
@@ -38,11 +37,9 @@ public final class NoPresort extends NonDominatedSorting {
 
         Node aPrev = null;
         for (Node aCurr = a; aCurr != null; ) {
-            double[] aPoint = aCurr.point;
-            int aLength = aPoint.length;
             boolean aRemoved = false;
             for (Node bPrev = null, bCurr = b; bCurr != null; ) {
-                int compare = DominanceHelper.dominanceComparison(aPoint, bCurr.point, aLength);
+                int compare = aCurr.dominanceComparison(bCurr);
                 if (compare > 0) {
                     Node aDel = aCurr;
                     aCurr = aCurr.next;

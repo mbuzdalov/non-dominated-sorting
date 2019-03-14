@@ -23,6 +23,10 @@ class Node implements Comparable<Node> {
         return DominanceHelper.strictlyDominatesAssumingLexicographicallySmaller(point, other.point, point.length - 1);
     }
 
+    int dominanceComparison(Node other) {
+        return DominanceHelper.dominanceComparison(point, other.point, point.length);
+    }
+
     // assumes b != null && b.next == null
     static Node concatenate(Node a, Node b) {
         if (a == null) {

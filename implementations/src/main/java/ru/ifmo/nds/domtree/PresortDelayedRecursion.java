@@ -1,7 +1,5 @@
 package ru.ifmo.nds.domtree;
 
-import java.util.Arrays;
-
 import ru.ifmo.nds.NonDominatedSorting;
 import ru.ifmo.nds.util.ArrayHelper;
 import ru.ifmo.nds.util.ArraySorter;
@@ -11,7 +9,6 @@ public final class PresortDelayedRecursion extends NonDominatedSorting {
     private Node[] nodes;
     private Node[] rankMergeArray;
     private final boolean useRecursiveMerge;
-    private Node[] concatenationNodes;
     private double[][] points;
     private int[] ranks;
 
@@ -23,7 +20,6 @@ public final class PresortDelayedRecursion extends NonDominatedSorting {
         for (int i = 0; i < maximumPoints; ++i) {
             nodes[i] = new Node(i);
         }
-        concatenationNodes = new Node[maximumPoints];
         points = new double[maximumPoints][];
         ranks = new int[maximumPoints];
     }
@@ -34,7 +30,6 @@ public final class PresortDelayedRecursion extends NonDominatedSorting {
         rankMergeArray = null;
         points = null;
         ranks = null;
-        concatenationNodes = null;
     }
 
     @Override
@@ -44,26 +39,22 @@ public final class PresortDelayedRecursion extends NonDominatedSorting {
                 + "delayed insertion with recursive concatenation)";
     }
 
-    private static Node concatenateRecursively(Node[] array, int until) {
-        Arrays.sort(array, 0, until);
-        for (int i = until - 2; i >= 0; --i) {
-            array[i].next = array[i + 1];
-        }
-        return array[0];
-    }
-
-    private static Node mergeHelperDelayed(Node main, Node other, Node[] tmp) {
+    private static Node mergeHelperDelayed(Node main, Node other) {
         Node rv = null;
-        int concatCount = 0;
+        Node concatHead = null, concatTail = null;
         double[] mainPoint = main.point;
         int maxObj = mainPoint.length - 1;
         for (Node prev = null; other != null; ) {
             if (DominanceHelper.strictlyDominatesAssumingLexicographicallySmaller(mainPoint, other.point, maxObj)) {
-                Node deleted = other;
+                if (concatTail != null) {
+                    concatTail.next = other;
+                } else {
+                    concatHead = other;
+                }
+                concatTail = other;
                 other = other.next;
-                deleted.next = null;
-                tmp[concatCount] = deleted;
-                ++concatCount;
+                concatTail.next = null;
+
                 if (prev != null) {
                     prev.next = other;
                 }
@@ -75,13 +66,13 @@ public final class PresortDelayedRecursion extends NonDominatedSorting {
                 rv = prev;
             }
         }
-        if (concatCount > 0) {
-            main.child = merge(main.child, concatenateRecursively(tmp, concatCount), tmp);
+        if (concatHead != null) {
+            main.child = merge(main.child, concatHead);
         }
         return rv;
     }
 
-    private static Node merge(Node a, Node b, Node[] tmp) {
+    private static Node merge(Node a, Node b) {
         if (a == null) {
             return b;
         }
@@ -91,7 +82,7 @@ public final class PresortDelayedRecursion extends NonDominatedSorting {
         Node rv = null, curr = null;
         while (a != null && b != null) {
             if (a.index < b.index) {
-                b = mergeHelperDelayed(a, b, tmp);
+                b = mergeHelperDelayed(a, b);
                 Node prevA = a;
                 a = a.next;
                 prevA.next = null;
@@ -100,7 +91,7 @@ public final class PresortDelayedRecursion extends NonDominatedSorting {
                 }
                 curr = prevA;
             } else {
-                a = mergeHelperDelayed(b, a, tmp);
+                a = mergeHelperDelayed(b, a);
                 Node prevB = b;
                 b = b.next;
                 prevB.next = null;
@@ -127,7 +118,7 @@ public final class PresortDelayedRecursion extends NonDominatedSorting {
             nodes[i].initialize(this.points[i]);
         }
 
-        Node tree = mergeAllRecursively(nodes, concatenationNodes, 0, realN);
+        Node tree = mergeAllRecursively(nodes, 0, realN);
         for (int rank = 0; tree != null; ++rank) {
             int rankMergeCount = rankAndPutChildrenToMergeArray(tree, this.ranks, rank);
             tree = mergeAll(rankMergeArray, rankMergeCount, useRecursiveMerge);
@@ -158,22 +149,22 @@ public final class PresortDelayedRecursion extends NonDominatedSorting {
             return null;
         }
         if (useRecursiveMerge) {
-            return mergeAllRecursively(array, concatenationNodes, 0, size);
+            return mergeAllRecursively(array, 0, size);
         } else {
             Node rv = array[0];
             for (int i = 1; i < size; ++i) {
-                rv = merge(rv, array[i], concatenationNodes);
+                rv = merge(rv, array[i]);
             }
             return rv;
         }
     }
 
-    private static Node mergeAllRecursively(Node[] array, Node[] concat, int from, int until) {
+    private static Node mergeAllRecursively(Node[] array, int from, int until) {
         if (from + 1 == until) {
             return array[from];
         } else {
             int mid = (from + until) >>> 1;
-            return merge(mergeAllRecursively(array, concat, from, mid), mergeAllRecursively(array, concat, mid, until), concat);
+            return merge(mergeAllRecursively(array, from, mid), mergeAllRecursively(array, mid, until));
         }
     }
 }
