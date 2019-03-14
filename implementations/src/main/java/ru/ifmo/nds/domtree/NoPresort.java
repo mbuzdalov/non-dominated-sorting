@@ -1,8 +1,26 @@
 package ru.ifmo.nds.domtree;
 
-public class NoPresort extends AbstractDominanceTree {
+import ru.ifmo.nds.NonDominatedSorting;
+
+public final class NoPresort extends NonDominatedSorting {
+    private Node[] nodes;
+    private Node[] rankMergeArray;
+    private final boolean useRecursiveMerge;
+
     public NoPresort(int maximumPoints, int maximumDimension, boolean useRecursiveMerge) {
-        super(maximumPoints, maximumDimension, useRecursiveMerge);
+        super(maximumPoints, maximumDimension);
+        nodes = new Node[maximumPoints];
+        rankMergeArray = new Node[maximumPoints];
+        this.useRecursiveMerge = useRecursiveMerge;
+        for (int i = 0; i < maximumPoints; ++i) {
+            nodes[i] = new Node(i);
+        }
+    }
+
+    @Override
+    protected void closeImpl() {
+        nodes = null;
+        rankMergeArray = null;
     }
 
     @Override
@@ -10,19 +28,18 @@ public class NoPresort extends AbstractDominanceTree {
         return "Dominance Tree (no presort, " + (useRecursiveMerge ? "recursive merge" : "sequential merge") + ")";
     }
 
-    @Override
-    protected Node merge(Node a, Node b) {
+    private static Node merge(Node a, Node b) {
         if (a == null) {
             return b;
         }
-        if (b == null) {
-            return a;
-        }
+
+        assert b != null;
+
         Node aPrev = null;
         for (Node aCurr = a; aCurr != null; ) {
             boolean aRemoved = false;
             for (Node bPrev = null, bCurr = b; bCurr != null; ) {
-                int compare = aCurr.dominationCompare(bCurr);
+                int compare = aCurr.dominanceComparison(bCurr);
                 if (compare > 0) {
                     Node aDel = aCurr;
                     aCurr = aCurr.next;
@@ -55,9 +72,6 @@ public class NoPresort extends AbstractDominanceTree {
                 aCurr = aCurr.next;
             }
         }
-        if (aPrev != null && aPrev.next != null) {
-            throw new AssertionError();
-        }
         if (a == null) {
             return b;
         } else {
@@ -68,6 +82,51 @@ public class NoPresort extends AbstractDominanceTree {
 
     @Override
     protected void sortChecked(double[][] points, int[] ranks, int maximalMeaningfulRank) {
-        sortCheckedImpl(points, ranks, points.length);
+        int n = points.length;
+        for (int i = 0; i < n; ++i) {
+            nodes[i].initialize(points[i]);
+        }
+        Node tree = mergeAllRecursively(nodes, 0, n);
+        for (int rank = 0; tree != null; ++rank) {
+            int rankMergeCount = rankAndPutChildrenToMergeArray(tree, ranks, rank);
+            tree = mergeAll(rankMergeArray, rankMergeCount, useRecursiveMerge);
+        }
+    }
+
+    private int rankAndPutChildrenToMergeArray(Node tree, int[] ranks, int rank) {
+        int rankMergeCount = 0;
+        while (tree != null) {
+            ranks[tree.index] = rank;
+            if (tree.child != null) {
+                rankMergeArray[rankMergeCount] = tree.child;
+                ++rankMergeCount;
+            }
+            tree = tree.next;
+        }
+        return rankMergeCount;
+    }
+
+    private static Node mergeAll(Node[] array, int size, boolean useRecursiveMerge) {
+        if (size == 0) {
+            return null;
+        }
+        if (useRecursiveMerge) {
+            return mergeAllRecursively(array, 0, size);
+        } else {
+            Node rv = array[0];
+            for (int i = 1; i < size; ++i) {
+                rv = merge(rv, array[i]);
+            }
+            return rv;
+        }
+    }
+
+    private static Node mergeAllRecursively(Node[] array, int from, int until) {
+        if (from + 1 == until) {
+            return array[from];
+        } else {
+            int mid = (from + until) >>> 1;
+            return merge(mergeAllRecursively(array, from, mid), mergeAllRecursively(array, mid, until));
+        }
     }
 }
