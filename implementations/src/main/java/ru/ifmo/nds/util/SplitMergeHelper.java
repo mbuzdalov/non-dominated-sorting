@@ -46,9 +46,11 @@ public final class SplitMergeHelper {
                 ++r;
             }
         }
-        System.arraycopy(scratchM, tempFrom, indices, l, m - tempFrom);
-        System.arraycopy(scratchR, tempFrom, indices, l + m - tempFrom, r - tempFrom);
-        return pack(l, m - tempFrom + l);
+        m -= tempFrom;
+        System.arraycopy(scratchM, tempFrom, indices, l, m);
+        m += l;
+        System.arraycopy(scratchR, tempFrom, indices, m, r - tempFrom);
+        return pack(l, m);
     }
 
     public final int mergeThree(int[] indices, int tempFrom,
