@@ -61,9 +61,9 @@ public final class PresortDelayed extends NonDominatedSorting {
             } else {
                 prev = other;
                 other = other.next;
-            }
-            if (prev != null && rv == null) {
-                rv = prev;
+                if (rv == null) {
+                    rv = prev;
+                }
             }
         }
         if (concatHead != null) {
@@ -115,7 +115,7 @@ public final class PresortDelayed extends NonDominatedSorting {
         sorter.lexicographicalSort(points, indices, 0, n, points[0].length);
         int realN = ArraySorter.retainUniquePoints(points, indices, this.points, ranks);
         for (int i = 0; i < realN; ++i) {
-            nodes[i].initialize(this.points[i]);
+            Node.initialize(nodes[i], this.points[i]);
         }
 
         Node tree = mergeAllRecursively(nodes, 0, realN);

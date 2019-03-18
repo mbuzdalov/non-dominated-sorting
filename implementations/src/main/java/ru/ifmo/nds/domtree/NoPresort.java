@@ -39,7 +39,7 @@ public final class NoPresort extends NonDominatedSorting {
         for (Node aCurr = a; aCurr != null; ) {
             boolean aRemoved = false;
             for (Node bPrev = null, bCurr = b; bCurr != null; ) {
-                int compare = aCurr.dominanceComparison(bCurr);
+                int compare = Node.dominanceComparison(aCurr, bCurr);
                 if (compare > 0) {
                     Node aDel = aCurr;
                     aCurr = aCurr.next;
@@ -84,7 +84,7 @@ public final class NoPresort extends NonDominatedSorting {
     protected void sortChecked(double[][] points, int[] ranks, int maximalMeaningfulRank) {
         int n = points.length;
         for (int i = 0; i < n; ++i) {
-            nodes[i].initialize(points[i]);
+            Node.initialize(nodes[i], points[i]);
         }
         Node tree = mergeAllRecursively(nodes, 0, n);
         for (int rank = 0; tree != null; ++rank) {

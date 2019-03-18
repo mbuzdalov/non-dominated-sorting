@@ -41,7 +41,7 @@ public final class PresortNoDelayed extends NonDominatedSorting {
     private static Node mergeHelperNoDelayed(Node main, Node other) {
         Node rv = null;
         for (Node prev = null; other != null; ) {
-            if (main.strictlyDominatesAssumingLexicographicallySmaller(other)) {
+            if (Node.strictlyDominatesAssumingLexicographicallySmaller(main, other)) {
                 Node deleted = other;
                 other = other.next;
                 deleted.next = null;
@@ -52,9 +52,9 @@ public final class PresortNoDelayed extends NonDominatedSorting {
             } else {
                 prev = other;
                 other = other.next;
-            }
-            if (prev != null && rv == null) {
-                rv = prev;
+                if (rv == null) {
+                    rv = prev;
+                }
             }
         }
         return rv;
@@ -104,7 +104,7 @@ public final class PresortNoDelayed extends NonDominatedSorting {
         int realN = ArraySorter.retainUniquePoints(points, indices, this.points, ranks);
 
         for (int i = 0; i < realN; ++i) {
-            nodes[i].initialize(this.points[i]);
+            Node.initialize(nodes[i], this.points[i]);
         }
         Node tree = mergeAllRecursively(nodes, 0, realN);
         for (int rank = 0; tree != null; ++rank) {
