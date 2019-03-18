@@ -27,29 +27,6 @@ class Node implements Comparable<Node> {
         return DominanceHelper.dominanceComparison(point, other.point, point.length);
     }
 
-    // assumes b != null && b.next == null
-    static Node concatenate(Node a, Node b) {
-        if (a == null) {
-            return b;
-        }
-        int bIndex = b.index;
-        if (a.index > bIndex) {
-            b.next = a;
-            return b;
-        }
-        Node prev = a, next = a.next;
-        while (next != null) {
-            if (next.index > bIndex) {
-                b.next = next;
-                break;
-            }
-            prev = next;
-            next = next.next;
-        }
-        prev.next = b;
-        return a;
-    }
-
     @Override
     public int compareTo(Node o) {
         return index - o.index;
