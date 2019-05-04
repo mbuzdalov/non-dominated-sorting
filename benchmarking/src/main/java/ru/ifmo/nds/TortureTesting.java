@@ -26,36 +26,71 @@ public class TortureTesting {
         return rv;
     }
 
+    private static void printPoint(StringBuilder sb, double[] point, int dimension) {
+        sb.append(" {");
+        for (int j = 0; j < dimension; ++j) {
+            double v = point[j];
+            int vi = (int) v;
+            if (v == vi) {
+                sb.append(vi);
+            } else {
+                sb.append(v);
+            }
+            if (j + 1 != dimension) {
+                sb.append(", ");
+            } else {
+                sb.append("},");
+            }
+        }
+    }
+
+    private static void printInt(StringBuilder sb, int value, boolean notLast) {
+        sb.append(" ").append(value);
+        if (notLast) {
+            sb.append(",");
+        } else {
+            sb.append("\n");
+        }
+    }
+
+    private static final int WIDTH_IN_COLUMNS = 120;
+    private static final String ARRAY_PREFIX = "               ";
+
     private static void printTest(int points, int dimension, double[][] instance, int[] reference) {
         System.out.println("        groupCheck(new double[][] {");
+        StringBuilder sb = new StringBuilder();
+        sb.append(ARRAY_PREFIX);
         for (int i = 0; i < points; ++i) {
-            System.out.print("                {");
-            for (int j = 0; j < dimension; ++j) {
-                System.out.print(instance[i][j]);
-                if (j + 1 != dimension) {
-                    System.out.print(", ");
-                } else {
-                    System.out.println("},");
-                }
+            int length = sb.length();
+            printPoint(sb, instance[i], dimension);
+            if (sb.length() > WIDTH_IN_COLUMNS) {
+                sb.setLength(length);
+                System.out.println(sb);
+                sb.setLength(ARRAY_PREFIX.length());
+                printPoint(sb, instance[i], dimension);
             }
         }
+        System.out.println(sb);
         System.out.println("        }, new int[] {");
-        System.out.print("                ");
+
+        sb.setLength(ARRAY_PREFIX.length());
         for (int i = 0; i < points; ++i) {
-            System.out.print(reference[i]);
-            if (i + 1 != points) {
-                System.out.print(",");
-            } else {
-                System.out.println();
+            int length = sb.length();
+            printInt(sb, reference[i], i + 1 != points);
+            if (sb.length() > WIDTH_IN_COLUMNS) {
+                sb.setLength(length);
+                System.out.println(sb);
+                sb.setLength(ARRAY_PREFIX.length());
+                printInt(sb, reference[i], i + 1 != points);
             }
         }
+        System.out.println(sb);
         System.out.println("        });");
-
     }
 
     public static void main(String[] args) throws IOException {
-        int maxPoints = 10000;
-        int maxDimension = 20;
+        int maxPoints = 300;
+        int maxDimension = 4;
         List<NonDominatedSortingFactory> sortingFactories = Arrays.asList(
                 FastNonDominatedSorting.getOriginalVersion(),
                 CornerSort.getInstance(),
@@ -97,6 +132,10 @@ public class TortureTesting {
                     + ", max rank " + maxRank);
             System.out.println();
             double[][] instance = generateCloud(points, dimension);
+            double[][] instanceCopy = instance.clone();
+            for (int i = 0; i < points; ++i) {
+                instanceCopy[i] = instanceCopy[i].clone();
+            }
             int[] reference = null;
             int[] ranks = new int[points];
             for (NonDominatedSorting sorting : sortings) {
@@ -105,6 +144,9 @@ public class TortureTesting {
                 long t0 = System.currentTimeMillis();
                 try {
                     sorting.sort(instance, ranks, maxRank);
+                    if (!Arrays.deepEquals(instanceCopy, instance)) {
+                        throw new AssertionError("Test has been altered!");
+                    }
                     long time = System.currentTimeMillis() - t0;
                     System.out.printf("%102s: %d ms%n", sorting.getName(), time);
                     if (reference == null) {
@@ -119,6 +161,7 @@ public class TortureTesting {
                         }
                     }
                 } catch (Throwable th) {
+                    th.printStackTrace();
                     printTest(points, dimension, instance, reference);
                     System.exit(1);
                 }
