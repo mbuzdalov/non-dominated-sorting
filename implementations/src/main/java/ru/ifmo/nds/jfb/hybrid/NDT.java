@@ -76,11 +76,10 @@ public final class NDT extends HybridAlgorithmWrapper {
 
         @Override
         public int helperAHook(int from, int until, int obj, int maximalMeaningfulRank) {
-            int M = obj + 1;
-            Split split = splitBuilder.result(from, until, indices, M);
+            Split split = splitBuilder.result(from, until, indices, obj + 1);
 
             for (int i = from; i < until; ++i) {
-                System.arraycopy(points[indices[i]], 0, localPoints[i], 0, M);
+                System.arraycopy(points[indices[i]], 1, localPoints[i], 1, obj);
             }
 
             int minOverflow = until;
@@ -100,14 +99,13 @@ public final class NDT extends HybridAlgorithmWrapper {
 
         @Override
         public int helperBHook(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj, int tempFrom, int maximalMeaningfulRank) {
-            int M = obj + 1;
-            Split split = splitBuilder.result(goodFrom, goodUntil, indices, M);
+            Split split = splitBuilder.result(goodFrom, goodUntil, indices, obj + 1);
 
             for (int good = goodFrom; good < goodUntil; ++good) {
-                System.arraycopy(points[indices[good]], 0, localPoints[good], 0, M);
+                System.arraycopy(points[indices[good]], 1, localPoints[good], 1, obj);
             }
             for (int weak = weakFrom; weak < weakUntil; ++weak) {
-                System.arraycopy(points[indices[weak]], 0, localPoints[weak], 0, M);
+                System.arraycopy(points[indices[weak]], 1, localPoints[weak], 1, obj);
             }
 
             int minOverflow = weakUntil;

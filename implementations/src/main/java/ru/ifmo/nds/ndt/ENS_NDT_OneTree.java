@@ -43,10 +43,10 @@ public class ENS_NDT_OneTree extends NonDominatedSorting {
         int n = points.length;
         int dim = points[0].length;
         ArrayHelper.fillIdentity(indices, n);
-        sorter.lexicographicalSort(points, indices, 0, n, points[0].length);
+        sorter.lexicographicalSort(points, indices, 0, n, dim);
 
         int newN = ArraySorter.retainUniquePoints(points, indices, this.points, ranks);
-        Arrays.fill(this.ranks, 0, newN, 0);
+        this.ranks[0] = 0;
 
         TreeRankNode tree = threshold == 1 ? TreeRankNode.EMPTY_1 : TreeRankNode.EMPTY;
         for (int i = 0; i < newN; ++i) {
@@ -58,11 +58,13 @@ public class ENS_NDT_OneTree extends NonDominatedSorting {
         Split split = splitBuilder.result(newN, dim);
 
         tree = tree.add(this.points[0], 0, split, threshold);
+        int maxObj = dim - 1;
         for (int i = 1; i < newN; ++i) {
             double[] current = this.points[i];
-            this.ranks[i] = tree.evaluateRank(current, 0, split, dim - 1);
-            if (this.ranks[i] <= maximalMeaningfulRank) {
-                tree = tree.add(current, this.ranks[i], split, threshold);
+            int currRank = tree.evaluateRank(current, 0, split, maxObj);
+            this.ranks[i] = currRank;
+            if (currRank <= maximalMeaningfulRank) {
+                tree = tree.add(current, currRank, split, threshold);
             }
         }
 
