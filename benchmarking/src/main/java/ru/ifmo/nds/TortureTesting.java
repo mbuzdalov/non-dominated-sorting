@@ -89,8 +89,8 @@ public class TortureTesting {
     }
 
     public static void main(String[] args) throws IOException {
-        int maxPoints = 300;
-        int maxDimension = 4;
+        int maxPoints = 10000;
+        int maxDimension = 20;
         List<NonDominatedSortingFactory> sortingFactories = Arrays.asList(
                 FastNonDominatedSorting.getOriginalVersion(),
                 CornerSort.getInstance(),
