@@ -85,17 +85,33 @@ public abstract class TreeRankNode {
                 int oldSize = size;
                 maxRank = 0;
                 size = 0;
-                for (int i = 0; i < oldSize; ++i) {
-                    double[] pi = points[i];
-                    int ri = ranks[i];
-                    points[i] = null;
-                    if (pi[obj] < median) {
-                        good.add(pi, ri, goodSplit, splitThreshold);
-                    } else {
-                        points[size] = pi;
-                        ranks[size] = ri;
-                        maxRank = Math.max(maxRank, ri);
-                        if (size == 0 || weakSplit != Split.NULL_MAX_DEPTH) {
+                if (weakSplit == Split.NULL_MAX_DEPTH) {
+                    double[] p0 = null;
+                    for (int i = 0; i < oldSize; ++i) {
+                        double[] pi = points[i];
+                        int ri = ranks[i];
+                        points[i] = null;
+                        if (pi[obj] < median) {
+                            good.add(pi, ri, goodSplit, splitThreshold);
+                        } else {
+                            size = 1;
+                            p0 = pi;
+                            maxRank = Math.max(maxRank, ri);
+                        }
+                    }
+                    points[0] = p0;
+                    ranks[0] = maxRank;
+                } else {
+                    for (int i = 0; i < oldSize; ++i) {
+                        double[] pi = points[i];
+                        int ri = ranks[i];
+                        points[i] = null;
+                        if (pi[obj] < median) {
+                            good.add(pi, ri, goodSplit, splitThreshold);
+                        } else {
+                            points[size] = pi;
+                            ranks[size] = ri;
+                            maxRank = Math.max(maxRank, ri);
                             ++size;
                         }
                     }
