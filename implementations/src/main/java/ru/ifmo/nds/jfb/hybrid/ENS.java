@@ -54,15 +54,14 @@ public final class ENS extends HybridAlgorithmWrapper {
             this.thresholdAll = thresholdAll;
         }
 
-        @Override
-        public boolean helperAHookCondition(int size, int obj) {
+        private boolean notHookCondition(int size, int obj) {
             switch (obj) {
                 case 1:
-                    return false;
+                    return true;
                 case 2:
-                    return size < threshold3D;
+                    return size >= threshold3D;
                 default:
-                    return size < thresholdAll;
+                    return size >= thresholdAll;
             }
         }
 
@@ -95,6 +94,10 @@ public final class ENS extends HybridAlgorithmWrapper {
 
         @Override
         public int helperAHook(int from, int until, int obj, int maximalMeaningfulRank) {
+            if (notHookCondition(until - from, obj)) {
+                return -1;
+            }
+
             int sliceOffset = from * STORAGE_MULTIPLE;
             int pointOffset = sliceOffset + 3 * (until - from);
 
@@ -140,19 +143,6 @@ public final class ENS extends HybridAlgorithmWrapper {
                 }
             }
             return JFBBase.kickOutOverflowedRanks(indices, ranks, maximalMeaningfulRank, minOverflow, until);
-        }
-
-        @Override
-        public boolean helperBHookCondition(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj) {
-            int size = goodUntil - goodFrom + weakUntil - weakFrom;
-            switch (obj) {
-                case 1:
-                    return false;
-                case 2:
-                    return size < threshold3D;
-                default:
-                    return size < thresholdAll;
-            }
         }
 
         private boolean checkWhetherDominates(int goodFrom, int goodUntil, double[] wp, int obj) {
@@ -264,6 +254,9 @@ public final class ENS extends HybridAlgorithmWrapper {
         @Override
         public int helperBHook(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj, int tempFrom, int maximalMeaningfulRank) {
             int goodSize = goodUntil - goodFrom;
+            if (notHookCondition(goodSize + weakUntil - weakFrom, obj)) {
+                return -1;
+            }
 
             int sortedIndicesOffset = tempFrom * STORAGE_MULTIPLE;
             int ranksAndSlicesOffset = sortedIndicesOffset + goodSize;
