@@ -27,23 +27,13 @@ public final class Dummy extends HybridAlgorithmWrapper {
 
     private static final Instance INSTANCE = new Instance() {
         @Override
-        public boolean helperAHookCondition(int size, int obj) {
-            return false;
-        }
-
-        @Override
-        public boolean helperBHookCondition(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj) {
-            return false;
-        }
-
-        @Override
         public int helperAHook(int from, int until, int obj, int maximalMeaningfulRank) {
-            throw new UnsupportedOperationException("helperAHook should never be called");
+            return -1;
         }
 
         @Override
         public int helperBHook(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj, int tempFrom, int maximalMeaningfulRank) {
-            throw new UnsupportedOperationException("helperBHook should never be called");
+            return -1;
         }
     };
 }

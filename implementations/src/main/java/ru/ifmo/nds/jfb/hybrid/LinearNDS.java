@@ -40,17 +40,19 @@ public final class LinearNDS extends HybridAlgorithmWrapper {
             this.points = points;
         }
 
-        @Override
-        public boolean helperAHookCondition(int size, int obj) {
+        private boolean notHookCondition(int size, int obj) {
             switch (obj) {
-                case 1: return false;
-                case 2: return size < THRESHOLD_3D;
-                default: return size < THRESHOLD_ALL;
+                case 1: return true;
+                case 2: return size >= THRESHOLD_3D;
+                default: return size >= THRESHOLD_ALL;
             }
         }
 
         @Override
         public int helperAHook(int from, int until, int obj, int maximalMeaningfulRank) {
+            if (notHookCondition(until - from, obj)) {
+                return -1;
+            }
             for (int left = from; left < until; ++left) {
                 until = JFBBase.updateByPoint(ranks, indices, points, maximalMeaningfulRank, indices[left], left + 1, until, obj);
             }
@@ -58,12 +60,10 @@ public final class LinearNDS extends HybridAlgorithmWrapper {
         }
 
         @Override
-        public boolean helperBHookCondition(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj) {
-            return helperAHookCondition(goodUntil - goodFrom + weakUntil - weakFrom, obj);
-        }
-
-        @Override
         public int helperBHook(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj, int tempFrom, int maximalMeaningfulRank) {
+            if (notHookCondition(goodUntil - goodFrom + weakUntil - weakFrom, obj)) {
+                return -1;
+            }
             for (int good = goodFrom, weakMin = weakFrom; good < goodUntil; ++good) {
                 int goodIndex = indices[good];
                 while (weakMin < weakUntil && indices[weakMin] < goodIndex) {
