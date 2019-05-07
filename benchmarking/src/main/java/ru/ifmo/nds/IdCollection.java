@@ -85,6 +85,7 @@ public final class IdCollection {
         addNonDominatedSortingFactory("jfb.rbtree", JensenFortinBuzdalov.getRedBlackTreeSweepImplementation(1));
         addNonDominatedSortingFactory("jfb.rbtree.hybrid.fnds", JensenFortinBuzdalov.getRedBlackTreeSweepHybridFNDSImplementation(1));
         addNonDominatedSortingFactory("jfb.rbtree.hybrid.ens", JensenFortinBuzdalov.getRedBlackTreeSweepHybridENSImplementation(1));
+        addNonDominatedSortingFactory("jfb.rbtree.hybrid.ens.tune", JensenFortinBuzdalov.getRedBlackTreeSweepHybridENSImplementationWithTuning(1));
 
         int maxThreadsValue = Integer.parseInt(maxThreads);
         for (int threads = 2; threads <= maxThreadsValue; ++threads) {

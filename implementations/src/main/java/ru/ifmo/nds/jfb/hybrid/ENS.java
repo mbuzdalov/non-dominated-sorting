@@ -12,9 +12,20 @@ public final class ENS extends HybridAlgorithmWrapper {
     private final int threshold3D;
     private final int thresholdAll;
 
-    public ENS(int threshold3D, int thresholdAll) {
+    private static final double TUNING_MULTIPLE = 1.5;
+    private static final double TUNING_MULTIPLE_FAIL = 1.0 / TUNING_MULTIPLE;
+    private static final double TUNING_MULTIPLE_SUCCESS = Math.pow(TUNING_MULTIPLE, 0.01);
+
+    private final boolean useTuning;
+
+    public ENS(int threshold3D, int thresholdAll, boolean useTuning) {
         this.threshold3D = threshold3D;
         this.thresholdAll = thresholdAll;
+        this.useTuning = useTuning;
+    }
+
+    public ENS(int threshold3D, int thresholdAll) {
+        this(threshold3D, thresholdAll, false);
     }
 
     @Override
@@ -24,12 +35,70 @@ public final class ENS extends HybridAlgorithmWrapper {
 
     @Override
     public String getName() {
-        return "ENS (threshold 3D = " + threshold3D + ", threshold all = " + thresholdAll + ")";
+        if (useTuning) {
+            return "ENS (dynamic thresholds, initial 3D = " + threshold3D + ", initial all = " + thresholdAll + ")";
+        } else {
+            return "ENS (threshold 3D = " + threshold3D + ", threshold all = " + thresholdAll + ")";
+        }
     }
 
     @Override
     public HybridAlgorithmWrapper.Instance create(int[] ranks, int[] indices, double[][] points, double[][] transposedPoints) {
-        return new Instance(ranks, indices, points, threshold3D, thresholdAll);
+        return new Instance(ranks, indices, points, threshold3D, thresholdAll,
+                useTuning ? TUNING_MULTIPLE_FAIL : 1.0,
+                useTuning ? TUNING_MULTIPLE_SUCCESS : 1.0);
+    }
+
+    private static final ThreadLocal<OperationCounter> counters = ThreadLocal.withInitial(OperationCounter::new);
+
+    private static class OperationCounter {
+        private int remains = 0;
+
+        // TODO: Get rid of this parameter and implement something which actually works.
+        // For d = 4 the good value is 8.5.
+        // For d = 5 the good value is 6.875.
+        // For d = 10 the good value is 2.75.
+        // Having it this way is not a good idea.
+        private static final double CORRECTOR = 8.5;
+
+        private void initialize(int problemSize) {
+            // Notes on performance counting on Irene's laptop.
+            // For helperB in ENS hybrid:
+            //     for x operations, the time is roughly 7.95 x + 392 nanoseconds.
+            // For helperB in divide-and-conquer:
+            //     for n points, the time is estimated as exp(3.5 + 1.5 * log(n)) = 33.11 * n * sqrt(n) nanoseconds.
+            // For n points, the number of operations that makes up the limit is:
+            //     (33.11 * n * sqrt(n) - 392) / 7.95 = 4.165 * n * sqrt(n) - 49.3
+            remains = (int) ((4.165 * problemSize * Math.sqrt(problemSize) - 49.3) / CORRECTOR);
+        }
+
+        private void consume(int nOperations) {
+            remains -= nOperations;
+        }
+
+        private boolean shallTerminate() {
+            return remains <= 0;
+        }
+    }
+
+    private static class ThresholdAdaptor {
+        private double threshold;
+        private final double multipleFail;
+        private final double multipleSuccess;
+
+        ThresholdAdaptor(int initialThresholdValue, double multipleFail, double multipleSuccess) {
+            this.threshold = initialThresholdValue;
+            this.multipleFail = multipleFail;
+            this.multipleSuccess = multipleSuccess;
+        }
+
+        private synchronized void algorithmFailed() {
+            threshold *= multipleFail;
+        }
+
+        private synchronized void algorithmSucceeded() {
+            threshold *= multipleSuccess;
+        }
     }
 
     private static final class Instance extends HybridAlgorithmWrapper.Instance {
@@ -41,17 +110,18 @@ public final class ENS extends HybridAlgorithmWrapper {
         private final double[][] points;
         private final double[][] exPoints;
 
-        private final int threshold3D;
-        private final int thresholdAll;
+        private final ThresholdAdaptor threshold3D;
+        private final ThresholdAdaptor thresholdAll;
 
-        private Instance(int[] ranks, int[] indices, double[][] points, int threshold3D, int thresholdAll) {
+        private Instance(int[] ranks, int[] indices, double[][] points, int threshold3D, int thresholdAll,
+                         double multipleFail, double multipleSuccess) {
             this.ranks = ranks;
             this.indices = indices;
             this.points = points;
             this.exPoints = new double[points.length][];
             this.space = new int[STORAGE_MULTIPLE * indices.length];
-            this.threshold3D = threshold3D;
-            this.thresholdAll = thresholdAll;
+            this.threshold3D = new ThresholdAdaptor(threshold3D, multipleFail, multipleSuccess);
+            this.thresholdAll = new ThresholdAdaptor(thresholdAll, multipleFail, multipleSuccess);
         }
 
         private boolean notHookCondition(int size, int obj) {
@@ -59,9 +129,9 @@ public final class ENS extends HybridAlgorithmWrapper {
                 case 1:
                     return true;
                 case 2:
-                    return size >= threshold3D;
+                    return size >= threshold3D.threshold;
                 default:
-                    return size >= thresholdAll;
+                    return size >= thresholdAll.threshold;
             }
         }
 
@@ -145,18 +215,23 @@ public final class ENS extends HybridAlgorithmWrapper {
             return JFBBase.kickOutOverflowedRanks(indices, ranks, maximalMeaningfulRank, minOverflow, until);
         }
 
-        private boolean checkWhetherDominates(int goodFrom, int goodUntil, double[] wp, int obj) {
-            while (goodUntil > goodFrom) {
-                --goodUntil;
-                if (DominanceHelper.strictlyDominatesAssumingLexicographicallySmaller(exPoints[goodUntil], wp, obj)) {
+        private boolean checkWhetherDominates(int goodFrom, int goodUntil, double[] wp, int obj,
+                                              OperationCounter counter) {
+            int curr = goodUntil;
+            while (curr > goodFrom) {
+                --curr;
+                if (DominanceHelper.strictlyDominatesAssumingLexicographicallySmaller(exPoints[curr], wp, obj)) {
+                    counter.consume(goodUntil - curr);
                     return true;
                 }
             }
+            counter.consume(goodUntil - curr);
             return false;
         }
 
         private int helperBSingleRank(int rank, int goodFrom, int goodUntil,
-                                      int weakFrom, int weakUntil, int obj, int maximalMeaningfulRank, int tempFrom) {
+                                      int weakFrom, int weakUntil, int obj, int maximalMeaningfulRank, int tempFrom,
+                                      ThresholdAdaptor adaptor, OperationCounter counter) {
             int minUpdated = weakUntil;
             int offset = tempFrom - goodFrom;
             for (int good = goodFrom; good < goodUntil; ++good) {
@@ -168,13 +243,19 @@ public final class ENS extends HybridAlgorithmWrapper {
                     continue;
                 }
                 good = ArrayHelper.findWhereNotSmaller(indices, good, goodUntil, wi);
-                if (checkWhetherDominates(tempFrom, good + offset, points[wi], obj)) {
+                if (checkWhetherDominates(tempFrom, good + offset, points[wi], obj, counter)) {
                     ranks[wi] = rank + 1;
                     if (minUpdated > weak) {
                         minUpdated = weak;
                     }
                 }
+                if (counter.shallTerminate()) {
+                    adaptor.algorithmFailed();
+                    Arrays.fill(exPoints, tempFrom, tempFrom + goodUntil - goodFrom, null);
+                    return -1;
+                }
             }
+            adaptor.algorithmSucceeded();
             Arrays.fill(exPoints, tempFrom, tempFrom + goodUntil - goodFrom, null);
             return rank == maximalMeaningfulRank && minUpdated < weakUntil
                     ? JFBBase.kickOutOverflowedRanks(indices, ranks, maximalMeaningfulRank, minUpdated, weakUntil)
@@ -227,7 +308,8 @@ public final class ENS extends HybridAlgorithmWrapper {
             return sliceLast;
         }
 
-        private int findRankInSlices(int sliceOffset, int sliceLast, int wi, int obj, int sliceRankOffset) {
+        private int findRankInSlices(int sliceOffset, int sliceLast, int wi, int obj, int sliceRankOffset,
+                                     OperationCounter counter) {
             int currSlice = sliceLast;
             int sliceRankIndex = ((currSlice - sliceOffset) >>> 1) + sliceRankOffset;
             int weakRank = ranks[wi];
@@ -238,7 +320,7 @@ public final class ENS extends HybridAlgorithmWrapper {
                 if (from < until) {
                     int currRank = -space[sliceRankIndex];
                     if (currRank >= weakRank) {
-                        if (checkWhetherDominates(from, until, wp, obj)) {
+                        if (checkWhetherDominates(from, until, wp, obj, counter)) {
                             weakRank = currRank + 1;
                         } else {
                             break;
@@ -258,6 +340,15 @@ public final class ENS extends HybridAlgorithmWrapper {
                 return -1;
             }
 
+            ThresholdAdaptor adaptor = obj == 2 ? threshold3D : thresholdAll;
+            OperationCounter counter = counters.get();
+            counter.initialize(goodSize + weakUntil - weakFrom);
+
+            if (counter.shallTerminate()) { // it can be like that
+                adaptor.algorithmFailed();
+                return -1;
+            }
+
             int sortedIndicesOffset = tempFrom * STORAGE_MULTIPLE;
             int ranksAndSlicesOffset = sortedIndicesOffset + goodSize;
             int sliceOffset = ranksAndSlicesOffset + goodSize;
@@ -265,7 +356,8 @@ public final class ENS extends HybridAlgorithmWrapper {
             int minRank = transplantRanksAndCheckWhetherAllAreSame(goodFrom, goodUntil, ranksAndSlicesOffset, sortedIndicesOffset);
             if (minRank != 1) {
                 // "good" has a single front, let's do the simple stuff
-                return helperBSingleRank(-minRank, goodFrom, goodUntil, weakFrom, weakUntil, obj, maximalMeaningfulRank, tempFrom);
+                return helperBSingleRank(-minRank, goodFrom, goodUntil, weakFrom, weakUntil, obj, maximalMeaningfulRank,
+                        tempFrom, adaptor, counter);
             } else {
                 // "good" has multiple fronts (called "slices" here), need to go a more complicated way.
                 ArraySorter.sortIndicesByValues(space, space, sortedIndicesOffset, sortedIndicesOffset + goodSize);
@@ -282,11 +374,17 @@ public final class ENS extends HybridAlgorithmWrapper {
                         ++good;
                         ++sliceOfGood;
                     }
-                    int weakRank = findRankInSlices(sliceOffset, sliceLast, wi, obj, sortedIndicesOffset);
+                    int weakRank = findRankInSlices(sliceOffset, sliceLast, wi, obj, sortedIndicesOffset, counter);
                     if (weakRank > maximalMeaningfulRank && minOverflowed > weak) {
                         minOverflowed = weak;
                     }
+                    if (counter.shallTerminate()) {
+                        adaptor.algorithmFailed();
+                        Arrays.fill(exPoints, tempFrom, tempFrom + goodUntil - goodFrom, null);
+                        return -1;
+                    }
                 }
+                adaptor.algorithmSucceeded();
                 Arrays.fill(exPoints, tempFrom, tempFrom + goodUntil - goodFrom, null);
                 return JFBBase.kickOutOverflowedRanks(indices, ranks, maximalMeaningfulRank, minOverflowed, weakUntil);
             }
