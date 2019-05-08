@@ -150,8 +150,7 @@ public final class ENS extends HybridAlgorithmWrapper {
         private final double[][] exPoints;
 
         private final boolean useTuning;
-        private final ThresholdAdaptor threshold3D;
-        private final ThresholdAdaptor thresholdAll;
+        private final ThresholdAdaptor[] thresholds;
 
         private Instance(int[] ranks, int[] indices, double[][] points, int threshold3D, int thresholdAll,
                          boolean useTuning) {
@@ -161,19 +160,15 @@ public final class ENS extends HybridAlgorithmWrapper {
             this.exPoints = new double[points.length][];
             this.space = new int[STORAGE_MULTIPLE * indices.length];
             this.useTuning = useTuning;
-            this.threshold3D = new ThresholdAdaptor(threshold3D, useTuning ? TUNING_MULTIPLE_FAIL : 1, useTuning ? TUNING_MULTIPLE_SUCCESS : 1);
-            this.thresholdAll = new ThresholdAdaptor(thresholdAll, useTuning ? TUNING_MULTIPLE_FAIL : 1, useTuning ? TUNING_MULTIPLE_SUCCESS : 1);
+            thresholds = new ThresholdAdaptor[8];
+            for (int i = 0; i < thresholds.length; ++i) {
+                thresholds[i] = new ThresholdAdaptor(i == 0 ? threshold3D : thresholdAll,
+                        useTuning ? TUNING_MULTIPLE_FAIL : 1, useTuning ? TUNING_MULTIPLE_SUCCESS : 1);
+            }
         }
 
         private boolean notHookCondition(int size, int obj) {
-            switch (obj) {
-                case 1:
-                    return true;
-                case 2:
-                    return size >= threshold3D.threshold;
-                default:
-                    return size >= thresholdAll.threshold;
-            }
+            return obj == 1 || size >= thresholds[Math.min(obj - 2, 7)].threshold;
         }
 
         private boolean checkIfDominatesA(int sliceIndex, int obj, int weakIndex) {
@@ -385,7 +380,7 @@ public final class ENS extends HybridAlgorithmWrapper {
                 return -1;
             }
 
-            ThresholdAdaptor adaptor = obj == 2 ? threshold3D : thresholdAll;
+            ThresholdAdaptor adaptor = thresholds[Math.min(obj - 2, 7)];
             OperationCounter counter = counters.get();
             counter.initialize(goodSize + weakUntil - weakFrom, obj);
 
