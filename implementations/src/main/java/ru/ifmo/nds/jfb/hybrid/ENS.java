@@ -51,31 +51,72 @@ public final class ENS extends HybridAlgorithmWrapper {
 
     private static class OperationCounter {
         private int remains = 0;
+        private int baseline = 0;
 
-        // TODO: Get rid of this parameter and implement something which actually works.
-        // For d = 4 the good value is 8.5.
-        // For d = 5 the good value is 6.875.
-        // For d = 10 the good value is 2.75.
-        // Having it this way is not a good idea.
-        private static final double CORRECTOR = 8.5;
+        private static final double[] A_IN_OPS = {
+                3.806816959499965, // for d = 2
+                4.113592943948679,
+                2.8467007731006437,
+                1.8473590929256243,
+                1.3249781911979446,
+                1.1777313339640052,
+                1.1653214813927109,
+                1.1401358990765458
+        };
 
-        private void initialize(int problemSize) {
-            // Notes on performance counting on Irene's laptop.
+        private static final double[] B_IN_OPS = {
+                -186.48883310027958, // for d = 2
+                -484.71257133393243,
+                -584.9885133808805,
+                -423.9142423658353,
+                -178.74936469020457,
+                -46.92822531334395,
+                -38.59458963435686,
+                -20.611906174873603
+        };
+
+        private static final double[] P_IN_OPS = {
+                0.015332333045967268, // for d = 2
+                0.14316676164960723,
+                0.26411624362740815,
+                0.3564856546604639,
+                0.4162172410288698,
+                0.4382815729645708,
+                0.4428886704739746,
+                0.44701314145948956
+        };
+
+        private void initialize(int problemSize, int objective) {
+            // Notes on performance counting on some fixed laptop.
             // For helperB in ENS hybrid:
-            //     for x operations, the time is roughly 7.95 x + 392 nanoseconds.
+            //     for x operations, the time is roughly 13 x + 2000 nanoseconds.
             // For helperB in divide-and-conquer:
-            //     for n points, the time is estimated as exp(3.5 + 1.5 * log(n)) = 33.11 * n * sqrt(n) nanoseconds.
-            // For n points, the number of operations that makes up the limit is:
-            //     (33.11 * n * sqrt(n) - 392) / 7.95 = 4.165 * n * sqrt(n) - 49.3
-            remains = (int) ((4.165 * problemSize * Math.sqrt(problemSize) - 49.3) / CORRECTOR);
+            //     for n points and objective d, the time is estimated, in nanoseconds, as
+            //        b_d + a_d * n * pow(n, p_d)
+            //     where:
+            //        d = 2:  a_2 = 49.488620473499545, b_2 =  -424.3548303036347, p_2 = 0.015332333045967268
+            //        d = 3:  a_3 = 53.476708271332825, b_3 = -4301.263427341121,  p_3 = 0.14316676164960723
+            //        d = 4:  a_4 = 37.00711005030837,  b_4 = -5604.850673951447,  p_4 = 0.26411624362740815
+            //        d = 5:  a_5 = 24.015668208033116, b_5 = -3510.8851507558597, p_5 = 0.3564856546604639
+            //        d = 6:  a_6 = 17.22471648557328,  b_6 =  -323.7417409726593, p_6 = 0.4162172410288698
+            //        d = 7:  a_7 = 15.310507341532068, b_7 =  1389.9330709265287, p_7 = 0.4382815729645708
+            //        d = 8:  a_8 = 15.14917925810524,  b_8 =  1498.2703347533609, p_8 = 0.4428886704739746
+            //        d = 9+: a_9 = 14.821766687995096, b_9 =  1732.0452197266432, p_9 = 0.44701314145948956
+            // Hence the arrays above have been computed.
+
+            objective = Math.min(objective - 2, 7);
+            remains = (int) ((B_IN_OPS[objective] + A_IN_OPS[objective] * problemSize * Math.pow(problemSize, P_IN_OPS[objective]) * 2));
+            baseline = -remains;
         }
 
         private void consume(int nOperations) {
             remains -= nOperations;
         }
 
+        private boolean considerFailed() { return remains <= 0; }
+
         private boolean shallTerminate() {
-            return remains <= 0;
+            return remains <= baseline;
         }
     }
 
@@ -255,7 +296,11 @@ public final class ENS extends HybridAlgorithmWrapper {
                     return -1;
                 }
             }
-            adaptor.algorithmSucceeded();
+            if (useTuning && counter.considerFailed()) {
+                adaptor.algorithmFailed();
+            } else {
+                adaptor.algorithmSucceeded();
+            }
             Arrays.fill(exPoints, tempFrom, tempFrom + goodUntil - goodFrom, null);
             return rank == maximalMeaningfulRank && minUpdated < weakUntil
                     ? JFBBase.kickOutOverflowedRanks(indices, ranks, maximalMeaningfulRank, minUpdated, weakUntil)
@@ -342,7 +387,7 @@ public final class ENS extends HybridAlgorithmWrapper {
 
             ThresholdAdaptor adaptor = obj == 2 ? threshold3D : thresholdAll;
             OperationCounter counter = counters.get();
-            counter.initialize(goodSize + weakUntil - weakFrom);
+            counter.initialize(goodSize + weakUntil - weakFrom, obj);
 
             if (useTuning && counter.shallTerminate()) { // it can be like that
                 adaptor.algorithmFailed();
@@ -384,7 +429,11 @@ public final class ENS extends HybridAlgorithmWrapper {
                         return -1;
                     }
                 }
-                adaptor.algorithmSucceeded();
+                if (useTuning && counter.considerFailed()) {
+                    adaptor.algorithmFailed();
+                } else {
+                    adaptor.algorithmSucceeded();
+                }
                 Arrays.fill(exPoints, tempFrom, tempFrom + goodUntil - goodFrom, null);
                 return JFBBase.kickOutOverflowedRanks(indices, ranks, maximalMeaningfulRank, minOverflowed, weakUntil);
             }
