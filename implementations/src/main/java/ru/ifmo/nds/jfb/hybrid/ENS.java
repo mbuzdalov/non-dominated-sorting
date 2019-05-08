@@ -344,7 +344,7 @@ public final class ENS extends HybridAlgorithmWrapper {
             OperationCounter counter = counters.get();
             counter.initialize(goodSize + weakUntil - weakFrom);
 
-            if (counter.shallTerminate()) { // it can be like that
+            if (useTuning && counter.shallTerminate()) { // it can be like that
                 adaptor.algorithmFailed();
                 return -1;
             }
