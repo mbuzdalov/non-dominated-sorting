@@ -44,9 +44,7 @@ public final class ENS extends HybridAlgorithmWrapper {
 
     @Override
     public HybridAlgorithmWrapper.Instance create(int[] ranks, int[] indices, double[][] points, double[][] transposedPoints) {
-        return new Instance(ranks, indices, points, threshold3D, thresholdAll,
-                useTuning ? TUNING_MULTIPLE_FAIL : 1.0,
-                useTuning ? TUNING_MULTIPLE_SUCCESS : 1.0);
+        return new Instance(ranks, indices, points, threshold3D, thresholdAll, useTuning);
     }
 
     private static final ThreadLocal<OperationCounter> counters = ThreadLocal.withInitial(OperationCounter::new);
@@ -110,18 +108,20 @@ public final class ENS extends HybridAlgorithmWrapper {
         private final double[][] points;
         private final double[][] exPoints;
 
+        private final boolean useTuning;
         private final ThresholdAdaptor threshold3D;
         private final ThresholdAdaptor thresholdAll;
 
         private Instance(int[] ranks, int[] indices, double[][] points, int threshold3D, int thresholdAll,
-                         double multipleFail, double multipleSuccess) {
+                         boolean useTuning) {
             this.ranks = ranks;
             this.indices = indices;
             this.points = points;
             this.exPoints = new double[points.length][];
             this.space = new int[STORAGE_MULTIPLE * indices.length];
-            this.threshold3D = new ThresholdAdaptor(threshold3D, multipleFail, multipleSuccess);
-            this.thresholdAll = new ThresholdAdaptor(thresholdAll, multipleFail, multipleSuccess);
+            this.useTuning = useTuning;
+            this.threshold3D = new ThresholdAdaptor(threshold3D, useTuning ? TUNING_MULTIPLE_FAIL : 1, useTuning ? TUNING_MULTIPLE_SUCCESS : 1);
+            this.thresholdAll = new ThresholdAdaptor(thresholdAll, useTuning ? TUNING_MULTIPLE_FAIL : 1, useTuning ? TUNING_MULTIPLE_SUCCESS : 1);
         }
 
         private boolean notHookCondition(int size, int obj) {
@@ -249,7 +249,7 @@ public final class ENS extends HybridAlgorithmWrapper {
                         minUpdated = weak;
                     }
                 }
-                if (counter.shallTerminate()) {
+                if (useTuning && counter.shallTerminate()) {
                     adaptor.algorithmFailed();
                     Arrays.fill(exPoints, tempFrom, tempFrom + goodUntil - goodFrom, null);
                     return -1;
@@ -378,7 +378,7 @@ public final class ENS extends HybridAlgorithmWrapper {
                     if (weakRank > maximalMeaningfulRank && minOverflowed > weak) {
                         minOverflowed = weak;
                     }
-                    if (counter.shallTerminate()) {
+                    if (useTuning && counter.shallTerminate()) {
                         adaptor.algorithmFailed();
                         Arrays.fill(exPoints, tempFrom, tempFrom + goodUntil - goodFrom, null);
                         return -1;
