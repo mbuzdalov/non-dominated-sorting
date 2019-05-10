@@ -1,5 +1,7 @@
 package ru.ifmo.nds.jfb.hybrid;
 
+import java.util.Arrays;
+
 import ru.ifmo.nds.jfb.HybridAlgorithmWrapper;
 import ru.ifmo.nds.jfb.JFBBase;
 import ru.ifmo.nds.jfb.hybrid.tuning.Threshold;
@@ -7,8 +9,6 @@ import ru.ifmo.nds.jfb.hybrid.tuning.ThresholdFactory;
 import ru.ifmo.nds.util.ArrayHelper;
 import ru.ifmo.nds.util.ArraySorter;
 import ru.ifmo.nds.util.DominanceHelper;
-
-import java.util.Arrays;
 
 public final class ENS extends HybridAlgorithmWrapper {
     private final ThresholdFactory threshold3D;
@@ -48,17 +48,6 @@ public final class ENS extends HybridAlgorithmWrapper {
             1.1401358990765458
     };
 
-    private static final double[] B_IN_OPS = {
-            -186.48883310027958, // for d = 2
-            -484.71257133393243,
-            -584.9885133808805,
-            -423.9142423658353,
-            -178.74936469020457,
-            -46.92822531334395,
-            -38.59458963435686,
-            -20.611906174873603
-    };
-
     private static final double[] P_IN_OPS = {
             0.015332333045967268, // for d = 2
             0.14316676164960723,
@@ -89,8 +78,8 @@ public final class ENS extends HybridAlgorithmWrapper {
         // Hence the arrays above have been computed.
 
         objective = Math.min(objective - 2, 7);
-        double estimation = B_IN_OPS[objective] + A_IN_OPS[objective] * problemSize * Math.pow(problemSize, P_IN_OPS[objective]) * Math.log(1 + problemSize);
-        return Math.max(1, (int) (estimation * 0.5));
+        double estimation = A_IN_OPS[objective] * problemSize * Math.pow(problemSize, P_IN_OPS[objective]) * Math.log(1 + problemSize);
+        return (int) (estimation * 0.3);
     }
 
     private static class OperationCounter {
