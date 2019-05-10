@@ -12,9 +12,8 @@ public final class ENS extends HybridAlgorithmWrapper {
     private final int threshold3D;
     private final int thresholdAll;
 
-    private static final double TUNING_MULTIPLE = 1.5;
-    private static final double TUNING_MULTIPLE_FAIL = 1.0 / TUNING_MULTIPLE;
-    private static final double TUNING_MULTIPLE_SUCCESS = Math.pow(TUNING_MULTIPLE, 0.01);
+    private static final double TUNING_FAILURE_EXPONENT = 0.5;
+    private static final double TUNING_SUCCESS_EXPONENT = 0.02;
 
     private final boolean useTuning;
 
@@ -51,7 +50,7 @@ public final class ENS extends HybridAlgorithmWrapper {
 
     private static class OperationCounter {
         private int remains = 0;
-        private int baseline = 0;
+        private int expected = 0;
 
         private static final double[] A_IN_OPS = {
                 3.806816959499965, // for d = 2
@@ -105,38 +104,46 @@ public final class ENS extends HybridAlgorithmWrapper {
             // Hence the arrays above have been computed.
 
             objective = Math.min(objective - 2, 7);
-            remains = (int) ((B_IN_OPS[objective] + A_IN_OPS[objective] * problemSize * Math.pow(problemSize, P_IN_OPS[objective]) * 2));
-            baseline = -remains;
+            expected = (int) ((B_IN_OPS[objective] + A_IN_OPS[objective] * problemSize * Math.pow(problemSize, P_IN_OPS[objective]) * Math.log(1 + problemSize)) * 0.5);
+            remains = expected;
         }
 
         private void consume(int nOperations) {
             remains -= nOperations;
         }
 
-        private boolean considerFailed() { return remains <= 0; }
+        private boolean considerFailed() {
+            return remains <= 0;
+        }
 
         private boolean shallTerminate() {
-            return remains <= baseline;
+            return remains <= -expected;
+        }
+
+        private int consumedOperations() {
+            return expected - remains;
         }
     }
 
     private static class ThresholdAdaptor {
         private double threshold;
-        private final double multipleFail;
-        private final double multipleSuccess;
+        private final boolean useTuning;
 
-        ThresholdAdaptor(int initialThresholdValue, double multipleFail, double multipleSuccess) {
+        ThresholdAdaptor(int initialThresholdValue, boolean useTuning) {
             this.threshold = initialThresholdValue;
-            this.multipleFail = multipleFail;
-            this.multipleSuccess = multipleSuccess;
+            this.useTuning = useTuning;
         }
 
-        private synchronized void algorithmFailed() {
-            threshold *= multipleFail;
+        private synchronized void algorithmFailed(int computedLimit, int actuallyConsumed) {
+            if (useTuning) {
+                threshold *= Math.pow((double) (computedLimit) / actuallyConsumed, TUNING_FAILURE_EXPONENT);
+            }
         }
 
-        private synchronized void algorithmSucceeded() {
-            threshold *= multipleSuccess;
+        private synchronized void algorithmSucceeded(int computedLimit, int actuallyConsumed) {
+            if (useTuning) {
+                threshold *= Math.pow(Math.min(2, (double) (computedLimit) / actuallyConsumed), TUNING_SUCCESS_EXPONENT);
+            }
         }
     }
 
@@ -162,8 +169,7 @@ public final class ENS extends HybridAlgorithmWrapper {
             this.useTuning = useTuning;
             thresholds = new ThresholdAdaptor[8];
             for (int i = 0; i < thresholds.length; ++i) {
-                thresholds[i] = new ThresholdAdaptor(i == 0 ? threshold3D : thresholdAll,
-                        useTuning ? TUNING_MULTIPLE_FAIL : 1, useTuning ? TUNING_MULTIPLE_SUCCESS : 1);
+                thresholds[i] = new ThresholdAdaptor(i == 0 ? threshold3D : thresholdAll, useTuning);
             }
         }
 
@@ -286,15 +292,15 @@ public final class ENS extends HybridAlgorithmWrapper {
                     }
                 }
                 if (useTuning && counter.shallTerminate()) {
-                    adaptor.algorithmFailed();
+                    adaptor.algorithmFailed(counter.expected, counter.consumedOperations());
                     Arrays.fill(exPoints, tempFrom, tempFrom + goodUntil - goodFrom, null);
                     return -1;
                 }
             }
             if (useTuning && counter.considerFailed()) {
-                adaptor.algorithmFailed();
+                adaptor.algorithmFailed(counter.expected, counter.consumedOperations());
             } else {
-                adaptor.algorithmSucceeded();
+                adaptor.algorithmSucceeded(counter.expected, counter.consumedOperations());
             }
             Arrays.fill(exPoints, tempFrom, tempFrom + goodUntil - goodFrom, null);
             return rank == maximalMeaningfulRank && minUpdated < weakUntil
@@ -385,7 +391,7 @@ public final class ENS extends HybridAlgorithmWrapper {
             counter.initialize(goodSize + weakUntil - weakFrom, obj);
 
             if (useTuning && counter.shallTerminate()) { // it can be like that
-                adaptor.algorithmFailed();
+                adaptor.algorithmFailed(1, 2);
                 return -1;
             }
 
@@ -419,15 +425,15 @@ public final class ENS extends HybridAlgorithmWrapper {
                         minOverflowed = weak;
                     }
                     if (useTuning && counter.shallTerminate()) {
-                        adaptor.algorithmFailed();
+                        adaptor.algorithmFailed(counter.expected, counter.consumedOperations());
                         Arrays.fill(exPoints, tempFrom, tempFrom + goodUntil - goodFrom, null);
                         return -1;
                     }
                 }
-                if (useTuning && counter.considerFailed()) {
-                    adaptor.algorithmFailed();
+                if (counter.considerFailed()) {
+                    adaptor.algorithmFailed(counter.expected, counter.consumedOperations());
                 } else {
-                    adaptor.algorithmSucceeded();
+                    adaptor.algorithmSucceeded(counter.expected, counter.consumedOperations());
                 }
                 Arrays.fill(exPoints, tempFrom, tempFrom + goodUntil - goodFrom, null);
                 return JFBBase.kickOutOverflowedRanks(indices, ranks, maximalMeaningfulRank, minOverflowed, weakUntil);
