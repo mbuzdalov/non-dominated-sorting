@@ -2,6 +2,8 @@ package ru.ifmo.nds.jfb.hybrid;
 
 import ru.ifmo.nds.jfb.HybridAlgorithmWrapper;
 import ru.ifmo.nds.jfb.JFBBase;
+import ru.ifmo.nds.jfb.hybrid.tuning.Threshold;
+import ru.ifmo.nds.jfb.hybrid.tuning.ThresholdFactory;
 import ru.ifmo.nds.util.ArrayHelper;
 import ru.ifmo.nds.util.ArraySorter;
 import ru.ifmo.nds.util.DominanceHelper;
@@ -9,22 +11,12 @@ import ru.ifmo.nds.util.DominanceHelper;
 import java.util.Arrays;
 
 public final class ENS extends HybridAlgorithmWrapper {
-    private final int threshold3D;
-    private final int thresholdAll;
+    private final ThresholdFactory threshold3D;
+    private final ThresholdFactory thresholdAll;
 
-    private static final double TUNING_FAILURE_EXPONENT = 0.5;
-    private static final double TUNING_SUCCESS_EXPONENT = 0.02;
-
-    private final boolean useTuning;
-
-    public ENS(int threshold3D, int thresholdAll, boolean useTuning) {
+    public ENS(ThresholdFactory threshold3D, ThresholdFactory thresholdAll) {
         this.threshold3D = threshold3D;
         this.thresholdAll = thresholdAll;
-        this.useTuning = useTuning;
-    }
-
-    public ENS(int threshold3D, int thresholdAll) {
-        this(threshold3D, thresholdAll, false);
     }
 
     @Override
@@ -34,116 +26,86 @@ public final class ENS extends HybridAlgorithmWrapper {
 
     @Override
     public String getName() {
-        if (useTuning) {
-            return "ENS (dynamic thresholds, initial 3D = " + threshold3D + ", initial all = " + thresholdAll + ")";
-        } else {
-            return "ENS (threshold 3D = " + threshold3D + ", threshold all = " + thresholdAll + ")";
-        }
+        return "ENS (threshold 3D = " + threshold3D.getDescription()
+                + ", threshold all = " + thresholdAll.getDescription() + ")";
     }
 
     @Override
     public HybridAlgorithmWrapper.Instance create(int[] ranks, int[] indices, double[][] points, double[][] transposedPoints) {
-        return new Instance(ranks, indices, points, threshold3D, thresholdAll, useTuning);
+        return new Instance(ranks, indices, points, threshold3D, thresholdAll);
     }
 
     private static final ThreadLocal<OperationCounter> counters = ThreadLocal.withInitial(OperationCounter::new);
 
+    private static final double[] A_IN_OPS = {
+            3.806816959499965, // for d = 2
+            4.113592943948679,
+            2.8467007731006437,
+            1.8473590929256243,
+            1.3249781911979446,
+            1.1777313339640052,
+            1.1653214813927109,
+            1.1401358990765458
+    };
+
+    private static final double[] B_IN_OPS = {
+            -186.48883310027958, // for d = 2
+            -484.71257133393243,
+            -584.9885133808805,
+            -423.9142423658353,
+            -178.74936469020457,
+            -46.92822531334395,
+            -38.59458963435686,
+            -20.611906174873603
+    };
+
+    private static final double[] P_IN_OPS = {
+            0.015332333045967268, // for d = 2
+            0.14316676164960723,
+            0.26411624362740815,
+            0.3564856546604639,
+            0.4162172410288698,
+            0.4382815729645708,
+            0.4428886704739746,
+            0.44701314145948956
+    };
+
+    private static int computeBudget(int problemSize, int objective) {
+        // Notes on performance counting on some fixed laptop.
+        // For helperB in ENS hybrid:
+        //     for x operations, the time is roughly 13 x + 2000 nanoseconds.
+        // For helperB in divide-and-conquer:
+        //     for n points and objective d, the time is estimated, in nanoseconds, as
+        //        b_d + a_d * n * pow(n, p_d) * log(n + 1)
+        //     where:
+        //        d = 2:  a_2 = 49.488620473499545, b_2 =  -424.3548303036347, p_2 = 0.015332333045967268
+        //        d = 3:  a_3 = 53.476708271332825, b_3 = -4301.263427341121,  p_3 = 0.14316676164960723
+        //        d = 4:  a_4 = 37.00711005030837,  b_4 = -5604.850673951447,  p_4 = 0.26411624362740815
+        //        d = 5:  a_5 = 24.015668208033116, b_5 = -3510.8851507558597, p_5 = 0.3564856546604639
+        //        d = 6:  a_6 = 17.22471648557328,  b_6 =  -323.7417409726593, p_6 = 0.4162172410288698
+        //        d = 7:  a_7 = 15.310507341532068, b_7 =  1389.9330709265287, p_7 = 0.4382815729645708
+        //        d = 8:  a_8 = 15.14917925810524,  b_8 =  1498.2703347533609, p_8 = 0.4428886704739746
+        //        d = 9+: a_9 = 14.821766687995096, b_9 =  1732.0452197266432, p_9 = 0.44701314145948956
+        // Hence the arrays above have been computed.
+
+        objective = Math.min(objective - 2, 7);
+        double estimation = B_IN_OPS[objective] + A_IN_OPS[objective] * problemSize * Math.pow(problemSize, P_IN_OPS[objective]) * Math.log(1 + problemSize);
+        return Math.max(1, (int) (estimation * 0.5));
+    }
+
     private static class OperationCounter {
-        private int remains = 0;
-        private int expected = 0;
+        private int operations = 0;
 
-        private static final double[] A_IN_OPS = {
-                3.806816959499965, // for d = 2
-                4.113592943948679,
-                2.8467007731006437,
-                1.8473590929256243,
-                1.3249781911979446,
-                1.1777313339640052,
-                1.1653214813927109,
-                1.1401358990765458
-        };
-
-        private static final double[] B_IN_OPS = {
-                -186.48883310027958, // for d = 2
-                -484.71257133393243,
-                -584.9885133808805,
-                -423.9142423658353,
-                -178.74936469020457,
-                -46.92822531334395,
-                -38.59458963435686,
-                -20.611906174873603
-        };
-
-        private static final double[] P_IN_OPS = {
-                0.015332333045967268, // for d = 2
-                0.14316676164960723,
-                0.26411624362740815,
-                0.3564856546604639,
-                0.4162172410288698,
-                0.4382815729645708,
-                0.4428886704739746,
-                0.44701314145948956
-        };
-
-        private void initialize(int problemSize, int objective) {
-            // Notes on performance counting on some fixed laptop.
-            // For helperB in ENS hybrid:
-            //     for x operations, the time is roughly 13 x + 2000 nanoseconds.
-            // For helperB in divide-and-conquer:
-            //     for n points and objective d, the time is estimated, in nanoseconds, as
-            //        b_d + a_d * n * pow(n, p_d)
-            //     where:
-            //        d = 2:  a_2 = 49.488620473499545, b_2 =  -424.3548303036347, p_2 = 0.015332333045967268
-            //        d = 3:  a_3 = 53.476708271332825, b_3 = -4301.263427341121,  p_3 = 0.14316676164960723
-            //        d = 4:  a_4 = 37.00711005030837,  b_4 = -5604.850673951447,  p_4 = 0.26411624362740815
-            //        d = 5:  a_5 = 24.015668208033116, b_5 = -3510.8851507558597, p_5 = 0.3564856546604639
-            //        d = 6:  a_6 = 17.22471648557328,  b_6 =  -323.7417409726593, p_6 = 0.4162172410288698
-            //        d = 7:  a_7 = 15.310507341532068, b_7 =  1389.9330709265287, p_7 = 0.4382815729645708
-            //        d = 8:  a_8 = 15.14917925810524,  b_8 =  1498.2703347533609, p_8 = 0.4428886704739746
-            //        d = 9+: a_9 = 14.821766687995096, b_9 =  1732.0452197266432, p_9 = 0.44701314145948956
-            // Hence the arrays above have been computed.
-
-            objective = Math.min(objective - 2, 7);
-            expected = (int) ((B_IN_OPS[objective] + A_IN_OPS[objective] * problemSize * Math.pow(problemSize, P_IN_OPS[objective]) * Math.log(1 + problemSize)) * 0.5);
-            remains = expected;
+        private void initialize() {
+            operations = 0;
         }
 
         private void consume(int nOperations) {
-            remains -= nOperations;
+            operations += nOperations;
         }
 
-        private boolean considerFailed() {
-            return remains <= 0;
-        }
-
-        private boolean shallTerminate() {
-            return remains <= -expected;
-        }
-
-        private int consumedOperations() {
-            return expected - remains;
-        }
-    }
-
-    private static class ThresholdAdaptor {
-        private double threshold;
-        private final boolean useTuning;
-
-        ThresholdAdaptor(int initialThresholdValue, boolean useTuning) {
-            this.threshold = initialThresholdValue;
-            this.useTuning = useTuning;
-        }
-
-        private synchronized void algorithmFailed(int computedLimit, int actuallyConsumed) {
-            if (useTuning) {
-                threshold *= Math.pow((double) (computedLimit) / actuallyConsumed, TUNING_FAILURE_EXPONENT);
-            }
-        }
-
-        private synchronized void algorithmSucceeded(int computedLimit, int actuallyConsumed) {
-            if (useTuning) {
-                threshold *= Math.pow(Math.min(2, (double) (computedLimit) / actuallyConsumed), TUNING_SUCCESS_EXPONENT);
-            }
+        private int getOperations() {
+            return operations;
         }
     }
 
@@ -156,25 +118,23 @@ public final class ENS extends HybridAlgorithmWrapper {
         private final double[][] points;
         private final double[][] exPoints;
 
-        private final boolean useTuning;
-        private final ThresholdAdaptor[] thresholds;
+        private final Threshold[] thresholds;
 
-        private Instance(int[] ranks, int[] indices, double[][] points, int threshold3D, int thresholdAll,
-                         boolean useTuning) {
+        private Instance(int[] ranks, int[] indices, double[][] points,
+                         ThresholdFactory threshold3D, ThresholdFactory thresholdAll) {
             this.ranks = ranks;
             this.indices = indices;
             this.points = points;
             this.exPoints = new double[points.length][];
             this.space = new int[STORAGE_MULTIPLE * indices.length];
-            this.useTuning = useTuning;
-            thresholds = new ThresholdAdaptor[8];
+            thresholds = new Threshold[8];
             for (int i = 0; i < thresholds.length; ++i) {
-                thresholds[i] = new ThresholdAdaptor(i == 0 ? threshold3D : thresholdAll, useTuning);
+                thresholds[i] = (i == 0 ? threshold3D : thresholdAll).createThreshold();
             }
         }
 
         private boolean notHookCondition(int size, int obj) {
-            return obj == 1 || size >= thresholds[Math.min(obj - 2, 7)].threshold;
+            return obj == 1 || size >= thresholds[Math.min(obj - 2, 7)].getThreshold();
         }
 
         private boolean checkIfDominatesA(int sliceIndex, int obj, int weakIndex) {
@@ -273,12 +233,20 @@ public final class ENS extends HybridAlgorithmWrapper {
 
         private int helperBSingleRank(int rank, int goodFrom, int goodUntil,
                                       int weakFrom, int weakUntil, int obj, int maximalMeaningfulRank, int tempFrom,
-                                      ThresholdAdaptor adaptor, OperationCounter counter) {
+                                      Threshold threshold) {
             int minUpdated = weakUntil;
             int offset = tempFrom - goodFrom;
+            int goodSize = goodUntil - goodFrom;
+            int problemSize = goodSize + weakUntil - weakFrom;
+
+            OperationCounter counter = counters.get();
+            counter.initialize();
+            int budget = computeBudget(problemSize, obj);
+
             for (int good = goodFrom; good < goodUntil; ++good) {
                 exPoints[offset + good] = points[indices[good]];
             }
+
             for (int weak = weakFrom, good = goodFrom; weak < weakUntil; ++weak) {
                 int wi = indices[weak];
                 if (ranks[wi] > rank) {
@@ -291,18 +259,14 @@ public final class ENS extends HybridAlgorithmWrapper {
                         minUpdated = weak;
                     }
                 }
-                if (useTuning && counter.shallTerminate()) {
-                    adaptor.algorithmFailed(counter.expected, counter.consumedOperations());
-                    Arrays.fill(exPoints, tempFrom, tempFrom + goodUntil - goodFrom, null);
+                if (threshold.shallTerminate(budget, counter.getOperations())) {
+                    threshold.recordPerformance(problemSize, budget, counter.getOperations(), true);
+                    Arrays.fill(exPoints, tempFrom, tempFrom + goodSize, null);
                     return -1;
                 }
             }
-            if (useTuning && counter.considerFailed()) {
-                adaptor.algorithmFailed(counter.expected, counter.consumedOperations());
-            } else {
-                adaptor.algorithmSucceeded(counter.expected, counter.consumedOperations());
-            }
-            Arrays.fill(exPoints, tempFrom, tempFrom + goodUntil - goodFrom, null);
+            threshold.recordPerformance(problemSize, budget, counter.getOperations(), false);
+            Arrays.fill(exPoints, tempFrom, tempFrom + goodSize, null);
             return rank == maximalMeaningfulRank && minUpdated < weakUntil
                     ? JFBBase.kickOutOverflowedRanks(indices, ranks, maximalMeaningfulRank, minUpdated, weakUntil)
                     : weakUntil;
@@ -382,18 +346,12 @@ public final class ENS extends HybridAlgorithmWrapper {
         @Override
         public int helperBHook(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj, int tempFrom, int maximalMeaningfulRank) {
             int goodSize = goodUntil - goodFrom;
-            if (notHookCondition(goodSize + weakUntil - weakFrom, obj)) {
+            int problemSize = goodSize + weakUntil - weakFrom;
+            if (notHookCondition(problemSize, obj)) {
                 return -1;
             }
 
-            ThresholdAdaptor adaptor = thresholds[Math.min(obj - 2, 7)];
-            OperationCounter counter = counters.get();
-            counter.initialize(goodSize + weakUntil - weakFrom, obj);
-
-            if (useTuning && counter.shallTerminate()) { // it can be like that
-                adaptor.algorithmFailed(1, 2);
-                return -1;
-            }
+            Threshold threshold = thresholds[Math.min(obj - 2, 7)];
 
             int sortedIndicesOffset = tempFrom * STORAGE_MULTIPLE;
             int ranksAndSlicesOffset = sortedIndicesOffset + goodSize;
@@ -403,12 +361,17 @@ public final class ENS extends HybridAlgorithmWrapper {
             if (minRank != 1) {
                 // "good" has a single front, let's do the simple stuff
                 return helperBSingleRank(-minRank, goodFrom, goodUntil, weakFrom, weakUntil, obj, maximalMeaningfulRank,
-                        tempFrom, adaptor, counter);
+                        tempFrom, threshold);
             } else {
                 // "good" has multiple fronts (called "slices" here), need to go a more complicated way.
                 ArraySorter.sortIndicesByValues(space, space, sortedIndicesOffset, sortedIndicesOffset + goodSize);
                 int sliceLast = distributePointsBetweenSlices(space, sortedIndicesOffset, sortedIndicesOffset + goodSize, sliceOffset, tempFrom);
                 int minOverflowed = weakUntil;
+
+                OperationCounter counter = counters.get();
+                counter.initialize();
+                int budget = computeBudget(problemSize, obj);
+
                 for (int weak = weakFrom, good = goodFrom, sliceOfGood = ranksAndSlicesOffset; weak < weakUntil; ++weak) {
                     int wi = indices[weak];
                     int gi;
@@ -424,18 +387,14 @@ public final class ENS extends HybridAlgorithmWrapper {
                     if (weakRank > maximalMeaningfulRank && minOverflowed > weak) {
                         minOverflowed = weak;
                     }
-                    if (useTuning && counter.shallTerminate()) {
-                        adaptor.algorithmFailed(counter.expected, counter.consumedOperations());
-                        Arrays.fill(exPoints, tempFrom, tempFrom + goodUntil - goodFrom, null);
+                    if (threshold.shallTerminate(budget, counter.getOperations())) {
+                        threshold.recordPerformance(problemSize, budget, counter.getOperations(), true);
+                        Arrays.fill(exPoints, tempFrom, tempFrom + goodSize, null);
                         return -1;
                     }
                 }
-                if (counter.considerFailed()) {
-                    adaptor.algorithmFailed(counter.expected, counter.consumedOperations());
-                } else {
-                    adaptor.algorithmSucceeded(counter.expected, counter.consumedOperations());
-                }
-                Arrays.fill(exPoints, tempFrom, tempFrom + goodUntil - goodFrom, null);
+                threshold.recordPerformance(problemSize, budget, counter.getOperations(), false);
+                Arrays.fill(exPoints, tempFrom, tempFrom + goodSize, null);
                 return JFBBase.kickOutOverflowedRanks(indices, ranks, maximalMeaningfulRank, minOverflowed, weakUntil);
             }
         }
