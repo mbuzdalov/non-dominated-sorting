@@ -75,6 +75,7 @@ public final class IdCollection {
             addNonDominatedSortingFactory("ens.ndt." + threshold, ENS.getENS_NDT(threshold));
             addNonDominatedSortingFactory("ens.ndt.one.tree." + threshold, ENS.getENS_NDT_OneTree(threshold));
             addNonDominatedSortingFactory("jfb.rbtree.hybrid.ndt." + threshold, JensenFortinBuzdalov.getRedBlackTreeSweepHybridNDTImplementation(threshold, 1));
+            addNonDominatedSortingFactory("jfb.rbtree.hybrid.ndt.tune." + threshold, JensenFortinBuzdalov.getRedBlackTreeSweepHybridNDTImplementationWithTuning(threshold, 1));
             addNonDominatedSortingFactory("jfb.veb.hybrid.ndt." + threshold, JensenFortinBuzdalov.getVanEmdeBoasHybridNDTImplementation(threshold));
         }
 
