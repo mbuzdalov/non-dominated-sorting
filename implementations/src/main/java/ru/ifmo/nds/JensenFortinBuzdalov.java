@@ -57,4 +57,8 @@ public final class JensenFortinBuzdalov {
     public static NonDominatedSortingFactory getRedBlackTreeSweepHybridNDTImplementation(int threshold, int allowedThreads) {
         return (p, d) -> new JFBDouble(new RedBlackRankQueryStructure(p), d, allowedThreads, new NDT(CONSTANT_100, CONSTANT_20000, threshold));
     }
+
+    public static NonDominatedSortingFactory getRedBlackTreeSweepHybridNDTImplementationWithTuning(int threshold, int allowedThreads) {
+        return (p, d) -> new JFBDouble(new RedBlackRankQueryStructure(p), d, allowedThreads, new NDT(DYNAMIC_100, DYNAMIC_200, threshold));
+    }
 }
