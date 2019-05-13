@@ -3,9 +3,16 @@ package ru.ifmo.nds.ndt;
 import ru.ifmo.nds.util.DominanceHelper;
 
 public abstract class TreeRankNode {
+    public static final class RankEvaluationContext {
+        public double[] point;
+        public int rank;
+        public int maxObj;
+        public int operations;
+    }
+
     public abstract TreeRankNode add(double[] point, int rank, Split split, int splitThreshold);
 
-    public abstract int evaluateRank(double[] point, int rank, Split split, int maxObj);
+    public abstract void evaluateRank(RankEvaluationContext ctx, Split split);
 
     protected abstract int getMaxRank();
 
@@ -19,9 +26,7 @@ public abstract class TreeRankNode {
         }
 
         @Override
-        public int evaluateRank(double[] point, int rank, Split split, int maxObj) {
-            return rank;
-        }
+        public void evaluateRank(RankEvaluationContext ctx, Split split) {}
 
         @Override
         protected int getMaxRank() {
@@ -36,9 +41,7 @@ public abstract class TreeRankNode {
         }
 
         @Override
-        public int evaluateRank(double[] point, int rank, Split split, int maxObj) {
-            return rank;
-        }
+        public void evaluateRank(RankEvaluationContext ctx, Split split) {}
 
         @Override
         protected int getMaxRank() {
@@ -136,19 +139,20 @@ public abstract class TreeRankNode {
         }
 
         @Override
-        public int evaluateRank(double[] point, int rank, Split split, int maxObj) {
-            if (maxRank < rank) {
-                return rank;
+        public void evaluateRank(RankEvaluationContext ctx, Split split) {
+            if (maxRank < ctx.rank) {
+                return;
             }
             for (int i = size - 1; i >= 0; --i) {
-                if (ranks[i] < rank) {
-                    return rank;
+                ++ctx.operations;
+                if (ranks[i] < ctx.rank) {
+                    return;
                 }
-                if (DominanceHelper.strictlyDominatesAssumingLexicographicallySmaller(points[i], point, maxObj)) {
-                    return ranks[i] + 1;
+                if (DominanceHelper.strictlyDominatesAssumingLexicographicallySmaller(points[i], ctx.point, ctx.maxObj)) {
+                    ctx.rank = ranks[i] + 1;
+                    return;
                 }
             }
-            return rank;
         }
 
         @Override
@@ -193,11 +197,12 @@ public abstract class TreeRankNode {
         }
 
         @Override
-        public int evaluateRank(double[] point, int rank, Split split, int maxObj) {
-            if (this.rank >= rank && DominanceHelper.strictlyDominatesAssumingLexicographicallySmaller(this.point, point, maxObj)) {
-                return this.rank + 1;
+        public void evaluateRank(RankEvaluationContext ctx, Split split) {
+            ++ctx.operations;
+            if (this.rank >= ctx.rank &&
+                    DominanceHelper.strictlyDominatesAssumingLexicographicallySmaller(this.point, ctx.point, ctx.maxObj)) {
+                ctx.rank = this.rank + 1;
             }
-            return rank;
         }
 
         @Override
@@ -228,17 +233,17 @@ public abstract class TreeRankNode {
         }
 
         @Override
-        public int evaluateRank(double[] point, int rank, Split split, int maxObj) {
-            if (maxRank < rank) {
-                return rank;
+        public void evaluateRank(RankEvaluationContext ctx, Split split) {
+            ++ctx.operations;
+            if (maxRank < ctx.rank) {
+                return;
             }
-            if (weak != null && point[split.coordinate] >= split.value) {
-                rank = weak.evaluateRank(point, rank, split.weak, maxObj);
+            if (weak != null && ctx.point[split.coordinate] >= split.value) {
+                weak.evaluateRank(ctx, split.weak);
             }
             if (good != null) {
-                rank = good.evaluateRank(point, rank, split.good, maxObj);
+                good.evaluateRank(ctx, split.good);
             }
-            return rank;
         }
 
         @Override

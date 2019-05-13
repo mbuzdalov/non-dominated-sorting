@@ -17,6 +17,7 @@ public final class JensenFortinBuzdalov {
 
     private static final ThresholdFactory CONSTANT_100 = new ConstantThresholdFactory(100);
     private static final ThresholdFactory CONSTANT_200 = new ConstantThresholdFactory(200);
+    private static final ThresholdFactory CONSTANT_20000 = new ConstantThresholdFactory(20000);
 
     private static final ThresholdFactory DYNAMIC_100 = new DynamicThresholdFactory(100);
     private static final ThresholdFactory DYNAMIC_200 = new DynamicThresholdFactory(200);
@@ -38,7 +39,7 @@ public final class JensenFortinBuzdalov {
     }
 
     public static NonDominatedSortingFactory getVanEmdeBoasHybridNDTImplementation(int threshold) {
-        return (p, d) -> new JFBInt(new VanEmdeBoasRankQueryStructureInt(p), d, 1, new NDT(100, 20000, threshold));
+        return (p, d) -> new JFBInt(new VanEmdeBoasRankQueryStructureInt(p), d, 1, new NDT(CONSTANT_100, CONSTANT_20000, threshold));
     }
 
     public static NonDominatedSortingFactory getRedBlackTreeSweepHybridFNDSImplementation(int allowedThreads) {
@@ -54,6 +55,6 @@ public final class JensenFortinBuzdalov {
     }
 
     public static NonDominatedSortingFactory getRedBlackTreeSweepHybridNDTImplementation(int threshold, int allowedThreads) {
-        return (p, d) -> new JFBDouble(new RedBlackRankQueryStructure(p), d, allowedThreads, new NDT(100, 20000, threshold));
+        return (p, d) -> new JFBDouble(new RedBlackRankQueryStructure(p), d, allowedThreads, new NDT(CONSTANT_100, CONSTANT_20000, threshold));
     }
 }
