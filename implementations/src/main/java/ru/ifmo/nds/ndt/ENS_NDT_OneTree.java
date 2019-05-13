@@ -4,8 +4,6 @@ import ru.ifmo.nds.NonDominatedSorting;
 import ru.ifmo.nds.util.ArrayHelper;
 import ru.ifmo.nds.util.ArraySorter;
 
-import java.util.Arrays;
-
 public class ENS_NDT_OneTree extends NonDominatedSorting {
     private SplitBuilder splitBuilder;
     private int[] ranks;
@@ -56,12 +54,16 @@ public class ENS_NDT_OneTree extends NonDominatedSorting {
         }
 
         Split split = splitBuilder.result(newN, dim);
+        TreeRankNode.RankEvaluationContext ctx = new TreeRankNode.RankEvaluationContext();
+        ctx.maxObj = dim - 1;
 
         tree = tree.add(this.points[0], 0, split, threshold);
-        int maxObj = dim - 1;
         for (int i = 1; i < newN; ++i) {
             double[] current = this.points[i];
-            int currRank = tree.evaluateRank(current, 0, split, maxObj);
+            ctx.rank = 0;
+            ctx.point = current;
+            tree.evaluateRank(ctx, split);
+            int currRank = ctx.rank;
             this.ranks[i] = currRank;
             if (currRank <= maximalMeaningfulRank) {
                 tree = tree.add(current, currRank, split, threshold);
