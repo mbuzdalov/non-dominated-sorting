@@ -40,14 +40,14 @@ public final class NDT extends HybridAlgorithmWrapper {
             ThreadLocal.withInitial(TreeRankNode.RankEvaluationContext::new);
 
     private static final double[] A_IN_OPS = {
-            4.685313180923034, // for d = 2
-            5.062883623321451,
-            3.503631720739254,
-            2.2736727297546144,
-            1.630742389166701,
-            1.4495154879556986,
-            1.434241823252567,
-            1.4032441834788256
+            3.665823738777744, // for d = 2
+            3.9612376497283575,
+            2.7412674111339532,
+            1.7789383857802308,
+            1.2759049248572798,
+            1.1341116549283012,
+            1.122161426526314,
+            1.0979086435551924,
     };
 
     private static final double[] P_IN_OPS = {
@@ -64,7 +64,7 @@ public final class NDT extends HybridAlgorithmWrapper {
     private static int computeBudget(int problemSize, int objective) {
         // Notes on performance counting on some fixed laptop.
         // For helperB in NDT hybrid:
-        //     for x operations, the time is roughly 16 x nanoseconds.
+        //     for x operations, the time is roughly 13.5 x nanoseconds.
         // For helperB in divide-and-conquer:
         //     for n points and objective d, the time is estimated, in nanoseconds, as
         //        b_d + a_d * n * pow(n, p_d) * log(n + 1)
@@ -81,7 +81,7 @@ public final class NDT extends HybridAlgorithmWrapper {
 
         objective = Math.min(objective - 2, 7);
         double estimation = A_IN_OPS[objective] * problemSize * Math.pow(problemSize, P_IN_OPS[objective]) * Math.log(1 + problemSize);
-        return (int) (estimation * 0.3);
+        return (int) (estimation);
     }
 
     private static final class Instance extends HybridAlgorithmWrapper.Instance {
@@ -135,7 +135,10 @@ public final class NDT extends HybridAlgorithmWrapper {
             }
 
             TreeRankNode.RankEvaluationContext ctx = contexts.get();
-            ctx.operations = 0;
+            // first component is the complexity estimation for the split building
+            // second component is for array copying
+            ctx.operations = (int) (problemSize * Math.log(problemSize + 1) * Math.log(obj + 10) * 0.4148148148148148
+                    + (30 + 1.125 * obj) * problemSize * 0.08148148148148149);
             ctx.maxObj = obj;
 
             int minOverflow = until;
@@ -180,7 +183,10 @@ public final class NDT extends HybridAlgorithmWrapper {
             }
 
             TreeRankNode.RankEvaluationContext ctx = contexts.get();
-            ctx.operations = 0;
+            // first component is the complexity estimation for the split building
+            // second component is for array copying
+            ctx.operations = (int) (problemSize * Math.log(problemSize + 1) * Math.log(obj + 10) * 0.4148148148148148
+                    + (30 + 1.125 * obj) * problemSize * 0.08148148148148149);
             ctx.maxObj = obj;
 
             int minOverflow = weakUntil;
