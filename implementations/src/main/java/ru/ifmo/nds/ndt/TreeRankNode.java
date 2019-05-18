@@ -140,19 +140,22 @@ public abstract class TreeRankNode {
 
         @Override
         public void evaluateRank(RankEvaluationContext ctx, Split split) {
+            ++ctx.operations;
             if (maxRank < ctx.rank) {
                 return;
             }
             for (int i = size - 1; i >= 0; --i) {
-                ++ctx.operations;
                 if (ranks[i] < ctx.rank) {
+                    ctx.operations += size - i;
                     return;
                 }
                 if (DominanceHelper.strictlyDominatesAssumingLexicographicallySmaller(points[i], ctx.point, ctx.maxObj)) {
+                    ctx.operations += size - i;
                     ctx.rank = ranks[i] + 1;
                     return;
                 }
             }
+            ctx.operations += size;
         }
 
         @Override
