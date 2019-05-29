@@ -14,13 +14,14 @@ public class ThresholdTunerRunner {
         ThresholdFactory thresholdFactory = new DynamicThresholdFactory(Integer.valueOf(args[1]));
         Threshold threshold = thresholdFactory.createThreshold();
         try (PrintWriter pw = new PrintWriter(thresholdFactory.getDescription() + ".csv")) {
-            pw.println("n,d,iter,thr");
+            pw.println("i,n,budget,taken,thr");
             for (int i = 0; i < countRuns; i++) {
                 int problemSize = rand.nextInt(threshold.getThreshold());
                 int operationBudget = getBudget(problemSize);
                 int operationTaken = getTaken(problemSize);
-                threshold.recordPerformance(problemSize, operationBudget, operationTaken, true);
-                pw.println(problemSize + ", " + operationBudget + ", " + operationTaken + ", " + threshold.getThreshold());
+                boolean wasOK = !threshold.shallTerminate(operationBudget, operationTaken);
+                threshold.recordPerformance(problemSize, operationBudget, operationTaken, !wasOK);
+                pw.println((i + 1) + ", " + problemSize + ", " + operationBudget + ", " + operationTaken + ", " + threshold.getThreshold());
             }
         }
     }
