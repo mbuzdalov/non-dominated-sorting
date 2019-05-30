@@ -45,6 +45,8 @@ public class DynamicThresholdFactory extends ThresholdFactory {
                 if (thresholdEstimate > threshold) {
                     double ratio = thresholdEstimate / threshold;
                     threshold *= (1 + (ratio - 1) * TUNING_SUCCESS_PROPORTION);
+                } else {
+                    threshold *= 1.0001;
                 }
             } else {
                 // Not OK, threshold can only shrink
