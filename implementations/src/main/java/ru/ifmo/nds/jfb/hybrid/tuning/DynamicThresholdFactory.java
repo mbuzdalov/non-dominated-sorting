@@ -86,8 +86,39 @@ public class DynamicThresholdFactory extends ThresholdFactory {
 //            }
 //        }
 
-        private final int maxSequence = 5;
-        private int curSequence = 0;
+//        private final int maxSequence = 5;
+//        private int curSequence = 0;
+//        @Override
+//        public final void recordPerformance(int problemSize, int operationBudget, int operationsTaken, boolean forced) {
+//            double thresholdEstimate = problemSize * Math.max(0.5, Math.min(2, (double) operationBudget / operationsTaken));
+//            if (operationBudget >= operationsTaken) {
+//                // OK, threshold can only grow
+//                if (thresholdEstimate > threshold) {
+//                    double ratio = thresholdEstimate / threshold;
+//                    threshold *= (1 + (ratio - 1) * TUNING_SUCCESS_PROPORTION);
+//                } else {
+//                    curSequence++;
+//                    if (curSequence == maxSequence) {
+//                        threshold *= 1.01;
+//                        curSequence = 0;
+//                    }
+//                }
+//            } else {
+//                curSequence = 0;
+//                // Not OK, threshold can only shrink
+//                if (thresholdEstimate < threshold) {
+//                    double ratio = threshold / thresholdEstimate;
+//                    threshold /= (1 + (ratio - 1) * TUNING_FAILURE_PROPORTION);
+//                } else {
+//                    threshold /= 1.01;
+//                }
+//            }
+//        }
+
+        private final double maxMult = 1.01;
+        private final double minMult = 1.000001;
+        private double mult = 1.01;
+        private boolean isSequence = false;
         @Override
         public final void recordPerformance(int problemSize, int operationBudget, int operationsTaken, boolean forced) {
             double thresholdEstimate = problemSize * Math.max(0.5, Math.min(2, (double) operationBudget / operationsTaken));
@@ -97,14 +128,16 @@ public class DynamicThresholdFactory extends ThresholdFactory {
                     double ratio = thresholdEstimate / threshold;
                     threshold *= (1 + (ratio - 1) * TUNING_SUCCESS_PROPORTION);
                 } else {
-                    curSequence++;
-                    if (curSequence == maxSequence) {
-                        threshold *= 1.01;
-                        curSequence = 0;
+                    threshold *= mult;
+                    if (isSequence) {
+                        mult = Math.max(1 + (mult - 1) / 2, minMult);
+//                        System.out.println(mult);
                     }
+                    isSequence = true;
                 }
             } else {
-                curSequence = 0;
+                isSequence = false;
+                mult = maxMult;
                 // Not OK, threshold can only shrink
                 if (thresholdEstimate < threshold) {
                     double ratio = threshold / thresholdEstimate;
