@@ -37,6 +37,57 @@ public class DynamicThresholdFactory extends ThresholdFactory {
             return operationsTaken > operationBudget + operationBudget;
         }
 
+//        @Override
+//        public final void recordPerformance(int problemSize, int operationBudget, int operationsTaken, boolean forced) {
+//            double thresholdEstimate = problemSize * Math.max(0.5, Math.min(2, (double) operationBudget / operationsTaken));
+//            if (operationBudget >= operationsTaken) {
+//                // OK, threshold can only grow
+//                if (thresholdEstimate > threshold) {
+//                    double ratio = thresholdEstimate / threshold;
+//                    threshold *= (1 + (ratio - 1) * TUNING_SUCCESS_PROPORTION);
+//                } else {
+//                    threshold *= 1.0001;
+//                }
+//            } else {
+//                // Not OK, threshold can only shrink
+//                if (thresholdEstimate < threshold) {
+//                    double ratio = threshold / thresholdEstimate;
+//                    threshold /= (1 + (ratio - 1) * TUNING_FAILURE_PROPORTION);
+//                } else {
+//                    threshold /= 1.01;
+//                }
+//            }
+//        }
+
+
+//        private final Random rand = new Random();
+//        private final double probability = 0.5;
+//        @Override
+//        public final void recordPerformance(int problemSize, int operationBudget, int operationsTaken, boolean forced) {
+//            double thresholdEstimate = problemSize * Math.max(0.5, Math.min(2, (double) operationBudget / operationsTaken));
+//            if (operationBudget >= operationsTaken) {
+//                // OK, threshold can only grow
+//                if (thresholdEstimate > threshold) {
+//                    double ratio = thresholdEstimate / threshold;
+//                    threshold *= (1 + (ratio - 1) * TUNING_SUCCESS_PROPORTION);
+//                } else {
+//                    if (rand.nextDouble() < probability) {
+//                        threshold *= 1.01;
+//                    }
+//                }
+//            } else {
+//                // Not OK, threshold can only shrink
+//                if (thresholdEstimate < threshold) {
+//                    double ratio = threshold / thresholdEstimate;
+//                    threshold /= (1 + (ratio - 1) * TUNING_FAILURE_PROPORTION);
+//                } else {
+//                    threshold /= 1.01;
+//                }
+//            }
+//        }
+
+        private final int maxSequence = 5;
+        private int curSequence = 0;
         @Override
         public final void recordPerformance(int problemSize, int operationBudget, int operationsTaken, boolean forced) {
             double thresholdEstimate = problemSize * Math.max(0.5, Math.min(2, (double) operationBudget / operationsTaken));
@@ -46,9 +97,14 @@ public class DynamicThresholdFactory extends ThresholdFactory {
                     double ratio = thresholdEstimate / threshold;
                     threshold *= (1 + (ratio - 1) * TUNING_SUCCESS_PROPORTION);
                 } else {
-                    threshold *= 1.0001;
+                    curSequence++;
+                    if (curSequence == maxSequence) {
+                        threshold *= 1.01;
+                        curSequence = 0;
+                    }
                 }
             } else {
+                curSequence = 0;
                 // Not OK, threshold can only shrink
                 if (thresholdEstimate < threshold) {
                     double ratio = threshold / thresholdEstimate;
@@ -58,5 +114,6 @@ public class DynamicThresholdFactory extends ThresholdFactory {
                 }
             }
         }
+
     }
 }
