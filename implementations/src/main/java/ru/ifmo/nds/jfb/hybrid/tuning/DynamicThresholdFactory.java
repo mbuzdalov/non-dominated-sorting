@@ -21,7 +21,12 @@ public class DynamicThresholdFactory extends ThresholdFactory {
     }
 
     private static final class Impl extends Threshold {
+        private static final double MAX_MULTIPLE = 1.01;
+        private static final double MIN_MULTIPLE = 1.000001;
+
         private double threshold;
+        private double multiple = 1.01;
+        private boolean isSequence = false;
 
         Impl(int initialValue) {
             threshold = initialValue;
@@ -115,12 +120,8 @@ public class DynamicThresholdFactory extends ThresholdFactory {
 //            }
 //        }
 
-        private final double maxMult = 1.01;
-        private final double minMult = 1.000001;
-        private double mult = 1.01;
-        private boolean isSequence = false;
         @Override
-        public final void recordPerformance(int problemSize, int operationBudget, int operationsTaken, boolean forced) {
+        public synchronized final void recordPerformance(int problemSize, int operationBudget, int operationsTaken, boolean forced) {
             double thresholdEstimate = problemSize * Math.max(0.5, Math.min(2, (double) operationBudget / operationsTaken));
             if (operationBudget >= operationsTaken) {
                 // OK, threshold can only grow
@@ -128,16 +129,15 @@ public class DynamicThresholdFactory extends ThresholdFactory {
                     double ratio = thresholdEstimate / threshold;
                     threshold *= (1 + (ratio - 1) * TUNING_SUCCESS_PROPORTION);
                 } else {
-                    threshold *= mult;
+                    threshold *= multiple;
                     if (isSequence) {
-                        mult = Math.max(1 + (mult - 1) / 2, minMult);
-//                        System.out.println(mult);
+                        multiple = Math.max(1 + (multiple - 1) / 2, MIN_MULTIPLE);
                     }
                     isSequence = true;
                 }
             } else {
                 isSequence = false;
-                mult = maxMult;
+                multiple = MAX_MULTIPLE;
                 // Not OK, threshold can only shrink
                 if (thresholdEstimate < threshold) {
                     double ratio = threshold / thresholdEstimate;
