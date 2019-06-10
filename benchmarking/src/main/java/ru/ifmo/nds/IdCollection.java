@@ -76,6 +76,8 @@ public final class IdCollection {
             addNonDominatedSortingFactory("ens.ndt.one.tree." + threshold, ENS.getENS_NDT_OneTree(threshold));
             addNonDominatedSortingFactory("jfb.rbtree.hybrid.ndt." + threshold, JensenFortinBuzdalov.getRedBlackTreeSweepHybridNDTImplementation(threshold, 1));
             addNonDominatedSortingFactory("jfb.rbtree.hybrid.ndt.tune." + threshold, JensenFortinBuzdalov.getRedBlackTreeSweepHybridNDTImplementationWithTuning(threshold, 1));
+            addNonDominatedSortingFactory("jfb.rbtree.hybrid.ndt.tuneAdjInc." + threshold, JensenFortinBuzdalov.getRedBlackTreeSweepHybridNDTImplementationWithTuningAdjustableInc(threshold, 1));
+            addNonDominatedSortingFactory("jfb.rbtree.hybrid.ndt.tuneAdjBoth." + threshold, JensenFortinBuzdalov.getRedBlackTreeSweepHybridNDTImplementationWithTuningAdjustableBoth(threshold, 1));
             addNonDominatedSortingFactory("jfb.veb.hybrid.ndt." + threshold, JensenFortinBuzdalov.getVanEmdeBoasHybridNDTImplementation(threshold));
         }
 
@@ -87,6 +89,8 @@ public final class IdCollection {
         addNonDominatedSortingFactory("jfb.rbtree.hybrid.fnds", JensenFortinBuzdalov.getRedBlackTreeSweepHybridFNDSImplementation(1));
         addNonDominatedSortingFactory("jfb.rbtree.hybrid.ens", JensenFortinBuzdalov.getRedBlackTreeSweepHybridENSImplementation(1));
         addNonDominatedSortingFactory("jfb.rbtree.hybrid.ens.tune", JensenFortinBuzdalov.getRedBlackTreeSweepHybridENSImplementationWithTuning(1));
+        addNonDominatedSortingFactory("jfb.rbtree.hybrid.ens.tuneAdjInc", JensenFortinBuzdalov.getRedBlackTreeSweepHybridENSImplementationWithTuningAdjustableInc(1));
+        addNonDominatedSortingFactory("jfb.rbtree.hybrid.ens.tuneAdjBoth", JensenFortinBuzdalov.getRedBlackTreeSweepHybridENSImplementationWithTuningAdjustableBoth(1));
 
         int maxThreadsValue = Integer.parseInt(maxThreads);
         for (int threads = 2; threads <= maxThreadsValue; ++threads) {
