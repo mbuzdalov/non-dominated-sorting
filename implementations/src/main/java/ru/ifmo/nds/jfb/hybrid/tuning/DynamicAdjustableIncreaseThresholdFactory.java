@@ -70,6 +70,28 @@ public class DynamicAdjustableIncreaseThresholdFactory extends ThresholdFactory 
                 }
             }
         }
+
+//        @Override
+//        public final void recordPerformance(int problemSize, int operationBudget, int operationsTaken, boolean forced) {
+//            double thresholdEstimate = problemSize * Math.max(0.5, Math.min(2, (double) operationBudget / operationsTaken));
+//            if (operationBudget >= operationsTaken) {
+//                // OK, threshold can only grow
+//                if (thresholdEstimate > threshold) {
+//                    double ratio = thresholdEstimate / threshold;
+//                    threshold *= (1 + (ratio - 1) * TUNING_SUCCESS_PROPORTION);
+//                } else {
+//                    threshold *= 1.0001;
+//                }
+//            } else {
+//                // Not OK, threshold can only shrink
+//                if (thresholdEstimate < threshold) {
+//                    double ratio = threshold / thresholdEstimate;
+//                    threshold /= (1 + (ratio - 1) * TUNING_FAILURE_PROPORTION);
+//                } else {
+//                    threshold /= 1.00001;
+//                }
+//            }
+//        }
     }
 }
 
