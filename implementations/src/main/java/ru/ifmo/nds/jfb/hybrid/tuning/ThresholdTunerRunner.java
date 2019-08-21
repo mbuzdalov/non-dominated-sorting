@@ -10,8 +10,8 @@ public class ThresholdTunerRunner {
 
     public static void main(String[] args) throws FileNotFoundException {
         Random rand = new Random();
-        int countRuns = Integer.valueOf(args[0]);
-        ThresholdFactory thresholdFactory = new DynamicThresholdFactory(Integer.valueOf(args[1]));
+        int countRuns = Integer.parseInt(args[0]);
+        ThresholdFactory thresholdFactory = new DynamicThresholdFactory(Integer.parseInt(args[1]));
         Threshold threshold = thresholdFactory.createThreshold();
         try (PrintWriter pw = new PrintWriter(thresholdFactory.getDescription() + ".csv")) {
             pw.println("i,n,budget,taken,thr");

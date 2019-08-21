@@ -17,7 +17,7 @@ public class DynamicAdjustableIncreaseThresholdFactory extends ThresholdFactory 
 
     @Override
     public Threshold createThreshold() {
-        return new DynamicAdjustableIncreaseThresholdFactory.Impl(initialValue);
+        return new Impl(initialValue);
     }
 
     private static final class Impl extends Threshold {
