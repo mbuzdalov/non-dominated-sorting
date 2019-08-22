@@ -47,7 +47,7 @@ public class ThresholdTunerRunner {
         }
 
         private static int divideConquerOperationsForRound(int problemSize) {
-            return 25 * problemSize;
+            return 60 * problemSize;
         }
 
         private static int divideConquerTotalOperations(int problemSize) {
@@ -94,6 +94,7 @@ public class ThresholdTunerRunner {
         static void run(String[] args) throws IOException {
             int problemSize = Integer.parseInt(args[0]);
             int iterations = Integer.parseInt(args[1]);
+            int averageRuns = Integer.parseInt(args[2]);
 
             ThresholdFactory[] factories = {
                     new ConstantThresholdFactory(0),
@@ -120,7 +121,7 @@ public class ThresholdTunerRunner {
                     for (double mul : (factory instanceof ConstantThresholdFactory ? new double[] { 1.0 } : multiples)) {
                         ADJUSTMENT_MULTIPLE = mul;
                         pw.println("    {\"factory\":\"" + factory.getDescription() + "@" + mul + "\",\"multiple\":" + mul + ",\"measurements\":[");
-                        for (int run = 0; run < 100; ++run) {
+                        for (int run = 0; run < averageRuns; ++run) {
                             Threshold threshold = factory.createThreshold();
                             for (int iteration = 0; iteration < iterations; ++iteration) {
                                 ITERATION_DEPENDENT_MULTIPLE = 1 - 0.8 * iteration / iterations;
@@ -128,7 +129,7 @@ public class ThresholdTunerRunner {
                                 long result = go(problemSize, threshold);
                                 pw.println("            {\"type\":\"runtime\",\"value\":" + result + "},");
                                 pw.println("            {\"type\":\"threshold\",\"value\":" + threshold.getThreshold() + "}");
-                                pw.println("        ]}" + (iteration + 1 < iterations || run + 1 < 100 ? "," : ""));
+                                pw.println("        ]}" + (iteration + 1 < iterations || run + 1 < averageRuns ? "," : ""));
                             }
                         }
                         pw.println("    ]}" + (i + 1 < factories.length || mul < multiples[multiples.length - 1] ? "," : ""));
