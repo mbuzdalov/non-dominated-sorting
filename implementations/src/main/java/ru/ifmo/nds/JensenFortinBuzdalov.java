@@ -20,11 +20,11 @@ public final class JensenFortinBuzdalov {
     private static final ThresholdFactory DYNAMIC_100 = new DynamicThresholdFactory(100);
     private static final ThresholdFactory DYNAMIC_200 = new DynamicThresholdFactory(200);
 
-    private static final ThresholdFactory DYNAMIC_100_ADJINC = new DynamicAdjustableIncreaseThresholdFactory(100);
-    private static final ThresholdFactory DYNAMIC_200_ADJINC = new DynamicAdjustableIncreaseThresholdFactory(200);
+    private static final ThresholdFactory DYNAMIC_100_ADJ_SMALL = new DynamicAdjustableIncreaseThresholdFactory(100, 1.000001);
+    private static final ThresholdFactory DYNAMIC_200_ADJ_SMALL = new DynamicAdjustableIncreaseThresholdFactory(200, 1.000001);
 
-    private static final ThresholdFactory DYNAMIC_100_ADJBOTH = new DynamicAdjustableBothThresholdFactory(100);
-    private static final ThresholdFactory DYNAMIC_200_ADJBOTH = new DynamicAdjustableBothThresholdFactory(200);
+    private static final ThresholdFactory DYNAMIC_100_ADJ_LARGE = new DynamicAdjustableIncreaseThresholdFactory(100, 1.0001);
+    private static final ThresholdFactory DYNAMIC_200_ADJ_LARGE = new DynamicAdjustableIncreaseThresholdFactory(200, 1.0001);
 
 
     public static NonDominatedSortingFactory getRedBlackTreeSweepImplementation(int allowedThreads) {
@@ -59,12 +59,12 @@ public final class JensenFortinBuzdalov {
         return (p, d) -> new JFBDouble(new RedBlackRankQueryStructure(p), d, allowedThreads, new ENS(DYNAMIC_100, DYNAMIC_200));
     }
 
-    public static NonDominatedSortingFactory getRedBlackTreeSweepHybridENSImplementationWithTuningAdjustableInc(int allowedThreads) {
-        return (p, d) -> new JFBDouble(new RedBlackRankQueryStructure(p), d, allowedThreads, new ENS(DYNAMIC_100_ADJINC, DYNAMIC_200_ADJINC));
+    public static NonDominatedSortingFactory getRedBlackTreeSweepHybridENSImplementationWithTuningAdjustableSmall(int allowedThreads) {
+        return (p, d) -> new JFBDouble(new RedBlackRankQueryStructure(p), d, allowedThreads, new ENS(DYNAMIC_100_ADJ_SMALL, DYNAMIC_200_ADJ_SMALL));
     }
 
-    public static NonDominatedSortingFactory getRedBlackTreeSweepHybridENSImplementationWithTuningAdjustableBoth(int allowedThreads) {
-        return (p, d) -> new JFBDouble(new RedBlackRankQueryStructure(p), d, allowedThreads, new ENS(DYNAMIC_100_ADJBOTH, DYNAMIC_200_ADJBOTH));
+    public static NonDominatedSortingFactory getRedBlackTreeSweepHybridENSImplementationWithTuningAdjustableLarge(int allowedThreads) {
+        return (p, d) -> new JFBDouble(new RedBlackRankQueryStructure(p), d, allowedThreads, new ENS(DYNAMIC_100_ADJ_LARGE, DYNAMIC_200_ADJ_LARGE));
     }
 
     public static NonDominatedSortingFactory getRedBlackTreeSweepHybridNDTImplementation(int threshold, int allowedThreads) {
@@ -75,11 +75,11 @@ public final class JensenFortinBuzdalov {
         return (p, d) -> new JFBDouble(new RedBlackRankQueryStructure(p), d, allowedThreads, new NDT(DYNAMIC_100, DYNAMIC_200, threshold));
     }
 
-    public static NonDominatedSortingFactory getRedBlackTreeSweepHybridNDTImplementationWithTuningAdjustableInc(int threshold, int allowedThreads) {
-        return (p, d) -> new JFBDouble(new RedBlackRankQueryStructure(p), d, allowedThreads, new NDT(DYNAMIC_100_ADJINC, DYNAMIC_200_ADJINC, threshold));
+    public static NonDominatedSortingFactory getRedBlackTreeSweepHybridNDTImplementationWithTuningAdjustableSmall(int threshold, int allowedThreads) {
+        return (p, d) -> new JFBDouble(new RedBlackRankQueryStructure(p), d, allowedThreads, new NDT(DYNAMIC_100_ADJ_SMALL, DYNAMIC_200_ADJ_SMALL, threshold));
     }
 
-    public static NonDominatedSortingFactory getRedBlackTreeSweepHybridNDTImplementationWithTuningAdjustableBoth(int threshold, int allowedThreads) {
-        return (p, d) -> new JFBDouble(new RedBlackRankQueryStructure(p), d, allowedThreads, new NDT(DYNAMIC_100_ADJBOTH, DYNAMIC_200_ADJBOTH, threshold));
+    public static NonDominatedSortingFactory getRedBlackTreeSweepHybridNDTImplementationWithTuningAdjustableLarge(int threshold, int allowedThreads) {
+        return (p, d) -> new JFBDouble(new RedBlackRankQueryStructure(p), d, allowedThreads, new NDT(DYNAMIC_100_ADJ_LARGE, DYNAMIC_200_ADJ_LARGE, threshold));
     }
 }

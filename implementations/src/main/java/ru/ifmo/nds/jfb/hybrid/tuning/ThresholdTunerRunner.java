@@ -22,7 +22,7 @@ public class ThresholdTunerRunner {
         static void run(String[] args) throws IOException {
             Random rand = new Random();
             int countRuns = Integer.parseInt(args[0]);
-            ThresholdFactory thresholdFactory = new DynamicAdjustableBothThresholdFactory(Integer.parseInt(args[1]));
+            ThresholdFactory thresholdFactory = new DynamicThresholdFactory(Integer.parseInt(args[1]));
             Threshold threshold = thresholdFactory.createThreshold();
             try (PrintWriter pw = new PrintWriter(thresholdFactory.getDescription() + ".csv")) {
                 pw.println("i,n,budget,taken,thr");
@@ -106,10 +106,10 @@ public class ThresholdTunerRunner {
                     new ConstantThresholdFactory(250),
                     new DynamicThresholdFactory(10),
                     new DynamicThresholdFactory(1000),
-                    new DynamicAdjustableIncreaseThresholdFactory(10),
-                    new DynamicAdjustableIncreaseThresholdFactory(1000),
-                    new DynamicAdjustableBothThresholdFactory(10),
-                    new DynamicAdjustableBothThresholdFactory(1000),
+                    new DynamicAdjustableIncreaseThresholdFactory(10, 1.000001),
+                    new DynamicAdjustableIncreaseThresholdFactory(1000, 1.000001),
+                    new DynamicAdjustableIncreaseThresholdFactory(10, 1.0001),
+                    new DynamicAdjustableIncreaseThresholdFactory(1000, 1.0001),
             };
 
             double[] multiples = new double[] {0.1, 0.2, 0.3, 0.4, 0.5, 0.6};
