@@ -35,7 +35,8 @@ public class RunTestInfinitely {
             }
         }
 
-        NonDominatedSorting sorting = factory.getInstance(n, d);
-        run(sorting, tests, ranks);
+        try (NonDominatedSorting sorting = factory.getInstance(n, d)) {
+            run(sorting, tests, ranks);
+        }
     }
 }
