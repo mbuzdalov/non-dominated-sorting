@@ -7,8 +7,6 @@ public abstract class TreeRankNode {
 
     public abstract int evaluateRank(double[] point, int rank, Split split, int maxObj);
 
-    protected abstract int getMaxRank();
-
     public static final TreeRankNode EMPTY = new EmptyRankNode();
     public static final TreeRankNode EMPTY_1 = new EmptyRankNode1();
 
@@ -22,11 +20,6 @@ public abstract class TreeRankNode {
         public int evaluateRank(double[] point, int rank, Split split, int maxObj) {
             return rank;
         }
-
-        @Override
-        protected int getMaxRank() {
-            return -1;
-        }
     }
 
     private static class EmptyRankNode1 extends TreeRankNode {
@@ -38,11 +31,6 @@ public abstract class TreeRankNode {
         @Override
         public int evaluateRank(double[] point, int rank, Split split, int maxObj) {
             return rank;
-        }
-
-        @Override
-        protected int getMaxRank() {
-            return -1;
         }
     }
 
@@ -78,6 +66,7 @@ public abstract class TreeRankNode {
             }
 
             if (size == points.length) {
+                int oldMaxRank = maxRank;
                 TerminalRankNode good = new TerminalRankNode();
                 Split weakSplit = split.weak, goodSplit = split.good;
                 int obj = split.coordinate;
@@ -116,7 +105,7 @@ public abstract class TreeRankNode {
                         }
                     }
                 }
-                return new BranchingRankNode(good, this).add(point, rank, split, splitThreshold);
+                return new BranchingRankNode(good, this, oldMaxRank).add(point, rank, split, splitThreshold);
             } else {
                 for (int i = size; i >= 0; --i) {
                     if (i == 0 || ranks[i - 1] <= rank) {
@@ -150,11 +139,6 @@ public abstract class TreeRankNode {
             }
             return rank;
         }
-
-        @Override
-        protected int getMaxRank() {
-            return maxRank;
-        }
     }
 
     private static class TerminalRankNode1 extends TreeRankNode {
@@ -175,6 +159,7 @@ public abstract class TreeRankNode {
             }
 
             if (this.point != null) {
+                int oldRank = this.rank;
                 TerminalRankNode1 good = new TerminalRankNode1();
                 Split goodSplit = split.good;
                 int obj = split.coordinate;
@@ -184,7 +169,7 @@ public abstract class TreeRankNode {
                     this.point = null;
                     this.rank = -1;
                 }
-                return new BranchingRankNode(good, this).add(point, rank, split, splitThreshold);
+                return new BranchingRankNode(good, this, oldRank).add(point, rank, split, splitThreshold);
             } else {
                 this.point = point;
                 this.rank = rank;
@@ -199,21 +184,16 @@ public abstract class TreeRankNode {
             }
             return rank;
         }
-
-        @Override
-        protected int getMaxRank() {
-            return rank;
-        }
     }
 
     private static class BranchingRankNode extends TreeRankNode {
         private TreeRankNode good, weak;
         private int maxRank;
 
-        private BranchingRankNode(TreeRankNode good, TreeRankNode weak) {
+        private BranchingRankNode(TreeRankNode good, TreeRankNode weak, int maxRank) {
             this.weak = weak;
             this.good = good;
-            this.maxRank = Math.max(good.getMaxRank(), weak.getMaxRank());
+            this.maxRank = maxRank;
         }
 
         @Override
@@ -239,11 +219,6 @@ public abstract class TreeRankNode {
                 rank = good.evaluateRank(point, rank, split.good, maxObj);
             }
             return rank;
-        }
-
-        @Override
-        protected int getMaxRank() {
-            return maxRank;
         }
     }
 }
