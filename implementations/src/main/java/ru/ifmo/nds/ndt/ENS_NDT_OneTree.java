@@ -4,8 +4,6 @@ import ru.ifmo.nds.NonDominatedSorting;
 import ru.ifmo.nds.util.ArrayHelper;
 import ru.ifmo.nds.util.ArraySorter;
 
-import java.util.Arrays;
-
 public class ENS_NDT_OneTree extends NonDominatedSorting {
     private SplitBuilder splitBuilder;
     private int[] ranks;
