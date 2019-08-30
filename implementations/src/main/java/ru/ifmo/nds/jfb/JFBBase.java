@@ -168,28 +168,27 @@ public abstract class JFBBase extends NonDominatedSorting {
                 if (hookResponse >= 0) {
                     return hookResponse;
                 }
-                int hookNewFrom = -hookResponse - 1;
-                if (hookNewFrom < from || hookNewFrom > until) {
-                    throw new AssertionError();
-                }
+                int hookUnsolvedFrom = -hookResponse - 1;
                 if (ArrayHelper.transplantAndCheckIfSame(transposedPoints[obj], indices, from, until, temporary, from)) {
                     --obj;
                 } else {
-                    double median = ArrayHelper.destructiveMedian(temporary, from, until);
-                    long split = splitMerge.splitInThree(transposedPoints[obj], indices, from, from, until, median);
+                    int hookSolvedUntil = kickOutOverflowedRanks(indices, ranks, maximalMeaningfulRank, from, hookUnsolvedFrom);
+                    double median = ArrayHelper.destructiveMedian(temporary, hookUnsolvedFrom, until);
+                    long split = splitMerge.splitInThree(transposedPoints[obj], indices, hookUnsolvedFrom, hookUnsolvedFrom, until, median);
                     int startMid = SplitMergeHelper.extractMid(split);
                     int startRight = SplitMergeHelper.extractRight(split);
 
-                    int newStartMid = helperA(from, startMid, obj);
+                    int newStartMid = helperA(hookUnsolvedFrom, startMid, obj);
                     --obj;
-                    int newStartRight = helperB(from, newStartMid, startMid, startRight, obj, from);
+                    int newStartRight = helperB(hookUnsolvedFrom, newStartMid, startMid, startRight, obj, hookUnsolvedFrom);
                     newStartRight = helperA(startMid, newStartRight, obj);
-                    int newUntil = helperB(from, newStartMid, startRight, until, obj, from);
-                    newUntil = helperB(startMid, newStartRight, startRight, newUntil, obj, from);
+                    int newUntil = helperB(hookUnsolvedFrom, newStartMid, startRight, until, obj, hookUnsolvedFrom);
+                    newUntil = helperB(startMid, newStartRight, startRight, newUntil, obj, hookUnsolvedFrom);
                     ++obj;
                     newUntil = helperA(startRight, newUntil, obj);
 
-                    return splitMerge.mergeThree(indices, from, from, newStartMid, startMid, newStartRight, startRight, newUntil);
+                    int result = splitMerge.mergeThree(indices, hookUnsolvedFrom, hookUnsolvedFrom, newStartMid, startMid, newStartRight, startRight, newUntil);
+                    return complicatedMerge(hookSolvedUntil, hookUnsolvedFrom, result);
                 }
             }
             return sweepA(from, until);
@@ -290,6 +289,15 @@ public abstract class JFBBase extends NonDominatedSorting {
         };
     }
 
+    private int complicatedMerge(int solvedUntil, int nextSolvedFrom, int nextSolvedUntil) {
+        if (solvedUntil == nextSolvedFrom) {
+            return nextSolvedUntil;
+        } else {
+            System.arraycopy(indices, nextSolvedFrom, indices, solvedUntil, nextSolvedUntil - nextSolvedFrom);
+            return solvedUntil + nextSolvedUntil - nextSolvedFrom;
+        }
+    }
+
     private int helperB(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj, int tempFrom) {
         if (goodUntil - goodFrom > 0 && weakUntil - weakFrom > 0) {
             goodUntil = ArrayHelper.findLastWhereNotGreater(indices, goodFrom, goodUntil, indices[weakUntil - 1]);
@@ -308,28 +316,25 @@ public abstract class JFBBase extends NonDominatedSorting {
                     if (hookResponse >= 0) {
                         return hookResponse;
                     }
-                    int weakPrefixFrom = -hookResponse - 1;
-                    if (weakPrefixFrom < weakFrom || weakPrefixFrom > weakUntil) {
-                        throw new AssertionError();
-                    }
-
+                    int weakUnsolvedFrom = -hookResponse - 1, weakSolvedUntil;
                     double[] currentPoints = transposedPoints[obj];
-                    switch (ArrayHelper.transplantAndDecide(currentPoints, indices,
-                            goodFrom, goodUntil, weakFrom, weakUntil, temporary, tempFrom)) {
+                    switch (ArrayHelper.transplantAndDecide(currentPoints, indices, goodFrom, goodUntil, weakUnsolvedFrom, weakUntil, temporary, tempFrom)) {
                         case ArrayHelper.TRANSPLANT_LEFT_NOT_GREATER:
                             --obj;
                             break;
                         case ArrayHelper.TRANSPLANT_RIGHT_SMALLER:
-                            return weakUntil;
+                            weakSolvedUntil = kickOutOverflowedRanks(indices, ranks, maximalMeaningfulRank, weakFrom, weakUnsolvedFrom);
+                            return complicatedMerge(weakSolvedUntil, weakUnsolvedFrom, weakUntil);
                         case ArrayHelper.TRANSPLANT_GENERAL_CASE:
-                            double median = ArrayHelper.destructiveMedian(temporary, tempFrom, tempFrom + goodUntil - goodFrom + weakUntil - weakFrom);
+                            weakSolvedUntil = kickOutOverflowedRanks(indices, ranks, maximalMeaningfulRank, weakFrom, weakUnsolvedFrom);
+                            double median = ArrayHelper.destructiveMedian(temporary, tempFrom, tempFrom + goodUntil - goodFrom + weakUntil - weakUnsolvedFrom);
                             long goodSplit = splitMerge.splitInThree(currentPoints, indices, tempFrom, goodFrom, goodUntil, median);
                             int goodMidL = SplitMergeHelper.extractMid(goodSplit);
                             int goodMidR = SplitMergeHelper.extractRight(goodSplit);
-                            long weakSplit = splitMerge.splitInThree(currentPoints, indices, tempFrom, weakFrom, weakUntil, median);
+                            long weakSplit = splitMerge.splitInThree(currentPoints, indices, tempFrom, weakUnsolvedFrom, weakUntil, median);
                             int weakMidL = SplitMergeHelper.extractMid(weakSplit);
                             int weakMidR = SplitMergeHelper.extractRight(weakSplit);
-                            int tempMid = tempFrom + ((goodUntil - goodFrom + weakUntil - weakFrom) >>> 1);
+                            int tempMid = tempFrom + ((goodUntil - goodFrom + weakUntil - weakUnsolvedFrom) >>> 1);
 
                             --obj;
                             int newWeakUntil = helperB(goodFrom, goodMidL, weakMidR, weakUntil, obj, tempFrom);
@@ -340,17 +345,17 @@ public abstract class JFBBase extends NonDominatedSorting {
                             ++obj;
 
                             ForkJoinTask<Integer> newWeakMidLTask = null;
-                            if (pool != null && goodMidL - goodFrom + weakMidL - weakFrom > FORK_JOIN_THRESHOLD) {
-                                newWeakMidLTask = helperBAsync(goodFrom, goodMidL, weakFrom, weakMidL, obj, tempFrom).fork();
+                            if (pool != null && goodMidL - goodFrom + weakMidL - weakUnsolvedFrom > FORK_JOIN_THRESHOLD) {
+                                newWeakMidLTask = helperBAsync(goodFrom, goodMidL, weakUnsolvedFrom, weakMidL, obj, tempFrom).fork();
                             }
                             newWeakUntil = helperB(goodMidR, goodUntil, weakMidR, newWeakUntil, obj, tempMid);
                             int newWeakMidL = newWeakMidLTask != null
                                     ? newWeakMidLTask.join()
-                                    : helperB(goodFrom, goodMidL, weakFrom, weakMidL, obj, tempFrom);
+                                    : helperB(goodFrom, goodMidL, weakUnsolvedFrom, weakMidL, obj, tempFrom);
 
                             splitMerge.mergeThree(indices, tempFrom, goodFrom, goodMidL, goodMidL, goodMidR, goodMidR, goodUntil);
-                            return splitMerge.mergeThree(indices, tempFrom,
-                                    weakFrom, newWeakMidL, weakMidL, newWeakMidR, weakMidR, newWeakUntil);
+                            int result = splitMerge.mergeThree(indices, tempFrom, weakUnsolvedFrom, newWeakMidL, weakMidL, newWeakMidR, weakMidR, newWeakUntil);
+                            return complicatedMerge(weakSolvedUntil, weakUnsolvedFrom, result);
                     }
                 }
                 return sweepB(goodFrom, goodUntil, weakFrom, weakUntil, tempFrom);
