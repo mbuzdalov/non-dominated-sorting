@@ -16,11 +16,18 @@ public abstract class HybridAlgorithmWrapper {
          * In this case, the method is expected to drop the corresponding point indices and return an updated value
          * that is to indicate the end of the updated range of point indices.
          *
+         * If the hook did not completely solve the subproblem, it returns a negative number.
+         * The value {@code -X - 1} means that {@code X} is the index of the first unprocessed point.
+         * The inequality {@code from <= X <= until} should be fulfilled.
+         * When such a value is returned, the ranks that exceeded {@code maximalMeaningfulRank} have not been filtered,
+         * and doing so is the responsibility of the caller.
+         *
          * @param from the smallest index of the points to consider (inclusively).
          * @param until the largest index of the points to consider (exclusively).
          * @param obj the maximum objective to consider.
          * @param maximalMeaningfulRank the maximal meaningful rank.
-         * @return -1 if the job is not complete, the new value for {@code until} otherwise.
+         * @return {@code -X - 1} if the job is not complete and the first unprocessed point index is {@code X},
+         *         the new value for {@code until} otherwise.
          */
         public abstract int helperAHook(int from, int until, int obj, int maximalMeaningfulRank);
 
@@ -37,6 +44,12 @@ public abstract class HybridAlgorithmWrapper {
          * In this case, the method is expected to drop the corresponding point indices and return an updated value
          * that is to indicate the end of the updated range of point indices.
          *
+         * If the hook did not completely solve the subproblem, it returns a negative number.
+         * The value {@code -X - 1} means that {@code X} is the index of the first unprocessed point.
+         * The inequality {@code weakFrom <= X <= weakUntil} should be fulfilled.
+         * When such a value is returned, the ranks that exceeded {@code maximalMeaningfulRank} have not been filtered,
+         * and doing so is the responsibility of the caller.
+         *
          * @param goodFrom the smallest index of the good points to consider (inclusively).
          * @param goodUntil the largest index of the good points to consider (exclusively).
          * @param weakFrom the smallest index of the weak points to consider (inclusively).
@@ -44,7 +57,8 @@ public abstract class HybridAlgorithmWrapper {
          * @param obj the maximum objective to consider.
          * @param tempFrom the smallest index of the free space.
          * @param maximalMeaningfulRank the maximal meaningful rank.
-         * @return -1 if the job is not complete, the new value for {@code weakUntil} otherwise.
+         * @return {@code -X - 1} if the job is not complete and the first unprocessed point index is {@code X},
+         *         the new value for {@code weakUntil} otherwise.
          */
         public abstract int helperBHook(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj, int tempFrom, int maximalMeaningfulRank);
     }

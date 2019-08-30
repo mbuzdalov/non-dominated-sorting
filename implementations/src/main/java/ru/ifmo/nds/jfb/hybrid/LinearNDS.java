@@ -51,7 +51,7 @@ public final class LinearNDS extends HybridAlgorithmWrapper {
         @Override
         public int helperAHook(int from, int until, int obj, int maximalMeaningfulRank) {
             if (notHookCondition(until - from, obj)) {
-                return -1;
+                return -from - 1;
             }
             for (int left = from; left < until; ++left) {
                 until = JFBBase.updateByPoint(ranks, indices, points, maximalMeaningfulRank, indices[left], left + 1, until, obj);
@@ -62,7 +62,7 @@ public final class LinearNDS extends HybridAlgorithmWrapper {
         @Override
         public int helperBHook(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj, int tempFrom, int maximalMeaningfulRank) {
             if (notHookCondition(goodUntil - goodFrom + weakUntil - weakFrom, obj)) {
-                return -1;
+                return -weakFrom - 1;
             }
             for (int good = goodFrom, weakMin = weakFrom; good < goodUntil; ++good) {
                 int goodIndex = indices[good];

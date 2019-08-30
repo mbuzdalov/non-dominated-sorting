@@ -168,6 +168,10 @@ public abstract class JFBBase extends NonDominatedSorting {
                 if (hookResponse >= 0) {
                     return hookResponse;
                 }
+                int hookNewFrom = -hookResponse - 1;
+                if (hookNewFrom < from || hookNewFrom > until) {
+                    throw new AssertionError();
+                }
                 if (ArrayHelper.transplantAndCheckIfSame(transposedPoints[obj], indices, from, until, temporary, from)) {
                     --obj;
                 } else {
@@ -304,6 +308,11 @@ public abstract class JFBBase extends NonDominatedSorting {
                     if (hookResponse >= 0) {
                         return hookResponse;
                     }
+                    int weakPrefixFrom = -hookResponse - 1;
+                    if (weakPrefixFrom < weakFrom || weakPrefixFrom > weakUntil) {
+                        throw new AssertionError();
+                    }
+
                     double[] currentPoints = transposedPoints[obj];
                     switch (ArrayHelper.transplantAndDecide(currentPoints, indices,
                             goodFrom, goodUntil, weakFrom, weakUntil, temporary, tempFrom)) {

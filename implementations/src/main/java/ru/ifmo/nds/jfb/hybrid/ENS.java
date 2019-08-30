@@ -138,7 +138,7 @@ public final class ENS extends HybridAlgorithmWrapper {
         @Override
         public int helperAHook(int from, int until, int obj, int maximalMeaningfulRank) {
             if (notHookCondition(until - from, obj)) {
-                return -1;
+                return -from - 1;
             }
 
             int sliceOffset = from * STORAGE_MULTIPLE;
@@ -231,7 +231,7 @@ public final class ENS extends HybridAlgorithmWrapper {
                 if (threshold.shallTerminate(budget, counter)) {
                     threshold.recordPerformance(problemSize, budget, counter, true);
                     Arrays.fill(exPoints, tempFrom, tempFrom + goodSize, null);
-                    return -1;
+                    return -weak - 2;
                 }
             }
             threshold.recordPerformance(problemSize, budget, counter, false);
@@ -292,7 +292,7 @@ public final class ENS extends HybridAlgorithmWrapper {
             int goodSize = goodUntil - goodFrom;
             int problemSize = goodSize + weakUntil - weakFrom;
             if (notHookCondition(problemSize, obj)) {
-                return -1;
+                return -weakFrom - 1;
             }
 
             Threshold threshold = thresholds[Math.min(obj - 2, 7)];
@@ -355,7 +355,7 @@ public final class ENS extends HybridAlgorithmWrapper {
                     if (threshold.shallTerminate(budget, counter)) {
                         threshold.recordPerformance(problemSize, budget, counter, true);
                         Arrays.fill(exPoints, tempFrom, tempFrom + goodSize, null);
-                        return -1;
+                        return -weak - 2;
                     }
                 }
                 threshold.recordPerformance(problemSize, budget, counter, false);

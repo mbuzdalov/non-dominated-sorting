@@ -123,7 +123,7 @@ public final class NDT extends HybridAlgorithmWrapper {
         public int helperAHook(int from, int until, int obj, int maximalMeaningfulRank) {
             int problemSize = until - from;
             if (notHookCondition(problemSize, obj)) {
-                return -1;
+                return -from - 1;
             }
 
             Split split = splitBuilder.result(from, until, indices, obj + 1);
@@ -157,7 +157,7 @@ public final class NDT extends HybridAlgorithmWrapper {
                 }
                 if (sizeThreshold.shallTerminate(budget, ctx.operations)) {
                     sizeThreshold.recordPerformance(problemSize, budget, ctx.operations, true);
-                    return -1;
+                    return -i - 2;
                 }
             }
             sizeThreshold.recordPerformance(problemSize, budget, ctx.operations, false);
@@ -168,7 +168,7 @@ public final class NDT extends HybridAlgorithmWrapper {
         public int helperBHook(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj, int tempFrom, int maximalMeaningfulRank) {
             int problemSize = goodUntil - goodFrom + weakUntil - weakFrom;
             if (notHookCondition(problemSize, obj)) {
-                return -1;
+                return -weakFrom - 1;
             }
 
             Split split = splitBuilder.result(goodFrom, goodUntil, indices, obj + 1);
@@ -207,7 +207,7 @@ public final class NDT extends HybridAlgorithmWrapper {
                 }
                 if (sizeThreshold.shallTerminate(budget, ctx.operations)) {
                     sizeThreshold.recordPerformance(problemSize, budget, ctx.operations, true);
-                    return -1;
+                    return -weak - 2;
                 }
             }
             sizeThreshold.recordPerformance(problemSize, budget, ctx.operations, false);

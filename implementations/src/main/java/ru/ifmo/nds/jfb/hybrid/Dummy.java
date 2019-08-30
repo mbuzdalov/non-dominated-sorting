@@ -28,12 +28,12 @@ public final class Dummy extends HybridAlgorithmWrapper {
     private static final Instance INSTANCE = new Instance() {
         @Override
         public int helperAHook(int from, int until, int obj, int maximalMeaningfulRank) {
-            return -1;
+            return -from - 1;
         }
 
         @Override
         public int helperBHook(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj, int tempFrom, int maximalMeaningfulRank) {
-            return -1;
+            return -weakFrom - 1;
         }
     };
 }
