@@ -142,6 +142,10 @@ public abstract class JFBBase extends NonDominatedSorting {
         return newUntil;
     }
 
+    private int localKickOut(int from, int until) {
+        return kickOutOverflowedRanks(indices, ranks, maximalMeaningfulRank, from, until);
+    }
+
     protected void postTransposePointHook(int newN) {}
 
     protected abstract int sweepA(int from, int until);
@@ -169,10 +173,13 @@ public abstract class JFBBase extends NonDominatedSorting {
                     return hookResponse;
                 }
                 int hookUnsolvedFrom = -hookResponse - 1;
+                if (hookUnsolvedFrom == until) {
+                    return localKickOut(from, hookUnsolvedFrom);
+                }
                 if (ArrayHelper.transplantAndCheckIfSame(transposedPoints[obj], indices, from, until, temporary, from)) {
                     --obj;
                 } else {
-                    int hookSolvedUntil = kickOutOverflowedRanks(indices, ranks, maximalMeaningfulRank, from, hookUnsolvedFrom);
+                    int hookSolvedUntil = localKickOut(from, hookUnsolvedFrom);
                     double median = ArrayHelper.destructiveMedian(temporary, hookUnsolvedFrom, until);
                     long split = splitMerge.splitInThree(transposedPoints[obj], indices, hookUnsolvedFrom, hookUnsolvedFrom, until, median);
                     int startMid = SplitMergeHelper.extractMid(split);
@@ -317,16 +324,19 @@ public abstract class JFBBase extends NonDominatedSorting {
                         return hookResponse;
                     }
                     int weakUnsolvedFrom = -hookResponse - 1, weakSolvedUntil;
+                    if (weakUnsolvedFrom == weakUntil) {
+                        return localKickOut(weakFrom, weakUnsolvedFrom);
+                    }
                     double[] currentPoints = transposedPoints[obj];
                     switch (ArrayHelper.transplantAndDecide(currentPoints, indices, goodFrom, goodUntil, weakUnsolvedFrom, weakUntil, temporary, tempFrom)) {
                         case ArrayHelper.TRANSPLANT_LEFT_NOT_GREATER:
                             --obj;
                             break;
                         case ArrayHelper.TRANSPLANT_RIGHT_SMALLER:
-                            weakSolvedUntil = kickOutOverflowedRanks(indices, ranks, maximalMeaningfulRank, weakFrom, weakUnsolvedFrom);
+                            weakSolvedUntil = localKickOut(weakFrom, weakUnsolvedFrom);
                             return complicatedMerge(weakSolvedUntil, weakUnsolvedFrom, weakUntil);
                         case ArrayHelper.TRANSPLANT_GENERAL_CASE:
-                            weakSolvedUntil = kickOutOverflowedRanks(indices, ranks, maximalMeaningfulRank, weakFrom, weakUnsolvedFrom);
+                            weakSolvedUntil = localKickOut(weakFrom, weakUnsolvedFrom);
                             double median = ArrayHelper.destructiveMedian(temporary, tempFrom, tempFrom + goodUntil - goodFrom + weakUntil - weakUnsolvedFrom);
                             long goodSplit = splitMerge.splitInThree(currentPoints, indices, tempFrom, goodFrom, goodUntil, median);
                             int goodMidL = SplitMergeHelper.extractMid(goodSplit);
