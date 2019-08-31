@@ -57,7 +57,7 @@ public final class ENS extends HybridAlgorithmWrapper {
             0.44701314145948956
     };
 
-    private static int computeBudget(int problemSize, int objective) {
+    private static double computeBudget(int problemSize, int objective) {
         // Notes on performance counting on some fixed laptop.
         // For helperB in ENS hybrid:
         //     for x operations, the time is roughly 13 x + 2000 nanoseconds.
@@ -77,7 +77,7 @@ public final class ENS extends HybridAlgorithmWrapper {
 
         objective = Math.min(objective - 2, 7);
         double estimation = A_IN_OPS[objective] * problemSize * Math.pow(problemSize, P_IN_OPS[objective]) * Math.log(1 + problemSize);
-        return (int) (estimation * 0.3);
+        return estimation * 0.3;
     }
 
     private static final class Instance extends HybridAlgorithmWrapper.Instance {
@@ -208,7 +208,7 @@ public final class ENS extends HybridAlgorithmWrapper {
             int problemSize = goodSize + weakUntil - weakFrom;
 
             int counter = 0;
-            int budget = computeBudget(problemSize, obj);
+            int budget = (int) (computeBudget(problemSize, obj) * 1.15);
 
             for (int good = goodFrom; good < goodUntil; ++good) {
                 exPoints[offset + good] = points[indices[good]];
@@ -313,7 +313,7 @@ public final class ENS extends HybridAlgorithmWrapper {
                 int minOverflowed = weakUntil;
 
                 int counter = 0;
-                int budget = computeBudget(problemSize, obj);
+                int budget = (int) computeBudget(problemSize, obj);
 
                 for (int weak = weakFrom, good = goodFrom, sliceOfGood = ranksAndSlicesOffset; weak < weakUntil; ++weak) {
                     int wi = indices[weak];
