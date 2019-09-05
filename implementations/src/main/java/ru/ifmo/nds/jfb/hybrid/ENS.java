@@ -35,7 +35,7 @@ public final class ENS extends HybridAlgorithmWrapper {
         return new Instance(ranks, indices, points, threshold3D, thresholdAll);
     }
 
-    private static final double[] A_IN_OPS = {
+    private static final double[] A_IN_OPS_GEN = {
             3.806816959499965, // for d = 2
             4.113592943948679,
             2.8467007731006437,
@@ -46,38 +46,38 @@ public final class ENS extends HybridAlgorithmWrapper {
             1.1401358990765458
     };
 
-    private static final double[] P_IN_OPS = {
-            0.015332333045967268, // for d = 2
-            0.14316676164960723,
-            0.26411624362740815,
-            0.3564856546604639,
-            0.4162172410288698,
-            0.4382815729645708,
-            0.4428886704739746,
-            0.44701314145948956
+    private static final double[] A_IN_OPS_SMALL = {
+            3.806816959499965  * 3.3, // for d = 2
+            4.113592943948679  * 2.4,
+            2.8467007731006437 * 1.7,
+            1.8473590929256243 * 1.5,
+            1.3249781911979446 * 1.2,
+            1.1777313339640052 * 1.2,
+            1.1653214813927109 * 1.2,
+            1.1401358990765458 * 1.2
     };
 
-    private static double computeBudget(int problemSize, int objective) {
-        // Notes on performance counting on some fixed laptop.
-        // For helperB in ENS hybrid:
-        //     for x operations, the time is roughly 13 x + 2000 nanoseconds.
-        // For helperB in divide-and-conquer:
-        //     for n points and objective d, the time is estimated, in nanoseconds, as
-        //        b_d + a_d * n * pow(n, p_d) * log(n + 1)
-        //     where:
-        //        d = 2:  a_2 = 49.488620473499545, b_2 =  -424.3548303036347, p_2 = 0.015332333045967268
-        //        d = 3:  a_3 = 53.476708271332825, b_3 = -4301.263427341121,  p_3 = 0.14316676164960723
-        //        d = 4:  a_4 = 37.00711005030837,  b_4 = -5604.850673951447,  p_4 = 0.26411624362740815
-        //        d = 5:  a_5 = 24.015668208033116, b_5 = -3510.8851507558597, p_5 = 0.3564856546604639
-        //        d = 6:  a_6 = 17.22471648557328,  b_6 =  -323.7417409726593, p_6 = 0.4162172410288698
-        //        d = 7:  a_7 = 15.310507341532068, b_7 =  1389.9330709265287, p_7 = 0.4382815729645708
-        //        d = 8:  a_8 = 15.14917925810524,  b_8 =  1498.2703347533609, p_8 = 0.4428886704739746
-        //        d = 9+: a_9 = 14.821766687995096, b_9 =  1732.0452197266432, p_9 = 0.44701314145948956
-        // Hence the arrays above have been computed.
+    private static final double[] P_IN_OPS = {
+            1.015332333045967268, // for d = 2
+            1.14316676164960723,
+            1.26411624362740815,
+            1.3564856546604639,
+            1.4162172410288698,
+            1.4382815729645708,
+            1.4428886704739746,
+            1.44701314145948956
+    };
 
+    private static int computeBudgetGen(int problemSize, int objective) {
         objective = Math.min(objective - 2, 7);
-        double estimation = A_IN_OPS[objective] * problemSize * Math.pow(problemSize, P_IN_OPS[objective]) * Math.log(1 + problemSize);
-        return estimation * 0.3;
+        double estimation = A_IN_OPS_GEN[objective] * Math.pow(problemSize, P_IN_OPS[objective]) * Math.log(1 + problemSize);
+        return (int) (estimation * 0.3);
+    }
+
+    private static int computeBudgetSmall(int problemSize, int objective) {
+        objective = Math.min(objective - 2, 7);
+        double estimation = A_IN_OPS_SMALL[objective] * Math.pow(problemSize, P_IN_OPS[objective]) * Math.log(1 + problemSize);
+        return (int) (estimation * 0.3);
     }
 
     private static final class Instance extends HybridAlgorithmWrapper.Instance {
@@ -208,7 +208,7 @@ public final class ENS extends HybridAlgorithmWrapper {
             int problemSize = goodSize + weakUntil - weakFrom;
 
             int counter = 0;
-            int budget = (int) (computeBudget(problemSize, obj) * 1.15);
+            int budget = computeBudgetSmall(problemSize, obj);
 
             for (int good = goodFrom; good < goodUntil; ++good) {
                 exPoints[offset + good] = points[indices[good]];
@@ -313,7 +313,7 @@ public final class ENS extends HybridAlgorithmWrapper {
                 int minOverflowed = weakUntil;
 
                 int counter = 0;
-                int budget = (int) computeBudget(problemSize, obj);
+                int budget = computeBudgetGen(problemSize, obj);
 
                 for (int weak = weakFrom, good = goodFrom, sliceOfGood = ranksAndSlicesOffset; weak < weakUntil; ++weak) {
                     int wi = indices[weak];
