@@ -35,6 +35,8 @@ public final class ENS extends HybridAlgorithmWrapper {
         return new Instance(ranks, indices, points, threshold3D, thresholdAll);
     }
 
+    private static final int MAX_THRESHOLD_INDEX = 7;
+
     private static final double[] A_IN_OPS_GEN = {
             3.806816959499965, // for d = 2
             4.113592943948679,
@@ -43,18 +45,18 @@ public final class ENS extends HybridAlgorithmWrapper {
             1.3249781911979446,
             1.1777313339640052,
             1.1653214813927109,
-            1.1401358990765458
+            0.88
     };
 
-    private static final double[] A_IN_OPS_SMALL = {
-            3.806816959499965  * 3.3, // for d = 2
-            4.113592943948679  * 2.4,
-            2.8467007731006437 * 1.7,
-            1.8473590929256243 * 1.5,
-            1.3249781911979446 * 1.2,
-            1.1777313339640052 * 1.2,
-            1.1653214813927109 * 1.2,
-            1.1401358990765458 * 1.2
+    private static final double[] A_IN_OPS_FLAT = {
+            3.806816959499965  * 2.7, // for d = 2
+            4.113592943948679  * 1.5,
+            2.8467007731006437 * 1.3,
+            1.8473590929256243 * 1.25,
+            1.3249781911979446 * 1.1,
+            1.1777313339640052 * 1.1,
+            1.1653214813927109 * 1.075,
+            1.1401358990765458 * 1.175, // WTF? but it works this way...
     };
 
     private static final double[] P_IN_OPS = {
@@ -65,18 +67,18 @@ public final class ENS extends HybridAlgorithmWrapper {
             1.4162172410288698,
             1.4382815729645708,
             1.4428886704739746,
-            1.44701314145948956
+            1.44701314145948956,
     };
 
     private static int computeBudgetGen(int problemSize, int objective) {
-        objective = Math.min(objective - 2, 7);
+        objective = Math.min(objective - 2, MAX_THRESHOLD_INDEX);
         double estimation = A_IN_OPS_GEN[objective] * Math.pow(problemSize, P_IN_OPS[objective]) * Math.log(1 + problemSize);
         return (int) (estimation * 0.3);
     }
 
-    private static int computeBudgetSmall(int problemSize, int objective) {
-        objective = Math.min(objective - 2, 7);
-        double estimation = A_IN_OPS_SMALL[objective] * Math.pow(problemSize, P_IN_OPS[objective]) * Math.log(1 + problemSize);
+    private static int computeBudgetFlat(int problemSize, int objective) {
+        objective = Math.min(objective - 2, MAX_THRESHOLD_INDEX);
+        double estimation = A_IN_OPS_FLAT[objective] * Math.pow(problemSize, P_IN_OPS[objective]) * Math.log(1 + problemSize);
         return (int) (estimation * 0.3);
     }
 
@@ -98,14 +100,11 @@ public final class ENS extends HybridAlgorithmWrapper {
             this.points = points;
             this.exPoints = new double[points.length][];
             this.space = new int[STORAGE_MULTIPLE * indices.length];
-            thresholds = new Threshold[8];
-            for (int i = 0; i < thresholds.length; ++i) {
-                thresholds[i] = (i == 0 ? threshold3D : thresholdAll).createThreshold();
+            thresholds = new Threshold[MAX_THRESHOLD_INDEX + 1];
+            for (int i = 0; i <= MAX_THRESHOLD_INDEX; ++i) {
+                ThresholdFactory f = i == 0 ? threshold3D : thresholdAll;
+                thresholds[i] = f.createThreshold();
             }
-        }
-
-        private boolean notHookCondition(int size, int obj) {
-            return obj == 1 || size >= thresholds[Math.min(obj - 2, 7)].getThreshold();
         }
 
         private boolean checkIfDominatesA(int sliceIndex, int obj, int weakIndex) {
@@ -137,7 +136,7 @@ public final class ENS extends HybridAlgorithmWrapper {
 
         @Override
         public int helperAHook(int from, int until, int obj, int maximalMeaningfulRank) {
-            if (notHookCondition(until - from, obj)) {
+            if (obj == 1 || until - from >= thresholds[Math.min(obj - 2, MAX_THRESHOLD_INDEX)].getThreshold()) {
                 return -from - 1;
             }
 
@@ -208,7 +207,7 @@ public final class ENS extends HybridAlgorithmWrapper {
             int problemSize = goodSize + weakUntil - weakFrom;
 
             int counter = 0;
-            int budget = computeBudgetSmall(problemSize, obj);
+            int budget = computeBudgetFlat(problemSize, obj);
 
             for (int good = goodFrom; good < goodUntil; ++good) {
                 exPoints[offset + good] = points[indices[good]];
@@ -289,13 +288,17 @@ public final class ENS extends HybridAlgorithmWrapper {
 
         @Override
         public int helperBHook(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj, int tempFrom, int maximalMeaningfulRank) {
+            if (obj == 1) return -weakFrom - 1;
+
             int goodSize = goodUntil - goodFrom;
             int problemSize = goodSize + weakUntil - weakFrom;
-            if (notHookCondition(problemSize, obj)) {
+            int objIndex = Math.min(obj - 2, MAX_THRESHOLD_INDEX);
+            Threshold threshold = thresholds[objIndex];
+            int thresholdValue = threshold.getThreshold();
+
+            if (problemSize >= thresholdValue) {
                 return -weakFrom - 1;
             }
-
-            Threshold threshold = thresholds[Math.min(obj - 2, 7)];
 
             int sortedIndicesOffset = tempFrom * STORAGE_MULTIPLE;
             int ranksAndSlicesOffset = sortedIndicesOffset + goodSize;
@@ -304,8 +307,7 @@ public final class ENS extends HybridAlgorithmWrapper {
             int minRank = transplantRanksAndCheckWhetherAllAreSame(goodFrom, goodUntil, ranksAndSlicesOffset, sortedIndicesOffset);
             if (minRank != 1) {
                 // "good" has a single front, let's do the simple stuff
-                return helperBSingleRank(-minRank, goodFrom, goodUntil, weakFrom, weakUntil, obj, maximalMeaningfulRank,
-                        tempFrom, threshold);
+                return helperBSingleRank(-minRank, goodFrom, goodUntil, weakFrom, weakUntil, obj, maximalMeaningfulRank, tempFrom, threshold);
             } else {
                 // "good" has multiple fronts (called "slices" here), need to go a more complicated way.
                 ArraySorter.sortIndicesByValues(space, space, sortedIndicesOffset, sortedIndicesOffset + goodSize);
