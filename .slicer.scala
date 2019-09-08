@@ -71,7 +71,7 @@ class Consolidate(key: String) extends Phase(s"phase.$key.consolidate") {
       case None =>
         // no previous runs - just copy a file over
         val src = curr.resolve(DataSubdirectoryRaw).resolve(currentPhaseOut)
-        if (!Files.isSameFile(trg, src)) {
+        if (!Files.exists(trg) || !Files.isSameFile(trg, src)) {
           Files.deleteIfExists(trg)
           Files.createLink(trg, src)
         }
