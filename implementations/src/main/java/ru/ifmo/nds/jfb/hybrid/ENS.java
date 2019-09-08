@@ -240,20 +240,21 @@ public final class ENS extends HybridAlgorithmWrapper {
                     : weakUntil;
         }
 
-        private int transplantRanksAndCheckWhetherAllAreSame(int goodFrom, int goodUntil, int ranksAndSlicesOffset, int sortedIndicesOffset) {
-            int firstRank = -ranks[indices[goodFrom]];
-            boolean allSame = true;
-            space[ranksAndSlicesOffset] = firstRank;
-            space[sortedIndicesOffset] = ranksAndSlicesOffset;
-            for (int i = goodFrom + 1, ri = ranksAndSlicesOffset, si = sortedIndicesOffset; i < goodUntil; ++i) {
-                ++ri;
-                ++si;
-                int rank = -ranks[indices[i]];
-                allSame &= firstRank == rank;
-                space[ri] = rank;
+        private int getRankIfAllSame(int goodFrom, int goodUntil) {
+            int first = ranks[indices[goodFrom]];
+            while (++goodFrom != goodUntil) {
+                if (first != ranks[indices[goodFrom]]) {
+                    return -1;
+                }
+            }
+            return first;
+        }
+
+        private void transplantRanks(int goodFrom, int goodUntil, int ranksAndSlicesOffset, int sortedIndicesOffset) {
+            for (int i = goodFrom, ri = ranksAndSlicesOffset, si = sortedIndicesOffset; i < goodUntil; ++i, ++ri, ++si) {
+                space[ri] = -ranks[indices[i]];
                 space[si] = ri;
             }
-            return allSame ? firstRank : 1;
         }
 
         private static int distributePointsBetweenSlices(int[] space, int from, int until, int sliceOffset, int pointsBySlicesOffset) {
@@ -286,12 +287,74 @@ public final class ENS extends HybridAlgorithmWrapper {
             return sliceLast;
         }
 
+        private int helperBMultipleRanks(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj,
+                                         int maximalMeaningfulRank, int tempFrom, Threshold threshold) {
+            int goodSize = goodUntil - goodFrom;
+            int problemSize = goodSize + weakUntil - weakFrom;
+            int sortedIndicesOffset = tempFrom * STORAGE_MULTIPLE;
+            int ranksAndSlicesOffset = sortedIndicesOffset + goodSize;
+            int sliceOffset = ranksAndSlicesOffset + goodSize;
+            transplantRanks(goodFrom, goodUntil, ranksAndSlicesOffset, sortedIndicesOffset);
+            ArraySorter.sortIndicesByValues(space, space, sortedIndicesOffset, sortedIndicesOffset + goodSize);
+            int sliceLast = distributePointsBetweenSlices(space, sortedIndicesOffset, sortedIndicesOffset + goodSize, sliceOffset, tempFrom);
+            int minOverflowed = weakUntil;
+
+            int counter = 0;
+            int budget = computeBudgetGen(problemSize, obj);
+
+            for (int weak = weakFrom, good = goodFrom, sliceOfGood = ranksAndSlicesOffset; weak < weakUntil; ++weak) {
+                int wi = indices[weak];
+                int gi;
+                while (good < goodUntil && (gi = indices[good]) < wi) {
+                    int sliceTailIndex = space[sliceOfGood] + 1;
+                    int spaceAtTail = space[sliceTailIndex];
+                    exPoints[spaceAtTail] = points[gi];
+                    space[sliceTailIndex] = spaceAtTail + 1;
+                    ++good;
+                    ++sliceOfGood;
+                }
+                int currSlice = sliceLast;
+                int sliceRankIndex = ((currSlice - sliceOffset) >>> 1) + sortedIndicesOffset;
+                int weakRank = ranks[wi];
+                double[] wp = points[wi];
+                while (currSlice >= sliceOffset) {
+                    int from = space[currSlice];
+                    int until = space[currSlice + 1];
+                    if (from < until) {
+                        int currRank = -space[sliceRankIndex];
+                        if (currRank >= weakRank) {
+                            int domCheckResult = checkWhetherDominates(from, until, wp, obj);
+                            counter += Math.abs(domCheckResult);
+                            if (domCheckResult > 0) {
+                                weakRank = currRank + 1;
+                            } else {
+                                break;
+                            }
+                        }
+                    }
+                    currSlice -= 2;
+                    --sliceRankIndex;
+                }
+                ranks[wi] = weakRank;
+                if (weakRank > maximalMeaningfulRank && minOverflowed > weak) {
+                    minOverflowed = weak;
+                }
+                if (threshold.shallTerminate(budget, counter)) {
+                    threshold.recordPerformance(problemSize, budget, counter, true);
+                    Arrays.fill(exPoints, tempFrom, tempFrom + goodSize, null);
+                    return -weak - 2;
+                }
+            }
+            threshold.recordPerformance(problemSize, budget, counter, false);
+            Arrays.fill(exPoints, tempFrom, tempFrom + goodSize, null);
+            return JFBBase.kickOutOverflowedRanks(indices, ranks, maximalMeaningfulRank, minOverflowed, weakUntil);
+        }
+
         @Override
         public int helperBHook(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj, int tempFrom, int maximalMeaningfulRank) {
             if (obj == 1) return -weakFrom - 1;
 
-            int goodSize = goodUntil - goodFrom;
-            int problemSize = goodSize + weakUntil - weakFrom;
+            int problemSize = goodUntil - goodFrom + weakUntil - weakFrom;
             int objIndex = Math.min(obj - 2, MAX_THRESHOLD_INDEX);
             Threshold threshold = thresholds[objIndex];
             int thresholdValue = threshold.getThreshold();
@@ -300,69 +363,13 @@ public final class ENS extends HybridAlgorithmWrapper {
                 return -weakFrom - 1;
             }
 
-            int sortedIndicesOffset = tempFrom * STORAGE_MULTIPLE;
-            int ranksAndSlicesOffset = sortedIndicesOffset + goodSize;
-            int sliceOffset = ranksAndSlicesOffset + goodSize;
-
-            int minRank = transplantRanksAndCheckWhetherAllAreSame(goodFrom, goodUntil, ranksAndSlicesOffset, sortedIndicesOffset);
-            if (minRank != 1) {
+            int theOnlyRank = getRankIfAllSame(goodFrom, goodUntil);
+            if (theOnlyRank >= 0) {
                 // "good" has a single front, let's do the simple stuff
-                return helperBSingleRank(-minRank, goodFrom, goodUntil, weakFrom, weakUntil, obj, maximalMeaningfulRank, tempFrom, threshold);
+                return helperBSingleRank(theOnlyRank, goodFrom, goodUntil, weakFrom, weakUntil, obj, maximalMeaningfulRank, tempFrom, threshold);
             } else {
                 // "good" has multiple fronts (called "slices" here), need to go a more complicated way.
-                ArraySorter.sortIndicesByValues(space, space, sortedIndicesOffset, sortedIndicesOffset + goodSize);
-                int sliceLast = distributePointsBetweenSlices(space, sortedIndicesOffset, sortedIndicesOffset + goodSize, sliceOffset, tempFrom);
-                int minOverflowed = weakUntil;
-
-                int counter = 0;
-                int budget = computeBudgetGen(problemSize, obj);
-
-                for (int weak = weakFrom, good = goodFrom, sliceOfGood = ranksAndSlicesOffset; weak < weakUntil; ++weak) {
-                    int wi = indices[weak];
-                    int gi;
-                    while (good < goodUntil && (gi = indices[good]) < wi) {
-                        int sliceTailIndex = space[sliceOfGood] + 1;
-                        int spaceAtTail = space[sliceTailIndex];
-                        exPoints[spaceAtTail] = points[gi];
-                        space[sliceTailIndex] = spaceAtTail + 1;
-                        ++good;
-                        ++sliceOfGood;
-                    }
-                    int currSlice = sliceLast;
-                    int sliceRankIndex = ((currSlice - sliceOffset) >>> 1) + sortedIndicesOffset;
-                    int weakRank = ranks[wi];
-                    double[] wp = points[wi];
-                    while (currSlice >= sliceOffset) {
-                        int from = space[currSlice];
-                        int until = space[currSlice + 1];
-                        if (from < until) {
-                            int currRank = -space[sliceRankIndex];
-                            if (currRank >= weakRank) {
-                                int domCheckResult = checkWhetherDominates(from, until, wp, obj);
-                                counter += Math.abs(domCheckResult);
-                                if (domCheckResult > 0) {
-                                    weakRank = currRank + 1;
-                                } else {
-                                    break;
-                                }
-                            }
-                        }
-                        currSlice -= 2;
-                        --sliceRankIndex;
-                    }
-                    ranks[wi] = weakRank;
-                    if (weakRank > maximalMeaningfulRank && minOverflowed > weak) {
-                        minOverflowed = weak;
-                    }
-                    if (threshold.shallTerminate(budget, counter)) {
-                        threshold.recordPerformance(problemSize, budget, counter, true);
-                        Arrays.fill(exPoints, tempFrom, tempFrom + goodSize, null);
-                        return -weak - 2;
-                    }
-                }
-                threshold.recordPerformance(problemSize, budget, counter, false);
-                Arrays.fill(exPoints, tempFrom, tempFrom + goodSize, null);
-                return JFBBase.kickOutOverflowedRanks(indices, ranks, maximalMeaningfulRank, minOverflowed, weakUntil);
+                return helperBMultipleRanks(goodFrom, goodUntil, weakFrom, weakUntil, obj, maximalMeaningfulRank, tempFrom, threshold);
             }
         }
     }
