@@ -32,31 +32,31 @@ public final class ENS extends HybridAlgorithmWrapper {
 
     @Override
     public HybridAlgorithmWrapper.Instance create(int[] ranks, int[] indices, double[][] points, double[][] transposedPoints) {
-        return new Instance(ranks, indices, points, threshold3D, thresholdAll);
+        return new Instance(ranks, indices, points, transposedPoints.length, threshold3D, thresholdAll);
     }
 
     private static final int MAX_THRESHOLD_INDEX = 7;
 
     private static final double[] A_IN_OPS_GEN = {
-            6, // for d = 2.
-            6,
-            3,
-            1.75,
-            1.2,
-            1.0,
-            1.0,
-            0.7,
+            1.8, // for d = 2.
+            1.8,
+            0.9,
+            0.525,
+            0.36,
+            0.3,
+            0.3,
+            0.21,
     };
 
     private static final double[] A_IN_OPS_FLAT = {
-            3.806816959499965  * 2.7, // for d = 2
-            4.113592943948679  * 1.5,
-            2.8467007731006437 * 1.3,
-            1.8473590929256243 * 1.25,
-            1.3249781911979446 * 1.1,
-            1.1777313339640052 * 1.1,
-            1.1653214813927109 * 1.075,
-            1.1401358990765458 * 1.175, // WTF? but it works this way...
+            3.0835217371949715, // for d = 2
+            1.8511168247769056,
+            1.110213301509251,
+            0.6927596598471091,
+            0.4372428030953217,
+            0.38865134020812175,
+            0.3758161777491492,
+            0.40189790442448237, // WTF? but it works this way...
     };
 
     private static final double[] P_IN_OPS = {
@@ -72,14 +72,12 @@ public final class ENS extends HybridAlgorithmWrapper {
 
     private static int computeBudgetGen(int problemSize, int objective) {
         objective = Math.min(objective - 2, MAX_THRESHOLD_INDEX);
-        double estimation = A_IN_OPS_GEN[objective] * Math.pow(problemSize, P_IN_OPS[objective]) * Math.log(1 + problemSize);
-        return (int) (estimation * 0.3);
+        return (int) (A_IN_OPS_GEN[objective] * Math.pow(problemSize, P_IN_OPS[objective]) * Math.log(1 + problemSize));
     }
 
     private static int computeBudgetFlat(int problemSize, int objective) {
         objective = Math.min(objective - 2, MAX_THRESHOLD_INDEX);
-        double estimation = A_IN_OPS_FLAT[objective] * Math.pow(problemSize, P_IN_OPS[objective]) * Math.log(1 + problemSize);
-        return (int) (estimation * 0.3);
+        return (int) (A_IN_OPS_FLAT[objective] * Math.pow(problemSize, P_IN_OPS[objective]) * Math.log(1 + problemSize));
     }
 
     private static final class Instance extends HybridAlgorithmWrapper.Instance {
@@ -94,16 +92,16 @@ public final class ENS extends HybridAlgorithmWrapper {
         private final Threshold[] thresholdsGen;
         private final Threshold[] thresholdsFlat;
 
-        private Instance(int[] ranks, int[] indices, double[][] points,
+        private Instance(int[] ranks, int[] indices, double[][] points, int dimension,
                          ThresholdFactory threshold3D, ThresholdFactory thresholdAll) {
             this.ranks = ranks;
             this.indices = indices;
             this.points = points;
             this.exPoints = new double[points.length][];
             this.space = new int[STORAGE_MULTIPLE * indices.length];
-            thresholdsGen = new Threshold[MAX_THRESHOLD_INDEX + 1];
-            thresholdsFlat = new Threshold[MAX_THRESHOLD_INDEX + 1];
-            for (int i = 0; i <= MAX_THRESHOLD_INDEX; ++i) {
+            thresholdsGen = new Threshold[dimension];
+            thresholdsFlat = new Threshold[dimension];
+            for (int i = 0; i < dimension; ++i) {
                 ThresholdFactory f = i == 0 ? threshold3D : thresholdAll;
                 thresholdsGen[i] = f.createThreshold();
                 thresholdsFlat[i] = f.createThreshold();
@@ -139,7 +137,7 @@ public final class ENS extends HybridAlgorithmWrapper {
 
         @Override
         public int helperAHook(int from, int until, int obj, int maximalMeaningfulRank) {
-            if (obj == 1 || until - from >= thresholdsGen[Math.min(obj - 2, MAX_THRESHOLD_INDEX)].getThreshold()) {
+            if (obj == 1 || until - from >= thresholdsGen[obj - 2].getThreshold()) {
                 return -from - 1;
             }
 
@@ -358,7 +356,7 @@ public final class ENS extends HybridAlgorithmWrapper {
             if (obj == 1) return -weakFrom - 1;
 
             int problemSize = goodUntil - goodFrom + weakUntil - weakFrom;
-            int objIndex = Math.min(obj - 2, MAX_THRESHOLD_INDEX);
+            int objIndex = obj - 2;
             Threshold thresholdGen = thresholdsGen[objIndex];
             Threshold thresholdFlat = thresholdsFlat[objIndex];
             int genValue = thresholdGen.getThreshold();
