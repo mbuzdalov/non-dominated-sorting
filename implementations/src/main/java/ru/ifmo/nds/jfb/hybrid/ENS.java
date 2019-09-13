@@ -38,14 +38,14 @@ public final class ENS extends HybridAlgorithmWrapper {
     private static final int MAX_THRESHOLD_INDEX = 7;
 
     private static final double[] A_IN_OPS_GEN = {
-            3.806816959499965, // for d = 2
-            4.113592943948679,
-            2.8467007731006437,
-            1.8473590929256243,
-            1.3249781911979446,
-            1.1777313339640052,
-            1.1653214813927109,
-            0.88
+            6, // for d = 2.
+            6,
+            3,
+            1.75,
+            1.2,
+            1.0,
+            1.0,
+            0.7,
     };
 
     private static final double[] A_IN_OPS_FLAT = {
@@ -91,7 +91,8 @@ public final class ENS extends HybridAlgorithmWrapper {
         private final double[][] points;
         private final double[][] exPoints;
 
-        private final Threshold[] thresholds;
+        private final Threshold[] thresholdsGen;
+        private final Threshold[] thresholdsFlat;
 
         private Instance(int[] ranks, int[] indices, double[][] points,
                          ThresholdFactory threshold3D, ThresholdFactory thresholdAll) {
@@ -100,10 +101,12 @@ public final class ENS extends HybridAlgorithmWrapper {
             this.points = points;
             this.exPoints = new double[points.length][];
             this.space = new int[STORAGE_MULTIPLE * indices.length];
-            thresholds = new Threshold[MAX_THRESHOLD_INDEX + 1];
+            thresholdsGen = new Threshold[MAX_THRESHOLD_INDEX + 1];
+            thresholdsFlat = new Threshold[MAX_THRESHOLD_INDEX + 1];
             for (int i = 0; i <= MAX_THRESHOLD_INDEX; ++i) {
                 ThresholdFactory f = i == 0 ? threshold3D : thresholdAll;
-                thresholds[i] = f.createThreshold();
+                thresholdsGen[i] = f.createThreshold();
+                thresholdsFlat[i] = f.createThreshold();
             }
         }
 
@@ -136,7 +139,7 @@ public final class ENS extends HybridAlgorithmWrapper {
 
         @Override
         public int helperAHook(int from, int until, int obj, int maximalMeaningfulRank) {
-            if (obj == 1 || until - from >= thresholds[Math.min(obj - 2, MAX_THRESHOLD_INDEX)].getThreshold()) {
+            if (obj == 1 || until - from >= thresholdsGen[Math.min(obj - 2, MAX_THRESHOLD_INDEX)].getThreshold()) {
                 return -from - 1;
             }
 
@@ -356,20 +359,28 @@ public final class ENS extends HybridAlgorithmWrapper {
 
             int problemSize = goodUntil - goodFrom + weakUntil - weakFrom;
             int objIndex = Math.min(obj - 2, MAX_THRESHOLD_INDEX);
-            Threshold threshold = thresholds[objIndex];
-            int thresholdValue = threshold.getThreshold();
+            Threshold thresholdGen = thresholdsGen[objIndex];
+            Threshold thresholdFlat = thresholdsFlat[objIndex];
+            int genValue = thresholdGen.getThreshold();
+            int flatValue = thresholdFlat.getThreshold();
 
-            if (problemSize >= thresholdValue) {
+            if (problemSize >= genValue && problemSize >= flatValue) {
                 return -weakFrom - 1;
             }
 
             int theOnlyRank = getRankIfAllSame(goodFrom, goodUntil);
             if (theOnlyRank >= 0) {
+                if (problemSize >= flatValue) {
+                    return -weakFrom - 1;
+                }
                 // "good" has a single front, let's do the simple stuff
-                return helperBSingleRank(theOnlyRank, goodFrom, goodUntil, weakFrom, weakUntil, obj, maximalMeaningfulRank, tempFrom, threshold);
+                return helperBSingleRank(theOnlyRank, goodFrom, goodUntil, weakFrom, weakUntil, obj, maximalMeaningfulRank, tempFrom, thresholdFlat);
             } else {
+                if (problemSize >= genValue) {
+                    return -weakFrom - 1;
+                }
                 // "good" has multiple fronts (called "slices" here), need to go a more complicated way.
-                return helperBMultipleRanks(goodFrom, goodUntil, weakFrom, weakUntil, obj, maximalMeaningfulRank, tempFrom, threshold);
+                return helperBMultipleRanks(goodFrom, goodUntil, weakFrom, weakUntil, obj, maximalMeaningfulRank, tempFrom, thresholdGen);
             }
         }
     }
