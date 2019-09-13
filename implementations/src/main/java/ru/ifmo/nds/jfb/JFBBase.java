@@ -178,8 +178,19 @@ public abstract class JFBBase extends NonDominatedSorting {
                 }
                 if (ArrayHelper.transplantAndCheckIfSame(transposedPoints[obj], indices, from, until, temporary, from)) {
                     --obj;
+
+                    int hookSolvedUntil = localKickOut(from, hookUnsolvedFrom);
+                    if (hookSolvedUntil != from) {
+                        until = helperB(from, hookSolvedUntil, hookUnsolvedFrom, until, obj, from);
+                        until = complicatedMerge(hookSolvedUntil, hookUnsolvedFrom, until);
+                        from = hookSolvedUntil;
+                    }
                 } else {
                     int hookSolvedUntil = localKickOut(from, hookUnsolvedFrom);
+                    if (hookSolvedUntil != from) {
+                        until = helperB(from, hookSolvedUntil, hookUnsolvedFrom, until, obj, from);
+                    }
+
                     double median = ArrayHelper.destructiveMedian(temporary, hookUnsolvedFrom, until);
                     long split = splitMerge.splitInThree(transposedPoints[obj], indices, hookUnsolvedFrom, hookUnsolvedFrom, until, median);
                     int startMid = SplitMergeHelper.extractMid(split);
@@ -189,12 +200,12 @@ public abstract class JFBBase extends NonDominatedSorting {
                     --obj;
                     int newStartRight = helperB(hookUnsolvedFrom, newStartMid, startMid, startRight, obj, hookUnsolvedFrom);
                     newStartRight = helperA(startMid, newStartRight, obj);
-                    int newUntil = helperB(hookUnsolvedFrom, newStartMid, startRight, until, obj, hookUnsolvedFrom);
-                    newUntil = helperB(startMid, newStartRight, startRight, newUntil, obj, hookUnsolvedFrom);
+                    until = helperB(hookUnsolvedFrom, newStartMid, startRight, until, obj, hookUnsolvedFrom);
+                    until = helperB(startMid, newStartRight, startRight, until, obj, hookUnsolvedFrom);
                     ++obj;
-                    newUntil = helperA(startRight, newUntil, obj);
+                    until = helperA(startRight, until, obj);
 
-                    int result = splitMerge.mergeThree(indices, hookUnsolvedFrom, hookUnsolvedFrom, newStartMid, startMid, newStartRight, startRight, newUntil);
+                    int result = splitMerge.mergeThree(indices, hookUnsolvedFrom, hookUnsolvedFrom, newStartMid, startMid, newStartRight, startRight, until);
                     return complicatedMerge(hookSolvedUntil, hookUnsolvedFrom, result);
                 }
             }
