@@ -108,22 +108,24 @@ public final class ENS extends HybridAlgorithmWrapper {
             }
         }
 
-        private boolean checkIfDominatesA(int sliceIndex, int obj, int weakIndex) {
+        private int checkIfDominatesA(int sliceIndex, int obj, int weakIndex) {
             int sliceRank = space[sliceIndex];
             if (ranks[weakIndex] > sliceRank) {
-                return true;
+                return 1;
             }
             int virtualGoodIndex = space[sliceIndex + 2];
             double[] wp = points[weakIndex];
+            int perfCount = 1;
             while (virtualGoodIndex != -1) {
                 int realGoodIndex = space[virtualGoodIndex];
+                ++perfCount;
                 if (DominanceHelper.strictlyDominatesAssumingLexicographicallySmaller(points[realGoodIndex], wp, obj)) {
                     ranks[weakIndex] = 1 + sliceRank;
-                    return true;
+                    return perfCount;
                 }
                 virtualGoodIndex = space[virtualGoodIndex + 1];
             }
-            return false;
+            return -perfCount;
         }
 
         private void initNewSliceA(int prevSlice, int currSlice, int nextSlice, int rank, int firstPointIndex) {
@@ -137,12 +139,20 @@ public final class ENS extends HybridAlgorithmWrapper {
 
         @Override
         public int helperAHook(int from, int until, int obj, int maximalMeaningfulRank) {
-            if (obj == 1 || until - from >= thresholdsGen[obj - 2].getThreshold()) {
+            if (obj == 1) {
+                return -from - 1;
+            }
+            Threshold threshold = thresholdsGen[obj - 2];
+            int problemSize = until - from;
+            if (problemSize >= threshold.getThreshold()) {
                 return -from - 1;
             }
 
+            int counter = 0;
+            int budget = computeBudgetGen(problemSize, obj);
+
             int sliceOffset = from * STORAGE_MULTIPLE;
-            int pointOffset = sliceOffset + 3 * (until - from);
+            int pointOffset = sliceOffset + 3 * problemSize;
 
             int sliceCurrent = sliceOffset - 3;
             int sliceFirst = -1;
@@ -150,7 +160,9 @@ public final class ENS extends HybridAlgorithmWrapper {
             int minOverflow = until;
             for (int i = from, pointIndex = pointOffset; i < until; ++i) {
                 int ii = indices[i];
-                if (sliceFirst == -1 || checkIfDominatesA(sliceFirst, obj, ii)) {
+                int domResult0 = 0;
+                if (sliceFirst == -1 || (domResult0 = checkIfDominatesA(sliceFirst, obj, ii)) > 0) {
+                    counter += domResult0;
                     if (ranks[ii] <= maximalMeaningfulRank) {
                         sliceCurrent += 3;
                         initNewSliceA(-1, sliceCurrent, sliceFirst, ranks[ii], pointIndex);
@@ -162,9 +174,12 @@ public final class ENS extends HybridAlgorithmWrapper {
                         minOverflow = i;
                     }
                 } else {
+                    counter -= domResult0;
                     int prevSlice = sliceFirst, nextSlice;
                     while ((nextSlice = space[prevSlice + 1]) != -1) {
-                        if (checkIfDominatesA(nextSlice, obj, ii)) {
+                        int domResult1 = checkIfDominatesA(nextSlice, obj, ii);
+                        counter += Math.abs(domResult1);
+                        if (domResult1 > 0) {
                             break;
                         }
                         prevSlice = nextSlice;
@@ -184,7 +199,12 @@ public final class ENS extends HybridAlgorithmWrapper {
                     }
                     pointIndex += 2;
                 }
+                if (threshold.shallTerminate(budget, counter)) {
+                    threshold.recordPerformance(problemSize, budget, counter, true);
+                    return -i - 2;
+                }
             }
+            threshold.recordPerformance(problemSize, budget, counter, false);
             return JFBBase.kickOutOverflowedRanks(indices, ranks, maximalMeaningfulRank, minOverflow, until);
         }
 
