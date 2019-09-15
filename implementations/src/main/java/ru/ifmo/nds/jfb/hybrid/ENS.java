@@ -48,6 +48,17 @@ public final class ENS extends HybridAlgorithmWrapper {
             0.21,
     };
 
+    private static final double[] A_IN_OPS_HA = {
+            1.8, // for d = 2.
+            1.8,
+            0.9,
+            0.525,
+            0.36,
+            0.3,
+            0.3,
+            0.21,
+    };
+
     private static final double[] A_IN_OPS_FLAT = {
             3.0835217371949715, // for d = 2
             1.8511168247769056,
@@ -75,6 +86,11 @@ public final class ENS extends HybridAlgorithmWrapper {
         return (int) (A_IN_OPS_GEN[objective] * Math.pow(problemSize, P_IN_OPS[objective]) * Math.log(1 + problemSize));
     }
 
+    private static int computeBudgetHelperA(int problemSize, int objective) {
+        objective = Math.min(objective - 2, MAX_THRESHOLD_INDEX);
+        return (int) (A_IN_OPS_HA[objective] * Math.pow(problemSize, P_IN_OPS[objective]) * Math.log(1 + problemSize));
+    }
+
     private static int computeBudgetFlat(int problemSize, int objective) {
         objective = Math.min(objective - 2, MAX_THRESHOLD_INDEX);
         return (int) (A_IN_OPS_FLAT[objective] * Math.pow(problemSize, P_IN_OPS[objective]) * Math.log(1 + problemSize));
@@ -91,6 +107,7 @@ public final class ENS extends HybridAlgorithmWrapper {
 
         private final Threshold[] thresholdsGen;
         private final Threshold[] thresholdsFlat;
+        private final Threshold[] thresholdsHelperA;
 
         private Instance(int[] ranks, int[] indices, double[][] points, int dimension,
                          ThresholdFactory threshold3D, ThresholdFactory thresholdAll) {
@@ -101,10 +118,12 @@ public final class ENS extends HybridAlgorithmWrapper {
             this.space = new int[STORAGE_MULTIPLE * indices.length];
             thresholdsGen = new Threshold[dimension];
             thresholdsFlat = new Threshold[dimension];
+            thresholdsHelperA = new Threshold[dimension];
             for (int i = 0; i < dimension; ++i) {
                 ThresholdFactory f = i == 0 ? threshold3D : thresholdAll;
                 thresholdsGen[i] = f.createThreshold();
                 thresholdsFlat[i] = f.createThreshold();
+                thresholdsHelperA[i] = f.createThreshold();
             }
         }
 
@@ -142,14 +161,14 @@ public final class ENS extends HybridAlgorithmWrapper {
             if (obj == 1) {
                 return -from - 1;
             }
-            Threshold threshold = thresholdsGen[obj - 2];
+            Threshold threshold = thresholdsHelperA[obj - 2];
             int problemSize = until - from;
             if (problemSize >= threshold.getThreshold()) {
                 return -from - 1;
             }
 
             int counter = 0;
-            int budget = computeBudgetGen(problemSize, obj);
+            int budget = computeBudgetHelperA(problemSize, obj);
 
             int sliceOffset = from * STORAGE_MULTIPLE;
             int pointOffset = sliceOffset + 3 * problemSize;
