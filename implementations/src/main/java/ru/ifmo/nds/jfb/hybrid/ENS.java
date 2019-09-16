@@ -49,14 +49,14 @@ public final class ENS extends HybridAlgorithmWrapper {
     };
 
     private static final double[] A_IN_OPS_HA = {
-            1.8, // for d = 2.
-            1.8,
-            0.9,
-            0.525,
-            0.36,
-            0.3,
-            0.3,
-            0.21,
+            4.0, // for d = 2.
+            2.45,
+            1.7,
+            1.2,
+            0.95,
+            0.88,
+            0.88,
+            0.87,
     };
 
     private static final double[] A_IN_OPS_FLAT = {
