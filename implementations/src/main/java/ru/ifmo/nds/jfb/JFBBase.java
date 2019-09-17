@@ -173,24 +173,18 @@ public abstract class JFBBase extends NonDominatedSorting {
                     return hookResponse;
                 }
                 int hookUnsolvedFrom = -hookResponse - 1;
+                int hookSolvedUntil = localKickOut(from, hookUnsolvedFrom);
                 if (hookUnsolvedFrom == until) {
-                    return localKickOut(from, hookUnsolvedFrom);
+                    return hookSolvedUntil;
+                }
+                if (hookSolvedUntil != from) {
+                    until = helperB(from, hookSolvedUntil, hookUnsolvedFrom, until, obj, from);
                 }
                 if (ArrayHelper.transplantAndCheckIfSame(transposedPoints[obj], indices, from, until, temporary, from)) {
                     --obj;
-
-                    int hookSolvedUntil = localKickOut(from, hookUnsolvedFrom);
-                    if (hookSolvedUntil != from) {
-                        until = helperB(from, hookSolvedUntil, hookUnsolvedFrom, until, obj, from);
-                        until = complicatedMerge(hookSolvedUntil, hookUnsolvedFrom, until);
-                        from = hookSolvedUntil;
-                    }
+                    until = complicatedMerge(hookSolvedUntil, hookUnsolvedFrom, until);
+                    from = hookSolvedUntil;
                 } else {
-                    int hookSolvedUntil = localKickOut(from, hookUnsolvedFrom);
-                    if (hookSolvedUntil != from) {
-                        until = helperB(from, hookSolvedUntil, hookUnsolvedFrom, until, obj, from);
-                    }
-
                     double median = ArrayHelper.destructiveMedian(temporary, hookUnsolvedFrom, until);
                     long split = splitMerge.splitInThree(transposedPoints[obj], indices, hookUnsolvedFrom, hookUnsolvedFrom, until, median);
                     int startMid = SplitMergeHelper.extractMid(split);
@@ -334,20 +328,20 @@ public abstract class JFBBase extends NonDominatedSorting {
                     if (hookResponse >= 0) {
                         return hookResponse;
                     }
-                    int weakUnsolvedFrom = -hookResponse - 1, weakSolvedUntil;
+                    int weakUnsolvedFrom = -hookResponse - 1;
+                    int weakSolvedUntil = localKickOut(weakFrom, weakUnsolvedFrom);
                     if (weakUnsolvedFrom == weakUntil) {
-                        return localKickOut(weakFrom, weakUnsolvedFrom);
+                        return weakSolvedUntil;
                     }
                     double[] currentPoints = transposedPoints[obj];
                     switch (ArrayHelper.transplantAndDecide(currentPoints, indices, goodFrom, goodUntil, weakUnsolvedFrom, weakUntil, temporary, tempFrom)) {
                         case ArrayHelper.TRANSPLANT_LEFT_NOT_GREATER:
                             --obj;
+                            weakUntil = complicatedMerge(weakSolvedUntil, weakUnsolvedFrom, weakUntil);
                             break;
                         case ArrayHelper.TRANSPLANT_RIGHT_SMALLER:
-                            weakSolvedUntil = localKickOut(weakFrom, weakUnsolvedFrom);
                             return complicatedMerge(weakSolvedUntil, weakUnsolvedFrom, weakUntil);
                         case ArrayHelper.TRANSPLANT_GENERAL_CASE:
-                            weakSolvedUntil = localKickOut(weakFrom, weakUnsolvedFrom);
                             double median = ArrayHelper.destructiveMedian(temporary, tempFrom, tempFrom + goodUntil - goodFrom + weakUntil - weakUnsolvedFrom);
                             long goodSplit = splitMerge.splitInThree(currentPoints, indices, tempFrom, goodFrom, goodUntil, median);
                             int goodMidL = SplitMergeHelper.extractMid(goodSplit);
