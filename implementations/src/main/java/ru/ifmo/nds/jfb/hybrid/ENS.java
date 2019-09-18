@@ -81,19 +81,60 @@ public final class ENS extends HybridAlgorithmWrapper {
             1.44701314145948956,
     };
 
+    private static final int MAX_CACHED_SIZE = 1000;
+    private static final int[][] BUDGET_GEN_CACHE = new int[MAX_CACHED_SIZE][MAX_THRESHOLD_INDEX + 1];
+    private static final int[][] BUDGET_HA_CACHE = new int[MAX_CACHED_SIZE][MAX_THRESHOLD_INDEX + 1];
+    private static final int[][] BUDGET_FLAT_CACHE = new int[MAX_CACHED_SIZE][MAX_THRESHOLD_INDEX + 1];
+
+    private static int evaluateBudgetGen(int problemSize, int objective) {
+        return (int) (A_IN_OPS_GEN[objective] * Math.pow(problemSize, P_IN_OPS[objective]) * Math.log(1 + problemSize));
+    }
+
+    private static int evaluateBudgetHelperA(int problemSize, int objective) {
+        return (int) (A_IN_OPS_HA[objective] * Math.pow(problemSize, P_IN_OPS[objective]) * Math.log(1 + problemSize));
+    }
+
+    private static int evaluateBudgetFlat(int problemSize, int objective) {
+        return (int) (A_IN_OPS_FLAT[objective] * Math.pow(problemSize, P_IN_OPS[objective]) * Math.log(1 + problemSize));
+    }
+
     private static int computeBudgetGen(int problemSize, int objective) {
         objective = Math.min(objective - 2, MAX_THRESHOLD_INDEX);
-        return (int) (A_IN_OPS_GEN[objective] * Math.pow(problemSize, P_IN_OPS[objective]) * Math.log(1 + problemSize));
+        if (problemSize < MAX_CACHED_SIZE) {
+            int cached = BUDGET_GEN_CACHE[problemSize][objective];
+            if (cached == 0) {
+                BUDGET_GEN_CACHE[problemSize][objective] = cached = evaluateBudgetGen(problemSize, objective);
+            }
+            return cached;
+        } else {
+            return evaluateBudgetGen(problemSize, objective);
+        }
     }
 
     private static int computeBudgetHelperA(int problemSize, int objective) {
         objective = Math.min(objective - 2, MAX_THRESHOLD_INDEX);
-        return (int) (A_IN_OPS_HA[objective] * Math.pow(problemSize, P_IN_OPS[objective]) * Math.log(1 + problemSize));
+        if (problemSize < MAX_CACHED_SIZE) {
+            int cached = BUDGET_HA_CACHE[problemSize][objective];
+            if (cached == 0) {
+                BUDGET_HA_CACHE[problemSize][objective] = cached = evaluateBudgetHelperA(problemSize, objective);
+            }
+            return cached;
+        } else {
+            return evaluateBudgetHelperA(problemSize, objective);
+        }
     }
 
     private static int computeBudgetFlat(int problemSize, int objective) {
         objective = Math.min(objective - 2, MAX_THRESHOLD_INDEX);
-        return (int) (A_IN_OPS_FLAT[objective] * Math.pow(problemSize, P_IN_OPS[objective]) * Math.log(1 + problemSize));
+        if (problemSize < MAX_CACHED_SIZE) {
+            int cached = BUDGET_FLAT_CACHE[problemSize][objective];
+            if (cached == 0) {
+                BUDGET_FLAT_CACHE[problemSize][objective] = cached = evaluateBudgetFlat(problemSize, objective);
+            }
+            return cached;
+        } else {
+            return evaluateBudgetFlat(problemSize, objective);
+        }
     }
 
     private static final class Instance extends HybridAlgorithmWrapper.Instance {
@@ -208,8 +249,9 @@ public final class ENS extends HybridAlgorithmWrapper {
                     int currRank = ranks[ii];
                     if (currRank == space[prevSlice]) {
                         // insert the current point into prevSlice
-                        space[pointIndex + 1] = space[prevSlice + 2];
-                        space[prevSlice + 2] = pointIndex;
+                        prevSlice += 2;
+                        space[pointIndex + 1] = space[prevSlice];
+                        space[prevSlice] = pointIndex;
                     } else {
                         sliceCurrent += 3;
                         // create a new slice and insert it between prevSlice and nextSlice
