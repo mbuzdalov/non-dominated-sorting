@@ -4,7 +4,6 @@ import oshi.SystemInfo;
 import oshi.hardware.CentralProcessor;
 import oshi.hardware.HardwareAbstractionLayer;
 import oshi.software.os.OperatingSystem;
-import oshi.software.os.OperatingSystemVersion;
 
 import java.io.File;
 import java.io.IOException;
@@ -71,7 +70,7 @@ public final class PatchWithOSHI {
             out.println("  \"hardware\" : {");
             HardwareAbstractionLayer hw = info.getHardware();
             out.println("    \"cpu\" : {");
-            CentralProcessor cpu = hw.getProcessor();
+            CentralProcessor.ProcessorIdentifier cpu = hw.getProcessor().getProcessorIdentifier();
             out.println("      \"vendor\" : \"" + toJsonString(cpu.getVendor()) + "\",");
             out.println("      \"model\" : \"" + toJsonString(cpu.getModel()) + "\",");
             out.println("      \"family\" : \"" + toJsonString(cpu.getFamily()) + "\",");
@@ -85,7 +84,7 @@ public final class PatchWithOSHI {
             out.println("     \"manufacturer\" : \"" + toJsonString(os.getManufacturer()) + "\",");
             out.println("     \"bitness\" : " + os.getBitness() + ",");
             out.println("     \"version\" : {");
-            OperatingSystemVersion osVersion = os.getVersion();
+            OperatingSystem.OSVersionInfo osVersion = os.getVersionInfo();
             out.println("       \"version-string\" : \"" + toJsonString(osVersion.getVersion()) + "\",");
             out.println("       \"codename\" : \"" + toJsonString(osVersion.getCodeName()) + "\",");
             out.println("       \"build\" : \"" + toJsonString(osVersion.getBuildNumber()) + "\"");
