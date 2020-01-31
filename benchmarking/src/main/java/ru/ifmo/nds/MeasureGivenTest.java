@@ -6,26 +6,6 @@ import java.io.IOException;
 import java.util.*;
 
 public class MeasureGivenTest {
-    private static String decimateTime(long time) {
-        String raw = String.valueOf(time);
-        StringBuilder sb = new StringBuilder();
-        for (int i = 12; i >= 0; --i) {
-            int index = raw.length() - 1 - i;
-            if (index < 0) {
-                sb.append(' ');
-                if (i > 0 && i % 3 == 0) {
-                    sb.append('_');
-                }
-            } else {
-                sb.append(raw.charAt(index));
-                if (i > 0 && i % 3 == 0) {
-                    sb.append('_');
-                }
-            }
-        }
-        return sb.toString();
-    }
-
     public static void main(String[] args) throws IOException {
         Locale.setDefault(Locale.US);
         try (BufferedReader in = new BufferedReader(new FileReader(args[0]))) {
@@ -54,8 +34,8 @@ public class MeasureGivenTest {
                     for (NonDominatedSorting sorting : sortings) {
                         long t0 = System.nanoTime();
                         sorting.sort(data, ranks);
-                        long time = System.nanoTime() - t0;
-                        System.out.println(decimateTime(time) + " ms <- " + sorting.getName());
+                        double time = (System.nanoTime() - t0) * 1e-9;
+                        System.out.printf(Locale.US, "%.03e s <- %s%n", time, sorting.getName());
                     }
                     System.out.println();
                 }
@@ -64,8 +44,8 @@ public class MeasureGivenTest {
                 while (System.in.available() == 0) {
                     long t0 = System.nanoTime();
                     sorting.sort(data, ranks);
-                    long time = System.nanoTime() - t0;
-                    System.out.println(time + " ms");
+                    double time = (System.nanoTime() - t0) * 1e-9;
+                    System.out.println(time + " s");
                 }
             }
         }
