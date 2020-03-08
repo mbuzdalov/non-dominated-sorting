@@ -94,7 +94,11 @@ public class TortureTesting {
         List<NonDominatedSortingFactory> sortingFactories = Arrays.asList(
                 FastNonDominatedSorting.getOriginalVersion(),
                 CornerSort.getInstance(),
+                DeductiveSort.getOriginalImplementation(),
                 DeductiveSort.getLibraryImplementationV1(),
+                DeductiveSort.getLibraryImplementationV2(),
+                DeductiveSort.getLibraryImplementationV3(false),
+                DeductiveSort.getLibraryImplementationV3(true),
                 DominanceTree.getPresortInsertion(false, false),
                 DominanceTree.getPresortInsertion(true, true),
                 DominanceTree.getNoPresortInsertion(false),

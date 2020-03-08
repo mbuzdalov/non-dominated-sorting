@@ -5,7 +5,7 @@ import ru.ifmo.nds.util.DominanceHelper;
 
 import java.util.Arrays;
 
-public class Original extends NonDominatedSorting {
+public final class Original extends NonDominatedSorting {
     private boolean[] dominated;
     private boolean[] ranked;
 

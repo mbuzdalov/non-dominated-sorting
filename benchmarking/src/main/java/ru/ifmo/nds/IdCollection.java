@@ -49,6 +49,8 @@ public final class IdCollection {
         addNonDominatedSortingFactory("deductive.original", DeductiveSort.getOriginalImplementation());
         addNonDominatedSortingFactory("deductive.library.v1", DeductiveSort.getLibraryImplementationV1());
         addNonDominatedSortingFactory("deductive.library.v2", DeductiveSort.getLibraryImplementationV2());
+        addNonDominatedSortingFactory("deductive.library.v3", DeductiveSort.getLibraryImplementationV3(false));
+        addNonDominatedSortingFactory("deductive.library.v3.shuffle", DeductiveSort.getLibraryImplementationV3(true));
 
         for (boolean isMergeRecursive : new boolean[] { false, true }) {
             String mergeString = isMergeRecursive ? "recmerge" : "seqmerge";
