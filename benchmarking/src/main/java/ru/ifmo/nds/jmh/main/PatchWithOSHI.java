@@ -83,12 +83,16 @@ public final class PatchWithOSHI {
             out.println("     \"family\" : \"" + toJsonString(os.getFamily()) + "\",");
             out.println("     \"manufacturer\" : \"" + toJsonString(os.getManufacturer()) + "\",");
             out.println("     \"bitness\" : " + os.getBitness() + ",");
-            out.println("     \"version\" : {");
             OperatingSystem.OSVersionInfo osVersion = os.getVersionInfo();
-            out.println("       \"version-string\" : \"" + toJsonString(osVersion.getVersion()) + "\",");
-            out.println("       \"codename\" : \"" + toJsonString(osVersion.getCodeName()) + "\",");
-            out.println("       \"build\" : \"" + toJsonString(osVersion.getBuildNumber()) + "\"");
-            out.println("     }");
+            if (osVersion != null) {
+                out.println("     \"version\" : {");
+                out.println("       \"version-string\" : \"" + toJsonString(osVersion.getVersion()) + "\",");
+                out.println("       \"codename\" : \"" + toJsonString(osVersion.getCodeName()) + "\",");
+                out.println("       \"build\" : \"" + toJsonString(osVersion.getBuildNumber()) + "\"");
+                out.println("     }");
+            } else {
+                out.println("     \"version\" : null");
+            }
             out.println("  },");
             out.println("  \"data\": ");
             Files.copy(source.toPath(), out);
