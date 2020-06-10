@@ -1,7 +1,6 @@
 package ru.ifmo.nds.deductive;
 
 import java.util.Arrays;
-import java.util.concurrent.ThreadLocalRandom;
 
 import ru.ifmo.nds.NonDominatedSorting;
 import ru.ifmo.nds.util.ArrayHelper;
@@ -33,15 +32,11 @@ public final class LibraryV3 extends NonDominatedSorting {
         final int dim = points[0].length;
 
         Arrays.fill(ranks, maximalMeaningfulRank + 1);
-        ArrayHelper.fillIdentity(indices, n);
+
         if (shuffle) {
-            ThreadLocalRandom random = ThreadLocalRandom.current();
-            for (int i = 1; i < n; ++i) {
-                int j = random.nextInt(i + 1);
-                int tmp = indices[i];
-                indices[i] = indices[j];
-                indices[j] = tmp;
-            }
+            ArrayHelper.fillWithRandomPermutation(indices, n);
+        } else {
+            ArrayHelper.fillIdentity(indices, n);
         }
 
         int currRank = 0;

@@ -1,5 +1,7 @@
 package ru.ifmo.nds.util;
 
+import java.util.concurrent.ThreadLocalRandom;
+
 public final class ArrayHelper {
     private ArrayHelper() {}
 
@@ -27,6 +29,16 @@ public final class ArrayHelper {
     public static void fillIdentity(int[] array, int n, int offset) {
         for (int i = 0, v = offset; i < n; ++i, ++v) {
             array[i] = v;
+        }
+    }
+
+    public static void fillWithRandomPermutation(int[] array, int n) {
+        ThreadLocalRandom random = ThreadLocalRandom.current();
+        array[0] = 0;
+        for (int i = 1; i < n; ++i) {
+            int j = random.nextInt(i + 1);
+            array[i] = array[j];
+            array[j] = i;
         }
     }
 
