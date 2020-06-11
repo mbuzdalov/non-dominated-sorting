@@ -36,24 +36,25 @@ public final class LibraryV2 extends NonDominatedSorting {
                 final int currI = indices[curr];
                 final double[] currP = points[currI];
                 int next = curr + 1;
-                boolean currentDominated = false;
+                boolean nonDominated = true;
                 while (next < last) {
                     final int nextI = indices[next];
                     int comparison = DominanceHelper.dominanceComparison(currP, points[nextI], dim);
-                    if (comparison < 0) {
-                        indices[next] = indices[--last];
-                        indices[last] = nextI;
-                    } else if (comparison > 0) {
-                        currentDominated = true;
-                        indices[next] = indices[--last];
-                        indices[last] = currI;
-                        indices[curr] = nextI;
-                        break;
-                    } else {
+                    if (comparison == 0) {
                         ++next;
+                    } else {
+                        indices[next] = indices[--last];
+                        if (comparison < 0) {
+                            indices[last] = nextI;
+                        } else {
+                            nonDominated = false;
+                            indices[last] = currI;
+                            indices[curr] = nextI;
+                            break;
+                        }
                     }
                 }
-                if (!currentDominated) {
+                if (nonDominated) {
                     ranks[currI] = rank;
                     ++curr;
                 }

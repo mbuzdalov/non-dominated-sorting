@@ -28,6 +28,7 @@ public final class LibraryV3 extends NonDominatedSorting {
 
     @Override
     protected void sortChecked(double[][] points, int[] ranks, int maximalMeaningfulRank) {
+        final int[] indices = this.indices;
         final int n = points.length;
         final int dim = points[0].length;
 
@@ -52,15 +53,15 @@ public final class LibraryV3 extends NonDominatedSorting {
                 boolean nonDominated = true;
                 while (curr != -1) {
                     int comparison = DominanceHelper.dominanceComparison(currP, points[indices[curr]], dim);
-                    if (comparison < 0) {
-                        curr = next[curr];
-                        next[prev] = curr;
-                    } else if (comparison > 0) {
-                        nonDominated = false;
-                        break;
-                    } else {
+                    if (comparison == 0) {
                         prev = curr;
                         curr = next[curr];
+                    } else if (comparison < 0) {
+                        curr = next[curr];
+                        next[prev] = curr;
+                    } else {
+                        nonDominated = false;
+                        break;
                     }
                 }
                 if (nonDominated) {

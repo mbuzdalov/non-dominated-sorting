@@ -47,12 +47,11 @@ public final class Original extends NonDominatedSorting {
                         continue;
                     }
                     int comparison = DominanceHelper.dominanceComparison(currP, points[j], dim);
-                    if (comparison < 0) {
-                        dominated[j] = true;
-                    } else if (comparison > 0) {
+                    if (comparison > 0) {
                         dominated[i] = true;
                         break;
                     }
+                    dominated[j] = comparison < 0;
                 }
                 if (!dominated[i]) {
                     ranks[i] = currRank;
