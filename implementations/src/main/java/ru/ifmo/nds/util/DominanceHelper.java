@@ -36,22 +36,34 @@ public final class DominanceHelper {
         return true;
     }
 
-    public static int dominanceComparison(double[] a, double[] b, int dim) {
-        boolean hasSmaller = false;
-        boolean hasGreater = false;
-        for (int i = 0; i < dim; ++i) {
-            double ai = a[i], bi = b[i];
-            if (ai < bi) {
-                hasSmaller = true;
-            }
-            // no "else if" because the code becomes way slower on inputs where "a" dominates "b".
-            if (ai > bi) {
-                hasGreater = true;
-            }
-            if (hasSmaller && hasGreater) {
+    private static int dominanceComparisonHasSmaller(double[] a, double[] b, int from, int dim) {
+        for (int i = from; i < dim; ++i) {
+            if (a[i] > b[i]) {
                 return 0;
             }
         }
-        return hasSmaller ? -1 : hasGreater ? 1 : 0;
+        return -1;
+    }
+
+    private static int dominanceComparisonHasLarger(double[] a, double[] b, int from, int dim) {
+        for (int i = from; i < dim; ++i) {
+            if (a[i] < b[i]) {
+                return 0;
+            }
+        }
+        return 1;
+    }
+
+    public static int dominanceComparison(double[] a, double[] b, int dim) {
+        for (int i = 0; i < dim; ++i) {
+            double ai = a[i], bi = b[i];
+            if (ai < bi) {
+                return dominanceComparisonHasSmaller(a, b, i + 1, dim);
+            }
+            if (ai > bi) {
+                return dominanceComparisonHasLarger(a, b, i + 1, dim);
+            }
+        }
+        return 0;
     }
 }
