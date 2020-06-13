@@ -12,11 +12,11 @@ import ru.ifmo.nds.util.DominanceHelper;
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
 @Timeout(time = 10)
-@Warmup(time = 1, iterations = 4)
-@Measurement(time = 1, iterations = 3)
-@Fork(value = 3)
+@Warmup(time = 1, iterations = 10)
+@Measurement(time = 1, iterations = 5)
+@Fork(value = 10)
 public class DominanceHelperBenchmark {
-    @Param(value = {"2", "5", "10", "20"})
+    @Param(value = {"2", "3", "4", "5", "6", "8", "10", "12", "14", "17", "20"})
     private int size;
 
     @Param(value = {"random", "leftDominates", "rightDominates", "equal"})
