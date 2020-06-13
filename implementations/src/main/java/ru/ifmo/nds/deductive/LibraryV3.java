@@ -28,31 +28,34 @@ public final class LibraryV3 extends NonDominatedSorting {
 
     @Override
     protected void sortChecked(double[][] points, int[] ranks, int maximalMeaningfulRank) {
-        final int[] indices = this.indices;
+        final int[] order = this.indices;
         final int n = points.length;
         final int dim = points[0].length;
 
         Arrays.fill(ranks, maximalMeaningfulRank + 1);
 
-        if (shuffle) {
-            ArrayHelper.fillWithRandomPermutation(indices, n);
-        } else {
-            ArrayHelper.fillIdentity(indices, n);
-        }
+        ArrayHelper.fillIdentity(order, n);
 
         int currRank = 0;
         int nRemaining = n;
+        boolean notShuffled = true;
+        long comparisonsRemainingToShuffle = Math.max(100, (long) n * (n - 1) / 2);
         while (nRemaining > 0 && currRank <= maximalMeaningfulRank) {
-            initLinkedList(next, nRemaining);
+            if (shuffle && notShuffled && comparisonsRemainingToShuffle < 0) {
+                notShuffled = false;
+                ArrayHelper.shuffle(order, nRemaining);
+            }
+            fillNextByOrder(next, order, nRemaining);
 
-            for (int point = 0; point >= 0; point = next[point]) {
-                final int currI = indices[point];
-                final double[] currP = points[currI];
+            for (int point = order[0]; point >= 0; point = next[point]) {
+                final double[] currP = points[point];
                 int prev = point;
-                int curr = next[prev];
+                int curr = next[point];
                 boolean nonDominated = true;
+                int localComparisons = 0;
                 while (curr != -1) {
-                    int comparison = DominanceHelper.dominanceComparison(currP, points[indices[curr]], dim);
+                    int comparison = DominanceHelper.dominanceComparison(currP, points[curr], dim);
+                    ++localComparisons;
                     if (comparison == 0) {
                         prev = curr;
                         curr = next[curr];
@@ -64,29 +67,33 @@ public final class LibraryV3 extends NonDominatedSorting {
                         break;
                     }
                 }
+                comparisonsRemainingToShuffle -= localComparisons;
                 if (nonDominated) {
-                    ranks[currI] = currRank;
+                    ranks[point] = currRank;
                 }
             }
 
-            nRemaining = filterHigherRanks(indices, ranks, nRemaining, currRank);
+            nRemaining = filterHigherRanks(order, ranks, nRemaining, currRank);
             ++currRank;
         }
     }
 
-    private static void initLinkedList(int[] list, int size) {
-        for (int i = 1; i < size; ++i) {
-            list[i - 1] = i;
+    private static void fillNextByOrder(int[] next, int[] order, int nRemaining) {
+        int prev = order[0];
+        for (int i = 1; i < nRemaining; ++i) {
+            int curr = order[i];
+            next[prev] = curr;
+            prev = curr;
         }
-        list[size - 1] = -1;
+        next[prev] = -1;
     }
 
-    private static int filterHigherRanks(int[] indices, int[] ranks, int size, int value) {
+    private static int filterHigherRanks(int[] order, int[] ranks, int size, int value) {
         int newSize = 0;
         for (int i = 0; i < size; ++i) {
-            int ii = indices[i];
+            int ii = order[i];
             if (ranks[ii] > value) {
-                indices[newSize] = ii;
+                order[newSize] = ii;
                 ++newSize;
             }
         }

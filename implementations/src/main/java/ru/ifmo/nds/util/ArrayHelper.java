@@ -32,13 +32,13 @@ public final class ArrayHelper {
         }
     }
 
-    public static void fillWithRandomPermutation(int[] array, int n) {
+    public static void shuffle(int[] array, int n) {
         ThreadLocalRandom random = ThreadLocalRandom.current();
-        array[0] = 0;
         for (int i = 1; i < n; ++i) {
             int j = random.nextInt(i + 1);
+            int tmp = array[i];
             array[i] = array[j];
-            array[j] = i;
+            array[j] = tmp;
         }
     }
 
