@@ -39,7 +39,7 @@ public final class LibraryV3 extends NonDominatedSorting {
         int currRank = 0;
         int nRemaining = n;
         boolean notShuffled = true;
-        long comparisonsRemainingToShuffle = Math.max(100, (long) n * (n - 1) / 2);
+        long comparisonsRemainingToShuffle = (long) n * (n - 1);
         while (nRemaining > 0 && currRank <= maximalMeaningfulRank) {
             if (shuffle && notShuffled && comparisonsRemainingToShuffle < 0) {
                 notShuffled = false;
