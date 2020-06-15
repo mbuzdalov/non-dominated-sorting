@@ -1,8 +1,7 @@
 package ru.ifmo.nds;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
@@ -122,6 +121,7 @@ public class TortureTesting {
                 FilterSort.getInstance(),
                 SetIntersectionSort.getBitSetInstance()
         );
+        Map<String, Integer> winnerCounts = new HashMap<>();
         List<NonDominatedSorting> sortings = sortingFactories
                 .stream()
                 .map(nonDominatedSortingFactory -> nonDominatedSortingFactory.getInstance(maxPoints, maxDimension))
@@ -141,17 +141,25 @@ public class TortureTesting {
             }
             int[] reference = null;
             int[] ranks = new int[points];
+
+            NonDominatedSorting winner = null;
+            double winnerTime = Double.POSITIVE_INFINITY;
+
             for (NonDominatedSorting sorting : sortings) {
                 System.gc();
                 System.gc();
-                long t0 = System.currentTimeMillis();
+                long t0 = System.nanoTime();
                 try {
                     sorting.sort(instance, ranks, maxRank);
                     if (!Arrays.deepEquals(instanceCopy, instance)) {
                         throw new AssertionError("Test has been altered!");
                     }
-                    long time = System.currentTimeMillis() - t0;
-                    System.out.printf("%102s: %d ms%n", sorting.getName(), time);
+                    double time = (System.nanoTime() - t0) * 1e-9;
+                    System.out.printf(Locale.US, "%102s: %f s%n", sorting.getName(), time);
+                    if (time < winnerTime) {
+                        winner = sorting;
+                        winnerTime = time;
+                    }
                     if (reference == null) {
                         reference = ranks.clone();
                     } else {
@@ -170,6 +178,20 @@ public class TortureTesting {
                 }
             }
             System.out.println();
+            if (winner != null) {
+                System.out.println("Winner: " + winner.getName());
+                winnerCounts.compute(winner.getName(), (n, old) -> old == null ? 1 : old + 1);
+            }
+        }
+        dumpWinners(winnerCounts);
+    }
+
+    private static void dumpWinners(Map<String, Integer> map) {
+        List<Map.Entry<String, Integer>> entries = new ArrayList<>(map.entrySet());
+        entries.sort(Comparator.comparingInt(Map.Entry::getValue));
+        System.out.println("Winners:");
+        for (int i = entries.size() - 1; i >= 0; --i) {
+            System.out.println("    " + entries.get(i).getValue() + " times: " + entries.get(i).getKey());
         }
     }
 }
