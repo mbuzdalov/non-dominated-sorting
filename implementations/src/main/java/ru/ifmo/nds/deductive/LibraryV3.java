@@ -8,17 +8,15 @@ import ru.ifmo.nds.util.DominanceHelper;
 
 public final class LibraryV3 extends NonDominatedSorting {
     private int[] next;
-    private final boolean shuffle;
 
-    public LibraryV3(int maximumPoints, int maximumDimension, boolean shuffle) {
+    public LibraryV3(int maximumPoints, int maximumDimension) {
         super(maximumPoints, maximumDimension);
-        this.shuffle = shuffle;
         this.next = new int[maximumPoints];
     }
 
     @Override
     public String getName() {
-        return "Deductive Sort, library version 3, shuffle: " + (shuffle ? "yes" : "no");
+        return "Deductive Sort, library version 3";
     }
 
     @Override
@@ -41,7 +39,7 @@ public final class LibraryV3 extends NonDominatedSorting {
         boolean notShuffled = true;
         long comparisonsRemainingToShuffle = (long) n * (n - 1);
         while (nRemaining > 0 && currRank <= maximalMeaningfulRank) {
-            if (shuffle && notShuffled && comparisonsRemainingToShuffle < 0) {
+            if (notShuffled && comparisonsRemainingToShuffle < 0) {
                 notShuffled = false;
                 ArrayHelper.shuffle(order, nRemaining);
             }
