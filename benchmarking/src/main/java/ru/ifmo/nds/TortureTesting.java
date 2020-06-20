@@ -97,6 +97,7 @@ public class TortureTesting {
                 DeductiveSort.getLibraryImplementationV1(),
                 DeductiveSort.getLibraryImplementationV2(),
                 DeductiveSort.getLibraryImplementationV3(),
+                DeductiveSort.getLibraryImplementationV4(),
                 DominanceTree.getPresortInsertion(false, false),
                 DominanceTree.getPresortInsertion(true, true),
                 DominanceTree.getNoPresortInsertion(false),
