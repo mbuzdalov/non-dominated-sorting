@@ -45,6 +45,7 @@ public final class LibraryV3 extends NonDominatedSorting {
             }
             fillNextByOrder(next, order, nRemaining);
 
+            int nRanked = 0;
             for (int point = order[0]; point >= 0; point = next[point]) {
                 final double[] currP = points[point];
                 int prev = point;
@@ -52,8 +53,8 @@ public final class LibraryV3 extends NonDominatedSorting {
                 boolean nonDominated = true;
                 int localComparisons = 0;
                 while (curr != -1) {
-                    int comparison = DominanceHelper.dominanceComparison(currP, points[curr], dim);
                     ++localComparisons;
+                    int comparison = DominanceHelper.dominanceComparison(currP, points[curr], dim);
                     if (comparison == 0) {
                         prev = curr;
                         curr = next[curr];
@@ -68,10 +69,14 @@ public final class LibraryV3 extends NonDominatedSorting {
                 comparisonsRemainingToShuffle -= localComparisons;
                 if (nonDominated) {
                     ranks[point] = currRank;
+                    ++nRanked;
                 }
             }
 
-            nRemaining = filterHigherRanks(order, ranks, nRemaining, currRank);
+            if (nRemaining != nRanked) {
+                filterHigherRanksAssumingTheyExist(order, ranks, nRemaining, currRank);
+            }
+            nRemaining -= nRanked;
             ++currRank;
         }
     }
@@ -86,15 +91,17 @@ public final class LibraryV3 extends NonDominatedSorting {
         next[prev] = -1;
     }
 
-    private static int filterHigherRanks(int[] order, int[] ranks, int size, int value) {
+    private static void filterHigherRanksAssumingTheyExist(int[] order, int[] ranks, int size, int value) {
         int newSize = 0;
-        for (int i = 0; i < size; ++i) {
+        while (ranks[order[newSize]] > value) {
+            ++newSize;
+        }
+        for (int i = newSize + 1; i < size; ++i) {
             int ii = order[i];
             if (ranks[ii] > value) {
                 order[newSize] = ii;
                 ++newSize;
             }
         }
-        return newSize;
     }
 }
