@@ -32,19 +32,20 @@ public final class LibraryV4 extends NonDominatedSorting {
         final int dim = points[0].length;
 
         Arrays.fill(ranks, maximalMeaningfulRank + 1);
-
-        ArrayHelper.fillIdentity(order, n);
+        ArrayHelper.fillIdentity(currOrder, n);
 
         int currRank = 0;
         int nRemaining = n;
         boolean notShuffled = true;
         long comparisonsRemainingToShuffle = (long) n * (n - 1);
         while (nRemaining > 0 && currRank <= maximalMeaningfulRank) {
-            if (notShuffled && comparisonsRemainingToShuffle < 0) {
-                notShuffled = false;
-                ArrayHelper.shuffle(order, nRemaining);
+            if (currRank > 0) {
+                if (notShuffled && comparisonsRemainingToShuffle < 0) {
+                    notShuffled = false;
+                    ArrayHelper.shuffle(order, nRemaining);
+                }
+                System.arraycopy(order, 0, currOrder, 0, nRemaining);
             }
-            System.arraycopy(order, 0, currOrder, 0, nRemaining);
 
             int curr = 0, until = nRemaining;
             while (curr < until) {
@@ -54,8 +55,7 @@ public final class LibraryV4 extends NonDominatedSorting {
 
                 // Do a quick scan first; if all the remaining points are incomparable with the current one, this will be cheap
                 int comparison = 0;
-                int nextI = -1;
-                while (next < until && (comparison = DominanceHelper.dominanceComparison(currP, points[nextI = currOrder[next]], dim)) == 0) {
+                while (next < until && (comparison = DominanceHelper.dominanceComparison(currP, points[currOrder[next]], dim)) == 0) {
                     ++next;
                 }
                 comparisonsRemainingToShuffle -= next - curr - 1;
@@ -63,6 +63,7 @@ public final class LibraryV4 extends NonDominatedSorting {
                 if (comparison != 0) {
                     // at least some of the points are going to be moved
                     int newUntil = next;
+                    int nextI = currOrder[next];
                     int localComparisons = 1;
                     while (true) {
                         if (comparison == 0) {
@@ -92,17 +93,26 @@ public final class LibraryV4 extends NonDominatedSorting {
             }
 
             if (nRemaining != curr) {
-                filterHigherRanksAssumingTheyExist(order, ranks, nRemaining, currRank);
+                if (currRank > 0) {
+                    filterHigherRanksAssumingTheyExist(order, ranks, nRemaining, currRank);
+                } else {
+                    initializeWithNonzeroRanksAssumingTheyExist(order, ranks, nRemaining);
+                }
             }
             nRemaining -= curr;
             ++currRank;
         }
     }
 
-    private static int kickDominatedPoints(int[] order, int from, int until, double[] point, double[][] points, int maxObj) {
+    private static int kickDominatedPointsPrefix(int[] order, int from, int until, double[] point, double[][] points, int maxObj) {
         while (from < until && !DominanceHelper.strictlyDominatesAssumingNotEqual(point, points[order[from]], maxObj)) {
             ++from;
         }
+        return from;
+    }
+
+    private static int kickDominatedPoints(int[] order, int from, int until, double[] point, double[][] points, int maxObj) {
+        from = kickDominatedPointsPrefix(order, from, until, point, points, maxObj);
         for (int i = from + 1; i < until; ++i) {
             int ii = order[i];
             if (!DominanceHelper.strictlyDominatesAssumingNotEqual(point, points[ii], maxObj)) {
@@ -113,16 +123,30 @@ public final class LibraryV4 extends NonDominatedSorting {
         return from;
     }
 
-    private static void filterHigherRanksAssumingTheyExist(int[] order, int[] ranks, int size, int value) {
+    private static int filterHigherRanksAssumingTheyExistPrefix(int[] order, int[] ranks, int value) {
         int newSize = 0;
         while (ranks[order[newSize]] > value) {
             ++newSize;
         }
+        return newSize;
+    }
+
+    private static void filterHigherRanksAssumingTheyExist(int[] order, int[] ranks, int size, int value) {
+        int newSize = filterHigherRanksAssumingTheyExistPrefix(order, ranks, value);
         for (int i = newSize + 1; i < size; ++i) {
             int ii = order[i];
             if (ranks[ii] > value) {
                 order[newSize] = ii;
                 ++newSize;
+            }
+        }
+    }
+
+    private static void initializeWithNonzeroRanksAssumingTheyExist(int[] order, int[] ranks, int size) {
+        for (int i = 0, target = 0; i < size; ++i) {
+            if (ranks[i] > 0) {
+                order[target] = i;
+                ++target;
             }
         }
     }
