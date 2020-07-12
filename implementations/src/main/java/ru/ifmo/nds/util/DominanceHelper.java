@@ -36,32 +36,23 @@ public final class DominanceHelper {
         return true;
     }
 
-    private static int dominanceComparisonHasSmaller(double[] a, double[] b, int from, int dim) {
-        for (int i = from; i < dim; ++i) {
-            if (a[i] > b[i]) {
-                return 0;
-            }
-        }
-        return -1;
-    }
-
-    private static int dominanceComparisonHasLarger(double[] a, double[] b, int from, int dim) {
+    private static int dominanceComparisonHelper(double[] a, double[] b, int from, int dim, int returnOnEnd) {
         for (int i = from; i < dim; ++i) {
             if (a[i] < b[i]) {
                 return 0;
             }
         }
-        return 1;
+        return returnOnEnd;
     }
 
     public static int dominanceComparison(double[] a, double[] b, int dim) {
         for (int i = 0; i < dim; ++i) {
             double ai = a[i], bi = b[i];
             if (ai < bi) {
-                return dominanceComparisonHasSmaller(a, b, i + 1, dim);
+                return dominanceComparisonHelper(b, a, i + 1, dim, -1);
             }
             if (ai > bi) {
-                return dominanceComparisonHasLarger(a, b, i + 1, dim);
+                return dominanceComparisonHelper(a, b, i + 1, dim, 1);
             }
         }
         return 0;
