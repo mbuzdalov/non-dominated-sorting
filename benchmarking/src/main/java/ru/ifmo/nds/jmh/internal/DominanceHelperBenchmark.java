@@ -44,10 +44,10 @@ public class DominanceHelperBenchmark {
                     int diffIndex = random.nextInt(size);
                     for (int j = 0; j < size; ++j) {
                         instances[i][0][j] = random.nextDouble();
-                        if (random.nextBoolean() || j == diffIndex) {
-                            instances[i][1][j] = instances[i][0][j];
-                        } else {
+                        if (j == diffIndex || random.nextBoolean()) {
                             instances[i][1][j] = instances[i][0][j] + random.nextDouble();
+                        } else {
+                            instances[i][1][j] = instances[i][0][j];
                         }
                     }
                 }
@@ -57,10 +57,10 @@ public class DominanceHelperBenchmark {
                     int diffIndex = random.nextInt(size);
                     for (int j = 0; j < size; ++j) {
                         instances[i][1][j] = random.nextDouble();
-                        if (random.nextBoolean() || j == diffIndex) {
-                            instances[i][0][j] = instances[i][1][j];
-                        } else {
+                        if (j == diffIndex || random.nextBoolean()) {
                             instances[i][0][j] = instances[i][1][j] + random.nextDouble();
+                        } else {
+                            instances[i][0][j] = instances[i][1][j];
                         }
                     }
                 }
