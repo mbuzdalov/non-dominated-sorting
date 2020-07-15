@@ -76,8 +76,8 @@ public final class LibraryV4 extends NonDominatedSorting {
                             currP = points[nextI];
                             // We also cleanup the already scanned points with the new currP.
                             // A striking feature is that none of these points dominate currP, and none is equal!
-                            newUntil = kickDominatedPoints(currOrder, curr + 1, newUntil, currP, points, dim - 1);
                             comparisonsRemainingToShuffle -= newUntil - curr - 1;
+                            newUntil = kickDominatedPoints(currOrder, curr + 1, newUntil, currP, points, dim - 1);
                         }
                         if (++next == until) {
                             break;
