@@ -24,7 +24,6 @@ public final class LibraryV6 extends NonDominatedSorting {
         final int[] indices = this.indices;
         final int n = points.length;
         final int dim = points[0].length;
-        final int maxObj = dim - 1;
 
         ArrayHelper.fillIdentity(indices, n);
         Arrays.fill(ranks, maximalMeaningfulRank + 1);
@@ -60,35 +59,46 @@ public final class LibraryV6 extends NonDominatedSorting {
                 if (replayUntil > curr) {
                     // The current point got replaced at least once.
                     // This means we need to scan the prefix [curr; replayUntil) once more.
-                    next = curr;
-                    // Initial mode: next < replayUntil < last
-                    // While this holds, everything initially at next cannot be equal to currP,
-                    // and every replacement has been already checked
-                    // Additionally, before replayUntil, there are no points equal to currP, hence we can use an efficient comparison
-                    while (next < replayUntil && replayUntil < last) {
-                        int nextI = indices[next];
-                        if (DominanceHelper.strictlyDominatesAssumingNotEqual(currP, points[nextI], maxObj)) {
-                            indices[next] = indices[--last];
-                            indices[last] = nextI;
-                        }
-                        ++next;
-                    }
-                    if (next < replayUntil) {
-                        // last starts getting points from the not-yet-tested region
-                        // switch to the more conservative scenario
-                        while (next < last) {
-                            int nextI = indices[next];
-                            if (DominanceHelper.strictlyDominates(currP, points[nextI], dim)) {
-                                indices[next] = indices[--last];
-                                indices[last] = nextI;
-                            } else {
-                                ++next;
-                            }
-                        }
-                    }
+                    last = replay(indices, dim, curr, last, replayUntil, currP, points);
                 }
             }
             from = last;
         }
+    }
+
+    private static int replay(int[] indices, int dim, int curr, int last, int replayUntil, double[] currP, double[][] points) {
+        int maxObj = dim - 1;
+        int next = curr;
+        // Initial mode: next < replayUntil <= last
+        // While this holds, everything initially at next cannot be equal to currP.
+        // Additionally, before replayUntil, there are no points equal to currP, hence we can use an efficient comparison
+        while (next < replayUntil) {
+            int nextI = indices[next];
+            if (DominanceHelper.strictlyDominatesAssumingNotEqual(currP, points[nextI], maxObj)) {
+                indices[next] = indices[--last];
+                indices[last] = nextI;
+                if (last < replayUntil) {
+                    // Before this happened, we moved forward the points that were already checked for dominance.
+                    // This allows the unconditional ++next and saves comparisons.
+                    // Now we start moving non-tested points forward, need to switch the technique.
+                    return replayConservative(indices, dim, next, last, currP, points);
+                }
+            }
+            ++next;
+        }
+        return last;
+    }
+
+    private static int replayConservative(int[] indices, int dim, int next, int last, double[] currP, double[][] points) {
+        while (next < last) {
+            int nextI = indices[next];
+            if (DominanceHelper.strictlyDominates(currP, points[nextI], dim)) {
+                indices[next] = indices[--last];
+                indices[last] = nextI;
+            } else {
+                ++next;
+            }
+        }
+        return last;
     }
 }
