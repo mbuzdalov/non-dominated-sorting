@@ -6,8 +6,8 @@ import ru.ifmo.nds.util.DominanceHelper;
 
 import java.util.Arrays;
 
-public final class QuadraticFast extends NonDominatedSorting {
-    public QuadraticFast(int maximumPoints, int maximumDimension) {
+public final class DeterministicQuadraticV3 extends NonDominatedSorting {
+    public DeterministicQuadraticV3(int maximumPoints, int maximumDimension) {
         super(maximumPoints, maximumDimension);
     }
 

@@ -48,13 +48,13 @@ public final class IdCollection {
         addNonDominatedSortingFactory("corner", CornerSort.getInstance());
 
         addNonDominatedSortingFactory("deductive.original", DeductiveSort.getOriginalImplementation());
-        addNonDominatedSortingFactory("deductive.library.v1", DeductiveSort.getLibraryImplementationV1());
-        addNonDominatedSortingFactory("deductive.library.v2", DeductiveSort.getLibraryImplementationV2());
-        addNonDominatedSortingFactory("deductive.library.v3", DeductiveSort.getLibraryImplementationV3());
-        addNonDominatedSortingFactory("deductive.library.v4", DeductiveSort.getLibraryImplementationV4());
-        addNonDominatedSortingFactory("deductive.quadratic.naive", DeductiveSort.getQuadraticNaiveImplementation());
-        addNonDominatedSortingFactory("deductive.quadratic.simple", DeductiveSort.getQuadraticSimpleImplementation());
-        addNonDominatedSortingFactory("deductive.quadratic.fast", DeductiveSort.getQuadraticFastImplementation());
+        addNonDominatedSortingFactory("deductive.reordering.v1", DeductiveSort.getReorderingImplementationV1());
+        addNonDominatedSortingFactory("deductive.reordering.v2", DeductiveSort.getReorderingImplementationV2());
+        addNonDominatedSortingFactory("deductive.quadratic.randomized.v1", DeductiveSort.getRandomizedQuadraticImplementationV1());
+        addNonDominatedSortingFactory("deductive.quadratic.randomized.v2", DeductiveSort.getRandomizedQuadraticImplementationV2());
+        addNonDominatedSortingFactory("deductive.quadratic.deterministic.v1", DeductiveSort.getDeterministicQuadraticImplementationV1());
+        addNonDominatedSortingFactory("deductive.quadratic.deterministic.v2", DeductiveSort.getDeterministicQuadraticImplementationV2());
+        addNonDominatedSortingFactory("deductive.quadratic.deterministic.v3", DeductiveSort.getDeterministicQuadraticImplementationV3());
 
         for (boolean isMergeRecursive : new boolean[] { false, true }) {
             String mergeString = isMergeRecursive ? "recmerge" : "seqmerge";

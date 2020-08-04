@@ -6,43 +6,43 @@ public final class DeductiveSort {
     private DeductiveSort() {}
 
     private static final NonDominatedSortingFactory INSTANCE_V0 = Original::new;
-    private static final NonDominatedSortingFactory INSTANCE_V1 = LibraryV1::new;
-    private static final NonDominatedSortingFactory INSTANCE_V2 = LibraryV2::new;
-    private static final NonDominatedSortingFactory INSTANCE_V3 = LibraryV3::new;
-    private static final NonDominatedSortingFactory INSTANCE_V4 = LibraryV4::new;
-    private static final NonDominatedSortingFactory INSTANCE_QN = QuadraticNaive::new;
-    private static final NonDominatedSortingFactory INSTANCE_QS = QuadraticSimple::new;
-    private static final NonDominatedSortingFactory INSTANCE_QF = QuadraticFast::new;
+    private static final NonDominatedSortingFactory INSTANCE_R1 = ReorderingV1::new;
+    private static final NonDominatedSortingFactory INSTANCE_R2 = ReorderingV2::new;
+    private static final NonDominatedSortingFactory INSTANCE_RQ1 = RandomizedQuadraticV1::new;
+    private static final NonDominatedSortingFactory INSTANCE_RQ2 = RandomizedQuadraticV2::new;
+    private static final NonDominatedSortingFactory INSTANCE_DQ1 = DeterministicQuadraticV1::new;
+    private static final NonDominatedSortingFactory INSTANCE_DQ2 = DeterministicQuadraticV2::new;
+    private static final NonDominatedSortingFactory INSTANCE_DQ3 = DeterministicQuadraticV3::new;
 
     public static NonDominatedSortingFactory getOriginalImplementation() {
         return INSTANCE_V0;
     }
 
-    public static NonDominatedSortingFactory getLibraryImplementationV1() {
-        return INSTANCE_V1;
+    public static NonDominatedSortingFactory getReorderingImplementationV1() {
+        return INSTANCE_R1;
     }
 
-    public static NonDominatedSortingFactory getLibraryImplementationV2() {
-        return INSTANCE_V2;
+    public static NonDominatedSortingFactory getReorderingImplementationV2() {
+        return INSTANCE_R2;
     }
 
-    public static NonDominatedSortingFactory getLibraryImplementationV3() {
-        return INSTANCE_V3;
+    public static NonDominatedSortingFactory getRandomizedQuadraticImplementationV1() {
+        return INSTANCE_RQ1;
     }
 
-    public static NonDominatedSortingFactory getLibraryImplementationV4() {
-        return INSTANCE_V4;
+    public static NonDominatedSortingFactory getRandomizedQuadraticImplementationV2() {
+        return INSTANCE_RQ2;
     }
 
-    public static NonDominatedSortingFactory getQuadraticNaiveImplementation() {
-        return INSTANCE_QN;
+    public static NonDominatedSortingFactory getDeterministicQuadraticImplementationV1() {
+        return INSTANCE_DQ1;
     }
 
-    public static NonDominatedSortingFactory getQuadraticSimpleImplementation() {
-        return INSTANCE_QS;
+    public static NonDominatedSortingFactory getDeterministicQuadraticImplementationV2() {
+        return INSTANCE_DQ2;
     }
 
-    public static NonDominatedSortingFactory getQuadraticFastImplementation() {
-        return INSTANCE_QF;
+    public static NonDominatedSortingFactory getDeterministicQuadraticImplementationV3() {
+        return INSTANCE_DQ3;
     }
 }

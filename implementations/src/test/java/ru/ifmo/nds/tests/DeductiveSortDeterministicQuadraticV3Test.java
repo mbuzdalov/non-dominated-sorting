@@ -3,9 +3,9 @@ package ru.ifmo.nds.tests;
 import ru.ifmo.nds.DeductiveSort;
 import ru.ifmo.nds.NonDominatedSortingFactory;
 
-public class DeductiveSortV4Test extends CorrectnessTestsBase {
+public class DeductiveSortDeterministicQuadraticV3Test extends CorrectnessTestsBase {
     @Override
     protected NonDominatedSortingFactory getFactory() {
-        return DeductiveSort.getLibraryImplementationV4();
+        return DeductiveSort.getDeterministicQuadraticImplementationV3();
     }
 }

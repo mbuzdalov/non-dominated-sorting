@@ -6,17 +6,17 @@ import ru.ifmo.nds.util.DominanceHelper;
 
 import java.util.Arrays;
 
-public final class LibraryV4 extends NonDominatedSorting {
+public final class RandomizedQuadraticV2 extends NonDominatedSorting {
     private int[] currOrder;
 
-    public LibraryV4(int maximumPoints, int maximumDimension) {
+    public RandomizedQuadraticV2(int maximumPoints, int maximumDimension) {
         super(maximumPoints, maximumDimension);
         this.currOrder = new int[maximumPoints];
     }
 
     @Override
     public String getName() {
-        return "Deductive Sort, library version 4";
+        return "Deductive Sort, randomized worst-case quadratic version, complex implementation";
     }
 
     @Override

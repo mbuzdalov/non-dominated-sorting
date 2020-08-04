@@ -6,14 +6,14 @@ import ru.ifmo.nds.util.DominanceHelper;
 
 import java.util.Arrays;
 
-public final class LibraryV2 extends NonDominatedSorting {
-    public LibraryV2(int maximumPoints, int maximumDimension) {
+public final class ReorderingV1 extends NonDominatedSorting {
+    public ReorderingV1(int maximumPoints, int maximumDimension) {
         super(maximumPoints, maximumDimension);
     }
 
     @Override
     public String getName() {
-        return "Deductive Sort, library version 2";
+        return "Deductive Sort, reordering version 1";
     }
 
     @Override
@@ -42,16 +42,14 @@ public final class LibraryV2 extends NonDominatedSorting {
                     int comparison = DominanceHelper.dominanceComparison(currP, points[nextI], dim);
                     if (comparison == 0) {
                         ++next;
-                    } else {
+                    } else if (comparison < 0) {
                         indices[next] = indices[--last];
-                        if (comparison < 0) {
-                            indices[last] = nextI;
-                        } else {
-                            nonDominated = false;
-                            indices[last] = currI;
-                            indices[curr] = nextI;
-                            break;
-                        }
+                        indices[last] = nextI;
+                    } else {
+                        nonDominated = false;
+                        indices[curr] = indices[--last];
+                        indices[last] = currI;
+                        break;
                     }
                 }
                 if (nonDominated) {
