@@ -26,9 +26,9 @@ public final class ArrayHelper {
         }
     }
 
-    public static void fillIdentity(int[] array, int n, int offset) {
-        for (int i = 0, v = offset; i < n; ++i, ++v) {
-            array[i] = v;
+    public static void fillIdentityFromIndex(int[] array, int from, int until) {
+        for (int i = from; i < until; ++i) {
+            array[i] = i;
         }
     }
 
