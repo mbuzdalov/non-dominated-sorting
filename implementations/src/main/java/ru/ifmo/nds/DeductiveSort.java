@@ -12,6 +12,7 @@ public final class DeductiveSort {
     private static final NonDominatedSortingFactory INSTANCE_V4 = LibraryV4::new;
     private static final NonDominatedSortingFactory INSTANCE_V5 = LibraryV5::new;
     private static final NonDominatedSortingFactory INSTANCE_V6 = LibraryV6::new;
+    private static final NonDominatedSortingFactory INSTANCE_QF = QuadraticFast::new;
 
     public static NonDominatedSortingFactory getOriginalImplementation() {
         return INSTANCE_V0;
@@ -39,5 +40,9 @@ public final class DeductiveSort {
 
     public static NonDominatedSortingFactory getLibraryImplementationV6() {
         return INSTANCE_V6;
+    }
+
+    public static NonDominatedSortingFactory getQuadraticFastImplementation() {
+        return INSTANCE_QF;
     }
 }
