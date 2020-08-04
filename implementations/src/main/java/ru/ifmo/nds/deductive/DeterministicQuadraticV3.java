@@ -77,9 +77,9 @@ public final class DeterministicQuadraticV3 extends NonDominatedSorting {
             ArrayHelper.fillIdentityFromIndex(indices, from + 1, --until);
             // Set the variables depending on whether curr dominates next or not.
             int next = stopped >= 0 ? stopped : ~stopped;
-            indices[next] = until;
             int currI = stopped >= 0 ? from : next;
             replayUntil = currI;
+            indices[next] = until;
             indices[until] = from ^ next ^ currI;
             // Continue the interrupted iteration.
             currI = iterateInner(currI, next);
