@@ -13,7 +13,7 @@ public final class DeterministicQuadraticV3 extends NonDominatedSorting {
 
     @Override
     public String getName() {
-        return "Deductive Sort, deterministic worst-case quadratic version, complicated implementation";
+        return "Deductive Sort, deterministic worst-case quadratic version, complex implementation";
     }
 
     @Override
@@ -124,19 +124,24 @@ public final class DeterministicQuadraticV3 extends NonDominatedSorting {
                 if (comparison == 0) {
                     ++next;
                 } else {
-                    indices[next] = indices[--until];
-                    if (comparison < 0) {
-                        indices[until] = nextI;
-                    } else {
-                        indices[until] = currI;
-                        // Remember to scan the prefix since we updated the current point.
-                        replayUntil = next;
-                        currI = nextI;
-                        currP = points[nextI];
-                    }
+                    currI = iterateInnerSwap(comparison, currI, next, nextI);
+                    currP = points[currI];
                 }
             }
             return currI;
+        }
+
+        private int iterateInnerSwap(int comparison, int currI, int next, int nextI) {
+            indices[next] = indices[--until];
+            if (comparison < 0) {
+                indices[until] = nextI;
+                return currI;
+            } else {
+                indices[until] = currI;
+                // Remember to scan the prefix since we updated the current point.
+                replayUntil = next;
+                return nextI;
+            }
         }
 
         private void replay(int currI) {
