@@ -6,14 +6,14 @@ import ru.ifmo.nds.util.DominanceHelper;
 
 import java.util.Arrays;
 
-public final class LibraryV6 extends NonDominatedSorting {
-    public LibraryV6(int maximumPoints, int maximumDimension) {
+public final class QuadraticSimple extends NonDominatedSorting {
+    public QuadraticSimple(int maximumPoints, int maximumDimension) {
         super(maximumPoints, maximumDimension);
     }
 
     @Override
     public String getName() {
-        return "Deductive Sort, library version 6";
+        return "Deductive Sort, deterministic worst-case quadratic version, simple implementation";
     }
 
     @Override

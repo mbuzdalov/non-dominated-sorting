@@ -52,8 +52,8 @@ public final class IdCollection {
         addNonDominatedSortingFactory("deductive.library.v2", DeductiveSort.getLibraryImplementationV2());
         addNonDominatedSortingFactory("deductive.library.v3", DeductiveSort.getLibraryImplementationV3());
         addNonDominatedSortingFactory("deductive.library.v4", DeductiveSort.getLibraryImplementationV4());
-        addNonDominatedSortingFactory("deductive.library.v5", DeductiveSort.getLibraryImplementationV5());
-        addNonDominatedSortingFactory("deductive.library.v6", DeductiveSort.getLibraryImplementationV6());
+        addNonDominatedSortingFactory("deductive.quadratic.naive", DeductiveSort.getQuadraticNaiveImplementation());
+        addNonDominatedSortingFactory("deductive.quadratic.simple", DeductiveSort.getQuadraticSimpleImplementation());
         addNonDominatedSortingFactory("deductive.quadratic.fast", DeductiveSort.getQuadraticFastImplementation());
 
         for (boolean isMergeRecursive : new boolean[] { false, true }) {
