@@ -136,7 +136,7 @@ public class TortureTesting {
             int maxRank = random.nextBoolean() ? random.nextInt(points + 1) : (int) (Math.sqrt(random.nextInt(points)));
             System.out.println("Uniform hypercube with " + points
                     + " points, dimension " + dimension
-                    + ", max rank " + maxRank);
+                    + ", rank upper limit " + maxRank);
             System.out.println();
             double[][] instance = generateCloud(points, dimension);
             double[][] instanceCopy = instance.clone();
