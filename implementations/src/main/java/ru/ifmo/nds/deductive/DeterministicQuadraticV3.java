@@ -73,16 +73,19 @@ public final class DeterministicQuadraticV3 extends NonDominatedSorting {
         private void continue0(int stopped) {
             // All points from 0 until from are already rank 0
             Arrays.fill(ranks, 0, from, 0);
-            // The remaining points are subject to permutation
-            ArrayHelper.fillIdentityFromIndex(indices, from + 1, --until);
             // Set the variables depending on whether curr dominates next or not.
             int next = stopped >= 0 ? stopped : ~stopped;
+            // The remaining points are subject to permutation.
+            // However, indices in [next; until) will be written by iterateInner0Continue,
+            // so we write only the points which are not affected by that procedure.
+            ArrayHelper.fillIdentityFromIndex(indices, from + 1, next);
             int currI = stopped >= 0 ? from : next;
             replayUntil = currI;
-            indices[next] = until;
-            indices[until] = from ^ next ^ currI;
+            indices[--until] = from ^ next ^ currI;
             // Continue the interrupted iteration.
-            currI = iterateInner(currI, next);
+            if (next < until) {
+                currI = iterateInner0Continue(currI, next);
+            }
             ranks[currI] = 0;
             if (replayUntil > ++from) {
                 replay(currI);
@@ -112,6 +115,38 @@ public final class DeterministicQuadraticV3 extends NonDominatedSorting {
                     // The current point got replaced at least once.
                     // This means we need to scan the prefix [curr; replayUntil) once more.
                     replay(currI);
+                }
+            }
+        }
+
+        private int iterateInner0Continue(int currI, int next) {
+            double[] currP = points[currI];
+            int nextI = until;
+            while (true) {
+                int comparison = DominanceHelper.dominanceComparison(currP, points[nextI], dim);
+                if (comparison == 0) {
+                    // we leave next, so we write its final value
+                    indices[next] = nextI;
+                    if (++next == until) {
+                        return currI;
+                    }
+                    nextI = next;
+                } else {
+                    int newUntilValue = comparison < 0 ? nextI : currI;
+                    indices[--until] = newUntilValue;
+                    if (next == until) {
+                        if (comparison > 0) {
+                            replayUntil = next;
+                        }
+                        return currI ^ nextI ^ newUntilValue;
+                    } else {
+                        if (comparison > 0) {
+                            replayUntil = next;
+                            currI = nextI;
+                            currP = points[nextI];
+                        }
+                        nextI = until;
+                    }
                 }
             }
         }
