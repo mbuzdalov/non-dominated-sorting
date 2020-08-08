@@ -107,18 +107,6 @@ public final class DeterministicQuadraticV3 extends NonDominatedSorting {
             return until;
         }
 
-        private void iterate() {
-            while (from < until) {
-                int currI = iterateInner(indices[from], replayUntil = ++from);
-                ranks[currI] = rank;
-                if (replayUntil > from) {
-                    // The current point got replaced at least once.
-                    // This means we need to scan the prefix [curr; replayUntil) once more.
-                    replay(currI);
-                }
-            }
-        }
-
         private int iterateInner0Continue(int currI, int next) {
             double[] currP = points[currI];
             int nextI = until;
@@ -147,6 +135,18 @@ public final class DeterministicQuadraticV3 extends NonDominatedSorting {
                         }
                         nextI = until;
                     }
+                }
+            }
+        }
+
+        private void iterate() {
+            while (from < until) {
+                int currI = iterateInner(indices[from], replayUntil = ++from);
+                ranks[currI] = rank;
+                if (replayUntil > from) {
+                    // The current point got replaced at least once.
+                    // This means we need to scan the prefix [curr; replayUntil) once more.
+                    replay(currI);
                 }
             }
         }
