@@ -88,10 +88,12 @@ public final class DeterministicQuadraticV3 extends NonDominatedSorting {
             }
             ranks[currI] = 0;
             if (replayUntil > ++from) {
-                replay(currI);
+                replay(points[currI], replayUntil);
             }
             // Continue the current level in the generic way
-            iterate();
+            if (from < until) {
+                iterate();
+            }
         }
 
         private int iterateInner0() {
@@ -110,78 +112,69 @@ public final class DeterministicQuadraticV3 extends NonDominatedSorting {
         private int iterateInner0Continue(int currI, int next) {
             double[] currP = points[currI];
             int nextI = until;
-            while (true) {
-                int comparison = DominanceHelper.dominanceComparison(currP, points[nextI], dim);
+            do {
+                double[] nextP = points[nextI];
+                int comparison = DominanceHelper.dominanceComparison(currP, nextP, dim);
                 if (comparison == 0) {
                     // we leave next, so we write its final value
                     indices[next] = nextI;
-                    if (++next == until) {
-                        return currI;
-                    }
-                    nextI = next;
+                    nextI = ++next;
                 } else {
-                    int newUntilValue = comparison < 0 ? nextI : currI;
-                    indices[--until] = newUntilValue;
-                    if (next == until) {
-                        if (comparison > 0) {
-                            replayUntil = next;
-                        }
-                        return currI ^ nextI ^ newUntilValue;
+                    if (comparison < 0) {
+                        indices[--until] = nextI;
                     } else {
-                        if (comparison > 0) {
-                            replayUntil = next;
-                            currI = nextI;
-                            currP = points[nextI];
-                        }
-                        nextI = until;
+                        indices[--until] = currI;
+                        replayUntil = next;
+                        currI = nextI;
+                        currP = nextP;
                     }
+                    nextI = until;
                 }
-            }
-        }
-
-        private void iterate() {
-            while (from < until) {
-                int currI = iterateInner(indices[from], replayUntil = ++from);
-                ranks[currI] = rank;
-                if (replayUntil > from) {
-                    // The current point got replaced at least once.
-                    // This means we need to scan the prefix [curr; replayUntil) once more.
-                    replay(currI);
-                }
-            }
-        }
-
-        private int iterateInner(int currI, int next) {
-            double[] currP = points[currI];
-            while (next < until) {
-                int nextI = indices[next];
-                int comparison = DominanceHelper.dominanceComparison(currP, points[nextI], dim);
-                if (comparison == 0) {
-                    ++next;
-                } else {
-                    currI = iterateInnerSwap(comparison, currI, next, nextI);
-                    currP = points[currI];
-                }
-            }
+            } while (next < until);
             return currI;
         }
 
-        private int iterateInnerSwap(int comparison, int currI, int next, int nextI) {
-            indices[next] = indices[--until];
-            if (comparison < 0) {
-                indices[until] = nextI;
-                return currI;
-            } else {
-                indices[until] = currI;
-                // Remember to scan the prefix since we updated the current point.
-                replayUntil = next;
-                return nextI;
+        private void iterate() {
+            while (true) {
+                int currI = indices[from];
+                if (++from < until) {
+                    iterateInner(currI, from);
+                } else {
+                    ranks[currI] = rank;
+                    return;
+                }
             }
         }
 
-        private void replay(int currI) {
+        private void iterateInner(int currI, int next) {
+            double[] currP = points[currI];
+            int replayUntil = next;
+            do {
+                int nextI = indices[next];
+                double[] nextP = points[nextI];
+                int comparison = DominanceHelper.dominanceComparison(currP, nextP, dim);
+                if (comparison == 0) {
+                    ++next;
+                } else {
+                    indices[next] = indices[--until];
+                    if (comparison < 0) {
+                        indices[until] = nextI;
+                    } else {
+                        indices[until] = currI;
+                        currI = nextI;
+                        currP = nextP;
+                        replayUntil = next;
+                    }
+                }
+            } while (next < until);
+            ranks[currI] = rank;
+            if (replayUntil > from) {
+                replay(currP, replayUntil);
+            }
+        }
+
+        private void replay(double[] currP, int replayUntil) {
             final int maxObj = dim - 1;
-            final double[] currP = points[currI];
             // Everything initially at index cannot be equal to currP and cannot dominate it.
             // This allows using an efficient comparison.
             // When looping from the end, we also simplify the logic vastly.
