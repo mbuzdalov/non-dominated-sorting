@@ -26,3 +26,23 @@ agreement [17-71-20178](http://рнф.рф/en/enprjcard/?rid=17-71-20178):
 
 * [Maxim Buzdalov](https://github.com/mbuzdalov)
 * [Margarita Markina](https://github.com/markina)
+
+## See also
+
+Links to other implementations of non-dominated sorting
+
+* [Official sources of Best Order Sort and Bounded Best Order Sort](https://github.com/proteekroy/Best-Order-Sort)
+* [Various algorithms in Java by the author of Best Order Sort](https://github.com/proteekroy/NDS)
+* [Implementation of the Jensen-Fortin-Buzdalov approach in C#](https://github.com/KernelA/nds)
+* [Implementation of the Jensen-Fortin-Buzdalov approach in Python](https://github.com/KernelA/nds-py)
+* [Implementation of the Deb's fast NDS in Rust](https://github.com/mneumann/non-dominated-sort-rs)
+* [A rather stale project in C++ that proposed Filter Sort](https://github.com/WangJunChen567/NS)
+* [Parallel implementation of Best Order Sort](https://github.com/juanjonrg/nds)
+
+
+Links to related projects about similar problems
+
+* [Data Structures for Non-Dominated Sets by Jonathan Fieldsend](https://github.com/fieldsend/multiobjective_data_structures)
+* [Skyline queries (aka finding the first non-dominated layer) in Python](https://github.com/tommyod/paretoset)
+* [Generalized Offline Orthant Search](https://github.com/mbuzdalov/orthant-search)
+* [Generalized Online Orthant Search](https://github.com/mbuzdalov/incremental-orthants)

@@ -26,8 +26,11 @@ public abstract class RankQueryStructureInt {
 
     /**
      * Creates a {@link RangeHandle} that uses the storage of the data structure and performs the actual operations.
-     * @param from the minimum inclusive index of the storage the handle is allowed to use
-     * @param until the maximum exclusive index of the storage the handle is allowed to use
+     * @param storageStart the minimum inclusive index in the storage the handle is allowed to use
+     * @param from the minimum inclusive point index this handle shall work with.
+     * @param until the maximum exclusive point index this handle shall work with.
+     * @param indices the array of actual point indices to be used by the handle.
+     * @param keys the array of the keys (the ordinate values) to be used by the handle.
      * @return the range handle.
      */
     public abstract RangeHandle createHandle(int storageStart, int from, int until, int[] indices, int[] keys);
