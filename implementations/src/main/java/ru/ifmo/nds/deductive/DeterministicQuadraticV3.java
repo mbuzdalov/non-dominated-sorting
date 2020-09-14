@@ -31,7 +31,7 @@ public final class DeterministicQuadraticV3 extends NonDominatedSorting {
         private final int[] ranks;
         private final int dim;
 
-        private int from, replayUntil, until;
+        private int from, until;
         private int rank;
 
         State(double[][] points, int[] indices, int[] ranks) {
@@ -42,77 +42,77 @@ public final class DeterministicQuadraticV3 extends NonDominatedSorting {
         }
 
         void run(int n, int nextNonExistingRank) {
-            rank = 0;
-            from = 0;
             until = n;
-            iterate0();
-            while (until < n && ++rank < nextNonExistingRank) {
-                from = until;
-                until = n;
-                iterate();
-            }
-
-            while (until < n) {
-                ranks[indices[until]] = nextNonExistingRank;
-                ++until;
-            }
-        }
-
-        private void iterate0() {
-            while (from < until) {
-                int stopped = iterateInner0();
-                if (stopped != until) {
-                    continue0(stopped);
-                    return;
+            // First, we try to perform a cheap non-dominance check that does not use indices.
+            int cheapRunResult = iterate0();
+            if (cheapRunResult == n) {
+                // Hooray, no points have been dominated, all points have rank 0.
+                Arrays.fill(ranks, 0, n, 0);
+            } else {
+                // We are here because one of the points has been dominated.
+                // First, we need to continue an interrupted dominance scan.
+                continue0(cheapRunResult);
+                // Second, the current level may be far from being complete.
+                // The incomplete part is between from and until.
+                // However, if it has been completed, we switch to rank 1 immediately.
+                if (from == until) {
+                    rank = 1;
+                    from = until;
+                    until = n;
                 }
-                ++from;
-            }
-            Arrays.fill(ranks, 0, until, 0);
-        }
-
-        private void continue0(int stopped) {
-            // All points from 0 until from are already rank 0
-            Arrays.fill(ranks, 0, from, 0);
-            // Set the variables depending on whether curr dominates next or not.
-            int next = stopped >= 0 ? stopped : ~stopped;
-            // The remaining points are subject to permutation.
-            // However, indices in [next; until) will be written by iterateInner0Continue,
-            // so we write only the points which are not affected by that procedure.
-            ArrayHelper.fillIdentityFromIndex(indices, from + 1, next);
-            int currI = stopped >= 0 ? from : next;
-            replayUntil = currI;
-            indices[--until] = from ^ next ^ currI;
-            // Continue the interrupted iteration.
-            if (next < until) {
-                currI = iterateInner0Continue(currI, next);
-            }
-            ranks[currI] = 0;
-            if (replayUntil > ++from) {
-                replay(points[currI], replayUntil);
-            }
-            // Continue the current level in the generic way
-            if (from < until) {
-                iterate();
+                // Finally, we hand out the computation to the generic algorithm.
+                runGenericAlgorithm(n, nextNonExistingRank);
             }
         }
 
-        private int iterateInner0() {
+        private int iterate0() {
             // This is an optimistic loop that thinks no points are going to be dominated.
+            do {
+                // Inlining this method here would increase the running time by roughly 30%.
+                // Tested on openjdk-8.265.
+                int result = iterate0Inner();
+                if (result != until) {
+                    return result;
+                }
+            } while (++from < until);
+            return until;
+        }
+
+        private int iterate0Inner() {
             double[] currP = points[from];
+            // This is an optimistic loop that thinks no points are going to be dominated.
             for (int next = from + 1; next < until; ++next) {
                 int comparison = DominanceHelper.dominanceComparison(currP, points[next], dim);
                 if (comparison != 0) {
-                    // Our optimism has just been broken, so we break the loop and notify the upstream.
-                    return comparison < 0 ? next : ~next;
+                    // Our optimistic assumption has just been broken,
+                    // so we break the loop and notify the upstream.
+                    return next ^ (comparison >> 1);
                 }
             }
             return until;
         }
 
-        private int iterateInner0Continue(int currI, int next) {
+        private void continue0(int next0) {
+            // All points from 0 until from are already rank 0
+            Arrays.fill(ranks, 0, from, 0);
+            int next = next0 ^ (next0 >> 31);
+            int nextFrom = next ^ from;
+            int currI = next ^ ((next ^ next0) & nextFrom);
+            indices[--until] = nextFrom ^ currI;
+            // The remaining points are subject to permutation.
+            // However, indices in [next; until) will be written by iterateInner0Continue,
+            // so we write only the points which are not affected by that procedure.
+            ArrayHelper.fillIdentityFromIndex(indices, ++from, next);
+            // Continue the interrupted iteration.
+            finalize0(currI, next);
+        }
+
+        private void finalize0(int currI, int next) {
             double[] currP = points[currI];
             int nextI = until;
-            do {
+            int replayUntil = currI;
+
+            while (next < until) {
                 double[] nextP = points[nextI];
                 int comparison = DominanceHelper.dominanceComparison(currP, nextP, dim);
                 if (comparison == 0) {
@@ -120,66 +120,120 @@ public final class DeterministicQuadraticV3 extends NonDominatedSorting {
                     indices[next] = nextI;
                     nextI = ++next;
                 } else {
-                    if (comparison < 0) {
-                        indices[--until] = nextI;
-                    } else {
-                        indices[--until] = currI;
-                        replayUntil = next;
-                        currI = nextI;
-                        currP = nextP;
-                    }
-                    nextI = until;
-                }
-            } while (next < until);
-            return currI;
-        }
-
-        private void iterate() {
-            while (true) {
-                int currI = indices[from];
-                if (++from < until) {
-                    iterateInner(currI, from);
-                } else {
-                    ranks[currI] = rank;
-                    return;
-                }
-            }
-        }
-
-        private void iterateInner(int currI, int next) {
-            double[] currP = points[currI];
-            int replayUntil = next;
-            do {
-                int nextI = indices[next];
-                double[] nextP = points[nextI];
-                int comparison = DominanceHelper.dominanceComparison(currP, nextP, dim);
-                if (comparison == 0) {
-                    ++next;
-                } else {
-                    indices[next] = indices[--until];
-                    if (comparison < 0) {
-                        indices[until] = nextI;
-                    } else {
+                    --until;
+                    if (comparison > 0) {
                         indices[until] = currI;
                         currI = nextI;
                         currP = nextP;
                         replayUntil = next;
+                    } else {
+                        indices[until] = nextI;
                     }
+                    nextI = until;
                 }
-            } while (next < until);
-            ranks[currI] = rank;
-            if (replayUntil > from) {
-                replay(currP, replayUntil);
             }
+
+            ranks[currI] = 0;
+            replay(currP, replayUntil);
+        }
+
+        private void runGenericAlgorithm(int n, int nextNonExistingRank) {
+            while (true) {
+                iterate();
+                if (until == n) {
+                    break;
+                }
+                if (++rank == nextNonExistingRank) {
+                    fillExtraBadPoints(n, nextNonExistingRank);
+                    break;
+                }
+                from = until;
+                until = n;
+            }
+        }
+
+        private void fillExtraBadPoints(int n, int nextNonExistingRank) {
+            do {
+                ranks[indices[until]] = nextNonExistingRank;
+            } while (++until < n);
+        }
+
+        private void iterate() {
+            do {
+                iterateInner();
+            } while (from < until);
+        }
+
+        private void iterateInner() {
+            int currI = indices[from];
+            double[] currP = points[currI];
+            int next = ++from;
+            int replayUntil = next;
+
+            // This one quickly gets inlined, so it does not waste heap space.
+            int[] comparisonRef = new int[1];
+
+            outerLoop:
+            while ((next = scanUntilDominance(currP, next, comparisonRef)) != until) {
+                int oldCurrI = currI;
+                int nextI = indices[next];
+                double[] nextP = points[nextI];
+                int comparison = comparisonRef[0];
+
+                do {
+                    --until;
+                    if (comparison < 0) {
+                        int tailValue = nextI;
+                        nextI = indices[until];
+                        indices[until] = tailValue;
+                    } else {
+                        currP = nextP;
+                        int tailValue = currI;
+                        currI = nextI;
+                        nextI = indices[until];
+                        indices[until] = tailValue;
+                    }
+                    if (next == until) {
+                        if (currI != oldCurrI) {
+                            replayUntil = next;
+                        }
+                        break outerLoop;
+                    }
+
+                    nextP = points[nextI];
+                    comparison = DominanceHelper.dominanceComparison(currP, nextP, dim);
+                } while (comparison != 0);
+
+                indices[next] = nextI;
+                if (currI != oldCurrI) {
+                    replayUntil = next;
+                }
+                ++next;
+            }
+
+            ranks[currI] = rank;
+            replay(currP, replayUntil);
+        }
+
+        private int scanUntilDominance(double[] currP, int next, int[] comparisonRef) {
+            while (next < until) {
+                int comparison = DominanceHelper.dominanceComparison(currP, points[indices[next]], dim);
+                if (comparison != 0) {
+                    comparisonRef[0] = comparison;
+                    break;
+                }
+                ++next;
+            }
+            return next;
         }
 
         private void replay(double[] currP, int replayUntil) {
             final int maxObj = dim - 1;
             // Everything initially at index cannot be equal to currP and cannot dominate it.
             // This allows using an efficient comparison.
-            // When looping from the end, we also simplify the logic vastly.
-            while (--replayUntil >= from) {
-                int nextI = indices[replayUntil];
+            // By looping from the end, we also simplify the logic vastly.
+            while (replayUntil > from) {
+                int nextI = indices[--replayUntil];
                 if (DominanceHelper.strictlyDominatesAssumingNotEqual(currP, points[nextI], maxObj)) {
                     indices[replayUntil] = indices[--until];
                     indices[until] = nextI;
