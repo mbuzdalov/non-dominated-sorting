@@ -41,6 +41,7 @@ Links to other implementations of non-dominated sorting
 Links to related projects about similar problems
 
 * [Data Structures for Non-Dominated Sets by Jonathan Fieldsend](https://github.com/fieldsend/multiobjective_data_structures)
+* [Divide-and-conquer non-dominated sets by Dias, Jesus, Paquete](https://github.com/TLDart/nondLib/blob/main/nondlib.hpp)
 * [Skyline queries (aka finding the first non-dominated layer) in Python](https://github.com/tommyod/paretoset)
 * [Generalized Offline Orthant Search](https://github.com/mbuzdalov/orthant-search)
 * [Generalized Online Orthant Search](https://github.com/mbuzdalov/incremental-orthants)
