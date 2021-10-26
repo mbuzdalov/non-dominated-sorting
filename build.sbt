@@ -6,7 +6,7 @@ lazy val commonSettings = Seq(
   fork := true
 )
 
-lazy val junitInterface = "com.novocode" % "junit-interface" % "0.11" % "test"
+lazy val junitInterface = "com.github.sbt" % "junit-interface" % "0.13.2" % "test"
 lazy val osHardwareInformation = "com.github.oshi" % "oshi-core" % "5.8.3"
 
 lazy val root = project
