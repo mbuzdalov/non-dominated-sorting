@@ -7,7 +7,7 @@ lazy val commonSettings = Seq(
 )
 
 lazy val junitInterface = "com.github.sbt" % "junit-interface" % "0.13.2" % "test"
-lazy val osHardwareInformation = "com.github.oshi" % "oshi-core" % "5.8.5"
+lazy val osHardwareInformation = "com.github.oshi" % "oshi-core" % "5.8.6"
 
 lazy val root = project
   .in(file("."))
