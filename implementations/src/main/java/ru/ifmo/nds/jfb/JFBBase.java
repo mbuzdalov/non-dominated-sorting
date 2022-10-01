@@ -320,7 +320,7 @@ public abstract class JFBBase extends NonDominatedSorting {
                             long weakSplit = splitMerge.splitInThree(currentPoints, indices, tempFrom, weakFrom, weakUntil, median);
                             int weakMidL = SplitMergeHelper.extractMid(weakSplit);
                             int weakMidR = SplitMergeHelper.extractRight(weakSplit);
-                            int tempMid = tempFrom + ((goodUntil - goodFrom + weakUntil - weakFrom) >>> 1);
+                            int tempMid = tempFrom + goodMidL - goodFrom + weakMidL - weakFrom;
 
                             --obj;
                             int newWeakUntil = helperB(goodFrom, goodMidL, weakMidR, weakUntil, obj, tempFrom);
