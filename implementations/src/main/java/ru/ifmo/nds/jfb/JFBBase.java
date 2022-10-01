@@ -273,7 +273,7 @@ public abstract class JFBBase extends NonDominatedSorting {
         return weak + change;
     }
 
-    private RecursiveTask<Integer> helperBAsync(final int goodFrom, final int goodUntil,
+    private ForkJoinTask<Integer> helperBAsync(final int goodFrom, final int goodUntil,
                                                 final int weakFrom, final int weakUntil,
                                                 final int obj,
                                                 final int tempFrom) {
@@ -282,7 +282,7 @@ public abstract class JFBBase extends NonDominatedSorting {
             protected Integer compute() {
                 return helperB(goodFrom, goodUntil, weakFrom, weakUntil, obj, tempFrom);
             }
-        };
+        }.fork();
     }
 
     private int helperB(int goodFrom, int goodUntil, int weakFrom, int weakUntil, int obj, int tempFrom) {
@@ -319,7 +319,7 @@ public abstract class JFBBase extends NonDominatedSorting {
                             long weakSplit = splitMerge.splitInThree(currentPoints, indices, tempFrom, weakFrom, weakUntil, median);
                             int weakMidL = SplitMergeHelper.extractMid(weakSplit);
                             int weakMidR = SplitMergeHelper.extractRight(weakSplit);
-                            int tempMid = tempFrom + goodMidL - goodFrom + weakMidL - weakFrom;
+                            int leftCallSize = goodMidL - goodFrom + weakMidL - weakFrom;
 
                             --obj;
                             int newWeakUntil = helperB(goodFrom, goodMidL, weakMidR, weakUntil, obj, tempFrom);
@@ -330,10 +330,10 @@ public abstract class JFBBase extends NonDominatedSorting {
                             ++obj;
 
                             ForkJoinTask<Integer> newWeakMidLTask = null;
-                            if (pool != null && goodMidL - goodFrom + weakMidL - weakFrom > FORK_JOIN_THRESHOLD) {
-                                newWeakMidLTask = helperBAsync(goodFrom, goodMidL, weakFrom, weakMidL, obj, tempFrom).fork();
+                            if (pool != null && leftCallSize > FORK_JOIN_THRESHOLD) {
+                                newWeakMidLTask = helperBAsync(goodFrom, goodMidL, weakFrom, weakMidL, obj, tempFrom);
                             }
-                            newWeakUntil = helperB(goodMidR, goodUntil, weakMidR, newWeakUntil, obj, tempMid);
+                            newWeakUntil = helperB(goodMidR, goodUntil, weakMidR, newWeakUntil, obj, tempFrom + leftCallSize);
                             int newWeakMidL = newWeakMidLTask != null
                                     ? newWeakMidLTask.join()
                                     : helperB(goodFrom, goodMidL, weakFrom, weakMidL, obj, tempFrom);
