@@ -195,82 +195,93 @@ public abstract class JFBBase extends NonDominatedSorting {
     public static int updateByPoint(int[] ranks, int[] indices, double[][] points, int maximalMeaningfulRank,
                                     int pointIndex, int from, int until, int obj) {
         int ri = ranks[pointIndex];
+        double[] pi = points[pointIndex];
         if (ri == maximalMeaningfulRank) {
-            return updateByPointCritical(ranks, indices, points, maximalMeaningfulRank, pointIndex, from, until, obj);
+            int minOverflow = updateByPointCritical(ranks, indices, points, maximalMeaningfulRank, pi, from, until, obj);
+            return kickOutOverflowedRanks(indices, ranks, maximalMeaningfulRank, minOverflow, until);
         } else {
-            updateByPointNormal(ranks, indices, points, pointIndex, ri, from, until, obj);
+            updateByPointNormal(ranks, indices, points, pi, ri, from, until, obj);
             return until;
         }
     }
 
-    private static void updateByPointNormal(int[] ranks, int[] indices, double[][] points, int pointIndex,
+    private static void updateByPointNormal(int[] ranks, int[] indices, double[][] points, double[] pt,
                                             int pointRank, int from, int until, int obj) {
-        double[] pt = points[pointIndex];
+        int rankPlus1 = pointRank + 1;
         for (int i = from; i < until; ++i) {
             int ii = indices[i];
-            if (ranks[ii] <= pointRank && DominanceHelper.strictlyDominatesAssumingLexicographicallySmaller(pt, points[ii], obj)) {
-                ranks[ii] = pointRank + 1;
+            if (ranks[ii] < rankPlus1 && DominanceHelper.strictlyDominatesAssumingLexicographicallySmaller(pt, points[ii], obj)) {
+                ranks[ii] = rankPlus1;
             }
         }
     }
 
     private static int updateByPointCritical(int[] ranks, int[] indices, double[][] points, int maximalMeaningfulRank,
-                                             int pointIndex, int from, int until, int obj) {
+                                             double[] pt, int from, int until, int obj) {
         int minOverflow = until;
-        double[] pt = points[pointIndex];
-        for (int i = from; i < until; ++i) {
+        for (int i = until; --i >= from; ) {
             int ii = indices[i];
             if (DominanceHelper.strictlyDominatesAssumingLexicographicallySmaller(pt, points[ii], obj)) {
                 ranks[ii] = maximalMeaningfulRank + 1;
-                if (minOverflow > i) {
-                    minOverflow = i;
-                }
+                minOverflow = i;
             }
         }
-        return kickOutOverflowedRanks(indices, ranks, maximalMeaningfulRank, minOverflow, until);
+        return minOverflow;
     }
 
-    private int helperBWeak1Generic(int wi, int obj, int rw, int rw0, double[] wp, int goodMin, int goodMax) {
-        for (int i = goodMax; i >= goodMin; --i) {
-            int gi = indices[i];
-            int gr = ranks[gi];
-            if (rw <= gr && DominanceHelper.strictlyDominatesAssumingLexicographicallySmaller(points[gi], wp, obj)) {
-                rw = gr + 1;
-                if (rw > maximalMeaningfulRank) {
-                    ranks[wi] = rw;
-                    return 0;
-                }
-            }
-        }
-        if (rw != rw0) {
-            ranks[wi] = rw;
-        }
-        return 1;
-    }
-
-    private int helperBWeak1Rank0(int wi, int obj, double[] wp, int goodMin, int goodMax) {
-        for (int i = goodMax; i >= goodMin; --i) {
-            int gi = indices[i];
-            if (DominanceHelper.strictlyDominatesAssumingLexicographicallySmaller(points[gi], wp, obj)) {
-                int newRank = ranks[gi] + 1;
-                if (newRank > maximalMeaningfulRank) {
-                    ranks[wi] = newRank;
-                    return 0;
-                }
-                return helperBWeak1Generic(wi, obj, newRank, 0, wp, goodMin, i - 1);
-            }
-        }
-        return 1;
-    }
-
+    // Try to update the rank of the single weak point by points in [goodFrom; goodUntil).
+    // The code is complicated since we avoid quite some cache misses in certain cases that are frequent in real life.
     private int helperBWeak1(int goodFrom, int goodUntil, int weak, int obj) {
         int wi = indices[weak];
         int rw = ranks[wi];
+        int newRank = rw;
         double[] wp = points[wi];
-        int change = rw == 0
-                ? helperBWeak1Rank0(wi, obj, wp, goodFrom, goodUntil - 1)
-                : helperBWeak1Generic(wi, obj, rw, rw, wp, goodFrom, goodUntil - 1);
-        return weak + change;
+        int current = goodUntil;
+
+        if (rw == 0) {
+            // A more efficient loop for the case that the weak point has rank 0.
+            while (true) {
+                int gi = indices[--current];
+                if (DominanceHelper.strictlyDominatesAssumingLexicographicallySmaller(points[gi], wp, obj)) {
+                    newRank = ranks[gi] + 1;
+                    break;
+                }
+                if (current == goodFrom) {
+                    // Since the rank has never been updated, we are safe to avoid extra array write.
+                    return weak + 1;
+                }
+            }
+        }
+        // A generic version of the loop that fetches ranks of good points.
+        // It also compares the newly obtained rank bound with the maximal meaningful rank,
+        // and if the latter gets exceeded, terminates the process prematurely.
+        // I attempted to deduplicate code while preserving efficiency. This explains the ugliness of the code.
+        maxMeaningfulRankComparison:
+        while (true) {
+            // If we got updated and exceed the maximum rank, call it a day.
+            // Note for purists: This is called one extra time in the beginning if rw != 0.
+            // Unfortunately, I cannot enter the loop past this point. Scala's pre-loop idiom might have helped that.
+            if (newRank > maximalMeaningfulRank) {
+                ranks[wi] = newRank;
+                return weak;
+            }
+            // The main part of the loop.
+            // If we update the rank, we need to check the maximum rank constraint, that is, continue to outer loop.
+            // If we exit it normally, no more updates happened.
+            while (--current >= goodFrom) {
+                int gi = indices[current];
+                int gr = ranks[gi];
+                if (newRank <= gr && DominanceHelper.strictlyDominatesAssumingLexicographicallySmaller(points[gi], wp, obj)) {
+                    newRank = gr + 1;
+                    continue maxMeaningfulRankComparison;
+                }
+            }
+            // Trying to avoid a cache miss if the rank has not been updated.
+            if (newRank != rw) {
+                ranks[wi] = newRank;
+            }
+            return weak + 1;
+        }
     }
 
     private ForkJoinTask<Integer> helperBAsync(final int goodFrom, final int goodUntil,
