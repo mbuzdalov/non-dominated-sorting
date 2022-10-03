@@ -24,7 +24,7 @@ public class MedianBenchmark {
             "20000", "50000", "100000"})
     private int size;
 
-    @Param(value = {"hypercube", "discrete"})
+    @Param(value = {"whole-range", "hypercube", "discrete"})
     private String type;
 
     private double[][] data;
@@ -33,8 +33,19 @@ public class MedianBenchmark {
     @Setup
     public void initialize() {
         Random random = new Random(size * 723525217L);
+        temp = new double[size];
         data = new double[10][size];
         switch (type) {
+            case "whole-range":
+                for (int i = 0; i < 10; ++i) {
+                    for (int j = 0; j < size; ++j) {
+                        double v;
+                        do {
+                            v = Double.longBitsToDouble(random.nextLong());
+                        } while (Double.isInfinite(v));
+                        data[i][j] = v;
+                    }
+                }
             case "hypercube":
                 for (int i = 0; i < 10; ++i) {
                     for (int j = 0; j < size; ++j) {
@@ -52,7 +63,6 @@ public class MedianBenchmark {
             default:
                 throw new AssertionError("Unknown data type: '" + type + "'");
         }
-        temp = new double[size];
     }
 
     @Benchmark
