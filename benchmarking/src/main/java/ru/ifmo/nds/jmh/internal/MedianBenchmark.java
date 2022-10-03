@@ -32,7 +32,7 @@ public class MedianBenchmark {
 
     @Setup
     public void initialize() {
-        Random random = new Random(size * 723525217);
+        Random random = new Random(size * 723525217L);
         data = new double[10][size];
         switch (type) {
             case "hypercube":
