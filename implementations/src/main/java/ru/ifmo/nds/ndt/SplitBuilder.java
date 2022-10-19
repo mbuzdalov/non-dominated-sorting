@@ -3,7 +3,7 @@ package ru.ifmo.nds.ndt;
 import ru.ifmo.nds.util.ArrayHelper;
 import ru.ifmo.nds.util.SplitMergeHelper;
 import ru.ifmo.nds.util.median.DestructiveMedianAlgorithm;
-import ru.ifmo.nds.util.median.HoareBidirectionalScan;
+import ru.ifmo.nds.util.median.HoareBidirectionalScanV1;
 
 public class SplitBuilder {
     private final double[] medianSwap;
@@ -24,7 +24,7 @@ public class SplitBuilder {
             splits[i] = new Split();
         }
         this.threshold = threshold;
-        this.destructiveMedian = HoareBidirectionalScan.instance().createInstance(size);
+        this.destructiveMedian = HoareBidirectionalScanV1.instance().createInstance(size);
     }
 
     private Split construct(int from, int until, int coordinate, int depth, int[] maxCoordinateNSplits) {

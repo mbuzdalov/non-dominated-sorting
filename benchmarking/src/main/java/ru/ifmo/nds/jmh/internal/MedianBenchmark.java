@@ -12,14 +12,14 @@ import ru.ifmo.nds.util.median.*;
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
 @Timeout(time = 100)
-@Warmup(time = 1, iterations = 10)
-@Measurement(time = 1, iterations = 3)
-@Fork(value = 3)
+@Warmup(time = 1, iterations = 5)
+@Measurement(time = 1, iterations = 1)
+@Fork(value = 5)
 public class MedianBenchmark {
     private static final int ITERATIONS = 1000;
 
     @Param(value = {
-            "2", "5", "10",
+            "2", "3", "4", "5", "10",
             "20", "50", "100",
             "200", "500", "1000",
             "2000", "5000", "10000",
@@ -29,7 +29,9 @@ public class MedianBenchmark {
     @Param(value = {"whole-range", "hypercube", "discrete"})
     private String type;
 
-    @Param(value = {"HoareBidirectionalScan", "SwappingSingleScanV1"})
+    @Param(value = {
+            "HoareBidirectionalScanV0", "HoareBidirectionalScanV1",
+            "SwappingSingleScanV0", "SwappingSingleScanV1"})
     private String algorithm;
 
     private double[][] data;
@@ -37,7 +39,7 @@ public class MedianBenchmark {
     private DestructiveMedianAlgorithm medianAlgorithm;
 
     @Setup
-    public void initialize() {
+    public void initialize() throws ClassNotFoundException, IllegalAccessException, InstantiationException {
         Random random = new Random(size * 723525217L);
         temp = new double[size];
         data = new double[ITERATIONS][size];
@@ -69,17 +71,8 @@ public class MedianBenchmark {
             default:
                 throw new AssertionError("Unknown data type: '" + type + "'");
         }
-        DestructiveMedianFactory factory;
-        switch (algorithm) {
-            case "HoareBidirectionalScan":
-                factory = HoareBidirectionalScan.instance();
-                break;
-            case "SwappingSingleScanV1":
-                factory = SwappingSingleScanV1.instance();
-                break;
-            default:
-                throw new AssertionError("Unknown algorithm: '" + algorithm + "'");
-        }
+        String factoryClassName = DestructiveMedianFactory.class.getName().replace("DestructiveMedianFactory", algorithm);
+        DestructiveMedianFactory factory = (DestructiveMedianFactory) Class.forName(factoryClassName).newInstance();
         medianAlgorithm = factory.createInstance(size);
     }
 

@@ -1,9 +1,9 @@
 package ru.ifmo.nds.util.median;
 
-public final class SwappingSingleScanV1 implements DestructiveMedianFactory {
-    private static final SwappingSingleScanV1 factoryInstance = new SwappingSingleScanV1();
+public final class SwappingSingleScanV0 implements DestructiveMedianFactory {
+    private static final SwappingSingleScanV0 factoryInstance = new SwappingSingleScanV0();
 
-    public static SwappingSingleScanV1 instance() {
+    public static SwappingSingleScanV0 instance() {
         return factoryInstance;
     }
 
@@ -37,12 +37,7 @@ public final class SwappingSingleScanV1 implements DestructiveMedianFactory {
                 int leftTo = from, rightFrom = to;
                 for (int i = from + 1; i < to; ++i) {
                     double v = array[i];
-                    if (v < pivot) {
-                        temp[++leftTo] = v;
-                    }
-                    if (v > pivot) {
-                        temp[--rightFrom] = v;
-                    }
+                    temp[v <= pivot ? ++leftTo : --rightFrom] = v;
                 }
                 double[] swp = temp; temp = array; array = swp;
 
@@ -51,13 +46,11 @@ public final class SwappingSingleScanV1 implements DestructiveMedianFactory {
                         return Common.maxUnchecked(array, from, leftTo);
                     }
                     to = leftTo;
-                } else if (resultIndex >= rightFrom) {
+                } else {
                     if (resultIndex == rightFrom) {
                         return Common.minUnchecked(array, rightFrom, to);
                     }
                     from = rightFrom;
-                } else {
-                    return pivot;
                 }
             }
 
