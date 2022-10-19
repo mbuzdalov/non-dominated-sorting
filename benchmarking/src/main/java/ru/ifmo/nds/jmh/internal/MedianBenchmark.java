@@ -6,9 +6,7 @@ import java.util.concurrent.TimeUnit;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.infra.Blackhole;
 
-import ru.ifmo.nds.util.median.DestructiveMedianAlgorithm;
-import ru.ifmo.nds.util.median.DestructiveMedianFactory;
-import ru.ifmo.nds.util.median.HoareBidirectionalScan;
+import ru.ifmo.nds.util.median.*;
 
 @State(Scope.Benchmark)
 @BenchmarkMode(Mode.AverageTime)
@@ -31,7 +29,7 @@ public class MedianBenchmark {
     @Param(value = {"whole-range", "hypercube", "discrete"})
     private String type;
 
-    @Param(value = {"HoareBidirectionalScan"})
+    @Param(value = {"HoareBidirectionalScan", "SwappingSingleScanV1"})
     private String algorithm;
 
     private double[][] data;
@@ -72,10 +70,12 @@ public class MedianBenchmark {
                 throw new AssertionError("Unknown data type: '" + type + "'");
         }
         DestructiveMedianFactory factory;
-        //noinspection SwitchStatementWithTooFewBranches
         switch (algorithm) {
             case "HoareBidirectionalScan":
                 factory = HoareBidirectionalScan.instance();
+                break;
+            case "SwappingSingleScanV1":
+                factory = SwappingSingleScanV1.instance();
                 break;
             default:
                 throw new AssertionError("Unknown algorithm: '" + algorithm + "'");
