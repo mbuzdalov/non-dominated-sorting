@@ -8,9 +8,14 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import ru.ifmo.nds.util.ArrayHelper;
+import ru.ifmo.nds.util.median.DestructiveMedianAlgorithm;
+import ru.ifmo.nds.util.median.DestructiveMedianFactory;
 
 public abstract class MedianTestsBase {
-    protected abstract double destructiveMedian(double[] array, int until);
+    protected abstract DestructiveMedianFactory getFactory();
+    private double destructiveMedian(double[] array, int until) {
+        return getFactory().createInstance(until).solve(array, 0, until);
+    }
 
     private void checkMedian(Function<Random, Double> generator) {
         Random random = new Random();
@@ -35,6 +40,14 @@ public abstract class MedianTestsBase {
                 Assert.assertEquals(Arrays.toString(originalPoints), points[size / 2], median, 1e-16);
             }
         }
+    }
+
+    @Test
+    public void maximumSizeIsCorrect() {
+        DestructiveMedianFactory factory = getFactory();
+        int maximumSize = 1000;
+        DestructiveMedianAlgorithm algorithm = factory.createInstance(maximumSize);
+        Assert.assertTrue("The maximum size is smaller than expected", algorithm.maximumSize() >= maximumSize);
     }
 
     @Test

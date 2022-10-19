@@ -6,16 +6,20 @@ import java.util.concurrent.TimeUnit;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.infra.Blackhole;
 
-import ru.ifmo.nds.util.ArrayHelper;
+import ru.ifmo.nds.util.median.DestructiveMedianAlgorithm;
+import ru.ifmo.nds.util.median.DestructiveMedianFactory;
+import ru.ifmo.nds.util.median.HoareBidirectionalScan;
 
 @State(Scope.Benchmark)
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
-@Timeout(time = 10)
+@Timeout(time = 100)
 @Warmup(time = 1, iterations = 10)
 @Measurement(time = 1, iterations = 3)
 @Fork(value = 3)
 public class MedianBenchmark {
+    private static final int ITERATIONS = 1000;
+
     @Param(value = {
             "2", "5", "10",
             "20", "50", "100",
@@ -27,17 +31,21 @@ public class MedianBenchmark {
     @Param(value = {"whole-range", "hypercube", "discrete"})
     private String type;
 
+    @Param(value = {"HoareBidirectionalScan"})
+    private String algorithm;
+
     private double[][] data;
     private double[] temp;
+    private DestructiveMedianAlgorithm medianAlgorithm;
 
     @Setup
     public void initialize() {
         Random random = new Random(size * 723525217L);
         temp = new double[size];
-        data = new double[10][size];
+        data = new double[ITERATIONS][size];
         switch (type) {
             case "whole-range":
-                for (int i = 0; i < 10; ++i) {
+                for (int i = 0; i < ITERATIONS; ++i) {
                     for (int j = 0; j < size; ++j) {
                         double v;
                         do {
@@ -47,14 +55,14 @@ public class MedianBenchmark {
                     }
                 }
             case "hypercube":
-                for (int i = 0; i < 10; ++i) {
+                for (int i = 0; i < ITERATIONS; ++i) {
                     for (int j = 0; j < size; ++j) {
                         data[i][j] = random.nextDouble();
                     }
                 }
                 break;
             case "discrete":
-                for (int i = 0; i < 10; ++i) {
+                for (int i = 0; i < ITERATIONS; ++i) {
                     for (int j = 0; j < size; ++j) {
                         data[i][j] = random.nextInt(100);
                     }
@@ -63,21 +71,24 @@ public class MedianBenchmark {
             default:
                 throw new AssertionError("Unknown data type: '" + type + "'");
         }
+        DestructiveMedianFactory factory;
+        //noinspection SwitchStatementWithTooFewBranches
+        switch (algorithm) {
+            case "HoareBidirectionalScan":
+                factory = HoareBidirectionalScan.instance();
+                break;
+            default:
+                throw new AssertionError("Unknown algorithm: '" + algorithm + "'");
+        }
+        medianAlgorithm = factory.createInstance(size);
     }
 
-    @Benchmark
-    public void baseline(Blackhole bh) {
-        for (double[] test : data) {
-            System.arraycopy(test, 0, temp, 0, test.length);
-            bh.consume(temp);
-        }
-    }
 
     @Benchmark
     public void quickSelect(Blackhole bh) {
         for (double[] test : data) {
             System.arraycopy(test, 0, temp, 0, test.length);
-            bh.consume(ArrayHelper.destructiveMedian(temp, 0, temp.length));
+            bh.consume(medianAlgorithm.solve(temp, 0, temp.length));
         }
     }
 }

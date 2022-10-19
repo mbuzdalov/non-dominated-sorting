@@ -1,6 +1,7 @@
 package ru.ifmo.nds.jfb;
 
 import ru.ifmo.nds.util.RankQueryStructureInt;
+import ru.ifmo.nds.util.median.DestructiveMedianFactory;
 
 public class JFBInt extends JFBBase {
     private RankQueryStructureInt rankQuery;
@@ -9,11 +10,12 @@ public class JFBInt extends JFBBase {
     public JFBInt(RankQueryStructureInt rankQueryStructure,
                   int maximumDimension,
                   int allowedThreads,
-                  HybridAlgorithmWrapper hybridWrapper) {
+                  HybridAlgorithmWrapper hybridWrapper,
+                  DestructiveMedianFactory medianFactory) {
         super(rankQueryStructure.maximumPoints(),
                 maximumDimension,
                 rankQueryStructure.supportsMultipleThreads() ? allowedThreads : 1,
-                hybridWrapper,
+                hybridWrapper, medianFactory,
                 "ordinate compression, data structure = " + rankQueryStructure.getName());
         compressedOrdinates = new int[rankQueryStructure.maximumPoints()];
         this.rankQuery = rankQueryStructure;

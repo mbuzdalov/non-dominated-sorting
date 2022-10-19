@@ -2,6 +2,8 @@ package ru.ifmo.nds.ndt;
 
 import ru.ifmo.nds.util.ArrayHelper;
 import ru.ifmo.nds.util.SplitMergeHelper;
+import ru.ifmo.nds.util.median.DestructiveMedianAlgorithm;
+import ru.ifmo.nds.util.median.HoareBidirectionalScan;
 
 public class SplitBuilder {
     private final double[] medianSwap;
@@ -10,6 +12,7 @@ public class SplitBuilder {
     private final int threshold;
     private final SplitMergeHelper splitMerge;
     private final Split[] splits;
+    private final DestructiveMedianAlgorithm destructiveMedian;
 
     public SplitBuilder(double[][] transposedPoints, int size, int threshold) {
         this.transposedPoints = transposedPoints;
@@ -21,6 +24,7 @@ public class SplitBuilder {
             splits[i] = new Split();
         }
         this.threshold = threshold;
+        this.destructiveMedian = HoareBidirectionalScan.instance().createInstance(size);
     }
 
     private Split construct(int from, int until, int coordinate, int depth, int[] maxCoordinateNSplits) {
@@ -36,7 +40,7 @@ public class SplitBuilder {
                     return construct(from, until, nextCoordinate, depth + 1, maxCoordinateNSplits);
                 }
             }
-            double median = ArrayHelper.destructiveMedian(medianSwap, from, until);
+            double median = destructiveMedian.solve(medianSwap, from, until);
             if (min == median) {
                 // It can be that median equals to everything from [0; n/2].
                 // This will make a "0 vs n" split and the subsequent stack overflow.

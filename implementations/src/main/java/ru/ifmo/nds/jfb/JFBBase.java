@@ -8,6 +8,8 @@ import java.util.concurrent.RecursiveTask;
 
 import ru.ifmo.nds.NonDominatedSorting;
 import ru.ifmo.nds.util.*;
+import ru.ifmo.nds.util.median.DestructiveMedianAlgorithm;
+import ru.ifmo.nds.util.median.DestructiveMedianFactory;
 
 public abstract class JFBBase extends NonDominatedSorting {
     private static final int FORK_JOIN_THRESHOLD = 400;
@@ -24,6 +26,7 @@ public abstract class JFBBase extends NonDominatedSorting {
     private double[] temporary; // also used in 2D-only sweep
     private SplitMergeHelper splitMerge;
     private HybridAlgorithmWrapper.Instance hybrid;
+    private DestructiveMedianAlgorithm destructiveMedian;
 
     private ForkJoinPool pool;
 
@@ -34,6 +37,7 @@ public abstract class JFBBase extends NonDominatedSorting {
             int maximumDimension,
             int allowedThreads,
             HybridAlgorithmWrapper hybridWrapper,
+            DestructiveMedianFactory medianFactory,
             String nameAddend) {
         super(maximumPoints, maximumDimension);
         if (!hybridWrapper.supportsMultipleThreads()) {
@@ -52,6 +56,7 @@ public abstract class JFBBase extends NonDominatedSorting {
         ranks = new int[maximumPoints];
 
         if (maximumDimension > 2) {
+            destructiveMedian = medianFactory.createInstance(maximumPoints);
             points = new double[maximumPoints][];
             transposedPoints = new double[maximumDimension][maximumPoints];
             splitMerge = new SplitMergeHelper(maximumPoints);
@@ -66,6 +71,7 @@ public abstract class JFBBase extends NonDominatedSorting {
         points = null;
         transposedPoints = null;
         splitMerge = null;
+        destructiveMedian = null;
 
         if (pool != null) {
             pool.shutdown();
@@ -171,7 +177,7 @@ public abstract class JFBBase extends NonDominatedSorting {
                 if (ArrayHelper.transplantAndCheckIfSame(transposedPoints[obj], indices, from, until, temporary, from)) {
                     --obj;
                 } else {
-                    double median = ArrayHelper.destructiveMedian(temporary, from, until);
+                    double median = destructiveMedian.solve(temporary, from, until);
                     long split = splitMerge.splitInThree(transposedPoints[obj], indices, from, from, until, median);
                     int startMid = SplitMergeHelper.extractMid(split);
                     int startRight = SplitMergeHelper.extractRight(split);
@@ -323,7 +329,7 @@ public abstract class JFBBase extends NonDominatedSorting {
                         case ArrayHelper.TRANSPLANT_RIGHT_SMALLER:
                             return weakUntil;
                         case ArrayHelper.TRANSPLANT_GENERAL_CASE:
-                            double median = ArrayHelper.destructiveMedian(temporary, tempFrom, tempFrom + goodUntil - goodFrom + weakUntil - weakFrom);
+                            double median = destructiveMedian.solve(temporary, tempFrom, tempFrom + goodUntil - goodFrom + weakUntil - weakFrom);
                             long goodSplit = splitMerge.splitInThree(currentPoints, indices, tempFrom, goodFrom, goodUntil, median);
                             int goodMidL = SplitMergeHelper.extractMid(goodSplit);
                             int goodMidR = SplitMergeHelper.extractRight(goodSplit);

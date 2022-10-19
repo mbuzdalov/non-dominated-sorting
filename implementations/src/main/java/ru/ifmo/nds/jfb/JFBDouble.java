@@ -1,6 +1,7 @@
 package ru.ifmo.nds.jfb;
 
 import ru.ifmo.nds.util.RankQueryStructureDouble;
+import ru.ifmo.nds.util.median.DestructiveMedianFactory;
 
 public class JFBDouble extends JFBBase {
     private RankQueryStructureDouble rankQuery;
@@ -8,11 +9,12 @@ public class JFBDouble extends JFBBase {
     public JFBDouble(RankQueryStructureDouble rankQueryStructure,
                      int maximumDimension,
                      int allowedThreads,
-                     HybridAlgorithmWrapper hybridWrapper) {
+                     HybridAlgorithmWrapper hybridWrapper,
+                     DestructiveMedianFactory medianFactory) {
         super(rankQueryStructure.maximumPoints(),
                 maximumDimension,
                 rankQueryStructure.supportsMultipleThreads() ? allowedThreads : 1,
-                hybridWrapper,
+                hybridWrapper, medianFactory,
                 "no ordinate compression, data structure = " + rankQueryStructure.getName());
         this.rankQuery = rankQueryStructure;
     }
