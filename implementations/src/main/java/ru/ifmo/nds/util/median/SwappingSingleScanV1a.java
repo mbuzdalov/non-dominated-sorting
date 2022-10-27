@@ -37,9 +37,11 @@ public final class SwappingSingleScanV1a implements DestructiveMedianFactory {
                 int leftTo = from, rightFrom = to;
                 for (int i = from + 1; i < to; ++i) {
                     double v = array[i];
-                    int comparison = Double.compare(v, pivot);
-                    if (comparison != 0) {
-                        temp[comparison < 0 ? ++leftTo : --rightFrom] = v;
+                    if (v < pivot) {
+                        temp[++leftTo] = v;
+                    }
+                    if (v > pivot) {
+                        temp[--rightFrom] = v;
                     }
                 }
                 double[] swp = temp; temp = array; array = swp;
