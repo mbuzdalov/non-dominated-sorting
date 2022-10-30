@@ -58,7 +58,7 @@ public final class SwappingSingleScanV1b implements DestructiveMedianFactory {
                 }
             }
 
-            return Common.solve3(array, from, resultIndex);
+            return Common.solve3(array, from);
         }
     }
 

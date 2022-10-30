@@ -25,7 +25,7 @@ public final class HoareBidirectionalScanV1a implements DestructiveMedianFactory
             int index = (from + until) >>> 1;
             int to = until - 1;
             while (to - from >= 3) {
-                double pivot = Common.rearrange3(array, from, index, to, array);
+                double pivot = Common.rearrange3(array, from, index, to);
 
                 double vl, vr;
                 int l = from + 1, r = to - 1;
@@ -52,7 +52,7 @@ public final class HoareBidirectionalScanV1a implements DestructiveMedianFactory
                 }
             }
 
-            return Common.solve3(array, from, index);
+            return Common.solve3(array, from);
         }
     };
 
