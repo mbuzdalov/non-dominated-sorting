@@ -36,7 +36,7 @@ public final class HoareBidirectionalScanV0 implements DestructiveMedianFactory 
                 } else if (l <= index) {
                     from = l;
                 } else {
-                    return array[index];
+                    break;
                 }
             }
 

@@ -48,7 +48,7 @@ public final class HoareBidirectionalScanV1a implements DestructiveMedianFactory
                 } else if (l == index) {
                     return Common.minUnchecked(array, l, to);
                 } else {
-                    return array[index];
+                    return pivot;
                 }
             }
 

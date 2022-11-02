@@ -15,9 +15,13 @@ public final class HoareBidirectionalScanV1 implements DestructiveMedianFactory 
 
         @Override
         public double solve(double[] array, int from, int until) {
-            int index = (from + until) >>> 1;
             int to = until - 1;
-            while (from < to) {
+            if (from == to) {
+                return array[from];
+            }
+            int index = (from + until) >>> 1;
+
+            while (true) {
                 double pivot = array[(from + to) >>> 1];
                 if (from + 4 < to) {
                     double mid = (array[from] + array[to]) / 2;
@@ -44,11 +48,9 @@ public final class HoareBidirectionalScanV1 implements DestructiveMedianFactory 
                 } else if (l == index) {
                     return Common.minUnchecked(array, l, to);
                 } else {
-                    return array[index];
+                    return pivot;
                 }
             }
-
-            return array[index];
         }
     };
 
