@@ -29,16 +29,16 @@ public final class HoareBidirectionalScanV1b implements DestructiveMedianFactory
 
                 int l = from, r = to;
                 do {
+                    double lv, rv;
                     //noinspection StatementWithEmptyBody
-                    while (array[++l] < pivot);
+                    while ((lv = array[++l]) < pivot);
                     //noinspection StatementWithEmptyBody
-                    while (array[--r] > pivot);
+                    while ((rv = array[--r]) > pivot);
                     if (l >= r) {
                         break;
                     }
-                    double tmp = array[l];
-                    array[l] = array[r];
-                    array[r] = tmp;
+                    array[l] = rv;
+                    array[r] = lv;
                 } while (true);
 
                 if (l == r) {
