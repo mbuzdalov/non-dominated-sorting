@@ -25,21 +25,18 @@ public final class HoareBidirectionalScanV1b implements DestructiveMedianFactory
             int index = (from + until) >>> 1;
             int to = until - 1;
             while (to - from >= 3) {
-                double pivot = Common.rearrange3(array, from, index, to);
+                double pivot = Common.rearrangeReverse3(array, from, index, to);
 
                 int l = from, r = to;
                 do {
-                    double lv, rv;
+                    double tmp = array[l];
+                    array[l] = array[r];
+                    array[r] = tmp;
                     //noinspection StatementWithEmptyBody
-                    while ((lv = array[++l]) < pivot);
+                    while (array[++l] < pivot);
                     //noinspection StatementWithEmptyBody
-                    while ((rv = array[--r]) > pivot);
-                    if (l >= r) {
-                        break;
-                    }
-                    array[l] = rv;
-                    array[r] = lv;
-                } while (true);
+                    while (array[--r] > pivot);
+                } while (l < r);
 
                 if (l == r) {
                     ++l;

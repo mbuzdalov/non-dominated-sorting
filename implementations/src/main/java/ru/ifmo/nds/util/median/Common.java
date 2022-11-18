@@ -75,4 +75,23 @@ final class Common {
         array[c] = v2;
         return v1;
     }
+
+    static double rearrangeReverse3(double[] array, int a, int b, int c) {
+        double v0 = array[a];
+        double v1 = array[b];
+        double v2 = array[c];
+        if (v0 > v1) {
+            double tmp = v0; v0 = v1; v1 = tmp;
+        }
+        if (v1 > v2) {
+            double tmp = v1; v1 = v2; v2 = tmp;
+        }
+        if (v0 > v1) {
+            double tmp = v0; v0 = v1; v1 = tmp;
+        }
+        array[a] = v2;
+        array[b] = v1;
+        array[c] = v0;
+        return v1;
+    }
 }
