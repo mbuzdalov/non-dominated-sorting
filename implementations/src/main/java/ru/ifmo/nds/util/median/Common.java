@@ -6,7 +6,10 @@ final class Common {
     static double minUnchecked(double[] array, int fromInc, int toInc) {
         double result = array[fromInc];
         while (++fromInc <= toInc) {
-            result = Math.min(result, array[fromInc]);
+            double value = array[fromInc];
+            if (result > value) {
+                result = value;
+            }
         }
         return result;
     }
@@ -14,7 +17,10 @@ final class Common {
     static double maxUnchecked(double[] array, int fromInc, int toInc) {
         double result = array[fromInc];
         while (++fromInc <= toInc) {
-            result = Math.max(result, array[fromInc]);
+            double value = array[fromInc];
+            if (result < value) {
+                result = value;
+            }
         }
         return result;
     }
