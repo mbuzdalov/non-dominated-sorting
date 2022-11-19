@@ -7,7 +7,16 @@ public final class HoareBidirectionalScanV1b implements DestructiveMedianFactory
         return factoryInstance;
     }
 
-    private static int scanImpl(double[] array, double pivot, int from, int index, int to) {
+    static final class ScanResult {
+        final int l, r;
+
+        ScanResult(int l, int r) {
+            this.l = l;
+            this.r = r;
+        }
+    }
+
+    static ScanResult scanImpl(double[] array, double pivot, int from, int to) {
         int l = from, r = to;
         do {
             double tmp = array[l];
@@ -24,29 +33,23 @@ public final class HoareBidirectionalScanV1b implements DestructiveMedianFactory
             --r;
         }
 
-        if (index <= r) {
-            return index - r - 1;
-        }
-        if (index >= l) {
-            return index - l + 1;
-        }
-        return 0;
+        return new ScanResult(l, r);
     }
 
-    private static double solveImpl(double[] array, int from, int until) {
+    static double solveImpl(double[] array, int from, int until) {
         int index = (from + until) >>> 1;
         int to = until - 1;
         while (to - from >= 3) {
             double pivot = Common.rearrangeReverse3(array, from, index, to);
-            int result = scanImpl(array, pivot, from, index, to);
+            ScanResult result = scanImpl(array, pivot, from, to);
 
-            if (result < -1) {
-                to = index - result - 1;
-            } else if (result > 1) {
-                from = index - result + 1;
-            } else if (result == -1) {
+            if (index < result.r) {
+                to = result.r;
+            } else if (result.l < index) {
+                from = result.l;
+            } else if (result.r == index) {
                 return Common.maxUnchecked(array, from, index);
-            } else if (result == 1) {
+            } else if (result.l == index) {
                 return Common.minUnchecked(array, index, to);
             } else {
                 return pivot;
