@@ -2,6 +2,7 @@ package ru.ifmo.nds.util.median;
 
 public final class HoareBidirectionalScanV1b implements DestructiveMedianFactory {
     private static final HoareBidirectionalScanV1b factoryInstance = new HoareBidirectionalScanV1b();
+    private static final int HEAP_CONSTANT = 4;
 
     public static HoareBidirectionalScanV1b instance() {
         return factoryInstance;
@@ -36,27 +37,26 @@ public final class HoareBidirectionalScanV1b implements DestructiveMedianFactory
         return new ScanResult(l, r);
     }
 
+
     static double solveImpl(double[] array, int from, int until) {
         int index = (from + until) >>> 1;
         int to = until - 1;
-        while (to - from >= 3) {
+        while (true) {
             double pivot = Common.rearrangeReverse3(array, from, index, to);
             ScanResult result = scanImpl(array, pivot, from, to);
 
-            if (index < result.r) {
+            if (index < result.r - HEAP_CONSTANT) {
                 to = result.r;
-            } else if (result.l < index) {
+            } else if (result.l + HEAP_CONSTANT < index) {
                 from = result.l;
-            } else if (result.r == index) {
-                return Common.maxUnchecked(array, from, index);
-            } else if (result.l == index) {
-                return Common.minUnchecked(array, index, to);
+            } else if (index <= result.r) {
+                return Common.kthMaxHeap(array, from, result.r, result.r - index);
+            } else if (result.l <= index) {
+                return Common.kthMinHeap(array, result.l, to, index - result.l);
             } else {
                 return pivot;
             }
         }
-
-        return Common.solve3(array, from);
     }
 
     private static final DestructiveMedianAlgorithm algorithmInstance = new DestructiveMedianAlgorithm() {

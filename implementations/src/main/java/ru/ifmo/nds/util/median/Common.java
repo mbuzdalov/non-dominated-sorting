@@ -100,4 +100,88 @@ final class Common {
         array[c] = v0;
         return v1;
     }
+
+    private static void minSiftDown(double[] array, int index, int to, int offset) {
+        double value = array[index];
+        while (true) {
+            int c1 = (index << 1) - offset;
+            if (c1 > to) {
+                break;
+            }
+            double v1 = array[c1];
+            int c2 = c1 + 1;
+            if (c2 <= to && array[c2] < v1) {
+                c1 = c2;
+                v1 = array[c2];
+            }
+            if (v1 < value) {
+                array[index] = v1;
+                array[c1] = value;
+                index = c1;
+            } else {
+                break;
+            }
+        }
+    }
+
+    private static void maxSiftDown(double[] array, int index, int to, int offset) {
+        double value = array[index];
+        while (true) {
+            int c1 = (index << 1) - offset;
+            if (c1 > to) {
+                break;
+            }
+            double v1 = array[c1];
+            int c2 = c1 + 1;
+            if (c2 <= to && array[c2] > v1) {
+                c1 = c2;
+                v1 = array[c2];
+            }
+            if (v1 > value) {
+                array[index] = v1;
+                array[c1] = value;
+                index = c1;
+            } else {
+                break;
+            }
+        }
+    }
+
+    static double kthMinHeap(double[] array, int from, int to, int k) {
+        if (k == 0) {
+            return minUnchecked(array, from, to);
+        }
+
+        int offset = from - 1;
+        // 1: Make heap
+        for (int i = (to + offset) >>> 1; i >= from; --i) {
+            minSiftDown(array, i, to, offset);
+        }
+        // 2: Drop minima
+        while (k > 0) {
+            array[from] = array[to];
+            minSiftDown(array, from, --to, offset);
+            --k;
+        }
+        return array[from];
+    }
+
+    static double kthMaxHeap(double[] array, int from, int to, int k) {
+        if (k == 0) {
+            return maxUnchecked(array, from, to);
+        }
+
+        int offset = from - 1;
+        // 1: Make heap
+        for (int i = (to + offset) >>> 1; i >= from; --i) {
+            maxSiftDown(array, i, to, offset);
+        }
+        // 2: Drop minima
+        while (k > 0) {
+            array[from] = array[to];
+            maxSiftDown(array, from, --to, offset);
+            --k;
+        }
+        return array[from];
+    }
 }
