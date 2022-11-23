@@ -6,17 +6,14 @@ import ru.ifmo.nds.util.median.DestructiveMedianAlgorithm;
 import ru.ifmo.nds.util.median.DestructiveMedianFactory;
 
 public class RunMedian {
-    public static void main(String[] args) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
+    public static void main(String[] args) throws Exception {
         String algoName = args[0];
         int size = Integer.parseInt(args[1]);
         int count = Integer.parseInt(args[2]);
         int iterations = Integer.parseInt(args[3]);
         long seed = Long.parseLong(args[4]);
 
-        String factoryClassName = DestructiveMedianFactory.class.getName().replace("DestructiveMedianFactory", algoName);
-        DestructiveMedianFactory factory = (DestructiveMedianFactory) Class.forName(factoryClassName).newInstance();
-
-        DestructiveMedianAlgorithm algorithm = factory.createInstance(size);
+        DestructiveMedianAlgorithm algorithm = DestructiveMedianFactory.getByName(algoName).createInstance(size);
 
         //noinspection MismatchedReadAndWriteOfArray the inspection fails to detect the actual filling of the array
         double[][] instances = new double[count][size];
