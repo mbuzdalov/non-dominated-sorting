@@ -2,61 +2,52 @@ package ru.ifmo.nds.util.median;
 
 public final class HoareBidirectionalScanV1b implements DestructiveMedianFactory {
     private static final HoareBidirectionalScanV1b factoryInstance = new HoareBidirectionalScanV1b();
-    private static final int HEAP_CONSTANT = 4;
 
     public static HoareBidirectionalScanV1b instance() {
         return factoryInstance;
     }
 
-    static final class ScanResult {
-        final int l, r;
-
-        ScanResult(int l, int r) {
-            this.l = l;
-            this.r = r;
-        }
+    static int findRightStart(double[] array, int from, double pivot) {
+        //noinspection StatementWithEmptyBody
+        while (array[++from] < pivot);
+        return from;
     }
 
-    static ScanResult scanImpl(double[] array, double pivot, int from, int to) {
-        int l = from, r = to;
-        do {
-            double tmp = array[l];
-            array[l] = array[r];
-            array[r] = tmp;
-            //noinspection StatementWithEmptyBody
-            while (array[++l] < pivot);
-            //noinspection StatementWithEmptyBody
-            while (array[--r] > pivot);
-        } while (l < r);
-
-        if (l == r) {
-            ++l;
-            --r;
+    static int scanRemaining(double[] array, int rightStart, double pivot, int to) {
+        int curr = rightStart;
+        while (++curr < to) {
+            double value = array[curr];
+            if (value < pivot) {
+                array[curr] = array[rightStart];
+                array[rightStart] = value;
+                ++rightStart;
+            }
         }
-
-        return new ScanResult(l, r);
+        return rightStart;
     }
-
 
     static double solveImpl(double[] array, int from, int until) {
         int index = (from + until) >>> 1;
         int to = until - 1;
-        while (true) {
-            double pivot = Common.rearrangeReverse3(array, from, index, to);
-            ScanResult result = scanImpl(array, pivot, from, to);
 
-            if (index < result.r - HEAP_CONSTANT) {
-                to = result.r;
-            } else if (result.l + HEAP_CONSTANT < index) {
-                from = result.l;
-            } else if (index <= result.r) {
-                return Common.kthMaxHeap(array, from, result.r, result.r - index);
-            } else if (result.l <= index) {
-                return Common.kthMinHeap(array, result.l, to, index - result.l);
+        while (to - from >= 3) {
+            double pivot = Common.rearrange3(array, from, index, to);
+            int rightStart = findRightStart(array, from, pivot);
+            rightStart = scanRemaining(array, rightStart, pivot, to);
+
+            int leftEnd = rightStart - 1;
+            if (index < leftEnd) {
+                to = leftEnd;
+            } else if (index > rightStart) {
+                from = rightStart;
+            } else if (index == leftEnd) {
+                return Common.maxUnchecked(array, from, leftEnd);
             } else {
-                return pivot;
+                return Common.minUnchecked(array, rightStart, to);
             }
         }
+
+        return Common.solve3(array, from);
     }
 
     private static final DestructiveMedianAlgorithm algorithmInstance = new DestructiveMedianAlgorithm() {
