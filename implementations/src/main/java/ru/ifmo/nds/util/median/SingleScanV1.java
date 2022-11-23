@@ -1,19 +1,40 @@
 package ru.ifmo.nds.util.median;
 
-public final class SingleScanV1 implements DestructiveMedianFactory {
-    private static final SingleScanV1 factory = new SingleScanV1();
+public final class SingleScanV1 implements DestructiveMedianAlgorithm {
+    private SingleScanV1() {}
 
-    public static SingleScanV1 factory() {
+    @Override
+    public int maximumSize() {
+        return Integer.MAX_VALUE;
+    }
+
+    @Override
+    public double solve(double[] array, int from, int until) {
+        switch (until - from) {
+            case 1:
+                return array[from];
+            case 2:
+                return Math.max(array[from], array[from + 1]);
+            default:
+                return solveImpl(array, from, until);
+        }
+    }
+
+    public static DestructiveMedianFactory factory() {
         return factory;
     }
 
-    static int findRightStart(double[] array, int from, double pivot) {
+    private static final DestructiveMedianAlgorithm algorithmInstance = new SingleScanV1();
+
+    private static final DestructiveMedianFactory factory = maxSize -> algorithmInstance;
+
+    private static int findRightStart(double[] array, int from, double pivot) {
         //noinspection StatementWithEmptyBody
         while (array[++from] < pivot);
         return from;
     }
 
-    static int scanRemaining(double[] array, int rightStart, double pivot, int to) {
+    private static int scanRemaining(double[] array, int rightStart, double pivot, int to) {
         int curr = rightStart;
         while (++curr < to) {
             double value = array[curr];
@@ -26,7 +47,7 @@ public final class SingleScanV1 implements DestructiveMedianFactory {
         return rightStart;
     }
 
-    static double solveImpl(double[] array, int from, int until) {
+    private static double solveImpl(double[] array, int from, int until) {
         int index = (from + until) >>> 1;
         int to = until - 1;
 
@@ -48,29 +69,5 @@ public final class SingleScanV1 implements DestructiveMedianFactory {
         }
 
         return Common.solve3(array, from);
-    }
-
-    private static final DestructiveMedianAlgorithm algorithmInstance = new DestructiveMedianAlgorithm() {
-        @Override
-        public int maximumSize() {
-            return Integer.MAX_VALUE;
-        }
-
-        @Override
-        public double solve(double[] array, int from, int until) {
-            switch (until - from) {
-                case 1:
-                    return array[from];
-                case 2:
-                    return Math.max(array[from], array[from + 1]);
-                default:
-                    return solveImpl(array, from, until);
-            }
-        }
-    };
-
-    @Override
-    public DestructiveMedianAlgorithm createInstance(int maxSize) {
-        return algorithmInstance;
     }
 }
