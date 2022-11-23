@@ -1,5 +1,7 @@
 package ru.ifmo.nds.util.median;
 
+import java.lang.reflect.InvocationTargetException;
+
 /**
  * This interface encapsulates factories to create instances of {@link DestructiveMedianAlgorithm}
  * given their maximum allowed size.
@@ -25,4 +27,11 @@ public interface DestructiveMedianFactory {
      * @return the algorithm for computing medians destructively.
      */
     DestructiveMedianAlgorithm createInstance(int maxSize);
+
+    static DestructiveMedianFactory getByName(String name)
+            throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        Class<?> myClass = DestructiveMedianFactory.class;
+        String factoryClassName = myClass.getName().replace(myClass.getSimpleName(), name);
+        return (DestructiveMedianFactory) Class.forName(factoryClassName).getMethod("factory").invoke(null);
+    }
 }

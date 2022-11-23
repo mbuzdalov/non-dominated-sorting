@@ -1,9 +1,9 @@
 package ru.ifmo.nds.util.median;
 
-public final class SwappingSingleScanV0 implements DestructiveMedianAlgorithm {
+public final class SwappingSingleScanV0a implements DestructiveMedianAlgorithm {
     private final double[] extraSpace;
 
-    private SwappingSingleScanV0(int maxSize) {
+    private SwappingSingleScanV0a(int maxSize) {
         extraSpace = new double[maxSize];
     }
 
@@ -34,23 +34,21 @@ public final class SwappingSingleScanV0 implements DestructiveMedianAlgorithm {
             }
             double[] swp = temp; temp = array; array = swp;
 
-            if (resultIndex <= leftTo) {
-                if (resultIndex == leftTo) {
-                    return Common.maxUnchecked(array, from, leftTo);
-                }
+            if (resultIndex < leftTo) {
                 to = leftTo;
-            } else {
-                if (resultIndex == rightFrom) {
-                    return Common.minUnchecked(array, rightFrom, to);
-                }
+            } else if (resultIndex > rightFrom) {
                 from = rightFrom;
+            } else if (resultIndex == leftTo) {
+                return Common.maxUnchecked(array, from, leftTo);
+            } else {
+                return Common.minUnchecked(array, rightFrom, to);
             }
         }
 
         return Common.solve3(array, from);
     }
 
-    private static final DestructiveMedianFactory factory = SwappingSingleScanV0::new;
+    private static final DestructiveMedianFactory factory = SwappingSingleScanV0a::new;
 
     public static DestructiveMedianFactory factory() {
         return factory;

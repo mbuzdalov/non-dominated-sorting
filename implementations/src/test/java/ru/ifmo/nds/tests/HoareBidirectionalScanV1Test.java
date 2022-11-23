@@ -6,6 +6,6 @@ import ru.ifmo.nds.util.median.HoareBidirectionalScanV1;
 public class HoareBidirectionalScanV1Test extends MedianTestsBase {
     @Override
     protected DestructiveMedianFactory getFactory() {
-        return HoareBidirectionalScanV1.instance();
+        return HoareBidirectionalScanV1.factory();
     }
 }

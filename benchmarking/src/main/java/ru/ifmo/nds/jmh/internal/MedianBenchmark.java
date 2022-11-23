@@ -30,8 +30,9 @@ public class MedianBenchmark {
     private String type;
 
     @Param(value = {
-            "HoareBidirectionalScanV0", "HoareBidirectionalScanV1",
-            "SwappingSingleScanV0", "SwappingSingleScanV1"})
+            "HoareBidirectionalScanV1",
+            "SwappingSingleScanV0", "SwappingSingleScanV0a", "SwappingSingleScanV0b",
+            "SingleScanV1" })
     private String algorithm;
 
     private double[][] data;
@@ -39,7 +40,7 @@ public class MedianBenchmark {
     private DestructiveMedianAlgorithm medianAlgorithm;
 
     @Setup
-    public void initialize() throws ClassNotFoundException, IllegalAccessException, InstantiationException {
+    public void initialize() throws Exception {
         Random random = new Random(size * 723525217L);
         temp = new double[size];
         data = new double[ITERATIONS][size];
@@ -71,9 +72,7 @@ public class MedianBenchmark {
             default:
                 throw new AssertionError("Unknown data type: '" + type + "'");
         }
-        String factoryClassName = DestructiveMedianFactory.class.getName().replace("DestructiveMedianFactory", algorithm);
-        DestructiveMedianFactory factory = (DestructiveMedianFactory) Class.forName(factoryClassName).newInstance();
-        medianAlgorithm = factory.createInstance(size);
+        medianAlgorithm = DestructiveMedianFactory.getByName(algorithm).createInstance(size);
     }
 
 
