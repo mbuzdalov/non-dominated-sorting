@@ -9,13 +9,13 @@ import ru.ifmo.nds.util.FenwickRankQueryStructureDouble;
 import ru.ifmo.nds.util.RedBlackRankQueryStructure;
 import ru.ifmo.nds.util.VanEmdeBoasRankQueryStructureInt;
 import ru.ifmo.nds.util.median.DestructiveMedianFactory;
-import ru.ifmo.nds.util.median.HoareBidirectionalScanV1;
+import ru.ifmo.nds.util.median.SingleScanV1;
 
 public final class JensenFortinBuzdalov {
     private JensenFortinBuzdalov() {}
 
     private static DestructiveMedianFactory defaultMedianFactory() {
-        return HoareBidirectionalScanV1.factory();
+        return SingleScanV1.factory();
     }
 
     public static NonDominatedSortingFactory getRedBlackTreeSweepImplementation(int allowedThreads) {
