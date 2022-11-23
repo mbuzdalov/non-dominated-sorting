@@ -15,7 +15,7 @@ public final class JensenFortinBuzdalov {
     private JensenFortinBuzdalov() {}
 
     private static DestructiveMedianFactory defaultMedianFactory() {
-        return HoareBidirectionalScanV1.instance();
+        return HoareBidirectionalScanV1.factory();
     }
 
     public static NonDominatedSortingFactory getRedBlackTreeSweepImplementation(int allowedThreads) {

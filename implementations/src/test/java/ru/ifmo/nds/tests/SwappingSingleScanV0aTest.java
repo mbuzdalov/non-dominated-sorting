@@ -6,6 +6,6 @@ import ru.ifmo.nds.util.median.SwappingSingleScanV0a;
 public class SwappingSingleScanV0aTest extends MedianTestsBase {
     @Override
     protected DestructiveMedianFactory getFactory() {
-        return SwappingSingleScanV0a.instance();
+        return SwappingSingleScanV0a.factory();
     }
 }

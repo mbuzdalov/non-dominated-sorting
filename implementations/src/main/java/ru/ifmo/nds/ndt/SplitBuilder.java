@@ -24,7 +24,7 @@ public class SplitBuilder {
             splits[i] = new Split();
         }
         this.threshold = threshold;
-        this.destructiveMedian = HoareBidirectionalScanV1.instance().createInstance(size);
+        this.destructiveMedian = HoareBidirectionalScanV1.factory().createInstance(size);
     }
 
     private Split construct(int from, int until, int coordinate, int depth, int[] maxCoordinateNSplits) {

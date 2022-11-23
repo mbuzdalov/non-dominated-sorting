@@ -1,10 +1,10 @@
 package ru.ifmo.nds.util.median;
 
 public final class SwappingSingleScanV0a implements DestructiveMedianFactory {
-    private static final SwappingSingleScanV0a factoryInstance = new SwappingSingleScanV0a();
+    private static final SwappingSingleScanV0a factory = new SwappingSingleScanV0a();
 
-    public static SwappingSingleScanV0a instance() {
-        return factoryInstance;
+    public static SwappingSingleScanV0a factory() {
+        return factory;
     }
 
     private static final class Instance implements DestructiveMedianAlgorithm {

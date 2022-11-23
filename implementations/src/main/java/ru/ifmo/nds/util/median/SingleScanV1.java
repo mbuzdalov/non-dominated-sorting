@@ -1,10 +1,10 @@
 package ru.ifmo.nds.util.median;
 
 public final class SingleScanV1 implements DestructiveMedianFactory {
-    private static final SingleScanV1 factoryInstance = new SingleScanV1();
+    private static final SingleScanV1 factory = new SingleScanV1();
 
-    public static SingleScanV1 instance() {
-        return factoryInstance;
+    public static SingleScanV1 factory() {
+        return factory;
     }
 
     static int findRightStart(double[] array, int from, double pivot) {
