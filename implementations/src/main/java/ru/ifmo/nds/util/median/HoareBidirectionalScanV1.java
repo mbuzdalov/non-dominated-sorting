@@ -15,20 +15,20 @@ public final class HoareBidirectionalScanV1 implements DestructiveMedianFactory 
 
         @Override
         public double solve(double[] array, int from, int until) {
-            int to = until - 1;
-            if (from == to) {
-                return array[from];
+            switch (until - from) {
+                case 1:
+                    return array[from];
+                case 2:
+                    return Math.max(array[from], array[from + 1]);
             }
-            int index = (from + until) >>> 1;
 
-            while (true) {
-                double pivot = array[(from + to) >>> 1];
-                if (from + 4 < to) {
-                    double mid = (array[from] + array[to]) / 2;
-                    pivot = (pivot + mid) / 2;
-                }
+            int index = (from + until) >>> 1;
+            int to = until - 1;
+            while (to - from >= 3) {
+                double pivot = Common.rearrange3(array, from, index, to);
+
                 double vl, vr;
-                int l = from, r = to;
+                int l = from + 1, r = to - 1;
                 do {
                     while ((vl = array[l]) < pivot) ++l;
                     while ((vr = array[r]) > pivot) --r;
@@ -51,6 +51,8 @@ public final class HoareBidirectionalScanV1 implements DestructiveMedianFactory 
                     return pivot;
                 }
             }
+
+            return Common.solve3(array, from);
         }
     };
 

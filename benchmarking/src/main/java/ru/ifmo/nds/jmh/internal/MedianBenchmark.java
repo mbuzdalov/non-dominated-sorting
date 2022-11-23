@@ -30,8 +30,9 @@ public class MedianBenchmark {
     private String type;
 
     @Param(value = {
-            "HoareBidirectionalScanV0", "HoareBidirectionalScanV1", "HoareBidirectionalScanV1a", "HoareBidirectionalScanV1b",
-            "SwappingSingleScanV0", "SwappingSingleScanV0a", "SwappingSingleScanV0b" })
+            "HoareBidirectionalScanV1",
+            "SwappingSingleScanV0", "SwappingSingleScanV0a", "SwappingSingleScanV0b",
+            "SingleScanV1" })
     private String algorithm;
 
     private double[][] data;

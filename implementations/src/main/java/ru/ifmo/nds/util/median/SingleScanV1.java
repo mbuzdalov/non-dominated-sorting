@@ -1,9 +1,9 @@
 package ru.ifmo.nds.util.median;
 
-public final class HoareBidirectionalScanV1b implements DestructiveMedianFactory {
-    private static final HoareBidirectionalScanV1b factoryInstance = new HoareBidirectionalScanV1b();
+public final class SingleScanV1 implements DestructiveMedianFactory {
+    private static final SingleScanV1 factoryInstance = new SingleScanV1();
 
-    public static HoareBidirectionalScanV1b instance() {
+    public static SingleScanV1 instance() {
         return factoryInstance;
     }
 
