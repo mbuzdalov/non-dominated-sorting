@@ -57,7 +57,6 @@ public final class DeterministicQuadraticV3 extends NonDominatedSorting {
                 // However, if it has been completed, we switch to rank 1 immediately.
                 if (from == until) {
                     rank = 1;
-                    from = until;
                     until = n;
                 }
                 // Finally, we hand out the computation to the generic algorithm.
