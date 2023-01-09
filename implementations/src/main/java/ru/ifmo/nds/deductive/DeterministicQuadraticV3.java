@@ -99,7 +99,7 @@ public final class DeterministicQuadraticV3 extends NonDominatedSorting {
             int currI = next ^ ((next ^ next0) & nextFrom);
             indices[--until] = nextFrom ^ currI;
             // The remaining points are subject to permutation.
-            // However, indices in [next; until) will be written by iterateInner0Continue,
+            // However, indices in [next; until) will be written by finalize0,
             // so we write only the points which are not affected by that procedure.
             ArrayHelper.fillIdentityFromIndex(indices, ++from, next);
             // Continue the interrupted iteration.
