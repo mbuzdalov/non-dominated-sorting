@@ -61,7 +61,7 @@ public final class RandomizedQuadraticV2 extends NonDominatedSorting {
                 comparisonsRemainingToShuffle -= next - curr - 1;
 
                 if (comparison != 0) {
-                    // at least some of the points are going to be moved
+                    // at least some points are going to be moved
                     int newUntil = next;
                     int nextI = currOrder[next];
                     int localComparisons = 1;
@@ -74,7 +74,7 @@ public final class RandomizedQuadraticV2 extends NonDominatedSorting {
                             // currP is dominated. Here, we replace currI and currP with nextI and points[nextI]
                             currI = nextI;
                             currP = points[nextI];
-                            // We also cleanup the already scanned points with the new currP.
+                            // We also clean up the already scanned points with the new currP.
                             // A striking feature is that none of these points dominate currP, and none is equal!
                             comparisonsRemainingToShuffle -= newUntil - curr - 1;
                             newUntil = kickDominatedPoints(currOrder, curr + 1, newUntil, currP, points, dim - 1);
