@@ -13,6 +13,7 @@ public final class DeductiveSort {
     private static final NonDominatedSortingFactory INSTANCE_DQ1 = DeterministicQuadraticV1::new;
     private static final NonDominatedSortingFactory INSTANCE_DQ2 = DeterministicQuadraticV2::new;
     private static final NonDominatedSortingFactory INSTANCE_DQ3 = DeterministicQuadraticV3::new;
+    private static final NonDominatedSortingFactory INSTANCE_DQ4 = DeterministicQuadraticV4::new;
 
     public static NonDominatedSortingFactory getOriginalImplementation() {
         return INSTANCE_V0;
@@ -44,5 +45,9 @@ public final class DeductiveSort {
 
     public static NonDominatedSortingFactory getDeterministicQuadraticImplementationV3() {
         return INSTANCE_DQ3;
+    }
+
+    public static NonDominatedSortingFactory getDeterministicQuadraticImplementationV4() {
+        return INSTANCE_DQ4;
     }
 }
