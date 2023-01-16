@@ -41,6 +41,10 @@ public final class DeterministicQuadraticV4 extends NonDominatedSorting {
             this.dim = points[0].length;
         }
 
+        int dominanceComparison(double[] a, double[] b) {
+            return DominanceHelper.dominanceComparison(a, b, dim);
+        }
+
         void run(int n, int nextNonExistingRank) {
             until = n;
             // First, we try to perform a cheap non-dominance check that does not use indices.
@@ -82,7 +86,7 @@ public final class DeterministicQuadraticV4 extends NonDominatedSorting {
             // This is an optimistic loop that thinks no points are going to be dominated.
             int next = from;
             while (++next < until) {
-                int comparison = DominanceHelper.dominanceComparison(currP, points[next], dim);
+                int comparison = dominanceComparison(currP, points[next]);
                 if (comparison != 0) {
                     // Our optimistic assumption has just been broken,
                     // so we break the loop and notify the upstream.
@@ -114,7 +118,7 @@ public final class DeterministicQuadraticV4 extends NonDominatedSorting {
 
             while (next < until) {
                 double[] nextP = points[nextI];
-                int comparison = DominanceHelper.dominanceComparison(currP, nextP, dim);
+                int comparison = dominanceComparison(currP, nextP);
                 if (comparison == 0) {
                     // we leave next, so we write its final value
                     indices[next] = nextI;
@@ -134,7 +138,7 @@ public final class DeterministicQuadraticV4 extends NonDominatedSorting {
             }
 
             ranks[currI] = 0;
-            until = replay(currP, until, replayUntil);
+            replay(currP, replayUntil);
         }
 
         private void runGenericAlgorithm(int n, int nextNonExistingRank) {
@@ -201,7 +205,7 @@ public final class DeterministicQuadraticV4 extends NonDominatedSorting {
                     }
 
                     nextP = points[nextI];
-                    comparison = DominanceHelper.dominanceComparison(currP, nextP, dim);
+                    comparison = dominanceComparison(currP, nextP);
                 } while (comparison != 0);
 
                 indices[next] = nextI;
@@ -212,12 +216,12 @@ public final class DeterministicQuadraticV4 extends NonDominatedSorting {
             }
 
             ranks[currI] = rank;
-            until = replay(currP, until, replayUntil);
+            replay(currP, replayUntil);
         }
 
         private int scanUntilDominance(double[] currP, int next, int[] comparisonRef) {
             while (next < until) {
-                int comparison = DominanceHelper.dominanceComparison(currP, points[indices[next]], dim);
+                int comparison = dominanceComparison(currP, points[indices[next]]);
                 if (comparison != 0) {
                     comparisonRef[0] = comparison;
                     break;
@@ -227,7 +231,7 @@ public final class DeterministicQuadraticV4 extends NonDominatedSorting {
             return next;
         }
 
-        private int replay(double[] currP, int until, int replayUntil) {
+        private void replay(double[] currP, int replayUntil) {
             final int maxObj = dim - 1;
             // Everything initially at index cannot be equal to currP and cannot dominate it.
             // This allows using an efficient comparison.
@@ -239,7 +243,6 @@ public final class DeterministicQuadraticV4 extends NonDominatedSorting {
                     indices[until] = nextI;
                 }
             }
-            return until;
         }
     }
 }
