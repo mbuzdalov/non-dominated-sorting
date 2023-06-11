@@ -1,7 +1,7 @@
 package ru.ifmo.nds.util.median;
 
 public final class HoareBidirectionalScanV1 implements DestructiveMedianAlgorithm {
-    private HoareBidirectionalScanV1() {}
+    HoareBidirectionalScanV1() {}
 
     @Override
     public int maximumSize() {

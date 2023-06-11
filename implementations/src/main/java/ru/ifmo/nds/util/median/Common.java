@@ -14,6 +14,23 @@ final class Common {
         return result;
     }
 
+    static double minUncheckedMove(double[] array, int fromInc, int toInc) {
+        int minIndex = fromInc;
+        double result = array[fromInc];
+        for (int i = fromInc; ++i <= toInc; ) {
+            double value = array[i];
+            if (result > value) {
+                result = value;
+                minIndex = i;
+            }
+        }
+        if (minIndex != fromInc) {
+            array[minIndex] = array[fromInc];
+            array[fromInc] = result;
+        }
+        return result;
+    }
+
     static double maxUnchecked(double[] array, int fromInc, int toInc) {
         double result = array[fromInc];
         while (++fromInc <= toInc) {
@@ -21,6 +38,23 @@ final class Common {
             if (result < value) {
                 result = value;
             }
+        }
+        return result;
+    }
+
+    static double maxUncheckedMove(double[] array, int fromInc, int toInc) {
+        int maxIndex = fromInc;
+        double result = array[fromInc];
+        for (int i = fromInc; ++i <= toInc; ) {
+            double value = array[i];
+            if (result < value) {
+                result = value;
+                maxIndex = i;
+            }
+        }
+        if (maxIndex != toInc) {
+            array[maxIndex] = array[toInc];
+            array[toInc] = result;
         }
         return result;
     }
