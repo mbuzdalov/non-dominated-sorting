@@ -9,7 +9,7 @@ package ru.ifmo.nds.util.median;
  */
 public final class SubsamplingV0 implements DestructiveMedianAlgorithm {
     private final double[] sampleArray;
-    private final HoareBidirectionalScanV1 smallSolver = new HoareBidirectionalScanV1();
+    private static final HoareBidirectionalScanV1 smallSolver = new HoareBidirectionalScanV1();
 
     private SubsamplingV0(int maxSize) {
         sampleArray = new double[maxSize];
@@ -75,8 +75,9 @@ public final class SubsamplingV0 implements DestructiveMedianAlgorithm {
         int windowSize = windowSize(size);
         int minIndex = from + Math.max(0, (sampleSize >>> 1) - windowSize);
         int maxIndex = from + Math.min(sampleSize - 1, (sampleSize >>> 1) + windowSize);
-        double minValue = kthHoare(sampleArray, from, sampleEnd, minIndex);
-        double maxValue = kthHoare(sampleArray, minIndex, sampleEnd, maxIndex);
+        twoKthStatistics(sampleArray, from, sampleEnd, minIndex, maxIndex, sampleEnd);
+        double minValue = sampleArray[sampleEnd];
+        double maxValue = sampleArray[sampleEnd + 1];
 
         // Here, we stop using sampleArray for subsampling the initial array.
         // In the non-trivial case, we use it again for storing filtered values.
@@ -119,6 +120,51 @@ public final class SubsamplingV0 implements DestructiveMedianAlgorithm {
     private static final DestructiveMedianFactory factory = SubsamplingV0::new;
     public static DestructiveMedianFactory factory() {
         return factory;
+    }
+
+    private static void twoKthStatistics(double[] array, int from, int until, int i1, int i2, int targetOffset) {
+        int to = until - 1;
+        if (to - from <= 2) throw new IllegalArgumentException("twoKth does not support small inputs");
+        if (i1 == from || i1 >= i2 || i2 == to) throw new IllegalArgumentException("twoKth does not support improper indices");
+
+        while (to - from >= 3) {
+            double pivot = Common.rearrange3(array, from, i1, to); // not sure if i1 is the best choice
+            double vl, vr;
+            int l = from + 1, r = to - 1;
+            do {
+                while ((vl = array[l]) < pivot) ++l;
+                while ((vr = array[r]) > pivot) --r;
+                if (l <= r) {
+                    array[l] = vr;
+                    array[r] = vl;
+                    ++l;
+                    --r;
+                }
+            } while (l <= r);
+
+            if (i2 < r) {
+                // both indices are strictly in the left half, continue there
+                to = r;
+            } else if (l < i1) {
+                // both indices are strictly in the right half, continue there
+                from = l;
+            } else if (i2 == r) {
+                // i1 is strictly in the left half, but i2 is the max
+                array[targetOffset + 1] = Common.maxUncheckedMove(array, from, r);
+                array[targetOffset] = kthHoare(array, from, r, i1);
+                return;
+            } else if (i1 == l) {
+                // i2 is strictly in the right half, but i1 is the min
+                array[targetOffset] = Common.minUncheckedMove(array, l, to);
+                array[targetOffset + 1] = kthHoare(array, l + 1, to + 1, i2);
+                return;
+            } else {
+                // i1 <= r < l <= i2
+                array[targetOffset] = kthHoare(array, from, r + 1, i1);
+                array[targetOffset + 1] = kthHoare(array, l, to + 1, i2);
+                return;
+            }
+        }
     }
 
     // Will be there until I refactor the whole thing to solve kth order in the general case.
