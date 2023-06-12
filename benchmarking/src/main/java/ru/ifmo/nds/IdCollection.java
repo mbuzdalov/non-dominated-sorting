@@ -47,7 +47,7 @@ public final class IdCollection {
         addNonDominatedSortingFactory("bos.improved", BestOrderSort.getImprovedImplementation());
         addNonDominatedSortingFactory("corner", CornerSort.getInstance());
 
-        addNonDominatedSortingFactory("deductive.original", DeductiveSort.getOriginalImplementation());
+        addNonDominatedSortingFactory("deductive.original", DeductiveSort.getOriginalImplementationV1());
         addNonDominatedSortingFactory("deductive.reordering.v1", DeductiveSort.getReorderingImplementationV1());
         addNonDominatedSortingFactory("deductive.reordering.v2", DeductiveSort.getReorderingImplementationV2());
         addNonDominatedSortingFactory("deductive.quadratic.randomized.v1", DeductiveSort.getRandomizedQuadraticImplementationV1());

@@ -5,7 +5,7 @@ import ru.ifmo.nds.deductive.*;
 public final class DeductiveSort {
     private DeductiveSort() {}
 
-    private static final NonDominatedSortingFactory INSTANCE_V0 = Original::new;
+    private static final NonDominatedSortingFactory INSTANCE_O1 = OriginalV1::new;
     private static final NonDominatedSortingFactory INSTANCE_R1 = ReorderingV1::new;
     private static final NonDominatedSortingFactory INSTANCE_R2 = ReorderingV2::new;
     private static final NonDominatedSortingFactory INSTANCE_RQ1 = RandomizedQuadraticV1::new;
@@ -15,8 +15,8 @@ public final class DeductiveSort {
     private static final NonDominatedSortingFactory INSTANCE_DQ3 = DeterministicQuadraticV3::new;
     private static final NonDominatedSortingFactory INSTANCE_DQ4 = DeterministicQuadraticV4::new;
 
-    public static NonDominatedSortingFactory getOriginalImplementation() {
-        return INSTANCE_V0;
+    public static NonDominatedSortingFactory getOriginalImplementationV1() {
+        return INSTANCE_O1;
     }
 
     public static NonDominatedSortingFactory getReorderingImplementationV1() {

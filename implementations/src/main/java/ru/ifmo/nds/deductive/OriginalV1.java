@@ -5,11 +5,11 @@ import ru.ifmo.nds.util.DominanceHelper;
 
 import java.util.Arrays;
 
-public final class Original extends NonDominatedSorting {
+public final class OriginalV1 extends NonDominatedSorting {
     private boolean[] dominated;
     private boolean[] ranked;
 
-    public Original(int maximumPoints, int maximumDimension) {
+    public OriginalV1(int maximumPoints, int maximumDimension) {
         super(maximumPoints, maximumDimension);
         this.dominated = new boolean[maximumPoints];
         this.ranked = new boolean[maximumPoints];
@@ -17,7 +17,7 @@ public final class Original extends NonDominatedSorting {
 
     @Override
     public String getName() {
-        return "Deductive Sort, original version";
+        return "Deductive Sort, original version 1";
     }
 
     @Override

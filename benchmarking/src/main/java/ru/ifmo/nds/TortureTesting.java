@@ -93,7 +93,7 @@ public class TortureTesting {
         List<NonDominatedSortingFactory> sortingFactories = Arrays.asList(
                 FastNonDominatedSorting.getOriginalVersion(),
                 CornerSort.getInstance(),
-                DeductiveSort.getOriginalImplementation(),
+                DeductiveSort.getOriginalImplementationV1(),
                 DeductiveSort.getReorderingImplementationV1(),
                 DeductiveSort.getReorderingImplementationV2(),
                 DeductiveSort.getRandomizedQuadraticImplementationV1(),
