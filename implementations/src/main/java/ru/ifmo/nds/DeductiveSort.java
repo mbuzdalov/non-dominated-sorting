@@ -6,6 +6,7 @@ public final class DeductiveSort {
     private DeductiveSort() {}
 
     private static final NonDominatedSortingFactory INSTANCE_O1 = OriginalV1::new;
+    private static final NonDominatedSortingFactory INSTANCE_O2 = OriginalV2::new;
     private static final NonDominatedSortingFactory INSTANCE_R1 = ReorderingV1::new;
     private static final NonDominatedSortingFactory INSTANCE_R2 = ReorderingV2::new;
     private static final NonDominatedSortingFactory INSTANCE_RQ1 = RandomizedQuadraticV1::new;
@@ -17,6 +18,10 @@ public final class DeductiveSort {
 
     public static NonDominatedSortingFactory getOriginalImplementationV1() {
         return INSTANCE_O1;
+    }
+
+    public static NonDominatedSortingFactory getOriginalImplementationV2() {
+        return INSTANCE_O2;
     }
 
     public static NonDominatedSortingFactory getReorderingImplementationV1() {
