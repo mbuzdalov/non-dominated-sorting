@@ -25,33 +25,29 @@ public final class OriginalV2 extends NonDominatedSorting {
 
         Arrays.fill(ranks, 0);
 
-        int currRank = 0, nRanked = 0;
+        int currRank = 0, nextRank = 1, nRanked = 0;
         while (nRanked < n && currRank <= maximalMeaningfulRank) {
+            dominatorLoop:
             for (int i = 0; i < n; ++i) {
                 if (ranks[i] == currRank) {
-                    if (innerLoop(points, ranks, dim, currRank, i, n)) {
-                        ++nRanked;
-                    } else {
-                        ranks[i] = currRank + 1;
+                    final double[] currP = points[i];
+                    for (int j = i; ++j < n; ) {
+                        if (ranks[j] == currRank) {
+                            int comparison = DominanceHelper.dominanceComparison(currP, points[j], dim);
+                            if (comparison > 0) {
+                                ranks[i] = nextRank;
+                                continue dominatorLoop;
+                            }
+                            if (comparison < 0) {
+                                ranks[j] = nextRank;
+                            }
+                        }
                     }
+                    ++nRanked;
                 }
             }
-            ++currRank;
+            currRank = nextRank;
+            ++nextRank;
         }
-    }
-
-    private static boolean innerLoop(double[][] points, int[] ranks, int dim, int currRank, int from, int until) {
-        final double[] currP = points[from];
-        for (int curr = from; ++curr < until; ) {
-            if (ranks[curr] == currRank) {
-                int comparison = DominanceHelper.dominanceComparison(currP, points[curr], dim);
-                if (comparison < 0) {
-                    ranks[curr] = currRank + 1;
-                } else if (comparison > 0) {
-                    return false;
-                }
-            }
-        }
-        return true;
     }
 }
