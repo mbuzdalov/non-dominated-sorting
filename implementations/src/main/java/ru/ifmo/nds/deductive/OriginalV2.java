@@ -28,28 +28,30 @@ public final class OriginalV2 extends NonDominatedSorting {
         int currRank = 0, nRanked = 0;
         while (nRanked < n && currRank <= maximalMeaningfulRank) {
             for (int i = 0; i < n; ++i) {
-                if (ranks[i] != currRank) {
-                    continue;
-                }
-                final double[] currP = points[i];
-                for (int j = i + 1; j < n; ++j) {
-                    if (ranks[j] != currRank) {
-                        continue;
-                    }
-                    int comparison = DominanceHelper.dominanceComparison(currP, points[j], dim);
-                    if (comparison > 0) {
-                        ++ranks[i];
-                        break;
-                    }
-                    if (comparison < 0) {
-                        ++ranks[j];
-                    }
-                }
                 if (ranks[i] == currRank) {
-                    ++nRanked;
+                    if (innerLoop(points, ranks, dim, currRank, i, n)) {
+                        ++nRanked;
+                    } else {
+                        ranks[i] = currRank + 1;
+                    }
                 }
             }
             ++currRank;
         }
+    }
+
+    private static boolean innerLoop(double[][] points, int[] ranks, int dim, int currRank, int from, int until) {
+        final double[] currP = points[from];
+        for (int curr = from; ++curr < until; ) {
+            if (ranks[curr] == currRank) {
+                int comparison = DominanceHelper.dominanceComparison(currP, points[curr], dim);
+                if (comparison < 0) {
+                    ranks[curr] = currRank + 1;
+                } else if (comparison > 0) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 }
