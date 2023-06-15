@@ -34,8 +34,8 @@ public final class OriginalV2 extends NonDominatedSorting {
                     for (int j = i; ++j < n; ) {
                         if (ranks[j] == currRank) {
                             switch (DominanceHelper.dominanceComparison(currP, points[j], dim)) {
-                                case -1: ranks[j] = currRank + 1; break;
-                                case +1: ranks[i] = currRank + 1; continue outerLoop;
+                                case -1: ++ranks[j]; break;
+                                case +1: ++ranks[i]; continue outerLoop;
                             }
                         }
                     }

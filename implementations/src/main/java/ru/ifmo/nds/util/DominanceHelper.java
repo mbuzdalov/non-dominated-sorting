@@ -36,9 +36,9 @@ public final class DominanceHelper {
         return true;
     }
 
-    private static int dominanceComparisonHelper(double[] a, double[] b, int from, int dim, int returnOnEnd) {
-        for (int i = from; i < dim; ++i) {
-            if (a[i] < b[i]) {
+    private static int dominanceComparisonHelper(double[] a, double[] b, int dim, int maxDim, int returnOnEnd) {
+        while (++dim < maxDim) {
+            if (a[dim] < b[dim]) {
                 return 0;
             }
         }
@@ -49,10 +49,10 @@ public final class DominanceHelper {
         for (int i = 0; i < dim; ++i) {
             double ai = a[i], bi = b[i];
             if (ai < bi) {
-                return dominanceComparisonHelper(b, a, i + 1, dim, -1);
+                return dominanceComparisonHelper(b, a, i, dim, -1);
             }
             if (ai > bi) {
-                return dominanceComparisonHelper(a, b, i + 1, dim, 1);
+                return dominanceComparisonHelper(a, b, i, dim, 1);
             }
         }
         return 0;
