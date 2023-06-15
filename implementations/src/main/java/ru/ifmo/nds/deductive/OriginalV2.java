@@ -27,18 +27,15 @@ public final class OriginalV2 extends NonDominatedSorting {
 
         int currRank = 0, nRanked = 0;
         while (nRanked < n && currRank <= maximalMeaningfulRank) {
+            outerLoop:
             for (int i = 0; i < n; ++i) {
                 if (ranks[i] == currRank) {
                     final double[] currP = points[i];
                     for (int j = i; ++j < n; ) {
                         if (ranks[j] == currRank) {
-                            int comparison = DominanceHelper.dominanceComparison(currP, points[j], dim);
-                            if (comparison <= 0) {
-                                ranks[j] = currRank - comparison;
-                            } else {
-                                ranks[i] = currRank + 1;
-                                --nRanked;
-                                break;
+                            switch (DominanceHelper.dominanceComparison(currP, points[j], dim)) {
+                                case -1: ranks[j] = currRank + 1; break;
+                                case +1: ranks[i] = currRank + 1; continue outerLoop;
                             }
                         }
                     }
