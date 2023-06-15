@@ -11,6 +11,7 @@ import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 
 import ru.ifmo.nds.IdCollection;
+import ru.ifmo.nds.jmh.AntiOriginalDeductiveSort;
 import ru.ifmo.nds.jmh.UniformCorrelated;
 import ru.ifmo.nds.jmh.UniformHypercube;
 import ru.ifmo.nds.jmh.UniformHyperplanes;
@@ -112,6 +113,7 @@ public class Minimal {
                 .include(UniformHypercube.class.getName())
                 .include(UniformHyperplanes.class.getName())
                 .include(UniformCorrelated.class.getName())
+                .include(AntiOriginalDeductiveSort.class.getName())
                 .param("algorithmId", algorithms.toArray(stub))
                 .param("n", n.toArray(stub))
                 .param("d", d.toArray(stub))
