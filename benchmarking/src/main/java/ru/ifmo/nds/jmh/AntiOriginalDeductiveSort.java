@@ -39,7 +39,7 @@ public class AntiOriginalDeductiveSort {
         for (int i = 0; i < h; ++i) {
             dataset[i][d - 2] = i + 1;
             dataset[i][d - 1] = h - i - 1;
-            dataset[h + i][d - 1] = n - i;
+            dataset[h + i][d - 1] = h - i;
         }
     }
 
