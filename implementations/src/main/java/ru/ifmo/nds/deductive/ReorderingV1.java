@@ -32,30 +32,29 @@ public final class ReorderingV1 extends NonDominatedSorting {
         for (int rank = 0; from < n && rank <= maximalMeaningfulRank; ++rank) {
             int curr = from;
             int last = n;
+            outerLoop:
             while (curr < last) {
                 final int currI = indices[curr];
                 final double[] currP = points[currI];
                 int next = curr + 1;
-                boolean nonDominated = true;
                 while (next < last) {
                     final int nextI = indices[next];
-                    int comparison = DominanceHelper.dominanceComparison(currP, points[nextI], dim);
-                    if (comparison == 0) {
-                        ++next;
-                    } else if (comparison < 0) {
-                        indices[next] = indices[--last];
-                        indices[last] = nextI;
-                    } else {
-                        nonDominated = false;
-                        indices[curr] = indices[--last];
-                        indices[last] = currI;
-                        break;
+                    switch (DominanceHelper.dominanceComparison(currP, points[nextI], dim)) {
+                        case -1:
+                            indices[next] = indices[--last];
+                            indices[last] = nextI;
+                            break;
+                        case 0:
+                            ++next;
+                            break;
+                        case +1:
+                            indices[curr] = indices[--last];
+                            indices[last] = currI;
+                            continue outerLoop;
                     }
                 }
-                if (nonDominated) {
-                    ranks[currI] = rank;
-                    ++curr;
-                }
+                ranks[currI] = rank;
+                ++curr;
             }
             from = last;
         }
