@@ -49,6 +49,7 @@ public final class IdCollection {
 
         addNonDominatedSortingFactory("deductive.original.v1", DeductiveSort.getOriginalImplementationV1());
         addNonDominatedSortingFactory("deductive.original.v2", DeductiveSort.getOriginalImplementationV2());
+        addNonDominatedSortingFactory("deductive.original.v3", DeductiveSort.getOriginalImplementationV3());
         addNonDominatedSortingFactory("deductive.reordering.v1", DeductiveSort.getReorderingImplementationV1());
         addNonDominatedSortingFactory("deductive.reordering.v2", DeductiveSort.getReorderingImplementationV2());
         addNonDominatedSortingFactory("deductive.quadratic.randomized.v1", DeductiveSort.getRandomizedQuadraticImplementationV1());
@@ -57,7 +58,7 @@ public final class IdCollection {
         addNonDominatedSortingFactory("deductive.quadratic.deterministic.v2", DeductiveSort.getDeterministicQuadraticImplementationV2());
         addNonDominatedSortingFactory("deductive.quadratic.deterministic.v3", DeductiveSort.getDeterministicQuadraticImplementationV3());
         addNonDominatedSortingFactory("deductive.quadratic.deterministic.v4", DeductiveSort.getDeterministicQuadraticImplementationV4());
-        addNonDominatedSortingFactory("deductive.original.v2.randomized", DeductiveSort.getRandomizedOriginalImplementationV2());
+        addNonDominatedSortingFactory("deductive.original.v3.randomized", DeductiveSort.getRandomizedOriginalImplementationV3());
 
         for (boolean isMergeRecursive : new boolean[] { false, true }) {
             String mergeString = isMergeRecursive ? "recmerge" : "seqmerge";
