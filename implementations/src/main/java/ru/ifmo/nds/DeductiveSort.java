@@ -13,8 +13,6 @@ public final class DeductiveSort {
             new OriginalV3(maximumPoints, maximumDimension, true);
     private static final NonDominatedSortingFactory INSTANCE_R1 = ReorderingV1::new;
     private static final NonDominatedSortingFactory INSTANCE_R2 = ReorderingV2::new;
-    private static final NonDominatedSortingFactory INSTANCE_RQ1 = RandomizedQuadraticV1::new;
-    private static final NonDominatedSortingFactory INSTANCE_RQ2 = RandomizedQuadraticV2::new;
     private static final NonDominatedSortingFactory INSTANCE_DQ1 = DeterministicQuadraticV1::new;
     private static final NonDominatedSortingFactory INSTANCE_DQ2 = DeterministicQuadraticV2::new;
     private static final NonDominatedSortingFactory INSTANCE_DQ3 = DeterministicQuadraticV3::new;
@@ -43,14 +41,6 @@ public final class DeductiveSort {
 
     public static NonDominatedSortingFactory getRandomizedOriginalImplementationV3() {
         return INSTANCE_O3_RANDOMIZED;
-    }
-
-    public static NonDominatedSortingFactory getRandomizedQuadraticImplementationV1() {
-        return INSTANCE_RQ1;
-    }
-
-    public static NonDominatedSortingFactory getRandomizedQuadraticImplementationV2() {
-        return INSTANCE_RQ2;
     }
 
     public static NonDominatedSortingFactory getDeterministicQuadraticImplementationV1() {

@@ -96,8 +96,6 @@ public class TortureTesting {
                 DeductiveSort.getOriginalImplementationV1(),
                 DeductiveSort.getReorderingImplementationV1(),
                 DeductiveSort.getReorderingImplementationV2(),
-                DeductiveSort.getRandomizedQuadraticImplementationV1(),
-                DeductiveSort.getRandomizedQuadraticImplementationV2(),
                 DeductiveSort.getDeterministicQuadraticImplementationV1(),
                 DeductiveSort.getDeterministicQuadraticImplementationV2(),
                 DeductiveSort.getDeterministicQuadraticImplementationV3(),
