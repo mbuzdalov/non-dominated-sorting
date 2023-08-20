@@ -58,8 +58,7 @@ public final class OriginalV3 extends NonDominatedSorting {
                 for (int j = i; ++j < n; ) {
                     int comparison = DominanceHelper.dominanceComparison(currP, points[j], dim);
                     if (comparison != 0) {
-                        complete0(i, j, comparison);
-                        continueSorting();
+                        solveRemaining(i, j, comparison);
                         return;
                     }
                 }
@@ -69,8 +68,20 @@ public final class OriginalV3 extends NonDominatedSorting {
             ranks = null;
         }
 
-        private void complete0(int lastLeft, int lastRight, int lastComparison) {
-            initializeNext0(next, n);
+        private void solveRemaining(int lastLeft, int lastRight, int lastComparison) {
+            initializeNext0(next, lastLeft, n);
+            completeInterruptedIteration(lastLeft, lastRight, lastComparison);
+            normalIteration(next[lastLeft]);
+
+            int aliveN = fillOrder0(lastLeft, n, ranks, order);
+            // If the version we want requires shuffling, we do it now.
+            if (shuffle) {
+                shuffleOrder(order, aliveN);
+            }
+            continueSorting(aliveN);
+        }
+
+        private void completeInterruptedIteration(int lastLeft, int lastRight, int lastComparison) {
             if (lastComparison < 0) {
                 ranks[lastRight] = 1;
                 next[lastRight - 1] = next[lastRight];
@@ -78,15 +89,9 @@ public final class OriginalV3 extends NonDominatedSorting {
             } else {
                 ranks[lastLeft] = 1;
             }
-            normalIteration(next[lastLeft]);
         }
 
-        private void continueSorting() {
-            int aliveN = fillOrder0(n, ranks, order);
-            // If the version we want requires shuffling, we do it now.
-            if (shuffle) {
-                shuffleOrder(order, aliveN);
-            }
+        private void continueSorting(int aliveN) {
             for (int currRank = 1; currRank <= maximalMeaningfulRank && aliveN > 0; ++currRank) {
                 // Initialize the list by the elements stored in `order`.
                 initializeNext(next, order, aliveN);
@@ -137,23 +142,26 @@ public final class OriginalV3 extends NonDominatedSorting {
         }
     }
 
-    private static void initializeNext0(int[] next, int n) {
-        for (int i = 1; i < n; ++i) {
-            next[i - 1] = i;
-        }
-        next[n - 1] = -1;
+    private static void initializeNext0(int[] next, int lastLeft, int n) {
+        int maxLeft = n - 1;
+        do {
+            next[lastLeft] = ++lastLeft;
+        } while (lastLeft < maxLeft);
+        next[maxLeft] = -1;
     }
 
     private static void initializeNext(int[] next, int[] order, int n) {
-        for (int i = 1; i < n; ++i) {
-            next[order[i - 1]] = order[i];
-        }
-        next[order[n - 1]] = -1;
+        int maxIndex = n - 1;
+        int i = 0;
+        do {
+            next[order[i]] = order[++i];
+        } while (i < maxIndex);
+        next[order[maxIndex]] = -1;
     }
 
-    private static int fillOrder0(int n, int[] ranks, int[] order) {
+    private static int fillOrder0(int lastLeft, int n, int[] ranks, int[] order) {
         int newN = 0;
-        for (int i = 0; i < n; ++i) {
+        for (int i = lastLeft; i < n; ++i) {
             if (ranks[i] != 0) {
                 order[newN] = i;
                 ++newN;
