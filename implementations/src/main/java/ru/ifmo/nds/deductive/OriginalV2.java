@@ -1,9 +1,9 @@
 package ru.ifmo.nds.deductive;
 
+import java.util.Arrays;
+
 import ru.ifmo.nds.NonDominatedSorting;
 import ru.ifmo.nds.util.DominanceHelper;
-
-import java.util.Arrays;
 
 public final class OriginalV2 extends NonDominatedSorting {
     public OriginalV2(int maximumPoints, int maximumDimension) {

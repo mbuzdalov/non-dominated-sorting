@@ -1,10 +1,10 @@
 package ru.ifmo.nds.deductive;
 
-import ru.ifmo.nds.NonDominatedSorting;
-import ru.ifmo.nds.util.DominanceHelper;
-
 import java.util.Arrays;
 import java.util.concurrent.ThreadLocalRandom;
+
+import ru.ifmo.nds.NonDominatedSorting;
+import ru.ifmo.nds.util.DominanceHelper;
 
 public final class OriginalV3 extends NonDominatedSorting {
     private State state;
