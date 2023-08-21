@@ -60,19 +60,19 @@ public final class DeterministicQuadraticV2 extends NonDominatedSorting {
             if (replayUntil > curr) {
                 // The current point got replaced at least once.
                 // This means we need to scan the prefix [curr; replayUntil) once more.
-                last = replay(indices, dim - 1, curr, last, replayUntil, currP, points);
+                last = replay(indices, dim, curr, last, replayUntil, currP, points);
             }
         }
         return last;
     }
 
-    private static int replay(int[] indices, int maxObj, int lowLimit, int last, int index, double[] currP, double[][] points) {
+    private static int replay(int[] indices, int dim, int lowLimit, int last, int index, double[] currP, double[][] points) {
         // Everything initially at index cannot be equal to currP and cannot dominate it.
         // This allows using an efficient comparison.
         // When looping from the end, we also simplify the logic vastly.
         while (--index >= lowLimit) {
             int nextI = indices[index];
-            if (DominanceHelper.strictlyDominatesAssumingNotEqual(currP, points[nextI], maxObj)) {
+            if (DominanceHelper.strictlyDominatesAssumingNotEqual(currP, points[nextI], dim)) {
                 indices[index] = indices[--last];
                 indices[last] = nextI;
             }

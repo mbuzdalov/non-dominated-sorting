@@ -111,7 +111,7 @@ public final class FilterSort {
             return nCandidates;
         }
 
-        private boolean isCandidateGood(int curr, int maxObj) {
+        private boolean isCandidateGood(int curr, int dim) {
             double[] currPoint = points[curr];
             int worstObj = worstObjective[curr];
             double currWorst = currPoint[worstObj];
@@ -122,7 +122,7 @@ public final class FilterSort {
                 if (alive[test]) {
                     double[] testPoint = points[test];
                     if (testPoint[worstObj] <= currWorst &&
-                            DominanceHelper.strictlyDominatesAssumingNotEqual(testPoint, currPoint, maxObj)) {
+                            DominanceHelper.strictlyDominatesAssumingNotEqual(testPoint, currPoint, dim)) {
                         return false;
                     }
                 }
@@ -130,14 +130,14 @@ public final class FilterSort {
             return true;
         }
 
-        private void runSorting(int n, int maxObj, int maximalMeaningfulRank) {
+        private void runSorting(int n, int dim, int maximalMeaningfulRank) {
             Arrays.fill(alive, 0, n, true);
             Arrays.fill(ranks, maximalMeaningfulRank + 1);
 
             int aliveCount = n;
             int filterIndex, filterIndexToStart = 0;
 
-            Arrays.fill(startOrderByObjective, 0, maxObj + 1, 0);
+            Arrays.fill(startOrderByObjective, 0, dim, 0);
 
             for (int currentRank = 0; currentRank <= maximalMeaningfulRank && aliveCount > 0; ++currentRank) {
                 // Choose the filter
@@ -155,7 +155,7 @@ public final class FilterSort {
 
                 // Collect the candidate points (those which precede the filter in at least one objective)
                 int nCandidates = 0;
-                for (int obj = 0; obj <= maxObj; ++obj) {
+                for (int obj = 0; obj < dim; ++obj) {
                     nCandidates = populateCandidates(filterIndex, obj, nCandidates);
                 }
 
@@ -163,7 +163,7 @@ public final class FilterSort {
                 for (int i = 0; i < nCandidates; ++i) {
                     int curr = candidates[i];
                     isCandidate[curr] = false;
-                    if (isCandidateGood(curr, maxObj)) {
+                    if (isCandidateGood(curr, dim)) {
                         ranks[curr] = currentRank;
                     }
                 }
@@ -185,7 +185,7 @@ public final class FilterSort {
             sorter.lexicographicalSort(points, indices, 0, oldN, dim);
             int n = ArraySorter.retainUniquePoints(points, indices, this.points, ranks);
             initializeObjectiveIndices(n, dim);
-            runSorting(n, dim - 1, maximalMeaningfulRank);
+            runSorting(n, dim, maximalMeaningfulRank);
             for (int i = 0; i < oldN; ++i) {
                 ranks[i] = this.ranks[ranks[i]];
                 this.points[i] = null;

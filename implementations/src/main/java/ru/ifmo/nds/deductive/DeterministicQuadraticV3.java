@@ -227,13 +227,12 @@ public final class DeterministicQuadraticV3 extends NonDominatedSorting {
         }
 
         private void replay(double[] currP, int replayUntil) {
-            final int maxObj = dim - 1;
             // Everything initially at index cannot be equal to currP and cannot dominate it.
             // This allows using an efficient comparison.
             // By looping from the end, we also simplify the logic vastly.
             while (replayUntil > from) {
                 int nextI = indices[--replayUntil];
-                if (DominanceHelper.strictlyDominatesAssumingNotEqual(currP, points[nextI], maxObj)) {
+                if (DominanceHelper.strictlyDominatesAssumingNotEqual(currP, points[nextI], dim)) {
                     indices[replayUntil] = indices[--until];
                     indices[until] = nextI;
                 }

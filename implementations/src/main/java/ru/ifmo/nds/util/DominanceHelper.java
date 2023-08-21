@@ -27,8 +27,8 @@ public final class DominanceHelper {
         return true;
     }
 
-    public static boolean strictlyDominatesAssumingNotEqual(double[] goodPoint, double[] weakPoint, int maxObj) {
-        for (int i = maxObj; i >= 0; --i) {
+    public static boolean strictlyDominatesAssumingNotEqual(double[] goodPoint, double[] weakPoint, int dim) {
+        for (int i = 0; i < dim; ++i) {
             if (goodPoint[i] > weakPoint[i]) {
                 return false;
             }

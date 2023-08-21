@@ -37,11 +37,11 @@ public abstract class DCNSBase extends NonDominatedSorting {
     final boolean checkIfDoesNotDominate(int targetFront, int pointIndex) {
         int index = firstIndex[targetFront];
         final double[] point = points[pointIndex];
-        final int maxObj = point.length - 1;
+        final int dim = point.length;
         while (index != -1) {
             // cannot assume `points[index]` is lexicographically smaller than `point`
             // because the right part is processed front-first.
-            if (DominanceHelper.strictlyDominatesAssumingNotEqual(points[index], point, maxObj)) {
+            if (DominanceHelper.strictlyDominatesAssumingNotEqual(points[index], point, dim)) {
                 parents[pointIndex] = index;
                 return false;
             }
@@ -162,9 +162,9 @@ public abstract class DCNSBase extends NonDominatedSorting {
     @Override
     protected void sortChecked(double[][] points, int[] ranks, int maximalMeaningfulRank) {
         int oldN = points.length;
-        int maxObj = points[0].length - 1;
+        int dim = points[0].length;
         ArrayHelper.fillIdentity(indices, oldN);
-        sorter.lexicographicalSort(points, indices, 0, oldN, maxObj + 1);
+        sorter.lexicographicalSort(points, indices, 0, oldN, dim);
 
         int n = ArraySorter.retainUniquePoints(points, indices, this.points, ranks);
         for (int i = 0; i < n; ++i) {
@@ -176,7 +176,7 @@ public abstract class DCNSBase extends NonDominatedSorting {
 
         int treeLevel = MathEx.log2up(n);
         // The first run of merging can be written with a much smaller leading constant.
-        merge0(n, maxObj);
+        merge0(n, dim - 1);
         // The rest of the runs use the generic implementation.
         for (int i = 1; i < treeLevel; i++) {
             int delta = 1 << i, delta2 = delta + delta;

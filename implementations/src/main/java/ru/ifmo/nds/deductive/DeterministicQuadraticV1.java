@@ -24,7 +24,6 @@ public final class DeterministicQuadraticV1 extends NonDominatedSorting {
         final int[] indices = this.indices;
         final int n = points.length;
         final int dim = points[0].length;
-        final int maxObj = dim - 1;
 
         ArrayHelper.fillIdentity(indices, n);
         Arrays.fill(ranks, maximalMeaningfulRank + 1);
@@ -40,7 +39,7 @@ public final class DeterministicQuadraticV1 extends NonDominatedSorting {
                 for (int next = curr + 1; next < last; ++next) {
                     int nextI = indices[next];
                     double[] nextP = points[nextI];
-                    if (DominanceHelper.strictlyDominatesAssumingNotEqual(nextP, currP, maxObj)) {
+                    if (DominanceHelper.strictlyDominatesAssumingNotEqual(nextP, currP, dim)) {
                         indices[next] = currI;
                         currI = nextI;
                         currP = nextP;
