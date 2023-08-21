@@ -4,8 +4,6 @@ import ru.ifmo.nds.NonDominatedSorting;
 import ru.ifmo.nds.util.ArrayHelper;
 import ru.ifmo.nds.util.DominanceHelper;
 
-import java.util.Arrays;
-
 public final class Arena extends NonDominatedSorting {
     private State state;
 
@@ -49,52 +47,71 @@ public final class Arena extends NonDominatedSorting {
         }
 
         void solve() {
-            Arrays.fill(ranks, 0);
-
             for (int i = 0; i < n; ++i) {
-                double[] currP = points[i];
-                for (int j = i; ++j < n; ) {
-                    int comparison = DominanceHelper.dominanceComparison(currP, points[j], dim);
-                    if (comparison != 0) {
-                        solveRemaining(i, j, comparison);
-                        return;
-                    }
+                if (naiveInner(i)) {
+                    break;
                 }
+                ranks[i] = 0;
             }
 
             points = null;
             ranks = null;
         }
 
+        boolean naiveInner(int left) {
+            double[] currP = points[left];
+            for (int j = left; ++j < n; ) {
+                int comparison = DominanceHelper.dominanceComparison(currP, points[j], dim);
+                if (comparison != 0) {
+                    solveRemaining(left, j, comparison);
+                    return true;
+                }
+            }
+            return false;
+        }
+
         void solveRemaining(int lastLeft, int lastRight, int lastComparison) {
             ArrayHelper.fillIdentityFromIndex(order, lastLeft, n);
             trashStart = n;
             if (lastComparison < 0) {
-                ranks[lastRight] = 1;
                 order[lastRight] = order[--trashStart];
                 order[trashStart] = lastRight;
             } else {
-                ranks[lastLeft] = 1;
                 order[lastLeft] = lastRight;
                 order[lastRight] = order[--trashStart];
                 order[trashStart] = lastLeft;
             }
-            pointScan(lastLeft, lastRight, order[lastLeft]);
+            pointScan(0, lastLeft, lastRight, order[lastLeft]);
             continueSolving(lastLeft + 1);
         }
 
         void continueSolving(int intervalStart) {
             int rank = 0;
             do {
-                for (int left = intervalStart; left < trashStart; ++left) {
-                    pointScan(left, left + 1, left);
-                }
+                continueInner(rank, intervalStart);
                 intervalStart = trashStart;
                 trashStart = n;
             } while (++rank <= maximalMeaningfulRank && intervalStart < trashStart);
+            fillNextRank(intervalStart);
         }
 
-        void pointScan(int left, int right, int rescanMax) {
+        void continueInner(int rank, int intervalStart) {
+            for (int left = intervalStart; left < trashStart; ++left) {
+                pointScan(rank, left, left + 1, left);
+            }
+        }
+
+        void fillNextRank(int intervalStart) {
+            if (intervalStart < n) {
+                int rankToFill = maximalMeaningfulRank + 1;
+                while (intervalStart < n) {
+                    ranks[order[intervalStart]] = rankToFill;
+                    ++intervalStart;
+                }
+            }
+        }
+
+        void pointScan(int rank, int left, int right, int rescanMax) {
             int currI = order[left];
             double[] currP = points[currI];
             while (right < trashStart) {
@@ -119,6 +136,7 @@ public final class Arena extends NonDominatedSorting {
                     ++right;
                 }
             }
+            ranks[currI] = rank;
             rescan(currP, left, rescanMax);
         }
 
@@ -126,7 +144,6 @@ public final class Arena extends NonDominatedSorting {
             while (--right > left) {
                 int nextI = order[right];
                 if (DominanceHelper.strictlyDominatesAssumingNotEqual(currP, points[nextI], dim)) {
-                    ++ranks[nextI];
                     order[right] = order[--trashStart];
                     order[trashStart] = nextI;
                 }

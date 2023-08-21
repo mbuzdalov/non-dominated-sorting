@@ -54,18 +54,25 @@ public final class OriginalV3 extends NonDominatedSorting {
             Arrays.fill(ranks, 0);
 
             for (int i = 0; i < n; ++i) {
-                double[] currP = points[i];
-                for (int j = i; ++j < n; ) {
-                    int comparison = DominanceHelper.dominanceComparison(currP, points[j], dim);
-                    if (comparison != 0) {
-                        solveRemaining(i, j, comparison);
-                        return;
-                    }
+                if (naiveInner(i)) {
+                    break;
                 }
             }
 
             points = null;
             ranks = null;
+        }
+
+        boolean naiveInner(int left) {
+            double[] currP = points[left];
+            for (int j = left; ++j < n; ) {
+                int comparison = DominanceHelper.dominanceComparison(currP, points[j], dim);
+                if (comparison != 0) {
+                    solveRemaining(left, j, comparison);
+                    return true;
+                }
+            }
+            return false;
         }
 
         private void solveRemaining(int lastLeft, int lastRight, int lastComparison) {
