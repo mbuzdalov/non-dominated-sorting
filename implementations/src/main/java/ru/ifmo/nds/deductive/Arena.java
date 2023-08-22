@@ -59,8 +59,7 @@ public final class Arena extends NonDominatedSorting {
             Arrays.fill(ranks, 0, left, 0);
 
             if (left < n) {
-                int sign = innerResult >> 31;
-                solveRemaining(left, innerResult ^ sign, sign < 0);
+                solveRemaining(left, innerResult);
             }
 
             points = null;
@@ -78,18 +77,14 @@ public final class Arena extends NonDominatedSorting {
             return 0;
         }
 
-        void solveRemaining(int lastLeft, int lastRight, boolean leftDominated) {
+        void solveRemaining(int lastLeft, int innerResult) {
+            int innerResultSign = innerResult >> 31;
+            int lastRight = innerResult ^ innerResultSign;
             ArrayHelper.fillIdentityFromIndex(order, lastLeft, lastRight);
 
-            int leftI;
+            int leftI = innerResultSign < 0 ? lastLeft : lastRight;
             trashStart = n - 1;
-            if (leftDominated) {
-                leftI = lastLeft;
-                order[trashStart] = lastRight;
-            } else {
-                leftI = lastRight;
-                order[trashStart] = lastLeft;
-            }
+            order[trashStart] = lastLeft ^ lastRight ^ leftI;
             pointScan0(lastLeft, lastRight, leftI);
             continueSolving(lastLeft + 1);
         }
@@ -106,7 +101,7 @@ public final class Arena extends NonDominatedSorting {
 
         void continueInner(int rank, int intervalStart) {
             for (int left = intervalStart; left < trashStart; ++left) {
-                pointScan(rank, left, left + 1, left);
+                pointScan(rank, left);
             }
         }
 
@@ -128,16 +123,15 @@ public final class Arena extends NonDominatedSorting {
                 double[] nextP = points[nextI];
                 int comparison = DominanceHelper.dominanceComparison(currP, nextP, dim);
                 if (comparison != 0) {
-                    --trashStart;
-                    if (comparison < 0) {
-                        order[trashStart] = nextI;
-                    } else {
-                        order[trashStart] = currI;
+                    int trashed = nextI;
+                    if (comparison > 0) {
+                        trashed = currI;
                         rescanMax = right;
                         currI = nextI;
                         currP = nextP;
                     }
-                    nextI = trashStart;
+                    nextI = --trashStart;
+                    order[trashStart] = trashed;
                 } else {
                     order[right] = nextI;
                     nextI = ++right;
@@ -148,7 +142,9 @@ public final class Arena extends NonDominatedSorting {
             rescan(currP, left, rescanMax);
         }
 
-        void pointScan(int rank, int left, int right, int rescanMax) {
+        void pointScan(int rank, int left) {
+            int rescanMax = left;
+            int right = left + 1;
             int currI = order[left];
             double[] currP = points[currI];
             while (right < trashStart) {
@@ -156,15 +152,15 @@ public final class Arena extends NonDominatedSorting {
                 double[] nextP = points[nextI];
                 int comparison = DominanceHelper.dominanceComparison(currP, nextP, dim);
                 if (comparison != 0) {
-                    order[right] = order[--trashStart];
-                    if (comparison < 0) {
-                        order[trashStart] = nextI;
-                    } else {
-                        order[trashStart] = currI;
+                    int trashed = nextI;
+                    if (comparison > 0) {
+                        trashed = currI;
                         rescanMax = right;
                         currI = nextI;
                         currP = nextP;
                     }
+                    order[right] = order[--trashStart];
+                    order[trashStart] = trashed;
                 } else {
                     ++right;
                 }
