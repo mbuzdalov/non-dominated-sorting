@@ -34,7 +34,7 @@ public final class Arena extends NonDominatedSorting {
         double[][] points;
         int[] order, ranks;
         int n, dim, maximalMeaningfulRank;
-        int trashStart;
+        int left, trashStart;
 
         State(int[] order) {
             this.order = order;
@@ -49,74 +49,80 @@ public final class Arena extends NonDominatedSorting {
         }
 
         void solve() {
-            int left = 0;
-            int innerResult;
-
-            do {
-                innerResult = naiveInner(left);
-            } while (innerResult == 0 && ++left < n);
-
+            int innerResult = optimisticRun();
             Arrays.fill(ranks, 0, left, 0);
 
-            if (left < n) {
-                solveRemaining(left, innerResult);
+            if (innerResult != 0) {
+                solveRemaining(innerResult);
             }
 
             points = null;
             ranks = null;
         }
 
-        int naiveInner(int left) {
+        int optimisticRun() {
+            int innerResult;
+            left = 0;
+            do {
+                innerResult = naiveInner();
+            } while (innerResult == 0 && ++left < n);
+            return innerResult;
+        }
+
+        int naiveInner() {
             double[] currP = points[left];
-            for (int j = left; ++j < n; ) {
-                int comparison = DominanceHelper.dominanceComparison(currP, points[j], dim);
+            int right = left;
+            while (++right < n) {
+                int comparison = DominanceHelper.dominanceComparison(currP, points[right], dim);
                 if (comparison != 0) {
-                    return j ^ (comparison >> 1);
+                    return right ^ (comparison >> 1);
                 }
             }
             return 0;
         }
 
-        void solveRemaining(int lastLeft, int innerResult) {
+        void solveRemaining(int innerResult) {
             int innerResultSign = innerResult >> 31;
             int lastRight = innerResult ^ innerResultSign;
-            ArrayHelper.fillIdentityFromIndex(order, lastLeft, lastRight);
+            ArrayHelper.fillIdentityFromIndex(order, left, lastRight);
 
-            int leftI = innerResultSign < 0 ? lastLeft : lastRight;
+            int leftI = innerResultSign < 0 ? left : lastRight;
             trashStart = n - 1;
-            order[trashStart] = lastLeft ^ lastRight ^ leftI;
-            pointScan0(lastLeft, lastRight, leftI);
-            continueSolving(lastLeft + 1);
+            order[trashStart] = left ^ lastRight ^ leftI;
+            pointScan0(lastRight, leftI);
+            continueSolving();
         }
 
-        void continueSolving(int intervalStart) {
+        void continueSolving() {
             int rank = 0;
+            ++left;
             do {
-                continueInner(rank, intervalStart);
-                intervalStart = trashStart;
+                continueInner(rank);
+                left = trashStart;
                 trashStart = n;
-            } while (++rank <= maximalMeaningfulRank && intervalStart < trashStart);
-            fillNextRank(intervalStart);
+            } while (++rank <= maximalMeaningfulRank && left < trashStart);
+            fillNonMeaningfulRank();
         }
 
-        void continueInner(int rank, int intervalStart) {
-            for (int left = intervalStart; left < trashStart; ++left) {
-                pointScan(rank, left);
+        void continueInner(int rank) {
+            while (left < trashStart) {
+                pointScan(rank);
+                ++left;
             }
         }
 
-        void fillNextRank(int intervalStart) {
-            if (intervalStart < n) {
+        void fillNonMeaningfulRank() {
+            if (left < n) {
                 int rankToFill = maximalMeaningfulRank + 1;
-                while (intervalStart < n) {
-                    ranks[order[intervalStart]] = rankToFill;
-                    ++intervalStart;
+                while (left < n) {
+                    ranks[order[left]] = rankToFill;
+                    ++left;
                 }
             }
         }
 
-        void pointScan0(int left, int right, int currI) {
-            int rescanMax = currI;
+        void pointScan0(int right, int currI) {
+            int rescanUntil = currI;
             double[] currP = points[currI];
             int nextI = trashStart;
             while (right < trashStart) {
@@ -126,7 +132,7 @@ public final class Arena extends NonDominatedSorting {
                     int trashed = nextI;
                     if (comparison > 0) {
                         trashed = currI;
-                        rescanMax = right;
+                        rescanUntil = right;
                         currI = nextI;
                         currP = nextP;
                     }
@@ -139,11 +145,11 @@ public final class Arena extends NonDominatedSorting {
             }
             order[left] = currI;
             ranks[currI] = 0;
-            rescan(currP, left, rescanMax);
+            rescan(currP, rescanUntil);
         }
 
-        void pointScan(int rank, int left) {
-            int rescanMax = left;
+        void pointScan(int rank) {
+            int rescanUntil = left;
             int right = left + 1;
             int currI = order[left];
             double[] currP = points[currI];
@@ -155,7 +161,7 @@ public final class Arena extends NonDominatedSorting {
                     int trashed = nextI;
                     if (comparison > 0) {
                         trashed = currI;
-                        rescanMax = right;
+                        rescanUntil = right;
                         currI = nextI;
                         currP = nextP;
                     }
@@ -167,10 +173,10 @@ public final class Arena extends NonDominatedSorting {
             }
             order[left] = currI;
             ranks[currI] = rank;
-            rescan(currP, left, rescanMax);
+            rescan(currP, rescanUntil);
         }
 
-        void rescan(double[] currP, int left, int right) {
+        void rescan(double[] currP, int right) {
             while (--right > left) {
                 int nextI = order[right];
                 if (DominanceHelper.strictlyDominatesAssumingNotEqual(currP, points[nextI], dim)) {
