@@ -61,12 +61,14 @@ public final class Arena extends NonDominatedSorting {
         }
 
         int optimisticRun() {
-            int innerResult;
             left = 0;
             do {
-                innerResult = naiveInner();
-            } while (innerResult == 0 && ++left < n);
-            return innerResult;
+                int innerResult = naiveInner();
+                if (innerResult != 0) {
+                    return innerResult;
+                }
+            } while (++left < n);
+            return 0;
         }
 
         int naiveInner() {
@@ -125,7 +127,8 @@ public final class Arena extends NonDominatedSorting {
             int rescanUntil = currI;
             double[] currP = points[currI];
             int nextI = trashStart;
-            while (right < trashStart) {
+            int nIterations = trashStart - right;
+            while (--nIterations >= 0) {
                 double[] nextP = points[nextI];
                 int comparison = DominanceHelper.dominanceComparison(currP, nextP, dim);
                 if (comparison != 0) {
@@ -153,7 +156,8 @@ public final class Arena extends NonDominatedSorting {
             int right = left + 1;
             int currI = order[left];
             double[] currP = points[currI];
-            while (right < trashStart) {
+            int nIterations = trashStart - right;
+            while (--nIterations >= 0) {
                 int nextI = order[right];
                 double[] nextP = points[nextI];
                 int comparison = DominanceHelper.dominanceComparison(currP, nextP, dim);
