@@ -34,7 +34,7 @@ public final class Arena extends NonDominatedSorting {
         double[][] points;
         int[] order, ranks;
         int n, dim, maximalMeaningfulRank;
-        int left, trashStart;
+        int left, grave;
 
         State(int[] order) {
             this.order = order;
@@ -89,8 +89,8 @@ public final class Arena extends NonDominatedSorting {
             ArrayHelper.fillIdentityFromIndex(order, left, lastRight);
 
             int leftI = innerResultSign < 0 ? left : lastRight;
-            trashStart = n - 1;
-            order[trashStart] = left ^ lastRight ^ leftI;
+            grave = n - 1;
+            order[grave] = left ^ lastRight ^ leftI;
             pointScan0(lastRight, leftI);
             continueSolving();
         }
@@ -100,14 +100,14 @@ public final class Arena extends NonDominatedSorting {
             ++left;
             do {
                 continueInner(rank);
-                left = trashStart;
-                trashStart = n;
-            } while (++rank <= maximalMeaningfulRank && left < trashStart);
+                left = grave;
+                grave = n;
+            } while (++rank <= maximalMeaningfulRank && left < grave);
             fillNonMeaningfulRank();
         }
 
         void continueInner(int rank) {
-            while (left < trashStart) {
+            while (left < grave) {
                 pointScan(rank);
                 ++left;
             }
@@ -126,8 +126,8 @@ public final class Arena extends NonDominatedSorting {
         void pointScan0(int right, int currI) {
             int rescanUntil = currI;
             double[] currP = points[currI];
-            int nextI = trashStart;
-            int nIterations = trashStart - right;
+            int nextI = grave;
+            int nIterations = grave - right;
             while (--nIterations >= 0) {
                 double[] nextP = points[nextI];
                 int comparison = DominanceHelper.dominanceComparison(currP, nextP, dim);
@@ -139,14 +139,13 @@ public final class Arena extends NonDominatedSorting {
                         currI = nextI;
                         currP = nextP;
                     }
-                    nextI = --trashStart;
-                    order[trashStart] = trashed;
+                    nextI = --grave;
+                    order[grave] = trashed;
                 } else {
                     order[right] = nextI;
                     nextI = ++right;
                 }
             }
-            order[left] = currI;
             ranks[currI] = 0;
             rescan(currP, rescanUntil);
         }
@@ -156,7 +155,7 @@ public final class Arena extends NonDominatedSorting {
             int right = left + 1;
             int currI = order[left];
             double[] currP = points[currI];
-            int nIterations = trashStart - right;
+            int nIterations = grave - right;
             while (--nIterations >= 0) {
                 int nextI = order[right];
                 double[] nextP = points[nextI];
@@ -169,13 +168,12 @@ public final class Arena extends NonDominatedSorting {
                         currI = nextI;
                         currP = nextP;
                     }
-                    order[right] = order[--trashStart];
-                    order[trashStart] = trashed;
+                    order[right] = order[--grave];
+                    order[grave] = trashed;
                 } else {
                     ++right;
                 }
             }
-            order[left] = currI;
             ranks[currI] = rank;
             rescan(currP, rescanUntil);
         }
@@ -184,8 +182,8 @@ public final class Arena extends NonDominatedSorting {
             while (--right > left) {
                 int nextI = order[right];
                 if (DominanceHelper.strictlyDominatesAssumingNotEqual(currP, points[nextI], dim)) {
-                    order[right] = order[--trashStart];
-                    order[trashStart] = nextI;
+                    order[right] = order[--grave];
+                    order[grave] = nextI;
                 }
             }
         }
