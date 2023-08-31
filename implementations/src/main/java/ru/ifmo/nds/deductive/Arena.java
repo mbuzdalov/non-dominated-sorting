@@ -127,20 +127,20 @@ public final class Arena extends NonDominatedSorting {
             int rescanUntil = currI;
             double[] currP = points[currI];
             int nextI = grave;
-            int nIterations = grave - right;
-            while (--nIterations >= 0) {
+            while (grave > right) {
                 double[] nextP = points[nextI];
                 int comparison = DominanceHelper.dominanceComparison(currP, nextP, dim);
                 if (comparison != 0) {
-                    int trashed = nextI;
+                    --grave;
                     if (comparison > 0) {
-                        trashed = currI;
+                        order[grave] = currI;
                         rescanUntil = right;
                         currI = nextI;
                         currP = nextP;
+                    } else {
+                        order[grave] = nextI;
                     }
-                    nextI = --grave;
-                    order[grave] = trashed;
+                    nextI = grave;
                 } else {
                     order[right] = nextI;
                     nextI = ++right;
@@ -155,21 +155,20 @@ public final class Arena extends NonDominatedSorting {
             int right = left + 1;
             int currI = order[left];
             double[] currP = points[currI];
-            int nIterations = grave - right;
-            while (--nIterations >= 0) {
+            while (grave > right) {
                 int nextI = order[right];
                 double[] nextP = points[nextI];
                 int comparison = DominanceHelper.dominanceComparison(currP, nextP, dim);
                 if (comparison != 0) {
-                    int trashed = nextI;
+                    order[right] = order[--grave];
                     if (comparison > 0) {
-                        trashed = currI;
+                        order[grave] = currI;
                         rescanUntil = right;
                         currI = nextI;
                         currP = nextP;
+                    } else {
+                        order[grave] = nextI;
                     }
-                    order[right] = order[--grave];
-                    order[grave] = trashed;
                 } else {
                     ++right;
                 }
