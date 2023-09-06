@@ -31,10 +31,11 @@ public final class Arena extends NonDominatedSorting {
     }
 
     private static final class State {
-        double[][] points;
-        int[] order, ranks;
-        int n, dim, maximalMeaningfulRank;
-        int left, grave;
+        private double[][] points;
+        private final int[] order;
+        private int[] ranks;
+        private int n, dim, maximalMeaningfulRank;
+        private int left, grave;
 
         State(int[] order) {
             this.order = order;
@@ -60,7 +61,7 @@ public final class Arena extends NonDominatedSorting {
             ranks = null;
         }
 
-        int optimisticRun() {
+        private int optimisticRun() {
             left = 0;
             do {
                 int innerResult = naiveInner();
@@ -71,7 +72,7 @@ public final class Arena extends NonDominatedSorting {
             return 0;
         }
 
-        int naiveInner() {
+        private int naiveInner() {
             double[] currP = points[left];
             int right = left;
             while (++right < n) {
@@ -83,7 +84,7 @@ public final class Arena extends NonDominatedSorting {
             return 0;
         }
 
-        void solveRemaining(int innerResult) {
+        private void solveRemaining(int innerResult) {
             int innerResultSign = innerResult >> 31;
             int lastRight = innerResult ^ innerResultSign;
             ArrayHelper.fillIdentityFromIndex(order, left, lastRight);
@@ -95,7 +96,7 @@ public final class Arena extends NonDominatedSorting {
             continueSolving();
         }
 
-        void continueSolving() {
+        private void continueSolving() {
             int rank = 0;
             ++left;
             do {
@@ -106,14 +107,14 @@ public final class Arena extends NonDominatedSorting {
             fillNonMeaningfulRank();
         }
 
-        void continueInner(int rank) {
+        private void continueInner(int rank) {
             while (left < grave) {
                 pointScan(rank);
                 ++left;
             }
         }
 
-        void fillNonMeaningfulRank() {
+        private void fillNonMeaningfulRank() {
             if (left < n) {
                 int rankToFill = maximalMeaningfulRank + 1;
                 while (left < n) {
@@ -123,7 +124,7 @@ public final class Arena extends NonDominatedSorting {
             }
         }
 
-        void pointScan0(int right, int currI) {
+        private void pointScan0(int right, int currI) {
             int rescanUntil = currI;
             double[] currP = points[currI];
             int nextI = grave;
@@ -150,7 +151,7 @@ public final class Arena extends NonDominatedSorting {
             rescan(currP, rescanUntil);
         }
 
-        void pointScan(int rank) {
+        private void pointScan(int rank) {
             int rescanUntil = left;
             int right = left + 1;
             int currI = order[left];
@@ -160,7 +161,8 @@ public final class Arena extends NonDominatedSorting {
                 double[] nextP = points[nextI];
                 int comparison = DominanceHelper.dominanceComparison(currP, nextP, dim);
                 if (comparison != 0) {
-                    order[right] = order[--grave];
+                    --grave;
+                    order[right] = order[grave];
                     if (comparison > 0) {
                         order[grave] = currI;
                         rescanUntil = right;
@@ -181,7 +183,8 @@ public final class Arena extends NonDominatedSorting {
             while (--right > left) {
                 int nextI = order[right];
                 if (DominanceHelper.strictlyDominatesAssumingNotEqual(currP, points[nextI], dim)) {
-                    order[right] = order[--grave];
+                    --grave;
+                    order[right] = order[grave];
                     order[grave] = nextI;
                 }
             }
