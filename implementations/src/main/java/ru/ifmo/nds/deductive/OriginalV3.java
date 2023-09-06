@@ -4,13 +4,12 @@ import java.util.Arrays;
 import java.util.concurrent.ThreadLocalRandom;
 
 import ru.ifmo.nds.NonDominatedSorting;
-import ru.ifmo.nds.util.DominanceHelper;
 
 public final class OriginalV3 extends NonDominatedSorting {
     private State state;
     public OriginalV3(int maximumPoints, int maximumDimension, boolean shuffle) {
         super(maximumPoints, maximumDimension);
-        this.state = new State(this.indices, shuffle);
+        this.state = new State(this.indices, maximumDimension, shuffle);
     }
 
     @Override
@@ -32,22 +31,25 @@ public final class OriginalV3 extends NonDominatedSorting {
     private static final class State {
         final int[] next, order;
         int n, dim, maximalMeaningfulRank;
-        double[][] points;
+        final double[] flatPoints;
         int[] ranks;
         final boolean shuffle;
 
-        State(int[] next, boolean shuffle) {
+        State(int[] next, int maximumDimension, boolean shuffle) {
             this.next = next;
             this.order = new int[next.length];
+            this.flatPoints = new double[maximumDimension * next.length];
             this.shuffle = shuffle;
         }
 
         void init(double[][] points, int[] ranks, int maximalMeaningfulRank) {
             this.n = points.length;
             this.dim = points[0].length;
-            this.points = points;
             this.ranks = ranks;
             this.maximalMeaningfulRank = maximalMeaningfulRank;
+            for (int i = 0, t = 0; i < n; ++i, t += dim) {
+                System.arraycopy(points[i], 0, flatPoints, t, dim);
+            }
         }
 
         void solve() {
@@ -59,14 +61,51 @@ public final class OriginalV3 extends NonDominatedSorting {
                 }
             }
 
-            points = null;
             ranks = null;
         }
 
+        private static int dominanceComparisonLess(double[] flatPoints, int p1, int p1Max, int p2) {
+            while (++p1 < p1Max) {
+                if (flatPoints[p1] > flatPoints[++p2]) {
+                    return 0;
+                }
+            }
+            return -1;
+        }
+
+        private static int dominanceComparisonGreater(double[] flatPoints, int p1, int p1Max, int p2) {
+            while (++p1 < p1Max) {
+                if (flatPoints[p1] < flatPoints[++p2]) {
+                    return 0;
+                }
+            }
+            return +1;
+        }
+
+        private static int dominanceComparisonImpl(double[] flatPoints, int p1, int p1Max, int p2) {
+            while (p1 < p1Max) {
+                double a = flatPoints[p1];
+                double b = flatPoints[p2];
+                if (a < b) {
+                    return dominanceComparisonLess(flatPoints, p1, p1Max, p2);
+                }
+                if (a > b) {
+                    return dominanceComparisonGreater(flatPoints, p1, p1Max, p2);
+                }
+                ++p1;
+                ++p2;
+            }
+            return 0;
+        }
+
+        private int dominanceComparison(int p1, int p2) {
+            return dominanceComparisonImpl(flatPoints, p1, p1 + dim, p2);
+        }
+
         boolean naiveInner(int left) {
-            double[] currP = points[left];
+            int lp = left * dim;
             for (int j = left; ++j < n; ) {
-                int comparison = DominanceHelper.dominanceComparison(currP, points[j], dim);
+                int comparison = dominanceComparison(lp, j * dim);
                 if (comparison != 0) {
                     solveRemaining(left, j, comparison);
                     return true;
@@ -76,9 +115,10 @@ public final class OriginalV3 extends NonDominatedSorting {
         }
 
         private void solveRemaining(int lastLeft, int lastRight, int lastComparison) {
+            Arrays.fill(ranks, lastLeft, n, -1);
             initializeNext0(next, lastLeft, n);
             completeInterruptedIteration(lastLeft, lastRight, lastComparison);
-            normalIteration(next[lastLeft]);
+            normalIteration(next[lastLeft], 0);
 
             int aliveN = fillOrder0(lastLeft, n, ranks, order);
             // If the version we want requires shuffling, we do it now.
@@ -90,11 +130,8 @@ public final class OriginalV3 extends NonDominatedSorting {
 
         private void completeInterruptedIteration(int lastLeft, int lastRight, int lastComparison) {
             if (lastComparison < 0) {
-                ranks[lastRight] = 1;
                 next[lastRight - 1] = next[lastRight];
-                innermostLoop(lastLeft, lastRight - 1);
-            } else {
-                ranks[lastLeft] = 1;
+                innermostLoop(lastLeft, lastRight - 1, 0);
             }
         }
 
@@ -103,26 +140,32 @@ public final class OriginalV3 extends NonDominatedSorting {
                 // Initialize the list by the elements stored in `order`.
                 initializeNext(next, order, aliveN);
                 // Perform the complete iteration on these elements.
-                normalIteration(order[0]);
+                normalIteration(order[0], currRank);
                 // Filter the unranked elements, preserving their order.
                 aliveN = fillOrder(aliveN, ranks, currRank, order);
             }
+            fillRemaining(aliveN, maximalMeaningfulRank + 1);
         }
 
-        private void normalIteration(int firstPoint) {
+        private void fillRemaining(int aliveN, int rank) {
+            for (int i = 0; i < aliveN; ++i) {
+                ranks[order[i]] = rank;
+            }
+        }
+
+        private void normalIteration(int firstPoint, int rank) {
             while (firstPoint >= 0) {
-                innermostLoop(firstPoint, firstPoint);
+                innermostLoop(firstPoint, firstPoint, rank);
                 firstPoint = next[firstPoint];
             }
         }
 
-        private void innermostLoop(int currLeft, int prevRight) {
-            double[] currP = points[currLeft];
+        private void innermostLoop(int currLeft, int prevRight, int rank) {
+            int clp = currLeft * dim;
             int currRight = next[prevRight];
             while (currRight >= 0) {
-                switch (DominanceHelper.dominanceComparison(currP, points[currRight], dim)) {
+                switch (dominanceComparison(clp, currRight * dim)) {
                     case -1:
-                        ++ranks[currRight];
                         next[prevRight] = currRight = next[currRight];
                         break;
                     case 0:
@@ -130,10 +173,10 @@ public final class OriginalV3 extends NonDominatedSorting {
                         currRight = next[currRight];
                         break;
                     case +1:
-                        ++ranks[currLeft];
                         return;
                 }
             }
+            ranks[currLeft] = rank;
         }
     }
 
@@ -181,7 +224,7 @@ public final class OriginalV3 extends NonDominatedSorting {
         int newN = 0;
         for (int i = 0; i < n; ++i) {
             int value = order[i];
-            if (ranks[value] > currRank) {
+            if (ranks[value] != currRank) {
                 order[newN] = value;
                 ++newN;
             }
