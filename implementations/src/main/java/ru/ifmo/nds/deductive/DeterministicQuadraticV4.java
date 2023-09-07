@@ -46,16 +46,14 @@ public final class DeterministicQuadraticV4 extends NonDominatedSorting {
         }
 
         void run(int n, int nextNonExistingRank) {
-            until = n;
             // First, we try to perform a cheap non-dominance check that does not use indices.
-            int cheapRunResult = iterate0();
-            if (cheapRunResult == n) {
-                // Hooray, no points have been dominated, all points have rank 0.
-                Arrays.fill(ranks, 0, n, 0);
-            } else {
+            OptimisticComparator optimisticComparator = new OptimisticComparator();
+            if (optimisticComparator.run(points)) {
+                from = optimisticComparator.getLeftIndex();
+                until = n;
                 // We are here because one of the points has been dominated.
                 // First, we need to continue an interrupted dominance scan.
-                continue0(cheapRunResult);
+                continue0(optimisticComparator.getRightIndex(), optimisticComparator.getComparisonResult());
                 // Second, the current level may be far from being complete.
                 // The incomplete part is between from and until.
                 // However, if it has been completed, we switch to rank 1 immediately.
@@ -65,43 +63,17 @@ public final class DeterministicQuadraticV4 extends NonDominatedSorting {
                 }
                 // Finally, we hand out the computation to the generic algorithm.
                 runGenericAlgorithm(n, nextNonExistingRank);
+            } else {
+                // Hooray, no points have been dominated, all points have rank 0.
+                Arrays.fill(ranks, 0, n, 0);
             }
         }
 
-        private int iterate0() {
-            // This is an optimistic loop that thinks no points are going to be dominated.
-            do {
-                // Inlining this method here would increase the running time by roughly 30%.
-                // Tested on openjdk-8.265.
-                int result = iterate0Inner();
-                if (result != until) {
-                    return result;
-                }
-            } while (++from < until);
-            return until;
-        }
-
-        private int iterate0Inner() {
-            double[] currP = points[from];
-            // This is an optimistic loop that thinks no points are going to be dominated.
-            int next = from;
-            while (++next < until) {
-                int comparison = dominanceComparison(currP, points[next]);
-                if (comparison != 0) {
-                    // Our optimistic assumption has just been broken,
-                    // so we break the loop and notify the upstream.
-                    return next ^ (comparison >> 1);
-                }
-            }
-            return until;
-        }
-
-        private void continue0(int next0) {
+        private void continue0(int next, int comparisonResult) {
             // All points from 0 until from are already rank 0
             Arrays.fill(ranks, 0, from, 0);
-            int next = next0 ^ (next0 >> 31);
             int nextFrom = next ^ from;
-            int currI = next ^ ((next ^ next0) & nextFrom);
+            int currI = comparisonResult < 0 ? from : next;
             indices[--until] = nextFrom ^ currI;
             // The remaining points are subject to permutation.
             // However, indices in [next; until) will be written by finalize0,

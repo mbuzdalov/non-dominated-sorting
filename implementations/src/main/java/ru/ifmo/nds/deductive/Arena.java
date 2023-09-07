@@ -24,52 +24,46 @@ public final class Arena extends NonDominatedSorting {
 
     @Override
     protected void sortChecked(double[][] points, int[] ranks, int maximalMeaningfulRank) {
-        state.init(points, ranks, maximalMeaningfulRank);
-        state.solve();
+        state.solve(points, ranks, maximalMeaningfulRank);
     }
 
     private static final class State {
         private final double[] flatPoints;
+        private double[][] points;
         private final int[] order;
         private int[] ranks;
-        private int n, dim, maximalMeaningfulRank;
+        private int n, dim, dim2log, maximalMeaningfulRank;
         private int left, grave;
 
         State(int[] order, int maximumDimension) {
             this.order = order;
-            this.flatPoints = new double[order.length * maximumDimension];
+            int maxDim2 = 1;
+            while (maxDim2 < maximumDimension) {
+                maxDim2 += maxDim2;
+            }
+            this.flatPoints = new double[order.length * maxDim2];
         }
 
-        void init(double[][] points, int[] ranks, int maximalMeaningfulRank) {
+        void solve(double[][] points, int[] ranks, int maximalMeaningfulRank) {
             this.ranks = ranks;
+            this.points = points;
             this.maximalMeaningfulRank = maximalMeaningfulRank;
             this.n = points.length;
             this.dim = points[0].length;
-            for (int i = 0, t = 0; i < n; ++i, t += dim) {
-                System.arraycopy(points[i], 0, flatPoints, t, dim);
-            }
-        }
-
-        void solve() {
-            int innerResult = optimisticRun();
-            Arrays.fill(ranks, 0, left, 0);
-
-            if (innerResult != 0) {
-                solveRemaining(innerResult);
+            dim2log = 0;
+            while ((1 << dim2log) < dim) {
+                ++dim2log;
             }
 
-            ranks = null;
-        }
+            OptimisticComparator optimisticComparator = new OptimisticComparator();
+            this.left = optimisticComparator.getLeftIndex();
+            if (optimisticComparator.run(points)) {
+                solveRemaining(optimisticComparator.getRightIndex(), optimisticComparator.getComparisonResult());
+            }
+            Arrays.fill(ranks, 0, optimisticComparator.getLeftIndex(), 0);
 
-        private int optimisticRun() {
-            left = 0;
-            do {
-                int innerResult = naiveInner();
-                if (innerResult != 0) {
-                    return innerResult;
-                }
-            } while (++left < n);
-            return 0;
+            this.ranks = null;
+            this.points = null;
         }
 
         private static int dominanceComparisonLess(double[] flatPoints, int p1, int p1Max, int p2) {
@@ -110,32 +104,23 @@ public final class Arena extends NonDominatedSorting {
             return dominanceComparisonImpl(flatPoints, p1, p1 + dim, p2);
         }
 
-        private int naiveInner() {
-            int ld = left * dim;
-            int ldl = ld + dim;
-            int right = left;
-            while (++right < n) {
-                int comparison = dominanceComparisonImpl(flatPoints, ld, ldl, right * dim);
-                if (comparison != 0) {
-                    return right ^ (comparison >> 1);
-                }
-            }
-            return 0;
+        private void solveRemaining(int lastRight, int lastComparison) {
+            fillOrderInitially(lastRight);
+
+            int leftI = lastComparison < 0 ? left : lastRight;
+            grave = n - 1;
+            order[grave] = (left ^ lastRight ^ leftI) << dim2log;
+            pointScan0(lastRight, leftI);
+            continueSolving();
         }
 
-        private void solveRemaining(int innerResult) {
-            int innerResultSign = innerResult >> 31;
-            int lastRight = innerResult ^ innerResultSign;
-
+        private void fillOrderInitially(int lastRight) {
             for (int i = left; i < lastRight; ++i) {
-                order[i] = i * dim;
+                order[i] = i << dim2log;
             }
-
-            int leftI = innerResultSign < 0 ? left : lastRight;
-            grave = n - 1;
-            order[grave] = (left ^ lastRight ^ leftI) * dim;
-            pointScan0(lastRight, leftI * dim);
-            continueSolving();
+            for (int i = left; i < n; ++i) {
+                System.arraycopy(points[i], 0, flatPoints, i << dim2log, dim);
+            }
         }
 
         private void continueSolving() {
@@ -160,16 +145,18 @@ public final class Arena extends NonDominatedSorting {
             if (left < n) {
                 int rankToFill = maximalMeaningfulRank + 1;
                 while (left < n) {
-                    ranks[order[left] / dim] = rankToFill;
+                    ranks[order[left] >> dim2log] = rankToFill;
                     ++left;
                 }
             }
         }
 
         private void pointScan0(int right, int currI) {
-            int rescanUntil = currI / dim;
-            int nextI = grave * dim;
+            int rescanUntil = currI;
+            currI <<= dim2log;
+            int nextI = grave;
             while (grave > right) {
+                nextI <<= dim2log;
                 int comparison = dominanceComparison(currI, nextI);
                 if (comparison != 0) {
                     --grave;
@@ -180,13 +167,13 @@ public final class Arena extends NonDominatedSorting {
                     } else {
                         order[grave] = nextI;
                     }
-                    nextI = grave * dim;
+                    nextI = grave;
                 } else {
                     order[right] = nextI;
-                    nextI = ++right * dim;
+                    nextI = ++right;
                 }
             }
-            ranks[currI / dim] = 0;
+            ranks[currI >> dim2log] = 0;
             rescan(currI, rescanUntil);
         }
 
@@ -211,7 +198,7 @@ public final class Arena extends NonDominatedSorting {
                     ++right;
                 }
             }
-            ranks[currI / dim] = rank;
+            ranks[currI >> dim2log] = rank;
             rescan(currI, rescanUntil);
         }
 

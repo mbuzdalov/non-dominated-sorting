@@ -24,8 +24,7 @@ public final class OriginalV3 extends NonDominatedSorting {
 
     @Override
     protected void sortChecked(double[][] points, int[] ranks, int maximalMeaningfulRank) {
-        state.init(points, ranks, maximalMeaningfulRank);
-        state.solve();
+        state.solve(points, ranks, maximalMeaningfulRank);
     }
 
     private static final class State {
@@ -42,26 +41,23 @@ public final class OriginalV3 extends NonDominatedSorting {
             this.shuffle = shuffle;
         }
 
-        void init(double[][] points, int[] ranks, int maximalMeaningfulRank) {
+        void solve(double[][] points, int[] ranks, int maximalMeaningfulRank) {
             this.n = points.length;
             this.dim = points[0].length;
             this.ranks = ranks;
             this.maximalMeaningfulRank = maximalMeaningfulRank;
-            for (int i = 0, t = 0; i < n; ++i, t += dim) {
-                System.arraycopy(points[i], 0, flatPoints, t, dim);
-            }
-        }
 
-        void solve() {
-            Arrays.fill(ranks, 0);
-
-            for (int i = 0; i < n; ++i) {
-                if (naiveInner(i)) {
-                    break;
+            OptimisticComparator optimisticComparator = new OptimisticComparator();
+            if (optimisticComparator.run(points)) {
+                int left = optimisticComparator.getLeftIndex();
+                for (int i = left, t = left * dim; i < n; ++i, t += dim) {
+                    System.arraycopy(points[i], 0, flatPoints, t, dim);
                 }
+                solveRemaining(left, optimisticComparator.getRightIndex(), optimisticComparator.getComparisonResult());
             }
 
-            ranks = null;
+            Arrays.fill(ranks, 0, optimisticComparator.getLeftIndex(), 0);
+            this.ranks = null;
         }
 
         private static int dominanceComparisonLess(double[] flatPoints, int p1, int p1Max, int p2) {
@@ -100,18 +96,6 @@ public final class OriginalV3 extends NonDominatedSorting {
 
         private int dominanceComparison(int p1, int p2) {
             return dominanceComparisonImpl(flatPoints, p1, p1 + dim, p2);
-        }
-
-        boolean naiveInner(int left) {
-            int lp = left * dim;
-            for (int j = left; ++j < n; ) {
-                int comparison = dominanceComparison(lp, j * dim);
-                if (comparison != 0) {
-                    solveRemaining(left, j, comparison);
-                    return true;
-                }
-            }
-            return false;
         }
 
         private void solveRemaining(int lastLeft, int lastRight, int lastComparison) {
