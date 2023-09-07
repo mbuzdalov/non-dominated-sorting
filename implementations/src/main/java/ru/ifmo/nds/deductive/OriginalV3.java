@@ -14,7 +14,7 @@ public final class OriginalV3 extends NonDominatedSorting {
 
     @Override
     public String getName() {
-        return "Deductive Sort, original version 3" + (state.shuffle ? ", shuffled" : "");
+        return "Deductive Sort, original version 3" + (state.shuffle ? ", randomized" : "");
     }
 
     @Override
