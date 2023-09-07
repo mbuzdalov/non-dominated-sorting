@@ -48,7 +48,7 @@ public final class DeterministicQuadraticV4 extends NonDominatedSorting {
         void run(int n, int nextNonExistingRank) {
             // First, we try to perform a cheap non-dominance check that does not use indices.
             OptimisticComparator optimisticComparator = new OptimisticComparator();
-            if (optimisticComparator.run(points)) {
+            if (optimisticComparator.hasDominatingPoints(points)) {
                 from = optimisticComparator.getLeftIndex();
                 until = n;
                 // We are here because one of the points has been dominated.

@@ -48,7 +48,7 @@ public final class OriginalV3 extends NonDominatedSorting {
             this.maximalMeaningfulRank = maximalMeaningfulRank;
 
             OptimisticComparator optimisticComparator = new OptimisticComparator();
-            if (optimisticComparator.run(points)) {
+            if (optimisticComparator.hasDominatingPoints(points)) {
                 int left = optimisticComparator.getLeftIndex();
                 for (int i = left, t = left * dim; i < n; ++i, t += dim) {
                     System.arraycopy(points[i], 0, flatPoints, t, dim);

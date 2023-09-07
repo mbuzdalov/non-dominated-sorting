@@ -57,7 +57,7 @@ public final class Arena extends NonDominatedSorting {
 
             OptimisticComparator optimisticComparator = new OptimisticComparator();
             this.left = optimisticComparator.getLeftIndex();
-            if (optimisticComparator.run(points)) {
+            if (optimisticComparator.hasDominatingPoints(points)) {
                 solveRemaining(optimisticComparator.getRightIndex(), optimisticComparator.getComparisonResult());
             }
             Arrays.fill(ranks, 0, optimisticComparator.getLeftIndex(), 0);
