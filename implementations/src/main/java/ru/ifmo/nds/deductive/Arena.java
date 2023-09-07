@@ -3,6 +3,7 @@ package ru.ifmo.nds.deductive;
 import java.util.Arrays;
 
 import ru.ifmo.nds.NonDominatedSorting;
+import ru.ifmo.nds.util.DominanceHelper;
 
 public final class Arena extends NonDominatedSorting {
     private State state;
@@ -66,42 +67,8 @@ public final class Arena extends NonDominatedSorting {
             this.points = null;
         }
 
-        private static int dominanceComparisonLess(double[] flatPoints, int p1, int p1Max, int p2) {
-            while (++p1 < p1Max) {
-                if (flatPoints[p1] > flatPoints[++p2]) {
-                    return 0;
-                }
-            }
-            return -1;
-        }
-
-        private static int dominanceComparisonGreater(double[] flatPoints, int p1, int p1Max, int p2) {
-            while (++p1 < p1Max) {
-                if (flatPoints[p1] < flatPoints[++p2]) {
-                    return 0;
-                }
-            }
-            return +1;
-        }
-
-        private static int dominanceComparisonImpl(double[] flatPoints, int p1, int p1Max, int p2) {
-            while (p1 < p1Max) {
-                double a = flatPoints[p1];
-                double b = flatPoints[p2];
-                if (a < b) {
-                    return dominanceComparisonLess(flatPoints, p1, p1Max, p2);
-                }
-                if (a > b) {
-                    return dominanceComparisonGreater(flatPoints, p1, p1Max, p2);
-                }
-                ++p1;
-                ++p2;
-            }
-            return 0;
-        }
-
         private int dominanceComparison(int p1, int p2) {
-            return dominanceComparisonImpl(flatPoints, p1, p1 + dim, p2);
+            return DominanceHelper.dominanceComparisonFlat(flatPoints, p1, p1 + dim, p2);
         }
 
         private void solveRemaining(int lastRight, int lastComparison) {

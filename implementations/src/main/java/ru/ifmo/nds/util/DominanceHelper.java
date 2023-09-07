@@ -57,4 +57,38 @@ public final class DominanceHelper {
         }
         return 0;
     }
+
+    private static int dominanceComparisonFlatLess(double[] flatPoints, int p1Start, int p1End, int p2Start) {
+        while (++p1Start < p1End) {
+            if (flatPoints[p1Start] > flatPoints[++p2Start]) {
+                return 0;
+            }
+        }
+        return -1;
+    }
+
+    private static int dominanceComparisonFlatGreater(double[] flatPoints, int p1Start, int p1End, int p2Start) {
+        while (++p1Start < p1End) {
+            if (flatPoints[p1Start] < flatPoints[++p2Start]) {
+                return 0;
+            }
+        }
+        return +1;
+    }
+
+    public static int dominanceComparisonFlat(double[] flatPoints, int p1Start, int p1End, int p2Start) {
+        while (p1Start < p1End) {
+            double v1 = flatPoints[p1Start];
+            double v2 = flatPoints[p2Start];
+            if (v1 < v2) {
+                return dominanceComparisonFlatLess(flatPoints, p1Start, p1End, p2Start);
+            }
+            if (v1 > v2) {
+                return dominanceComparisonFlatGreater(flatPoints, p1Start, p1End, p2Start);
+            }
+            ++p1Start;
+            ++p2Start;
+        }
+        return 0;
+    }
 }
