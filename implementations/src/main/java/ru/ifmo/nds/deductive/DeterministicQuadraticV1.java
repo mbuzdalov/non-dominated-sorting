@@ -35,28 +35,39 @@ public final class DeterministicQuadraticV1 extends NonDominatedSorting {
             while (curr < last) {
                 int currI = indices[curr];
                 double[] currP = points[currI];
-                // First stage. Find the best dominating point for curr
-                for (int next = curr + 1; next < last; ++next) {
+                // First stage. Scan towards the end, replacing the current point when it gets dominated
+                int next = curr + 1;
+                int rescanUntil = next;
+                while (next < last) {
                     int nextI = indices[next];
                     double[] nextP = points[nextI];
-                    if (DominanceHelper.strictlyDominatesAssumingNotEqual(nextP, currP, dim)) {
-                        indices[next] = currI;
-                        currI = nextI;
-                        currP = nextP;
+                    switch (DominanceHelper.dominanceComparison(currP, nextP, dim)) {
+                        case -1:
+                            indices[next] = indices[--last];
+                            indices[last] = nextI;
+                            break;
+                        case 0:
+                            ++next;
+                            break;
+                        default:
+                            indices[next] = indices[--last];
+                            indices[last] = currI;
+                            currI = nextI;
+                            currP = nextP;
+                            rescanUntil = next;
+                            break;
                     }
                 }
                 ranks[currI] = rank;
-                // Second stage. Sweep the dominated points.
-                int next = ++curr;
-                while (next < last) {
-                    int nextI = indices[next];
-                    if (DominanceHelper.strictlyDominates(currP, points[nextI], dim)) {
-                        indices[next] = indices[--last];
+                // Second stage. Rescan the points before the last replacement
+                while (--rescanUntil > curr) {
+                    int nextI = indices[rescanUntil];
+                    if (DominanceHelper.strictlyDominatesAssumingNotEqual(currP, points[nextI], dim)) {
+                        indices[rescanUntil] = indices[--last];
                         indices[last] = nextI;
-                    } else {
-                        ++next;
                     }
                 }
+                ++curr;
             }
             from = last;
         }

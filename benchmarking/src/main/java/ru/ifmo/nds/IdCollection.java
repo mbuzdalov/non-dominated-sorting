@@ -53,8 +53,6 @@ public final class IdCollection {
         addNonDominatedSortingFactory("deductive.reordering.v1", DeductiveSort.getReorderingImplementationV1());
         addNonDominatedSortingFactory("deductive.reordering.v2", DeductiveSort.getReorderingImplementationV2());
         addNonDominatedSortingFactory("deductive.quadratic.deterministic.v1", DeductiveSort.getDeterministicQuadraticImplementationV1());
-        addNonDominatedSortingFactory("deductive.quadratic.deterministic.v2", DeductiveSort.getDeterministicQuadraticImplementationV2());
-        addNonDominatedSortingFactory("deductive.quadratic.deterministic.v3", DeductiveSort.getDeterministicQuadraticImplementationV3());
         addNonDominatedSortingFactory("deductive.quadratic.deterministic.v4", DeductiveSort.getDeterministicQuadraticImplementationV4());
         addNonDominatedSortingFactory("deductive.original.v3.randomized", DeductiveSort.getRandomizedOriginalImplementationV3());
         addNonDominatedSortingFactory("deductive.arena", DeductiveSort.getArenaPrinciple());
