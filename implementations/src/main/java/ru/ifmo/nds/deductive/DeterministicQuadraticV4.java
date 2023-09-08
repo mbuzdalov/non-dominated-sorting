@@ -49,10 +49,10 @@ public final class DeterministicQuadraticV4 extends NonDominatedSorting {
             // First, we try to perform a cheap non-dominance check that does not use indices.
             OptimisticComparator optimisticComparator = new OptimisticComparator();
             if (optimisticComparator.hasDominatingPoints(points)) {
-                from = optimisticComparator.getLeftIndex();
-                until = n;
                 // We are here because one of the points has been dominated.
                 // First, we need to continue an interrupted dominance scan.
+                from = optimisticComparator.getLeftIndex();
+                until = n;
                 continue0(optimisticComparator.getRightIndex(), optimisticComparator.getComparisonResult());
                 // Second, the current level may be far from being complete.
                 // The incomplete part is between from and until.
@@ -63,15 +63,12 @@ public final class DeterministicQuadraticV4 extends NonDominatedSorting {
                 }
                 // Finally, we hand out the computation to the generic algorithm.
                 runGenericAlgorithm(n, nextNonExistingRank);
-            } else {
-                // Hooray, no points have been dominated, all points have rank 0.
-                Arrays.fill(ranks, 0, n, 0);
             }
+            // Ranks of points that were successfully processed by the optimistic comparator are all zeros.
+            Arrays.fill(ranks, 0, optimisticComparator.getLeftIndex(), 0);
         }
 
         private void continue0(int next, int comparisonResult) {
-            // All points from 0 until from are already rank 0
-            Arrays.fill(ranks, 0, from, 0);
             int nextFrom = next ^ from;
             int currI = comparisonResult < 0 ? from : next;
             indices[--until] = nextFrom ^ currI;
