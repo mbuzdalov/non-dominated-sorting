@@ -63,6 +63,7 @@ public final class DeterministicQuadraticV4 extends NonDominatedSorting {
                 }
                 // Finally, we hand out the computation to the generic algorithm.
                 runGenericAlgorithm(n, nextNonExistingRank);
+                fillExtraBadPoints(nextNonExistingRank);
             }
             // Ranks of points that were successfully processed by the optimistic comparator are all zeros.
             Arrays.fill(ranks, 0, optimisticComparator.getLeftIndex(), 0);
@@ -111,30 +112,21 @@ public final class DeterministicQuadraticV4 extends NonDominatedSorting {
         }
 
         private void runGenericAlgorithm(int n, int nextNonExistingRank) {
-            while (true) {
-                iterate();
-                if (until == n) {
-                    break;
-                }
-                if (++rank == nextNonExistingRank) {
-                    fillExtraBadPoints(n, nextNonExistingRank);
-                    break;
+            while (rank < nextNonExistingRank && from < until) {
+                while (from < until) {
+                    iterateInner();
                 }
                 from = until;
                 until = n;
+                ++rank;
             }
         }
 
-        private void fillExtraBadPoints(int n, int nextNonExistingRank) {
-            do {
-                ranks[indices[until]] = nextNonExistingRank;
-            } while (++until < n);
-        }
-
-        private void iterate() {
-            do {
-                iterateInner();
-            } while (from < until);
+        private void fillExtraBadPoints(int nextNonExistingRank) {
+            while (from < until) {
+                ranks[indices[from]] = nextNonExistingRank;
+                ++from;
+            }
         }
 
         private void iterateInner() {
