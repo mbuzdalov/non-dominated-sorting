@@ -4,8 +4,6 @@ import ru.ifmo.nds.NonDominatedSorting;
 import ru.ifmo.nds.util.ArrayHelper;
 import ru.ifmo.nds.util.DominanceHelper;
 
-import java.util.Arrays;
-
 public final class DeterministicQuadraticV1 extends NonDominatedSorting {
     public DeterministicQuadraticV1(int maximumPoints, int maximumDimension) {
         super(maximumPoints, maximumDimension);
