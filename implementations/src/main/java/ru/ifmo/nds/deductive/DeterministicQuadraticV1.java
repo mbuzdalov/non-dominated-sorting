@@ -26,11 +26,9 @@ public final class DeterministicQuadraticV1 extends NonDominatedSorting {
         final int dim = points[0].length;
 
         ArrayHelper.fillIdentity(indices, n);
-        Arrays.fill(ranks, maximalMeaningfulRank + 1);
 
-        int from = 0;
-        for (int rank = 0; from < n && rank <= maximalMeaningfulRank; ++rank) {
-            int curr = from;
+        int curr = 0;
+        for (int rank = 0; curr < n && rank <= maximalMeaningfulRank; ++rank) {
             int last = n;
             while (curr < last) {
                 int currI = indices[curr];
@@ -69,7 +67,12 @@ public final class DeterministicQuadraticV1 extends NonDominatedSorting {
                 }
                 ++curr;
             }
-            from = last;
+            curr = last;
+        }
+
+        // Finally, if there are points with non-meaningful ranks, assign them their rank accordingly
+        for (int i = curr, r = maximalMeaningfulRank + 1; i < n; ++i) {
+            ranks[indices[i]] = r;
         }
     }
 }
