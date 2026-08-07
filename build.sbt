@@ -11,7 +11,7 @@ lazy val osHardwareInformation = "com.github.oshi" % "oshi-core" % "7.3.2"
 
 lazy val root = project
   .in(file("."))
-  .settings(commonSettings :_*)
+  .settings(commonSettings*)
   .settings(name    := "non-dominated-sorting",
             version := "0.2.1")
   .dependsOn(implementations, benchmarking)
@@ -19,13 +19,13 @@ lazy val root = project
 
 lazy val implementations = project
   .in(file("implementations"))
-  .settings(commonSettings :_*)
+  .settings(commonSettings*)
   .settings(name    := "non-dominated-sorting-implementations",
             version := "0.2.1")
 
 lazy val benchmarking = project
   .in(file("benchmarking"))
-  .settings(commonSettings :_*)
+  .settings(commonSettings*)
   .settings(name    := "non-dominated-sorting-benchmarking",
             version := "0.2.1",
             libraryDependencies += osHardwareInformation)
